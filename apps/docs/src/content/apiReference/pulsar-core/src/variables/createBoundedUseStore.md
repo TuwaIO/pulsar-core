@@ -6,7 +6,7 @@
 
 > `const` **createBoundedUseStore**: \<`S`\>(`store`) => \{(): `ExtractState`\<`S`\>; \<`T`\>(`selector`): `T`; \}
 
-Defined in: [packages/pulsar-core/src/utils/createBoundedUseStore.ts:25](https://github.com/TuwaIO/pulsar-core/blob/1b4300a614d84f49e2f240cc8a629dd932f3f73b/packages/pulsar-core/src/utils/createBoundedUseStore.ts#L25)
+Defined in: [packages/pulsar-core/src/utils/createBoundedUseStore.ts:25](https://github.com/TuwaIO/pulsar-core/blob/7b6906782951fd4d04264219ee29d69cf04f952f/packages/pulsar-core/src/utils/createBoundedUseStore.ts#L25)
 
 Creates a bounded `useStore` hook from a vanilla Zustand store instance.
 The returned hook is fully typed and can be used with or without a selector.

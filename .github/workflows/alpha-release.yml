@@ -9,5 +9,5 @@ on:
 
 jobs:
   call-alpha-release:
-    uses: TuwaIO/tuwa-workflows/.github/workflows/reusable-alpha-release.yml@main
+    uses: TuwaIO/workflows/.github/workflows/reusable-alpha-release.yml@main
     secrets: inherit

@@ -26,6 +26,6 @@ jobs:
   call-stable-publish:
     needs: release-please
     if: ${{ needs.release-please.outputs.releases_created == 'true' }}
-    uses: TuwaIO/tuwa-workflows/.github/workflows/reusable-stable-publish.yml@main
+    uses: TuwaIO/workflows/.github/workflows/reusable-stable-publish.yml@main
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
