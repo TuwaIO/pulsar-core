@@ -6,7 +6,7 @@
 
 > **getAvatar**(`name`): `Promise`\<`undefined` \| `string`\>
 
-Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:43](https://github.com/TuwaIO/pulsar-core/blob/720ae68e888aeb5b19c59753a144a246fe05cc4c/packages/pulsar-evm/src/utils/ensUtils.ts#L43)
+Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:43](https://github.com/TuwaIO/pulsar-core/blob/3ed266adfc4c048a9ad6d076a8281e66ffb56ee3/packages/pulsar-evm/src/utils/ensUtils.ts#L43)
 
 Fetches the avatar for a given ENS name.
 If no ENS avatar is set, it generates a unique "blockie" image as a fallback.

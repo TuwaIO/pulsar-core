@@ -6,7 +6,7 @@
 
 > **isGelatoTxKey**(`txKey`): `txKey is GelatoTxKey`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:30](https://github.com/TuwaIO/pulsar-core/blob/720ae68e888aeb5b19c59753a144a246fe05cc4c/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L30)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:30](https://github.com/TuwaIO/pulsar-core/blob/3ed266adfc4c048a9ad6d076a8281e66ffb56ee3/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L30)
 
 A type guard to determine if an ActionTxKey is a GelatoTxKey.
 

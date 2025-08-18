@@ -6,7 +6,7 @@
 
 > **speedUpTxAction**\<`TR`, `T`\>(`params`): `Promise`\<`` `0x${string}` ``\>
 
-Defined in: [packages/pulsar-evm/src/utils/speedUpTxAction.ts:35](https://github.com/TuwaIO/pulsar-core/blob/720ae68e888aeb5b19c59753a144a246fe05cc4c/packages/pulsar-evm/src/utils/speedUpTxAction.ts#L35)
+Defined in: [packages/pulsar-evm/src/utils/speedUpTxAction.ts:35](https://github.com/TuwaIO/pulsar-core/blob/3ed266adfc4c048a9ad6d076a8281e66ffb56ee3/packages/pulsar-evm/src/utils/speedUpTxAction.ts#L35)
 
 Speeds up a pending transaction by resubmitting it with the same nonce but higher gas fees.
 This is a common strategy to prevent a transaction from getting stuck.

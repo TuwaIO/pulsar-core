@@ -4,9 +4,9 @@
 
 # evmAdapter()
 
-> **evmAdapter**\<`T`\>(`config`, `appChains`): `object`
+> **evmAdapter**\<`T`\>(`config`, `appChains`): [`TxAdapter`](../../../pulsar-core/src/type-aliases/TxAdapter.md)\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>
 
-Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:10](https://github.com/TuwaIO/pulsar-core/blob/720ae68e888aeb5b19c59753a144a246fe05cc4c/packages/pulsar-evm/src/adapters/evmAdapter.ts#L10)
+Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:11](https://github.com/TuwaIO/pulsar-core/blob/3ed266adfc4c048a9ad6d076a8281e66ffb56ee3/packages/pulsar-evm/src/adapters/evmAdapter.ts#L11)
 
 ## Type Parameters
 
@@ -26,58 +26,4 @@ Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:10](https://github.c
 
 ## Returns
 
-`object`
-
-### checkAndInitializeTrackerInStore()
-
-> **checkAndInitializeTrackerInStore**: (`__namedParameters`) => `Promise`\<`void`\>
-
-#### Parameters
-
-##### \_\_namedParameters
-
-`object` & `Pick`\<`ITxTrackingStore`\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>, `"transactionsPool"` \| `"updateTxParams"` \| `"onSucceedCallbacks"` \| `"removeTxFromPool"`\>
-
-#### Returns
-
-`Promise`\<`void`\>
-
-### checkChainForTx()
-
-> **checkChainForTx**: (`chainId`) => `Promise`\<`void`\>
-
-#### Parameters
-
-##### chainId
-
-`string` | `number`
-
-#### Returns
-
-`Promise`\<`void`\>
-
-### checkTransactionsTracker()
-
-> **checkTransactionsTracker**: (`actionTxKey`, `walletType`) => `object`
-
-#### Parameters
-
-##### actionTxKey
-
-[`ActionTxKey`](../type-aliases/ActionTxKey.md)
-
-##### walletType
-
-`string`
-
-#### Returns
-
-`object`
-
-##### tracker
-
-> **tracker**: [`TransactionTracker`](../enumerations/TransactionTracker.md)
-
-##### txKey
-
-> **txKey**: `string`
+[`TxAdapter`](../../../pulsar-core/src/type-aliases/TxAdapter.md)\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>

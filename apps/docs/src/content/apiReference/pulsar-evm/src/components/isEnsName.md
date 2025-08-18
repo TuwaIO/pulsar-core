@@ -6,7 +6,7 @@
 
 > **isEnsName**(`address`): `boolean`
 
-Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:79](https://github.com/TuwaIO/pulsar-core/blob/720ae68e888aeb5b19c59753a144a246fe05cc4c/packages/pulsar-evm/src/utils/ensUtils.ts#L79)
+Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:79](https://github.com/TuwaIO/pulsar-core/blob/3ed266adfc4c048a9ad6d076a8281e66ffb56ee3/packages/pulsar-evm/src/utils/ensUtils.ts#L79)
 
 A simple heuristic to check if a string could be an ENS name.
 It works by checking if the string is NOT a valid Ethereum address.

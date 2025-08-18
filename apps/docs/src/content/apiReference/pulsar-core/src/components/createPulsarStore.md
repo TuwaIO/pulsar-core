@@ -6,7 +6,7 @@
 
 > **createPulsarStore**\<`TR`, `T`, `A`\>(`__namedParameters`): `Write`\<`StoreApi`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>, `StorePersist`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>, [`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>\>
 
-Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:9](https://github.com/TuwaIO/pulsar-core/blob/720ae68e888aeb5b19c59753a144a246fe05cc4c/packages/pulsar-core/src/store/txTrackingStore.ts#L9)
+Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:9](https://github.com/TuwaIO/pulsar-core/blob/3ed266adfc4c048a9ad6d076a8281e66ffb56ee3/packages/pulsar-core/src/store/txTrackingStore.ts#L9)
 
 ## Type Parameters
 
