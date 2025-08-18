@@ -6,6 +6,6 @@
 
 > **GelatoTrackerParams** = `Pick`\<`InitializePollingTracker`\<[`GelatoTaskStatusResponse`](GelatoTaskStatusResponse.md), `InitialGelatoTx`, [`TransactionTracker`](../enumerations/TransactionTracker.md)\>, `"tx"` \| `"removeTxFromPool"` \| `"onInitialize"` \| `"onSucceed"` \| `"onFailed"` \| `"onIntervalTick"` \| `"pollingInterval"` \| `"retryCount"`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:73](https://github.com/TuwaIO/pulsar-core/blob/7b6906782951fd4d04264219ee29d69cf04f952f/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L73)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:73](https://github.com/TuwaIO/pulsar-core/blob/dbac4ff9fac5e788ddd51c1eb159f621106ceb73/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L73)
 
 Defines the parameters required for the low-level `gelatoTracker` function.
