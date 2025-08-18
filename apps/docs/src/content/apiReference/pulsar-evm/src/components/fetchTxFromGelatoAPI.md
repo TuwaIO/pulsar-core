@@ -6,7 +6,7 @@
 
 > **fetchTxFromGelatoAPI**(`params`): `Promise`\<`Response`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:110](https://github.com/TuwaIO/pulsar-core/blob/dbac4ff9fac5e788ddd51c1eb159f621106ceb73/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L110)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:110](https://github.com/TuwaIO/pulsar-core/blob/cfb78f395afc8df6db7931c5480fbfd64ecfc7dc/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L110)
 
 The fetcher function passed to `initializePollingTracker` to get the status of a Gelato task.
 

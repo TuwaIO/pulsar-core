@@ -43,4 +43,5 @@
 - [isGelatoTxKey](functions/isGelatoTxKey.md)
 - [safeTracker](functions/safeTracker.md)
 - [safeTrackerForStore](functions/safeTrackerForStore.md)
+- [selectEvmTxExplorerLink](functions/selectEvmTxExplorerLink.md)
 - [speedUpTxAction](functions/speedUpTxAction.md)

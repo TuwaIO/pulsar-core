@@ -11,4 +11,5 @@ export * from './utils/checkTransactionsTracker';
 export * from './utils/createViemClient';
 export * from './utils/getActiveWalletAndClient';
 export * from './utils/safeConstants';
+export * from './utils/selectEvmTxExplorerLink';
 export * from './utils/speedUpTxAction';
