@@ -1,4 +1,4 @@
-import { cn } from '@tuwaio/transactions-tracking-ui';
+import { cn } from '@tuwaio/nova-core';
 import { ReactNode } from 'react';
 
 export function StyledLink({ href, children }: { href: string; children: ReactNode }) {

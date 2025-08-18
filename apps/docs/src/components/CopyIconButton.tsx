@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircleIcon, Square2StackIcon } from '@heroicons/react/24/outline';
-import { cn } from '@tuwaio/transactions-tracking-ui';
+import { cn } from '@tuwaio/nova-core';
 
 interface CopyIconButtonProps {
   isCopied: boolean;

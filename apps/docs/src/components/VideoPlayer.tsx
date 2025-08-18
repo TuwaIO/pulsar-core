@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@tuwaio/transactions-tracking-ui';
+import { cn } from '@tuwaio/nova-core';
 import React from 'react';
 
 /**
