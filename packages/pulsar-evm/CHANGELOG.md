@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.5](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.4...pulsar-evm-v0.0.5) (2025-08-18)
+
+
+### Bug Fixes
+
+* update evm adapter ([d86abf1](https://github.com/TuwaIO/pulsar-core/commit/d86abf14599dcb8b42a46e770c0020136d47d4ba))
+
 ## [0.0.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.3...pulsar-evm-v0.0.4) (2025-08-18)
 
 
