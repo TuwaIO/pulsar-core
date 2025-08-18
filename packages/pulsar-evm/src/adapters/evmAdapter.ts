@@ -21,5 +21,7 @@ export function evmAdapter<T extends Transaction<TransactionTracker>>(config: Co
         'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
       >) => checkAndInitializeTrackerInStore({ tracker: tx.tracker, tx, chains: appChains, ...rest }),
     };
+  } else {
+    throw new Error('EVM adapter requires a Wagmi config object.');
   }
 }
