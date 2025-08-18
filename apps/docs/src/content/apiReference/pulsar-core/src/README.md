@@ -31,6 +31,7 @@
 
 ## Functions
 
+- [createPulsarStore](functions/createPulsarStore.md)
 - [initializePollingTracker](functions/initializePollingTracker.md)
 - [initializeTxTrackingStore](functions/initializeTxTrackingStore.md)
 - [selectAllTransactions](functions/selectAllTransactions.md)
