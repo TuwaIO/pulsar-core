@@ -6,7 +6,7 @@
 
 > `const` **safeSdkOptions**: `object`
 
-Defined in: [packages/pulsar-evm/src/utils/safeConstants.ts:12](https://github.com/TuwaIO/pulsar-core/blob/cfb78f395afc8df6db7931c5480fbfd64ecfc7dc/packages/pulsar-evm/src/utils/safeConstants.ts#L12)
+Defined in: [packages/pulsar-evm/src/utils/safeConstants.ts:12](https://github.com/TuwaIO/pulsar-core/blob/331a7d5f292c7c39ecb210370af8d2ac8b40c273/packages/pulsar-evm/src/utils/safeConstants.ts#L12)
 
 Configuration options for the Safe Apps SDK.
 This is typically used when integrating with the Safe environment.

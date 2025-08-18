@@ -9,6 +9,7 @@ export * from './utils/checkChainForTx';
 export * from './utils/checkIsGelatoAvailable';
 export * from './utils/checkTransactionsTracker';
 export * from './utils/createViemClient';
+export * from './utils/ensUtils';
 export * from './utils/getActiveWalletAndClient';
 export * from './utils/safeConstants';
 export * from './utils/selectEvmTxExplorerLink';
