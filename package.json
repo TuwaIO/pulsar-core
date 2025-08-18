@@ -1,0 +1,54 @@
+{
+  "name": "@tuwaio/pulsar-core-monorepo",
+  "version": "0.0.1",
+  "private": true,
+  "author": "Oleksandr Tkach",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@9.6.0",
+  "description": "Monorepo for the Pulsar Engine, the headless state management system for tracking Web3 transactions in the TUWA ecosystem.",
+  "scripts": {
+    "build": "pnpm --filter \"./packages/**\" build",
+    "postinstall": "pnpm build",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "test": "pnpm --filter \"./packages/**\" test",
+    "clean": "find . -name node_modules -type d -prune -exec rm -rf '{}' + && find . -name dist -type d -prune -exec rm -rf '{}' + && rm -rf .turbo",
+    "docs:gen": "typedoc",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TuwaIO/pulsar-core.git"
+  },
+  "homepage": "https://github.com/TuwaIO/pulsar-core",
+  "bugs": {
+    "url": "https://github.com/TuwaIO/pulsar-core/issues"
+  },
+  "contributors": [
+    {
+      "name": "Oleksandr Tkach",
+      "url": "https://github.com/Argeare5"
+    }
+  ],
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "eslint": "^9.33.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "globals": "^16.3.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.6.14",
+    "semantic-release": "^24.2.7",
+    "semantic-release-pnpm": "^1.0.2",
+    "typedoc": "^0.28.10",
+    "typedoc-plugin-markdown": "^4.8.1",
+    "typedoc-plugin-react": "^0.1.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.39.1"
+  }
+}

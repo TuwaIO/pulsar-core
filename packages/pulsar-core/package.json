@@ -1,0 +1,58 @@
+{
+  "name": "@tuwaio/pulsar-core",
+  "version": "0.0.0",
+  "private": false,
+  "author": "Oleksandr Tkach",
+  "license": "Apache-2.0",
+  "description": "The core, framework-agnostic engine for real-time tracking of Web3 transaction lifecycles (pending, success, failed, replaced).",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "start": "tsup src/index.ts --watch",
+    "build": "tsup"
+  },
+  "keywords": [
+    "web3",
+    "transaction",
+    "tracking",
+    "zustand",
+    "immer",
+    "typescript",
+    "core",
+    "headless"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TuwaIO/pulsar-core.git",
+    "directory": "packages/pulsar-core"
+  },
+  "homepage": "https://github.com/TuwaIO/pulsar-core",
+  "bugs": {
+    "url": "https://github.com/TuwaIO/pulsar-core/issues"
+  },
+  "contributors": [
+    {
+      "name": "Oleksandr Tkach",
+      "url": "https://github.com/Argeare5"
+    }
+  ],
+  "peerDependencies": {
+    "dayjs": ">=1",
+    "immer": ">=10",
+    "zustand": ">=5"
+  },
+  "devDependencies": {
+    "dayjs": "^1.11.13",
+    "immer": "^10.1.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "zustand": "^5.0.7"
+  }
+}

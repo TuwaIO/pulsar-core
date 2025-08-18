@@ -1,0 +1,237 @@
+# Using EVM Trackers Standalone
+
+While the `@tuwaio/web3-transactions-tracking` library provides a comprehensive solution with a UI (`@tuwaio/transactions-tracking-ui`) and a Zustand-based state store (`@tuwaio/evm-transactions-tracking`), its architecture is modular. You can use the low-level **trackers** (`evmTracker`, `gelatoTracker`, `safeTracker`) directly, without installing or configuring the state management store.
+
+This is incredibly useful if:
+* You already have your own state management solution (Redux, MobX, Valtio, etc.) and want to integrate only the tracking logic.
+* You need tracking logic on the server-side, where a client-side store is unnecessary.
+* You want maximum control over every stage of the transaction lifecycle.
+
+---
+
+## Why Use `evmTracker`?
+
+One might ask, "Why do I need `evmTracker` if I can just use `waitForTransactionReceipt` from `viem`/`wagmi`?"
+
+`waitForTransactionReceipt` is an excellent function, but it only solves part of the problem. `evmTracker` provides a more robust and complete solution out of the box.
+
+| Feature | `waitForTransactionReceipt` (viem/wagmi) | `evmTracker` (TUWA) |
+| :--- | :--- | :--- |
+| **Handles RPC Lags** | ❌ No. If called immediately after submission, the RPC node might not see the transaction yet, causing a "transaction not found" error. | ✅ **Yes.** Includes a built-in retry mechanism to wait for the transaction to appear in the mempool. |
+| **Lifecycle** | 🤷‍♂️ Limited. Mainly reacts to transaction completion or replacement. | ✅ **Full.** Provides callbacks for every stage: `onInitialize` (start), `onTxDetailsGot` (details received), `onFinished` (success), `onReplaced` (replacement), `onFailed` (error). |
+| **Fetches Details** | ❌ No. Does not return full transaction details like `nonce`, `value`, etc. | ✅ **Yes.** Internally calls `getTransaction` and passes the full transaction data to the callbacks. |
+| **Abstraction Level** | Low. Requires the developer to orchestrate the logic themselves. | High. Encapsulates the entire tracking process into one convenient async function. |
+
+Simply put, `evmTracker` is a reliable wrapper around `viem` functions that solves common edge cases and significantly simplifies your code.
+
+---
+
+## Trackers Overview
+
+### 1. EVM Tracker
+
+This is the primary tracker for monitoring standard on-chain transactions in EVM networks. It operates using a transaction hash.
+
+#### How It Works
+`evmTracker` first tries to fetch transaction details using `getTransaction`. If the RPC node hasn't indexed the transaction yet, it will retry several times. Once the details are fetched, it begins waiting for its completion using `waitForTransactionReceipt`.
+
+#### Example Usage
+
+```tsx
+import { evmTracker } from '@tuwaio/evm-transactions-tracking';
+
+async function trackMyTransaction(txHash, chains) {
+  console.log(`Starting to track transaction: ${txHash}`);
+
+  await evmTracker({
+    tx: {
+      txKey: txHash, // The transaction hash
+      chainId: 1,     // The network ID
+    },
+    chains: chains,
+
+    // Callback when transaction details are successfully fetched
+    onTxDetailsGot: (txDetails) => {
+      console.log('Transaction details received:', txDetails);
+      // Here you can update your state to show nonce, gas, etc.
+    },
+
+    // Callback when the transaction is successfully mined
+    onFinished: async (txDetails, receipt) => {
+      console.log('Transaction finished successfully!', receipt);
+      // Update your state to 'Success'
+    },
+
+    // Callback if the transaction was replaced (sped up/cancelled)
+    onReplaced: (replacement) => {
+      console.log('Transaction was replaced:', replacement);
+      // Update your state to 'Replaced'
+    },
+
+    // Callback on any error
+    onFailed: (error) => {
+      console.error('Tracking failed:', error);
+      // Update your state to 'Failed'
+    },
+
+    // Optional parameters
+    retryCount: 5,      // Retry fetching the tx 5 times
+    retryTimeout: 2000, // with a 2-second interval
+  });
+}
+````
+
+### 2\. Gelato Tracker
+
+This tracker is designed for monitoring meta-transactions relayed via the Gelato Network. It works with a Gelato `taskId`.
+
+#### How It Works
+
+`gelatoTracker` uses a polling mechanism: it periodically queries the Gelato API (`https://api.gelato.digital/tasks/status/...`) to get the task status. When the task reaches a terminal state (success, error, cancelled), the tracker finishes its job.
+
+#### Example Usage
+
+```tsx
+import { gelatoTracker, GelatoTaskState } from '@tuwaio/evm-transactions-tracking';
+
+async function trackGelatoTask(taskId) {
+  console.log(`Starting to track Gelato task: ${taskId}`);
+
+  await gelatoTracker({
+    tx: { txKey: taskId },
+
+    // Callback on every response from the Gelato API
+    onIntervalTick: (gelatoStatus) => {
+      console.log('Current task status:', gelatoStatus.task.taskState);
+      // Update your UI to show the current progress
+    },
+
+    // Callback on successful execution
+    onSucceed: (gelatoStatus) => {
+      console.log('Gelato task executed successfully:', gelatoStatus);
+      // Update your state to 'Success'
+    },
+
+    // Callback on failure
+    onFailed: (gelatoStatus) => {
+      console.error('Gelato task failed:', gelatoStatus);
+      // Update your state to 'Failed'
+    },
+
+    pollingInterval: 5000, // Poll the API every 5 seconds
+  });
+}
+```
+
+### 3\. Safe Tracker
+
+Used for tracking transactions in Safe (formerly Gnosis Safe) multisig wallets. It operates using a `safeTxHash`.
+
+#### How It Works
+
+Similar to `gelatoTracker`, it uses polling, but this time against the Safe Transaction Service API. This tracker is also smart enough to check if the current transaction was replaced by another one with the same `nonce`.
+
+#### Example Usage
+
+```tsx
+import { safeTracker } from '@tuwaio/evm-transactions-tracking';
+
+async function trackSafeTransaction(safeTxHash, chainId, safeAddress) {
+  console.log(`Tracking Safe transaction: ${safeTxHash}`);
+
+  await safeTracker({
+    tx: {
+      txKey: safeTxHash,
+      chainId: chainId,
+      from: safeAddress,
+    },
+    onIntervalTick: (safeStatus) => {
+      console.log('Transaction is awaiting signatures...', safeStatus);
+    },
+    onSucceed: (safeStatus) => {
+      console.log('Safe transaction executed successfully!', safeStatus);
+    },
+    onFailed: (safeStatus) => {
+      console.error('Safe transaction failed.', safeStatus);
+    },
+    onReplaced: (response) => {
+      console.warn(`Transaction was replaced by: ${response.replacedHash}`);
+    },
+  });
+}
+```
+
+-----
+
+## Helper Functions
+
+The library exports several utilities that simplify working with the trackers.
+
+### `checkTransactionsTracker`
+
+This is a key routing function. After you submit a transaction, you get back a key (`ActionTxKey`). This function helps you determine which tracker to use for that key.
+
+```tsx
+import { checkTransactionsTracker, TransactionTracker, isGelatoTxKey } from '@tuwaio/evm-transactions-tracking';
+
+function determineTracker(actionTxKey, walletType) {
+  const { tracker, txKey } = checkTransactionsTracker(actionTxKey, walletType);
+
+  switch (tracker) {
+    case TransactionTracker.Ethereum:
+      console.log(`Using EVM tracker for key: ${txKey}`);
+      // trackMyTransaction(txKey, ...);
+      break;
+    case TransactionTracker.Gelato:
+      console.log(`Using Gelato tracker for key: ${txKey}`);
+      // trackGelatoTask(txKey, ...);
+      break;
+    case TransactionTracker.Safe:
+      console.log(`Using Safe tracker for key: ${txKey}`);
+      // trackSafeTransaction(txKey, ...);
+      break;
+  }
+}
+
+// Example 1: Regular hash
+determineTracker('0x...', 'metaMask');
+// Output: Using EVM tracker for key: 0x...
+
+// Example 2: Key from Gelato
+determineTracker({ taskId: '0x123...' }, 'metaMask');
+// Output: Using Gelato tracker for key: 0x123...
+
+// Example 3: Hash from Safe
+determineTracker('0xabc...', 'safe');
+// Output: Using Safe tracker for key: 0xabc...
+```
+
+### `checkChainForTx`
+
+A simple but important utility that checks if the user is on the correct network, and if not, prompts them to switch using `wagmi`.
+
+```tsx
+import { checkChainForTx } from '@tuwaio/evm-transactions-tracking';
+import { wagmiConfig } from './config'; // Your wagmi config
+
+async function safeSendTransaction() {
+  const targetChainId = 1; // Mainnet
+
+  try {
+    // This function will pause execution until the user switches the network
+    await checkChainForTx(targetChainId, wagmiConfig);
+
+    console.log('Network is correct, sending transaction...');
+    // ...transaction sending logic
+  } catch (error) {
+    console.error(error.message); // "User rejected chain switch..."
+  }
+}
+```
+
+### Safe Constants
+
+You don't need to manually find and paste URLs for the Safe API. The library exports them for you:
+
+  * `SafeTransactionServiceUrls`: URLs for the transaction service API.
+  * `gnosisSafeLinksHelper`: URLs for the Safe web app to build links to transactions.

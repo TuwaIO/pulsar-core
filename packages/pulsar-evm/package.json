@@ -1,0 +1,67 @@
+{
+  "name": "@tuwaio/pulsar-evm",
+  "version": "0.0.0",
+  "private": false,
+  "author": "Oleksandr Tkach",
+  "license": "Apache-2.0",
+  "description": "An adapter for the Pulsar Engine that adds support for tracking transactions on EVM-compatible chains. Integrates with Viem and Wagmi.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "start": "tsup src/index.ts --watch",
+    "build": "tsup",
+    "test": "vitest"
+  },
+  "keywords": [
+    "web3",
+    "evm",
+    "transaction",
+    "tracking",
+    "wagmi",
+    "viem",
+    "zustand"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TuwaIO/pulsar-core.git",
+    "directory": "packages/pulsar-evm"
+  },
+  "homepage": "https://github.com/TuwaIO/pulsar-core",
+  "bugs": {
+    "url": "https://github.com/TuwaIO/pulsar-core/issues"
+  },
+  "contributors": [
+    {
+      "name": "Oleksandr Tkach",
+      "url": "https://github.com/Argeare5"
+    }
+  ],
+  "dependencies": {
+    "@tuwaio/pulsar-core": "workspace:^"
+  },
+  "peerDependencies": {
+    "@wagmi/core": ">=2",
+    "dayjs": ">=1",
+    "immer": ">=10",
+    "viem": ">=2",
+    "zustand": ">=5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.10",
+    "@wagmi/core": "^2.19.0",
+    "dayjs": "^1.11.13",
+    "immer": "^10.1.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2",
+    "viem": "^2.33.3",
+    "vitest": "^3.2.4",
+    "zustand": "^5.0.7"
+  }
+}

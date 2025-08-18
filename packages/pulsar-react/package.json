@@ -1,0 +1,53 @@
+{
+  "name": "@tuwaio/pulsar-react",
+  "version": "0.0.0",
+  "private": false,
+  "author": "Oleksandr Tkach",
+  "license": "Apache-2.0",
+  "description": "Provides React bindings for the Pulsar Engine, including the essential `useInitializeTransactionsPool` hook to resume tracking pending transactions after a page reload.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "start": "tsup src/index.ts --watch",
+    "build": "tsup"
+  },
+  "keywords": [
+    "react",
+    "hooks",
+    "web3",
+    "transaction",
+    "tracking",
+    "pulsar"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TuwaIO/pulsar-core.git",
+    "directory": "packages/pulsar-react"
+  },
+  "homepage": "https://github.com/TuwaIO/pulsar-core",
+  "bugs": {
+    "url": "https://github.com/TuwaIO/pulsar-core/issues"
+  },
+  "contributors": [
+    {
+      "name": "Oleksandr Tkach",
+      "url": "https://github.com/Argeare5"
+    }
+  ],
+  "peerDependencies": {
+    "react": ">=19"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.10",
+    "react": "^19.1.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  }
+}
