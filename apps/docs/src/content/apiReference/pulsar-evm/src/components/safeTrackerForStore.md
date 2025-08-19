@@ -6,7 +6,7 @@
 
 > **safeTrackerForStore**\<`T`\>(`__namedParameters`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/safeTracker.ts:147](https://github.com/TuwaIO/pulsar-core/blob/3c7dfd4bb35a5c5bf0b6bdf4d64b37f2ab5357a0/packages/pulsar-evm/src/trackers/safeTracker.ts#L147)
+Defined in: [packages/pulsar-evm/src/trackers/safeTracker.ts:147](https://github.com/TuwaIO/pulsar-core/blob/0ac47fbd71e3f16b6f165721254c65739d8470fd/packages/pulsar-evm/src/trackers/safeTracker.ts#L147)
 
 A higher-level wrapper for `safeTracker` that integrates directly with the Zustand store.
 

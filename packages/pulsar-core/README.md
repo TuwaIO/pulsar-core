@@ -2,7 +2,7 @@
 
 [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-core.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-core)
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-core.svg)](./LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/main.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
 The core, framework-agnostic engine for real-time tracking of Web3 transaction lifecycles (pending, success, failed, replaced).
 

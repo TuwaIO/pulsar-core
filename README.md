@@ -1,6 +1,6 @@
 # Pulsar Engine
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/main.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-core.svg)](./LICENSE)
 [![Contributors](https://img.shields.io/github/contributors/TuwaIO/pulsar-core)](https://github.com/TuwaIO/pulsar-core/graphs/contributors)
 

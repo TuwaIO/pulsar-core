@@ -2,7 +2,7 @@
 
 [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react)
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-react.svg)](./LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/Tuwaio/pulsar-core/main.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
 Official React bindings for the Pulsar Engine. This package currently provides the essential **`useInitializeTransactionsPool`** hook to resume tracking pending transactions after a page reload.
 

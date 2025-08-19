@@ -2,7 +2,7 @@
 
 [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-evm.svg)](./LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/main.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
 An advanced toolkit for the Pulsar Engine that adds support for tracking transactions on EVM-compatible chains. It integrates with Viem and Wagmi and provides multiple tracking strategies, utility actions, and helpers.
 
