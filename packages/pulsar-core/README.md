@@ -33,22 +33,14 @@ This is the main factory function that creates your transaction store. It takes 
 ```ts
 import { createPulsarStore } from '@tuwaio/pulsar-core';
 import { evmAdapter } from '@tuwaio/pulsar-evm'; // Example adapter
-import { mainnet, sepolia } from 'viem/chains';
 
 const pulsarStore = createPulsarStore({
   // Unique name for Zustand's persistence middleware (localStorage key)
   name: 'pulsar-storage',
-
-  // Array of chains supported by your dApp (from viem/chains)
-  appChains: [mainnet, sepolia],
-
-  // (Optional) An array of adapters for different blockchain ecosystems
+  // An array of adapters for different blockchain ecosystems
   adapters: [
-    evmAdapter({
-      // EVM-specific config
-    }),
+    evmAdapter(config, chains),
   ],
-
   // (Optional) Callbacks to execute on successful transaction
   onSucceedCallbacks: {
     onTxSucceed: (tx) => console.log('Transaction succeeded!', tx),
@@ -62,13 +54,17 @@ const pulsarStore = createPulsarStore({
 The `createPulsarStore` function returns a Zustand store with the following state and actions:
 
 #### State
--   `transactions: Transaction[]`: An array of all tracked transactions.
--   `trackedTxs: TrackedTx[]`: A map of currently tracked transactions with their real-time status.
--   `isInitialized: boolean`: A flag indicating if the store has been initialized.
+-   `transactionsPool: Record<string, T>`: The primary state object. A map of all tracked transactions, where the key is the transaction's unique `txKey`.
+-   `initialTx?: InitialTransaction`: Holds the state of a transaction that is currently being initiated (e.g., waiting for a user's signature) but is not yet on-chain.
+-   `lastAddedTxKey?: string`: The `txKey` of the most recently added transaction, useful for quick access.
 
 #### Actions
--   `track(args)`: The primary function to start tracking a new transaction.
--   `initializeTransactionsPool(args)`: An async function to re-initialize the store and resume tracking pending transactions from storage.
+-   `handleTransaction(params)`: The primary, all-in-one function for initiating, sending, and tracking a new transaction.
+-   `initializeTransactionsPool()`: An async function to re-initialize trackers for any pending transactions stored from a previous session. Crucial for resuming tracking after a page reload.
+-   `addTxToPool({ tx })`: Adds a new transaction directly to the tracking pool.
+-   `updateTxParams(fields)`: Updates one or more properties of an existing transaction in the pool.
+-   `removeTxFromPool(txKey)`: Removes a transaction from the pool by its key.
+-   `closeTxTrackedModal(txKey?)`: Closes the tracking modal for a specific transaction and clears the `initialTx` state.
 
 ## ✨ How it Connects to the Ecosystem
 

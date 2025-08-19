@@ -1,22 +1,27 @@
-# Pulsar EVM Adapter
+# Pulsar EVM Adapter & Toolkit
 
 [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-evm.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/main.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-An adapter for the Pulsar Engine that adds support for tracking transactions on EVM-compatible chains. Integrates with Viem and Wagmi to provide real-time status updates.
+An advanced toolkit for the Pulsar Engine that adds support for tracking transactions on EVM-compatible chains. It integrates with Viem and Wagmi and provides multiple tracking strategies, utility actions, and helpers.
 
 ## 🏛️ What is `@tuwaio/pulsar-evm`?
 
-This package is a **logic adapter** that plugs into `@tuwaio/pulsar-core`. It contains all the necessary logic to interact with EVM-compatible blockchains (like Ethereum, Polygon, etc.) using popular libraries like **Viem** and **Wagmi**.
+This package is a powerful extension for `@tuwaio/pulsar-core`. It contains all the necessary logic to interact with EVM-compatible blockchains, acting as the primary logic provider for most dApps.
 
-Its primary responsibility is to:
--   Monitor pending transactions.
--   Fetch transaction receipts.
--   Determine the final status (success, failed, replaced).
--   Report these status changes back to the central `pulsar-core` store.
+While its main export is the `evmAdapter`, it also includes a suite of standalone trackers, actions, and utilities for advanced use cases.
 
-This package is **headless** and **framework-agnostic**.
+## ✨ Core Features
+
+-   **🔌 Simple Integration:** A single `evmAdapter` to easily plug EVM support into `pulsar-core`.
+-   **🎯 Multi-Tracker Support:** Provides distinct, optimized trackers for:
+    -   **Standard EVM Transactions** (via transaction hash)
+    -   **Gnosis Safe** Transactions (via Safe Transaction Service API)
+    -   **Gelato Relay** Meta-Transactions (via Gelato API)
+-   **🤖 Automatic Routing:** The system automatically detects the correct tracker to use (Safe, Gelato, or standard EVM) based on the transaction context.
+-   **⚡ Built-in Actions:** Includes ready-to-use functions for common user needs like `speedUpTxAction` and `cancelTxAction`.
+-   **🛠️ Utility Suite:** Exports a rich set of helpers, including ENS resolvers and explorer link generators (`selectEvmTxExplorerLink`).
 
 ## 💾 Installation
 
@@ -28,17 +33,9 @@ pnpm add @tuwaio/pulsar-evm @tuwaio/pulsar-core wagmi viem zustand immer
 
 ## 🚀 Usage
 
-This package exports a single main function, `evmAdapter`, which you pass to the `adapters` array when creating your Pulsar store.
+### 1. Primary Usage: The `evmAdapter`
 
-### `evmAdapter(config)`
-
-The adapter function takes a configuration object.
-
--   `wagmiConfig`: **(Required)** Your application's Wagmi config object. The adapter uses this to interact with the blockchain.
-
-### Example
-
-Here’s how to create a Pulsar store and enable EVM support by passing the `evmAdapter`.
+For most applications, you'll only need to import the `evmAdapter` and pass it to your `createPulsarStore` configuration.
 
 ```ts
 import { createPulsarStore } from '@tuwaio/pulsar-core';
@@ -58,20 +55,75 @@ const wagmiConfig = createConfig({
 // 2. Create the Pulsar store and pass the evmAdapter
 const pulsarStore = createPulsarStore({
   name: 'my-dapp-transactions',
-  appChains: [mainnet, sepolia],
   
-  // Plug in the EVM adapter here
+  // Plug in the EVM adapter with its config
   adapters: [
-    evmAdapter({
-      wagmiConfig: wagmiConfig,
-    }),
+    evmAdapter(wagmiConfig, [mainnet, sepolia]),
   ],
 });
-
-// 3. Now the store is ready to be used with @tuwaio/pulsar-react
-// or in any other environment.
 ```
-Once configured, the Pulsar store will automatically use this adapter to handle any EVM-based transactions that are passed to its `track` function.
+
+### 2. Using Standalone Actions
+
+This package also exports utility actions that you can wire up to your UI.
+
+**Example: Speeding up a stuck transaction**
+
+```tsx
+import { speedUpTxAction } from '@tuwaio/pulsar-evm';
+import { usePulsar } from '@tuwaio/pulsar-react'; // Or your custom hook
+import { wagmiConfig } from './wagmi'; // Your wagmi config
+
+function TransactionDetails({ txKey }) {
+  const { transactionsPool } = usePulsar();
+  const stuckTransaction = transactionsPool[txKey];
+
+  const handleSpeedUp = async () => {
+    try {
+      const newTxHash = await speedUpTxAction({
+        config: wagmiConfig,
+        tx: stuckTransaction,
+      });
+      console.log('Transaction sped up with new hash:', newTxHash);
+      // Pulsar will automatically track this new transaction
+    } catch (error) {
+      console.error('Failed to speed up transaction:', error);
+    }
+  };
+
+  return (
+    <div>
+      {/* ... your component UI ... */}
+      <button onClick={handleSpeedUp}>Speed Up</button>
+    </div>
+  );
+}
+```
+
+### 3. Using Standalone Utilities
+
+You can use exported utilities, like selectors, to get derived data.
+
+**Example: Getting a block explorer link**
+
+```tsx
+import { selectEvmTxExplorerLink } from '@tuwaio/pulsar-evm';
+import { usePulsar } from '@tuwaio/pulsar-react';
+import { mainnet, sepolia } from 'viem/chains';
+
+function TxLink({ txKey }) {
+    const { transactionsPool } = usePulsar();
+    const explorerLink = selectEvmTxExplorerLink(
+        transactionsPool,
+        [mainnet, sepolia], // Your app's chains
+        txKey
+    );
+
+    if (!explorerLink) return null;
+
+    return <a href={explorerLink} target="_blank" rel="noopener noreferrer">View on Explorer</a>
+}
+```
 
 ## 🤝 Contributing
 

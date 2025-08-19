@@ -2,13 +2,15 @@
 
 [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react)
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-react.svg)](./LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/main.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/Tuwaio/pulsar-core/main.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-Official React bindings for the Pulsar Engine. This package currently provides the essential `useInitializeTransactionsPool` hook to resume tracking pending transactions after a page reload.
+Official React bindings for the Pulsar Engine. This package currently provides the essential **`useInitializeTransactionsPool`** hook to resume tracking pending transactions after a page reload.
 
 ## 🏛️ Architecture
 
 This package acts as a lightweight connector between the framework-agnostic Pulsar engine and a React application. It helps integrate Pulsar's state with the React component lifecycle.
+
+---
 
 ## 💾 Installation
 
@@ -18,35 +20,37 @@ To use this package, you need the core Pulsar stack.
 pnpm add @tuwaio/pulsar-react @tuwaio/pulsar-core @tuwaio/pulsar-evm
 ```
 
+---
+
 ## 🚀 Getting Started
 
-The setup process involves three main steps: creating a custom hook for your store, creating a component to initialize it, and placing that component in your application tree.
+The `useInitializeTransactionsPool` hook is designed to be called once when your application loads. It requires the `initializeTransactionsPool` function, which is provided by the main Pulsar store.
+
+Here is a complete example of the recommended setup:
 
 ### Step 1: Create Your `usePulsar` Hook
 
-In your application (e.g., in a `store/` or `hooks/` directory), create a custom `usePulsar` hook. This is done by calling `createPulsarStore` with your project's configuration and wrapping it with `createBoundedUseStore`.
+In your application, create a custom hook to access the Pulsar store, which is created by a function from `@tuwaio/pulsar-core`.
 
 ```tsx
 // hooks/usePulsar.ts
 import { createBoundedUseStore, createPulsarStore } from '@tuwaio/pulsar-core';
-import { appChains } from './wagmi';
-import { onSucceedCallbacks } from './onSucceedCallbacks';
-
-// Define your custom transaction types if any
-// type TransactionUnion = ...;
 
 export const usePulsar = createBoundedUseStore(
-  createPulsarStore<TransactionUnion>({
+  createPulsarStore({
     name: 'pulsar-storage',
-    appChains,
-    onSucceedCallbacks,
+    // Plug in the EVM adapter with its config for example
+    adapters: [
+      evmAdapter(wagmiConfig, [mainnet, sepolia]),
+    ],
+    // ... other configurations
   }),
 );
 ```
 
 ### Step 2: Create an Initializer Component
 
-Create a small, client-side component whose only job is to call the initialization hook.
+Create a small, client-side component that uses the hook from this package to initialize the store.
 
 ```tsx
 // components/TransactionInitializer.tsx
@@ -56,32 +60,31 @@ import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
 import { usePulsar } from '../hooks/usePulsar';
 
 export const TransactionInitializer = () => {
-  // Get the initialization function from your custom hook
+  // 1. Get the initialization function from the core store hook
   const { initializeTransactionsPool } = usePulsar();
 
-  // Pass it to the hook from this package to run on mount
+  // 2. Pass it to the hook from this package to run on mount
   useInitializeTransactionsPool(initializeTransactionsPool);
 
   return null; // This component renders nothing
 };
 ```
 
-### Step 3: Add the Initializer to Your App Layout
+### Step 3: Add the Initializer to Your App
 
-Finally, place the `TransactionInitializer` component at a high level in your application, for example, in your root providers file.
+Place the `TransactionInitializer` component at a high level in your application tree so it runs on every page load.
 
 ```tsx
-// app/providers.tsx
-'use client';
-
+// app/layout.tsx or app/providers.tsx
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 import { wagmiConfig } from './wagmi';
 import { TransactionInitializer } from '../components/TransactionInitializer';
 
 const queryClient = new QueryClient();
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
@@ -93,13 +96,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-## API: `useInitializeTransactionsPool`
+---
 
-This is the primary hook exported by this package. Its sole purpose is to re-initialize the transaction store on page load.
+## 📖 API: `useInitializeTransactionsPool`
+
+This is the only hook exported by this package. Its purpose is to re-initialize the transaction store on page load.
 
 ### Parameters
--   `initializeTransactionsPool`: The initialization function obtained from your custom `usePulsar` hook.
+-   `initializeTransactionsPool`: The initialization function obtained from your `usePulsar` hook.
 -   `customErrorHandler?`: (Optional) A callback function to handle any errors during initialization.
+
+---
 
 ## 🤝 Contributing
 
