@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { Footer as NextraFooter } from 'nextra-theme-docs';
 
-import Logo from '@/assets/tuwaLogo.svg';
-import LogoDark from '@/assets/tuwaLogoWhite.svg';
 import NoSSR from '@/components/NoSSR';
 
 export function Footer() {
@@ -21,7 +19,11 @@ export function Footer() {
               <Image
                 width={50}
                 height={50}
-                src={resolvedTheme === 'dark' ? LogoDark : Logo}
+                src={
+                  resolvedTheme === 'dark'
+                    ? 'https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/tuwaLogoWhite.svg'
+                    : 'https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/tuwaLogo.svg'
+                }
                 alt="TUWA Logo"
                 className="transition-opacity duration-300"
               />

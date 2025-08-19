@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { Navbar as NextraNavbar } from 'nextra-theme-docs';
 
-import Logo from '@/assets/tuwaLogo.svg';
-import LogoDark from '@/assets/tuwaLogoWhite.svg';
 import NoSSR from '@/components/NoSSR';
 
 export function Navbar() {
@@ -16,7 +14,16 @@ export function Navbar() {
     <NextraNavbar
       logo={
         <NoSSR>
-          <Image width={50} height={50} src={resolvedTheme === 'dark' ? LogoDark : Logo} alt="TUWA Logo" />
+          <Image
+            width={50}
+            height={50}
+            src={
+              resolvedTheme === 'dark'
+                ? 'https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/tuwaLogoWhite.svg'
+                : 'https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/tuwaLogo.svg'
+            }
+            alt="TUWA Logo"
+          />
         </NoSSR>
       }
     >

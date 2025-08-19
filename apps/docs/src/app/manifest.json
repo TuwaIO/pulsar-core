@@ -1,7 +1,7 @@
 {
-  "name": "TUWA Web3 Transaction Tracking Suite Docs",
-  "short_name": "TUWA Tx's tracking",
-  "description": "The source code for the official documentation website for the TUWA Web3 Transaction Tracking Suite.",
+  "name": "Pulsar Engine Documentation",
+  "short_name": "Pulsar Engine Documentation",
+  "description": "The official documentation for the headless state management system for tracking Web3 transactions.",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",

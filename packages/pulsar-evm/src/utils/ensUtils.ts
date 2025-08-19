@@ -33,12 +33,10 @@ export const getName = async (address: Hex): Promise<string | undefined> => {
 
 /**
  * Fetches the avatar for a given ENS name.
- * If no ENS avatar is set, it generates a unique "blockie" image as a fallback.
  * Performs the lookup on Ethereum Mainnet.
  *
  * @param {string} name - The ENS name (e.g., 'vitalik.eth').
- * @param {string} address - The Ethereum address, used for the blockie fallback.
- * @returns {Promise<string | undefined>} The URL of the avatar image, a base64 blockie, or undefined if an error occurs.
+ * @returns {Promise<string | undefined>} The URL of the avatar image or undefined if an error occurs.
  */
 export const getAvatar = async (name: string): Promise<string | undefined> => {
   if (!ensClient) return undefined;

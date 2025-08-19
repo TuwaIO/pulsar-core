@@ -6,7 +6,7 @@
 
 > **checkTransactionsTracker**(`actionTxKey`, `walletType`): `object`
 
-Defined in: [packages/pulsar-evm/src/utils/checkTransactionsTracker.ts:24](https://github.com/TuwaIO/pulsar-core/blob/8e3b09e31968f4ec01c4c0951617f2dc09a588af/packages/pulsar-evm/src/utils/checkTransactionsTracker.ts#L24)
+Defined in: [packages/pulsar-evm/src/utils/checkTransactionsTracker.ts:24](https://github.com/TuwaIO/pulsar-core/blob/bf888b7cba0c2ed8046a56f4a3dbf1e64f61c8e9/packages/pulsar-evm/src/utils/checkTransactionsTracker.ts#L24)
 
 Determines which transaction tracker to use based on the format of the transaction key and the wallet type.
 
