@@ -1,6 +1,6 @@
 import { ITxTrackingStore, Transaction, TransactionAdapter, TxAdapter } from '@tuwaio/pulsar-core';
-import { Config } from '@wagmi/core';
-import { Chain } from 'viem';
+import { Config, getAccount } from '@wagmi/core';
+import { Chain, zeroAddress } from 'viem';
 
 import { ActionTxKey, TransactionTracker } from '../types';
 import { checkAndInitializeTrackerInStore } from '../utils/checkAndInitializeTrackerInStore';
@@ -14,6 +14,13 @@ export function evmAdapter<T extends Transaction<TransactionTracker>>(
   if (config) {
     return {
       key: TransactionAdapter.EVM,
+      getWalletInfo: () => {
+        const activeWallet = getAccount(config);
+        return {
+          walletAddress: activeWallet.address ?? zeroAddress,
+          walletType: activeWallet.connector?.type ?? '',
+        };
+      },
       checkChainForTx: (chainId: string | number) => checkChainForTx(chainId as number, config),
       checkTransactionsTracker: (actionTxKey: ActionTxKey, walletType: string) =>
         checkTransactionsTracker(actionTxKey, walletType),

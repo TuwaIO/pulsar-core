@@ -163,10 +163,6 @@ export type InitialTransactionParams = {
   type: string;
   /** If true, the detailed tracking modal will open automatically for this transaction. */
   withTrackedModal?: boolean;
-  /** Wallet address from. */
-  from: string;
-  /** Type of the wallet. (injected, wallet connect, etc.) */
-  walletType: string;
 };
 
 /**
@@ -186,6 +182,12 @@ export type InitialTransaction = InitialTransactionParams & {
 
 export type TxAdapter<TR, T extends Transaction<TR>, A> = {
   key: TransactionAdapter;
+  getWalletInfo: () => {
+    /** Wallet address. */
+    walletAddress: string;
+    /** Type of the wallet. (injected, wallet connect, etc.) */
+    walletType: string;
+  };
   checkChainForTx: (chainId: string | number) => Promise<void>;
   checkTransactionsTracker: (actionTxKey: A, walletType: string) => { txKey: string; tracker: TR };
   checkAndInitializeTrackerInStore: ({

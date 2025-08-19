@@ -43,8 +43,14 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
           const { desiredChainID, ...restParams } = params;
           const localTimestamp = dayjs().unix();
 
+          const adapter = adapters.find((adapter) => adapter.key === restParams.adapter);
+
+          const { walletType, walletAddress } = adapter ? adapter.getWalletInfo() : {};
+
           const txInitialParams = {
             ...restParams,
+            walletType,
+            from: walletAddress,
             tracker: defaultTracker,
             chainId: desiredChainID,
             localTimestamp,
@@ -75,8 +81,6 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
               isInitializing: true,
             },
           });
-
-          const adapter = adapters.find((adapter) => adapter.key === restParams.adapter);
 
           if (adapter) {
             try {
