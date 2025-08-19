@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.8](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.7...pulsar-evm-v0.0.8) (2025-08-19)
+
+
+### Bug Fixes
+
+* added getWalletInfo to addepters type ([ac94959](https://github.com/TuwaIO/pulsar-core/commit/ac9495923e01fe0a5b726d977924d7e55dc2aa45))
+* readmes ([0719815](https://github.com/TuwaIO/pulsar-core/commit/07198153161fb7ab8490c2e80caac344eea77477))
+
 ## [0.0.7](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.6...pulsar-evm-v0.0.7) (2025-08-19)
 
 
