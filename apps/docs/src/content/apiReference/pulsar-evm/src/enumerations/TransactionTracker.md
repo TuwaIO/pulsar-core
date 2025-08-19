@@ -4,7 +4,7 @@
 
 # TransactionTracker
 
-Defined in: [packages/pulsar-evm/src/types.ts:13](https://github.com/TuwaIO/pulsar-core/blob/3ed266adfc4c048a9ad6d076a8281e66ffb56ee3/packages/pulsar-evm/src/types.ts#L13)
+Defined in: [packages/pulsar-evm/src/types.ts:13](https://github.com/TuwaIO/pulsar-core/blob/8e3b09e31968f4ec01c4c0951617f2dc09a588af/packages/pulsar-evm/src/types.ts#L13)
 
 Enum representing the different tracking strategies available for EVM transactions.
 
@@ -14,7 +14,7 @@ Enum representing the different tracking strategies available for EVM transactio
 
 > **Ethereum**: `"ethereum"`
 
-Defined in: [packages/pulsar-evm/src/types.ts:15](https://github.com/TuwaIO/pulsar-core/blob/3ed266adfc4c048a9ad6d076a8281e66ffb56ee3/packages/pulsar-evm/src/types.ts#L15)
+Defined in: [packages/pulsar-evm/src/types.ts:15](https://github.com/TuwaIO/pulsar-core/blob/8e3b09e31968f4ec01c4c0951617f2dc09a588af/packages/pulsar-evm/src/types.ts#L15)
 
 For standard on-chain EVM transactions tracked by their hash.
 
@@ -24,7 +24,7 @@ For standard on-chain EVM transactions tracked by their hash.
 
 > **Gelato**: `"gelato"`
 
-Defined in: [packages/pulsar-evm/src/types.ts:19](https://github.com/TuwaIO/pulsar-core/blob/3ed266adfc4c048a9ad6d076a8281e66ffb56ee3/packages/pulsar-evm/src/types.ts#L19)
+Defined in: [packages/pulsar-evm/src/types.ts:19](https://github.com/TuwaIO/pulsar-core/blob/8e3b09e31968f4ec01c4c0951617f2dc09a588af/packages/pulsar-evm/src/types.ts#L19)
 
 For meta-transactions relayed through the Gelato Network.
 
@@ -34,6 +34,6 @@ For meta-transactions relayed through the Gelato Network.
 
 > **Safe**: `"safe"`
 
-Defined in: [packages/pulsar-evm/src/types.ts:17](https://github.com/TuwaIO/pulsar-core/blob/3ed266adfc4c048a9ad6d076a8281e66ffb56ee3/packages/pulsar-evm/src/types.ts#L17)
+Defined in: [packages/pulsar-evm/src/types.ts:17](https://github.com/TuwaIO/pulsar-core/blob/8e3b09e31968f4ec01c4c0951617f2dc09a588af/packages/pulsar-evm/src/types.ts#L17)
 
 For multi-signature transactions managed by a Safe contract.

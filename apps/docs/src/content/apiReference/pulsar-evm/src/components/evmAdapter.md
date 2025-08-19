@@ -4,9 +4,9 @@
 
 # evmAdapter()
 
-> **evmAdapter**\<`T`\>(`config`, `appChains`): [`TxAdapter`](../../../pulsar-core/src/type-aliases/TxAdapter.md)\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>
+> **evmAdapter**\<`T`\>(`config`, `appChains`): `TxAdapter`\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>
 
-Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:11](https://github.com/TuwaIO/pulsar-core/blob/3ed266adfc4c048a9ad6d076a8281e66ffb56ee3/packages/pulsar-evm/src/adapters/evmAdapter.ts#L11)
+Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:10](https://github.com/TuwaIO/pulsar-core/blob/8e3b09e31968f4ec01c4c0951617f2dc09a588af/packages/pulsar-evm/src/adapters/evmAdapter.ts#L10)
 
 ## Type Parameters
 
@@ -26,4 +26,4 @@ Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:11](https://github.c
 
 ## Returns
 
-[`TxAdapter`](../../../pulsar-core/src/type-aliases/TxAdapter.md)\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>
+`TxAdapter`\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>

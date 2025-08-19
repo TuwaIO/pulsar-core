@@ -1,5 +1,4 @@
-import { ITxTrackingStore, Transaction } from '@tuwaio/pulsar-core';
-import { TransactionAdapter, TxAdapter } from '@tuwaio/pulsar-core/src';
+import { ITxTrackingStore, Transaction, TransactionAdapter, TxAdapter } from '@tuwaio/pulsar-core';
 import { Config } from '@wagmi/core';
 import { Chain } from 'viem';
 
