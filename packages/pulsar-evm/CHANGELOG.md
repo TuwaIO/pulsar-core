@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.10](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.9...pulsar-evm-v0.0.10) (2025-08-20)
+
+
+### Bug Fixes
+
+* dependencies ([260d060](https://github.com/TuwaIO/pulsar-core/commit/260d060ad239abfaa028989391737d2e7877287f))
+
 ## [0.0.9](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.8...pulsar-evm-v0.0.9) (2025-08-20)
 
 
