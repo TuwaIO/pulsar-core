@@ -6,7 +6,7 @@
 
 > **selectTXByKey**\<`TR`, `T`\>(`transactionsPool`, `key`): `undefined` \| `T`
 
-Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:42](https://github.com/TuwaIO/pulsar-core/blob/07198153161fb7ab8490c2e80caac344eea77477/packages/pulsar-core/src/store/transactionsSelectors.ts#L42)
+Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:42](https://github.com/TuwaIO/pulsar-core/blob/c240bb5d3e8c1654c70ed6317097503807beff23/packages/pulsar-core/src/store/transactionsSelectors.ts#L42)
 
 Selects a single transaction from the pool by its unique transaction key (`txKey`).
 This is the most direct way to retrieve a transaction.
