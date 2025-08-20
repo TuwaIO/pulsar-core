@@ -1,5 +1,6 @@
 module.exports = {
   branches: [
+    'main',
     { name: 'dev/**', prerelease: 'alpha' },
     { name: 'fix/**', prerelease: 'alpha' },
     { name: 'feat/**', prerelease: 'alpha' },

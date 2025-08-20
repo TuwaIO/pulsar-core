@@ -6,7 +6,7 @@
 
 > **checkChainForTx**(`chainId`, `config`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/utils/checkChainForTx.ts:18](https://github.com/TuwaIO/pulsar-core/blob/3276bf16709f6ec29953e98e8eed75f9c97b41d2/packages/pulsar-evm/src/utils/checkChainForTx.ts#L18)
+Defined in: [packages/pulsar-evm/src/utils/checkChainForTx.ts:18](https://github.com/TuwaIO/pulsar-core/blob/059fb1fb20bad7ab55e675cc3194e0d9a366071c/packages/pulsar-evm/src/utils/checkChainForTx.ts#L18)
 
 Checks if the user's wallet is connected to the specified chain. If not, it prompts
 the user to switch to the correct chain and waits for the operation to complete.
