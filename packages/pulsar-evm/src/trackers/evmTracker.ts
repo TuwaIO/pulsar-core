@@ -167,13 +167,13 @@ export async function evmTrackerForStore<T extends Transaction<TransactionTracke
       updateTxParams({
         to: localTx.to ?? '',
         input: localTx.input,
-        value: String(localTx.value),
+        value: localTx.value ? String(localTx.value) : undefined,
         txKey: tx.txKey,
         pending: tx.pending,
         nonce: localTx.nonce,
         hash: localTx.hash,
-        maxFeePerGas: String(localTx.maxFeePerGas),
-        maxPriorityFeePerGas: String(localTx.maxPriorityFeePerGas),
+        maxFeePerGas: localTx.maxFeePerGas ? String(localTx.maxFeePerGas) : undefined,
+        maxPriorityFeePerGas: localTx.maxPriorityFeePerGas ? String(localTx.maxPriorityFeePerGas) : undefined,
       });
     },
     onFinished: async (localTx, receipt, client) => {
