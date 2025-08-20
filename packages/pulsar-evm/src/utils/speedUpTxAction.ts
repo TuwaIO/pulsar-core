@@ -39,7 +39,7 @@ export async function speedUpTxAction<TR, T extends Transaction<TR>>({
   config: Config;
   tx: T;
 }): Promise<Hex> {
-  console.log('speedTxAction', tx);
+  console.log('speedTxAction tx', tx);
 
   if (tx.adapter === TransactionAdapter.EVM) {
     // Ensure all necessary transaction details are present.

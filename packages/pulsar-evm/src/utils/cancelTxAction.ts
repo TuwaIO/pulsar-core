@@ -38,7 +38,7 @@ export async function cancelTxAction<T extends Transaction<any>>({
   config: Config;
   tx: T;
 }): Promise<Hex> {
-  console.log('cancelTxAction', tx);
+  console.log('cancelTxAction tx', tx);
 
   if (tx.adapter === TransactionAdapter.EVM) {
     // Ensure the transaction has all the necessary details for cancellation.

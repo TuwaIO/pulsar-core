@@ -6,7 +6,7 @@
 
 > **GelatoTxKey** = `object`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:21](https://github.com/TuwaIO/pulsar-core/blob/b0a80b70bc22baf2c706d161bdc4a093678b2647/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L21)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:21](https://github.com/TuwaIO/pulsar-core/blob/cef3f4fa8c4f60c96b5803206f685db0060e639e/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L21)
 
 Defines the shape of the identifier for a Gelato transaction task.
 
@@ -16,4 +16,4 @@ Defines the shape of the identifier for a Gelato transaction task.
 
 > **taskId**: `string`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:22](https://github.com/TuwaIO/pulsar-core/blob/b0a80b70bc22baf2c706d161bdc4a093678b2647/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L22)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:22](https://github.com/TuwaIO/pulsar-core/blob/cef3f4fa8c4f60c96b5803206f685db0060e639e/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L22)
