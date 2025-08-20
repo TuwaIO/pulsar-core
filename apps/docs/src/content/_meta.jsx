@@ -5,7 +5,7 @@ export default {
   },
   gettingStarted: 'Getting started',
   quickStart: 'Quick Start',
-  trackersStandalone: 'EVM Trackers Standalone',
+  evmStandalone: 'Pulsar EVM Standalone',
   libraryComparison: 'Library comparison',
   customization: 'Customization',
   apiReference: 'API reference'

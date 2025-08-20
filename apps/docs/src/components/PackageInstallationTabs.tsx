@@ -6,10 +6,6 @@ import { Tabs } from 'nextra/components';
 import { CodeBlock } from '@/components/CodeBlock';
 import { CodeHighlighter } from '@/components/CodeHighlighter';
 
-export interface PackageInstallationTabsProps {
-  trackingPackageName: string;
-}
-
 const tabsItems = [
   {
     title: 'npm',
@@ -29,8 +25,8 @@ const tabsItems = [
   },
 ];
 
-export function PackageInstallationTabs({ trackingPackageName }: PackageInstallationTabsProps) {
-  const packages = `@tuwaio/web3-transactions-tracking-core @tuwaio/${trackingPackageName}`;
+export function PackageInstallationTabs() {
+  const packages = '@tuwaio/pulsar-core @tuwaio/pulsar-evm @tuwaio/pulsar-react';
 
   return (
     <div className="my-4">

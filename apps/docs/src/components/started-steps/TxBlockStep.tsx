@@ -12,30 +12,34 @@ const txBlockStepCodeGenerate = ({ importLine, buttonLine }: TxBlockStepCodeGene
   return `'use client';
 
 ${importLine}
-import { useInitializeTransactionsPool } from '@tuwaio/evm-transactions-tracking';
+import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
+import { TransactionAdapter } from '@tuwaio/pulsar-evm';
 import { sepolia } from 'viem/chains';
 
+// The wagmi config is needed by the action function itself
 import { config } from '@/configs/wagmiConfig';
-import { useTxTrackingStore } from '@/hooks/txTrackingHooks';
+import { usePulsarStore } from '@/hooks/txTrackingHooks';
 import { increment } from '@/transactions/actions/increment';
 import { TxType } from '@/transactions/onSucceedCallbacks';
 
 export const Increment = () => {
-  const initializeTransactionsPool = useTxTrackingStore(state => state.initializeTransactionsPool);
-  const handleTransaction = useTxTrackingStore(state => state.handleTransaction);
+  const initializeTransactionsPool = usePulsarStore(state => state.initializeTransactionsPool);
+  const handleTransaction = usePulsarStore(state => state.handleTransaction);
+
   // This hook ensures that transaction tracking continues even after a page reload.
   useInitializeTransactionsPool(initializeTransactionsPool);
 
   const handleIncrement = async () => {
     await handleTransaction({
-      config,
+      // The actionFunction needs the config to interact with the wallet/contract.
       actionFunction: () => increment({ wagmiConfig: config }),
+      // Params describe the transaction for the Pulsar store.
       params: {
         type: TxType.increment,
+        adapter: TransactionAdapter.EVM,
         desiredChainID: sepolia.id,
-        // The payload would typically contain dynamic data relevant to the transaction.
         payload: {
-          value: 0,
+          value: 0, // This would typically be dynamic data
         },
       },
     });
@@ -66,9 +70,9 @@ export function TxBlockStep({ importLine, buttonLine }: TxBlockStepCodeGenerateP
     <div className="mt-4">
       <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 6: Trigger the Transaction</h3>
       <p className="mb-2 text-[var(--tuwa-text-secondary)]">
-        Finally, a component is created with a wallet connection button and another button to trigger the transaction.
-        When a user clicks 'Increment,' the transaction is dispatched and immediately tracked in the transaction pool.
-        From this point on, the tracking suite automatically handles all status updates.
+        Finally, create a component to trigger the transaction. When a user clicks 'Increment,' the `handleTransaction`
+        function orchestrates the entire process. It dispatches the transaction, adds it to the pool, and from this
+        point on, the <b>Pulsar</b> engine automatically handles all status updates.
       </p>
       <CodeBlock title="Increment.tsx" titleIcons={<DocumentTextIcon />} textToCopy={codeBlock}>
         <CodeHighlighter children={codeBlock} language="tsx" />

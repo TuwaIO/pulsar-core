@@ -20,7 +20,7 @@ export function Navbar() {
             src={
               resolvedTheme === 'dark'
                 ? 'https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/tuwaLogoWhite.svg'
-                : 'https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/tuwaLogo.svg'
+                : 'https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/tuwaLogoDark.svg'
             }
             alt="TUWA Logo"
           />
@@ -53,7 +53,7 @@ export function Navbar() {
         </Link>
 
         <Link
-          href="https://github.com/TuwaIO/web3-transactions-tracking"
+          href="https://github.com/TuwaIO/pulsar-core"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"

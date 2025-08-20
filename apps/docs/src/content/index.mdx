@@ -4,126 +4,103 @@ import { VideoPreview } from '../components/VideoPreview';
 
 <VideoPreview />
 
-Welcome to the documentation for the **TUWA Web3 Transaction Tracking Suite** 🚀 - your complete solution for creating world-class transaction experiences in Web3 applications.
+Welcome to the documentation for **Pulsar** 🚀 - TUWA's comprehensive solution for creating world-class transaction tracking experiences in your Web3 applications.
 
 ## The Challenge
 
-Building great Web3 user experiences goes far beyond just submitting transactions to the blockchain. Modern dApp users expect:
+Building a great Web3 user experience goes far beyond just submitting transactions to the blockchain. Modern dApp users expect:
 
-- **Real-time updates** on their transaction status
-- **Clear visual feedback** from pending to confirmation
-- **Error handling** with actionable retry options
-- **Multi-chain support** across different networks
-- **Beautiful interfaces** that don't feel like developer tools
+- **Real-time updates** on their transaction status.
+- **Clear visual feedback**, from pending to confirmation.
+- **Robust error handling** with actionable retry options.
+- **Multi-chain support** across different networks.
+- **Beautiful interfaces** that don't feel like developer tools.
 
-Manually building this tracking infrastructure is complex, time-consuming, and takes you away from building your core product features. Different wallet types, transaction replacements, network congestion, and cross-chain operations create a maze of edge cases that are painful to handle correctly.
+Building this tracking infrastructure manually is complex, time-consuming, and distracts from your core product features. Different wallet types, transaction replacements, network congestion, and cross-chain operations create a maze of edge cases that are difficult to handle correctly.
 
-## Our Solution: Complete Transaction UX
+## Our Solution: Pulsar
 
-The TUWA suite transforms transaction tracking from a complex technical challenge into a simple integration. We provide everything you need to deliver a seamless, professional transaction experience with just a few lines of code.
+**Pulsar** transforms transaction tracking from a complex technical challenge into a simple integration. We provide everything you need to deliver a seamless, professional transaction experience with just a few lines of code.
 
 ### 🏗️ **Architecture Overview**
 
-Our modular approach gives you flexibility while maintaining simplicity:
+Our modular, adapter-based approach gives you maximum flexibility while maintaining simplicity:
 
 ```text
-┌─ @tuwaio/web3-transactions-tracking-core ─┐
-│ • Shared types & interfaces             │
-│ • Zustand store management              │
-│ • Persistent transaction history        │
+┌────────── @tuwaio/pulsar-core ──────────┐
+│ • Headless engine powered by Zustand    │
+│ • Persistent transaction history      │
+│ • Adapter-based architecture            │
 └─────────────────────────────────────────┘
                       │
-          ┌───────────┼───────────┐
+          ┌───────────┴───────────┐
           │                       │
-┌─────────▼──────────┐  ┌─────────▼──────────┐
-│   EVM Trackers     │  │   UI Components    │
-│ • Ethereum         │  │ • Toast System     │
-│ • Gelato Tasks     │  │ • Modal Dialogs    │
-│ • Safe Multi-sig   │  │ • Status Badges    │
-│ • Auto-detection   │  │ • Full Widget      │
-└────────────────────┘  └────────────────────┘
+┌─────────▼─────────┐   ┌─────────▼──────────┐
+│ @tuwaio/pulsar-evm│   │ @tuwaio/pulsar-react │
+│ • EVM Adapter     │   │ • React hooks for    │
+│ • Safe Tracker    │   │   easy integration   │
+│ • Gelato Tracker  │   └────────────────────┘
+└───────────────────┘             │
+                                  │
+                  ┌───────────────▼───────────────┐
+                  │ @tuwaio/nova-transactions (UI)│
+                  │ • Pre-built modals            │
+                  │ • Status components           │
+                  └───────────────────────────────┘
 ````
 
 ### ✨ **Key Features**
 
 #### 🧠 **Intelligent Core Engine**
 
-  - **Headless architecture** - Use with any UI framework or build your own
-  - **TypeScript-first** - Full type safety and excellent developer experience
-  - **Persistent state** - Survives page reloads and maintains history
-  - **Zustand-powered** - Lightweight, fast, and predictable state management
+  - **Headless Architecture**: Use with any UI framework or build your own from scratch.
+  - **TypeScript-First**: Full type safety and an excellent developer experience.
+  - **Persistent State**: Transaction history survives page reloads.
+  - **Zustand-Powered**: Lightweight, fast, and predictable state management.
 
-#### ⛓️ **Comprehensive Chain Support**
+#### ⛓️ **Flexible Chain Support**
 
-  - **All EVM networks** - Ethereum, Polygon, Arbitrum, Base, Optimism, and more
-  - **Smart detection** - Automatically identifies transaction types and uses appropriate trackers
-  - **Multi-tracker support** - Standard transactions, Gelato meta-transactions, Safe multi-sig
+  - **All EVM Networks**: Ethereum, Polygon, Arbitrum, Base, Optimism, and more via `@tuwaio/pulsar-evm`.
+  - **Adapter Architecture**: Easily extendable to support other ecosystems like Solana, Starknet, etc.
+  - **Multi-Tracker Support**: Handles standard transactions, Gelato meta-transactions, and Safe multi-sig.
 
-#### 🎨 **Beautiful UI Components**
+#### 🎨 **Beautiful UI Components by Nova**
 
-  - **[TransactionsWidget](https://stories.tuwa.io/?path=/docs/transactionswidget--docs)** - Complete solution in one component
-  - **Smart toasts** - Non-intrusive notifications with real-time updates
-  - **Transaction modals** - Detailed progress tracking with retry capabilities
-  - **Wallet integration** - Seamless connection with any wagmi-based setup
+  - **Out-of-the-Box Solutions**: `@tuwaio/nova-transactions` provides a complete UI suite.
+  - **Smart Notifications**: Non-intrusive toasts with real-time updates.
+  - **Detailed Modals**: In-depth progress tracking with retry and speed-up capabilities.
+  - **Simple Integration**: Hooks from `@tuwaio/pulsar-react` make connecting the UI to the Pulsar core effortless.
 
 #### 🎯 **Developer Experience**
 
-  - **One-line integration** - Get started in minutes, not hours
-  - **Wallet agnostic** - Works with RainbowKit, ConnectKit, Dynamic, Web3Auth, and more
-  - **Fully customizable** - Match your brand with CSS variables and component overrides
-  - **Production ready** - Battle-tested with proper error handling and edge case coverage
-
-### 🎯 **What Makes TUWA Special**
-
-#### **For Users:**
-
-  - Beautiful, intuitive transaction experiences
-  - Never lose track of pending transactions
-  - Clear error messages with actionable solutions
-  - Works consistently across all supported wallets
-
-#### **For Developers:**
-
-  - Eliminate weeks of complex tracking logic
-  - Focus on your core product, not infrastructure
-  - Get professional UX without hiring a design team
-  - Reduce support tickets with better error handling
+  - **One-Line Integration**: Get started in minutes, not hours.
+  - **Wallet Agnostic**: Works seamlessly with RainbowKit, ConnectKit, and any other wagmi-based setup.
+  - **Fully Customizable**: Match your brand with CSS variables and component overrides.
+  - **Production-Ready**: Battle-tested with proper error handling and edge case coverage.
 
 ### 📦 **Package Overview**
 
 | Package | Purpose | Key Features |
 |---------|---------|--------------|
-| **[@tuwaio/web3-transactions-tracking-core](https://github.com/TuwaIO/web3-transactions-tracking/tree/main/packages/web3-transactions-tracking-core)** | Foundation | Types, store, persistence |
-| **[@tuwaio/evm-transactions-tracking](https://github.com/TuwaIO/web3-transactions-tracking/tree/main/packages/evm-transactions-tracking)** | EVM Support | Ethereum, Gelato, Safe tracking |
-| **[@tuwaio/transactions-tracking-ui](https://github.com/TuwaIO/web3-transactions-tracking/tree/main/packages/transactions-tracking-ui)** | UI Components | React components, themes, widgets |
-
+| **[@tuwaio/pulsar-core](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-core)** | The Core Engine | Headless store, types, persistence logic |
+| **[@tuwaio/pulsar-evm](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-evm)** | EVM Support | EVM adapter, trackers for Ethereum, Gelato, Safe |
+| **[@tuwaio/pulsar-react](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-react)** | React Integration | Hooks for easy store connection |
+| **[@tuwaio/nova-transactions](https://github.com/TuwaIO/nova-uikit/tree/main/packages/nova-transactions)** | UI Components | Pre-built React components, themes, widgets |
 
 ### 🎯 **Perfect For**
 
-  - **DeFi protocols** - DEX, lending, yield farming interfaces
-  - **NFT marketplaces** - Minting, trading, auction platforms
-  - **Gaming dApps** - In-game transactions and asset management
-  - **DAO interfaces** - Governance and treasury management
-  - **Any Web3 app** - That needs professional transaction UX
-
-### 💡 **Real-World Impact**
-
-Teams using TUWA report:
-
-  - **90% less** transaction-related support tickets
-  - **3x faster** development cycles for transaction features
-  - **Higher user satisfaction** with clearer transaction feedback
-  - **Better conversion rates** due to improved UX confidence
+  - **DeFi Protocols**: DEXs, lending platforms, yield farming interfaces.
+  - **NFT Marketplaces**: Minting, trading, and auction platforms.
+  - **Gaming dApps**: In-game transactions and asset management.
+  - **DAO Interfaces**: Governance voting and treasury management.
+  - **Any Web3 App** that needs a professional transaction UX.
 
 ## What's Next?
 
 Ready to transform your transaction experience? Here's your journey:
 
-1.  **[Getting Started](https://docs.tuwa.io/gettingStarted)** - Set up TUWA in your project
-2.  **[Quick Start](https://docs.tuwa.io/quickStart)** - Build your first tracked transaction
-3.  **[Live Demo](https://docs.tuwa.io/liveDemo)** - See it in action with different wallets
-4.  **[API Reference](https://docs.tuwa.io/apiReference/README)** - Dive deep into customization options
+1.  **[Getting Started](https://docs.tuwa.io/gettingStarted)** - Set up Pulsar in your project.
+2.  **[Quick Start](https://docs.tuwa.io/quickStart)** - Build your first tracked transaction.
+3.  **[API Reference](https://docs.tuwa.io/apiReference/README)** - Dive deep into customization options.
 
 **Built with ❤️ by the [TUWA Team](https://github.com/TuwaIO)**
-
- [Report issues](https://github.com/TuwaIO/web3-transactions-tracking/issues) | [Contribute](https://github.com/TuwaIO/web3-transactions-tracking/blob/main/CONTRIBUTING.md)

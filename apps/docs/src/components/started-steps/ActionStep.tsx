@@ -27,9 +27,9 @@ export function ActionStep() {
       <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 3: Create a Contract Action</h3>
       <p className="mb-2 text-[var(--tuwa-text-secondary)]">
         The next step involves wrapping a smart contract function into a reusable 'action'. This approach makes the
-        function compatible with the transaction tracking suite. While this step isn't strictly necessary, creating
-        actions is a powerful pattern for simplifying code and avoiding repetition, especially in larger applications.
-        This example demonstrates creating an action for the `increment` function:
+        function compatible with the <b>Pulsar</b> engine. While this step isn't strictly necessary, creating actions is
+        a powerful pattern for simplifying code and avoiding repetition, especially in larger applications. This example
+        demonstrates creating an action for the `increment` function:
       </p>
       <CodeBlock title="increment.ts" titleIcons={<DocumentTextIcon />} textToCopy={codeBlock}>
         <CodeHighlighter children={codeBlock} language="ts" />

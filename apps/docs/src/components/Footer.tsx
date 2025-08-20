@@ -22,7 +22,7 @@ export function Footer() {
                 src={
                   resolvedTheme === 'dark'
                     ? 'https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/tuwaLogoWhite.svg'
-                    : 'https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/tuwaLogo.svg'
+                    : 'https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/tuwaLogoDark.svg'
                 }
                 alt="TUWA Logo"
                 className="transition-opacity duration-300"
@@ -61,7 +61,7 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex-1">
               <p className="tuwa-footer-description">
-                Complete Web3 transaction tracking solution with beautiful React UI components.
+                A headless transaction tracking engine (<b>Pulsar</b>) with a beautiful React UI kit (<b>Nova</b>).
               </p>
               <p className="tuwa-footer-license">Licensed under Apache 2.0. Open source and free to use.</p>
             </div>
@@ -77,7 +77,7 @@ export function Footer() {
 
           <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 tuwa-footer-border">
             {/*<span className="tuwa-badge">*/}
-            {/*  🚀 v1.0 Released*/}
+            {/* 🚀 v1.0 Released*/}
             {/*</span>*/}
             {/*<span className="tuwa-badge tuwa-badge--secondary">⚡ Lightning Fast</span>*/}
             {/*<span className="tuwa-badge tuwa-badge--success">✨ Production Ready</span>*/}

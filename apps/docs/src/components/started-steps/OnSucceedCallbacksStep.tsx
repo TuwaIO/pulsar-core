@@ -3,8 +3,8 @@ import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { CodeBlock } from '@/components/CodeBlock';
 import { CodeHighlighter } from '@/components/CodeHighlighter';
 
-const codeBlock = `import { TransactionTracker } from '@tuwaio/evm-transactions-tracking/dist/types';
-import { Transaction } from '@tuwaio/web3-transactions-tracking-core/dist/types';
+const codeBlock = `import { Transaction } from '@tuwaio/pulsar-core';
+import { TransactionTracker } from '@tuwaio/pulsar-evm';
 
 export enum TxType {
   increment = 'increment',

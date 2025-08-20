@@ -361,20 +361,3 @@
   outline: 2px solid var(--tuwa-primary);
   outline-offset: 2px;
 }
-
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--tuwa-primary);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--tuwa-secondary);
-}

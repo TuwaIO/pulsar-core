@@ -186,6 +186,7 @@ export const ReadmeCards: React.FC = () => {
       status: 'ready',
       githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/nextjs-web3auth',
       difficulty: 'advanced',
+      demoUrl: 'https://web3auth.example.tuwa.io/',
     },
     {
       title: 'Vite + RainbowKit',

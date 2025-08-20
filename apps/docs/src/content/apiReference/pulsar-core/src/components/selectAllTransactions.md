@@ -6,7 +6,7 @@
 
 > **selectAllTransactions**\<`TR`, `T`\>(`transactionsPool`): `T`[]
 
-Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:16](https://github.com/TuwaIO/pulsar-core/blob/3dd99361d439c3516b34d795b4c0fe6affcc943c/packages/pulsar-core/src/store/transactionsSelectors.ts#L16)
+Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:16](https://github.com/TuwaIO/pulsar-core/blob/06efb81e25851de10cd682c9a7c240a3c9cbde6f/packages/pulsar-core/src/store/transactionsSelectors.ts#L16)
 
 Selects all transactions from the pool and sorts them by their creation timestamp.
 
