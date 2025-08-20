@@ -43,10 +43,8 @@
       "url": "https://github.com/Argeare5"
     }
   ],
-  "dependencies": {
-    "@tuwaio/pulsar-core": "workspace:^"
-  },
   "peerDependencies": {
+    "@tuwaio/pulsar-core": ">=0",
     "@wagmi/core": ">=2",
     "dayjs": ">=1",
     "immer": ">=10",
@@ -54,6 +52,7 @@
     "zustand": ">=5"
   },
   "devDependencies": {
+    "@tuwaio/pulsar-core": "workspace:^",
     "@types/react": "^19.1.10",
     "@wagmi/core": "^2.19.0",
     "dayjs": "^1.11.13",

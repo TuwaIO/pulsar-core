@@ -161,11 +161,10 @@ importers:
         version: 5.0.7(@types/react@19.1.10)(immer@10.1.1)(react@19.1.1)(use-sync-external-store@1.5.0(react@19.1.1))
 
   packages/pulsar-evm:
-    dependencies:
+    devDependencies:
       '@tuwaio/pulsar-core':
         specifier: workspace:^
         version: link:../pulsar-core
-    devDependencies:
       '@types/react':
         specifier: ^19.1.10
         version: 19.1.10

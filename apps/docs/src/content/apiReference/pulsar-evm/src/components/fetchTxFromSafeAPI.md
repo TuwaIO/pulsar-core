@@ -6,7 +6,7 @@
 
 > **fetchTxFromSafeAPI**(`__namedParameters`): `Promise`\<`Response`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/safeTracker.ts:69](https://github.com/TuwaIO/pulsar-core/blob/b0a80b70bc22baf2c706d161bdc4a093678b2647/packages/pulsar-evm/src/trackers/safeTracker.ts#L69)
+Defined in: [packages/pulsar-evm/src/trackers/safeTracker.ts:69](https://github.com/TuwaIO/pulsar-core/blob/71f97f7daed8929582a6500160e6e16d91f0bef6/packages/pulsar-evm/src/trackers/safeTracker.ts#L69)
 
 The fetcher function passed to `initializePollingTracker` to get the status of a Safe transaction.
 
