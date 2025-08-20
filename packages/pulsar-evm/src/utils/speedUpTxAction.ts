@@ -39,6 +39,8 @@ export async function speedUpTxAction<TR, T extends Transaction<TR>>({
   config: Config;
   tx: T;
 }): Promise<Hex> {
+  console.log('speedUpTxAction', tx);
+
   if (tx.adapter === TransactionAdapter.EVM) {
     // Ensure all necessary transaction details are present.
     if (!tx.nonce || !tx.from || !tx.to || !tx.value || !tx.input || !tx.maxFeePerGas || !tx.maxPriorityFeePerGas) {
