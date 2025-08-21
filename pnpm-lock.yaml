@@ -78,8 +78,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0(react@19.1.1)
       '@tuwaio/nova-core':
-        specifier: latest
-        version: 0.0.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(tailwindcss@4.1.12)
+        specifier: 0.0.7
+        version: 0.0.7(clsx@2.1.1)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(tailwind-merge@3.3.1)(tailwindcss@4.1.12)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -1313,11 +1313,13 @@ packages:
   '@ts-morph/common@0.27.0':
     resolution: {integrity: sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ==}
 
-  '@tuwaio/nova-core@0.0.1':
-    resolution: {integrity: sha512-4fOnYK8PaIc/Rotx40acVdtt1nr2Jfl49cxeqqxScX08w+1fKVEMwwLVUNlqKzkRSX1NmbvF3lh1/KXc8XNWqw==}
+  '@tuwaio/nova-core@0.0.7':
+    resolution: {integrity: sha512-dYz12VjVNa//XgE+h9GiNFh23n8oDxjd1kIErDAF0+kW/JXxq9zxqUvM+AjsI2YapzL0vWiUNEQFlpZv3kbFGg==}
     peerDependencies:
+      clsx: '>=2'
       react: '>=19'
       react-dom: '>=19'
+      tailwind-merge: '>=3'
       tailwindcss: '>=4'
 
   '@types/chai@5.2.2':
@@ -6114,7 +6116,7 @@ snapshots:
       minimatch: 10.0.3
       path-browserify: 1.0.1
 
-  '@tuwaio/nova-core@0.0.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(tailwindcss@4.1.12)':
+  '@tuwaio/nova-core@0.0.7(clsx@2.1.1)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(tailwind-merge@3.3.1)(tailwindcss@4.1.12)':
     dependencies:
       clsx: 2.1.1
       react: 19.1.1
