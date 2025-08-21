@@ -44,7 +44,6 @@ export function CodeBlock({ title, titleIcons, children, textToCopy }: CodeBlock
           <CopyIconButton isCopied={isCopied} onCopy={() => copy(textToCopy)} />
         </div>
       </div>
-
       {children}
     </div>
   );
