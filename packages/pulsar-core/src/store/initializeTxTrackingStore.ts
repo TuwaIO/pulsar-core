@@ -5,7 +5,7 @@
 
 import { Draft, produce } from 'immer';
 
-import {EvmTransaction, InitialTransaction, StoreSlice, Transaction} from '../types';
+import { EvmTransaction, InitialTransaction, StoreSlice, Transaction } from '../types';
 
 /**
  * Defines the structure of the transaction pool, which is a record of transactions indexed by their unique keys.

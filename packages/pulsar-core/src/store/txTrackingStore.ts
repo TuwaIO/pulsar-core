@@ -4,6 +4,7 @@ import { persist, PersistOptions } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
 import { ITxTrackingStore, Transaction, TxAdapter } from '../types';
+import { selectAdapterByKey } from '../utils/selectAdapterByKey';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 
 export function createPulsarStore<TR, T extends Transaction<TR>, A>({
@@ -27,7 +28,7 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
           await Promise.all(
             Object.values(get().transactionsPool).map(async (tx) => {
               if (tx.pending) {
-                const adapter = adapters.find((adapter) => adapter.key === tx.adapter);
+                const adapter = selectAdapterByKey({ adapterKey: tx.adapter, adapters });
                 adapter?.checkAndInitializeTrackerInStore({ tx, ...get() });
               }
             }),
@@ -43,7 +44,7 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
           const { desiredChainID, ...restParams } = params;
           const localTimestamp = dayjs().unix();
 
-          const adapter = adapters.find((adapter) => adapter.key === restParams.adapter);
+          const adapter = selectAdapterByKey({ adapterKey: restParams.adapter, adapters });
 
           const { walletType, walletAddress } = adapter ? adapter.getWalletInfo() : {};
 

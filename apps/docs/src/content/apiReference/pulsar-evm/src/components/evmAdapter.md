@@ -6,7 +6,7 @@
 
 > **evmAdapter**\<`T`\>(`config`, `appChains`): `TxAdapter`\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>
 
-Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:21](https://github.com/TuwaIO/pulsar-core/blob/5e4fd0f371deb2427a774b38516e777830e67329/packages/pulsar-evm/src/adapters/evmAdapter.ts#L21)
+Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:21](https://github.com/TuwaIO/pulsar-core/blob/815bc21285ae9bacc614d9409dbf8732e5b5c450/packages/pulsar-evm/src/adapters/evmAdapter.ts#L21)
 
 Creates an EVM-specific transaction adapter that provides utilities to manage transactions and interact with chains.
 
@@ -38,4 +38,4 @@ The EVM transaction adapter with methods to interact with chains and transaction
 
 ## Throws
 
-Throws an error when the configuration object is not provided .
+Throws an error when the configuration object is not provided.

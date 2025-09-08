@@ -4,4 +4,4 @@ export * from './store/txTrackingStore';
 export * from './types';
 export * from './utils/createBoundedUseStore';
 export * from './utils/initializePollingTracker';
-export * from './utils/selectTxAdapter';
+export * from './utils/selectAdapterByKey';

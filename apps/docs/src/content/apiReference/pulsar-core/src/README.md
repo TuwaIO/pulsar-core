@@ -23,6 +23,7 @@
 - [StoreSlice](type-aliases/StoreSlice.md)
 - [Transaction](type-aliases/Transaction.md)
 - [TransactionPool](type-aliases/TransactionPool.md)
+- [TxActions](type-aliases/TxActions.md)
 - [TxAdapter](type-aliases/TxAdapter.md)
 
 ## Variables
@@ -34,9 +35,9 @@
 - [createPulsarStore](functions/createPulsarStore.md)
 - [initializePollingTracker](functions/initializePollingTracker.md)
 - [initializeTxTrackingStore](functions/initializeTxTrackingStore.md)
+- [selectAdapterByKey](functions/selectAdapterByKey.md)
 - [selectAllTransactions](functions/selectAllTransactions.md)
 - [selectAllTransactionsByActiveWallet](functions/selectAllTransactionsByActiveWallet.md)
 - [selectPendingTransactions](functions/selectPendingTransactions.md)
 - [selectPendingTransactionsByActiveWallet](functions/selectPendingTransactionsByActiveWallet.md)
-- [selectTxAdapter](functions/selectTxAdapter.md)
 - [selectTXByKey](functions/selectTXByKey.md)

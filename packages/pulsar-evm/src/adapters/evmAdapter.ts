@@ -16,7 +16,7 @@ import { speedUpTxAction } from '../utils/speedUpTxAction';
  * @param {Config} config - The configuration object for the Wagmi library, required to initialize the adapter.
  * @param {Chain[]} appChains - An array of available chain configurations for the application.
  * @return {TxAdapter<TransactionTracker, T, ActionTxKey>} The EVM transaction adapter with methods to interact with chains and transactions.
- * @throws {Error} Throws an error when the configuration object is not provided .
+ * @throws {Error} Throws an error when the configuration object is not provided.
  */
 export function evmAdapter<T extends Transaction<TransactionTracker>>(
   config: Config,
@@ -45,7 +45,23 @@ export function evmAdapter<T extends Transaction<TransactionTracker>>(
       cancelTxAction: (tx) => cancelTxAction({ config, tx }),
       speedUpTxAction: (tx) => speedUpTxAction({ config, tx }),
       explorerLink: (transactionsPool, txKey, replacedTxHash) =>
-        selectEvmTxExplorerLink(transactionsPool, appChains, txKey, replacedTxHash),
+        selectEvmTxExplorerLink(transactionsPool, appChains, txKey as `0x${string}`, replacedTxHash as `0x${string}`),
+      retryTxAction: async ({ actions, onClose, txKey, handleTransaction, tx }) => {
+        onClose(txKey);
+        if (handleTransaction) {
+          await handleTransaction({
+            actionFunction: () =>
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-expect-error
+              actions![tx?.actionKey]({
+                config,
+                ...tx.payload,
+              }),
+            params: tx,
+            defaultTracker: TransactionTracker.Ethereum,
+          });
+        }
+      },
     };
   } else {
     throw new Error('EVM adapter requires a Wagmi config object.');

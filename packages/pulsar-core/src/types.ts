@@ -143,6 +143,9 @@ export type StarknetTransaction<T> = BaseTransaction<T> & {
 /** A union type representing any possible transaction structure. */
 export type Transaction<T> = EvmTransaction<T> | SolanaTransaction<T> | StarknetTransaction<T>;
 
+/** A registry of functions that can be re-executed via the 'Retry' button. The key should match `actionKey` on a transaction. */
+export type TxActions = Record<string, (...args: any[]) => Promise<unknown>>;
+
 /**
  * Represents the parameters required to initiate a new transaction.
  */
@@ -204,13 +207,20 @@ export type TxAdapter<TR, T extends Transaction<TR>, A> = {
     ITxTrackingStore<TR, T, A>,
     'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
   >) => Promise<void>;
-  cancelTxAction: (tx: T) => Promise<`0x${string}`>;
-  speedUpTxAction: (tx: T) => Promise<`0x${string}`>;
-  explorerLink: (
-    transactionsPool: TransactionPool<TR, T>,
-    txKey: `0x${string}`,
-    replacedTxHash?: `0x${string}`,
-  ) => string;
+  cancelTxAction?: (tx: T) => Promise<string>;
+  speedUpTxAction?: (tx: T) => Promise<string>;
+  retryTxAction?: ({
+    tx,
+    actions,
+    onClose,
+    handleTransaction,
+  }: {
+    txKey: string;
+    tx: InitialTransactionParams;
+    actions?: TxActions;
+    onClose: (txKey?: string) => void;
+  } & Partial<Pick<ITxTrackingStore<TR, T, A>, 'handleTransaction'>>) => Promise<void>;
+  explorerLink: (transactionsPool: TransactionPool<TR, T>, txKey: string, replacedTxHash?: string) => string;
 };
 
 /**
