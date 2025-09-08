@@ -4,7 +4,7 @@
 
 # TransactionAdapter
 
-Defined in: [packages/pulsar-core/src/types.ts:24](https://github.com/TuwaIO/pulsar-core/blob/d3c1cd2bf3c4ee994c97e3b17aa8ea73c2cbc70f/packages/pulsar-core/src/types.ts#L24)
+Defined in: [packages/pulsar-core/src/types.ts:24](https://github.com/TuwaIO/pulsar-core/blob/4e6a98991bdba757946ff4584c5a9e22ecc297f5/packages/pulsar-core/src/types.ts#L24)
 
 Represents the blockchain adapter for a transaction.
 
@@ -14,7 +14,7 @@ Represents the blockchain adapter for a transaction.
 
 > **EVM**: `"evm"`
 
-Defined in: [packages/pulsar-core/src/types.ts:26](https://github.com/TuwaIO/pulsar-core/blob/d3c1cd2bf3c4ee994c97e3b17aa8ea73c2cbc70f/packages/pulsar-core/src/types.ts#L26)
+Defined in: [packages/pulsar-core/src/types.ts:26](https://github.com/TuwaIO/pulsar-core/blob/4e6a98991bdba757946ff4584c5a9e22ecc297f5/packages/pulsar-core/src/types.ts#L26)
 
 EVM adapter.
 
@@ -24,7 +24,7 @@ EVM adapter.
 
 > **SOLANA**: `"solana"`
 
-Defined in: [packages/pulsar-core/src/types.ts:28](https://github.com/TuwaIO/pulsar-core/blob/d3c1cd2bf3c4ee994c97e3b17aa8ea73c2cbc70f/packages/pulsar-core/src/types.ts#L28)
+Defined in: [packages/pulsar-core/src/types.ts:28](https://github.com/TuwaIO/pulsar-core/blob/4e6a98991bdba757946ff4584c5a9e22ecc297f5/packages/pulsar-core/src/types.ts#L28)
 
 Solana adapter.
 
@@ -34,6 +34,6 @@ Solana adapter.
 
 > **Starknet**: `"Starknet"`
 
-Defined in: [packages/pulsar-core/src/types.ts:30](https://github.com/TuwaIO/pulsar-core/blob/d3c1cd2bf3c4ee994c97e3b17aa8ea73c2cbc70f/packages/pulsar-core/src/types.ts#L30)
+Defined in: [packages/pulsar-core/src/types.ts:30](https://github.com/TuwaIO/pulsar-core/blob/4e6a98991bdba757946ff4584c5a9e22ecc297f5/packages/pulsar-core/src/types.ts#L30)
 
 Starknet adapter.
