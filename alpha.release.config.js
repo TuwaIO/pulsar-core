@@ -20,10 +20,8 @@ module.exports = {
           npm whoami
         `,
         prepareCmd: `
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          FINAL_VERSION="\${nextRelease.version}.\${SHORT_SHA}"
-          echo "Final version will be: \${FINAL_VERSION}"
-          pnpm -r exec pnpm dlx json -I -f package.json -e "this.version = '\${FINAL_VERSION}'"
+          echo "Final version will be: \${nextRelease.version}.\$(git rev-parse --short HEAD)"
+          pnpm -r exec pnpm dlx json -I -f package.json -e "this.version = \`\${nextRelease.version}.\$(git rev-parse --short HEAD)\`"
         `,
         publishCmd: 'pnpm publish --filter "@tuwaio/*" --no-git-checks --tag alpha --access public',
         successCmd: `
