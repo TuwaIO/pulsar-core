@@ -24,13 +24,6 @@ module.exports = {
           pnpm -r exec pnpm dlx json -I -f package.json -e "this.version = '\${nextRelease.version}.\$(git rev-parse --short HEAD)'"
         `,
         publishCmd: 'pnpm publish --filter "@tuwaio/*" --no-git-checks --tag alpha --access public',
-        successCmd: `
-          FINAL_VERSION="\${nextRelease.version}.\$(git rev-parse --short HEAD)"
-          echo "Creating Git tag and GitHub release for v$FINAL_VERSION"
-          git tag "v$FINAL_VERSION"
-          git push origin "refs/tags/v$FINAL_VERSION"
-          gh release create "v$FINAL_VERSION" --generate-notes --prerelease -t "v$FINAL_VERSION"
-        `,
       },
     ],
   ],

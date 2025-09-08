@@ -207,6 +207,7 @@ export type TxAdapter<TR, T extends Transaction<TR>, A> = {
     ITxTrackingStore<TR, T, A>,
     'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
   >) => Promise<void>;
+  getExplorerUrl: () => string | undefined;
   cancelTxAction?: (tx: T) => Promise<string>;
   speedUpTxAction?: (tx: T) => Promise<string>;
   retryTxAction?: ({
@@ -220,7 +221,7 @@ export type TxAdapter<TR, T extends Transaction<TR>, A> = {
     actions?: TxActions;
     onClose: (txKey?: string) => void;
   } & Partial<Pick<ITxTrackingStore<TR, T, A>, 'handleTransaction'>>) => Promise<void>;
-  explorerLink: (transactionsPool: TransactionPool<TR, T>, txKey: string, replacedTxHash?: string) => string;
+  getExplorerTxUrl?: (transactionsPool: TransactionPool<TR, T>, txKey: string, replacedTxHash?: string) => string;
 };
 
 /**

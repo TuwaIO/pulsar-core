@@ -6,7 +6,7 @@
 
 > **gelatoTracker**(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:156](https://github.com/TuwaIO/pulsar-core/blob/815bc21285ae9bacc614d9409dbf8732e5b5c450/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L156)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:156](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L156)
 
 A low-level tracker for monitoring Gelato transactions. It wraps the generic polling
 tracker with the Gelato-specific fetcher logic.

@@ -6,7 +6,7 @@
 
 > **TxAdapter**\<`TR`, `T`, `A`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:193](https://github.com/TuwaIO/pulsar-core/blob/815bc21285ae9bacc614d9409dbf8732e5b5c450/packages/pulsar-core/src/types.ts#L193)
+Defined in: [packages/pulsar-core/src/types.ts:193](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-core/src/types.ts#L193)
 
 Represents the type for a transaction adapter which provides utilities for handling transaction-related operations.
 
@@ -36,7 +36,7 @@ Represents the type for the action transaction key.
 
 > `optional` **cancelTxAction**: (`tx`) => `Promise`\<`string`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:210](https://github.com/TuwaIO/pulsar-core/blob/815bc21285ae9bacc614d9409dbf8732e5b5c450/packages/pulsar-core/src/types.ts#L210)
+Defined in: [packages/pulsar-core/src/types.ts:211](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-core/src/types.ts#L211)
 
 #### Parameters
 
@@ -57,7 +57,7 @@ Defined in: [packages/pulsar-core/src/types.ts:210](https://github.com/TuwaIO/pu
     ...rest
   }`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:203](https://github.com/TuwaIO/pulsar-core/blob/815bc21285ae9bacc614d9409dbf8732e5b5c450/packages/pulsar-core/src/types.ts#L203)
+Defined in: [packages/pulsar-core/src/types.ts:203](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-core/src/types.ts#L203)
 
 #### Parameters
 
@@ -78,7 +78,7 @@ Defined in: [packages/pulsar-core/src/types.ts:203](https://github.com/TuwaIO/pu
 
 > **checkChainForTx**: (`chainId`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:201](https://github.com/TuwaIO/pulsar-core/blob/815bc21285ae9bacc614d9409dbf8732e5b5c450/packages/pulsar-core/src/types.ts#L201)
+Defined in: [packages/pulsar-core/src/types.ts:201](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-core/src/types.ts#L201)
 
 #### Parameters
 
@@ -96,7 +96,7 @@ Defined in: [packages/pulsar-core/src/types.ts:201](https://github.com/TuwaIO/pu
 
 > **checkTransactionsTracker**: (`actionTxKey`, `walletType`) => `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:202](https://github.com/TuwaIO/pulsar-core/blob/815bc21285ae9bacc614d9409dbf8732e5b5c450/packages/pulsar-core/src/types.ts#L202)
+Defined in: [packages/pulsar-core/src/types.ts:202](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-core/src/types.ts#L202)
 
 #### Parameters
 
@@ -122,11 +122,11 @@ Defined in: [packages/pulsar-core/src/types.ts:202](https://github.com/TuwaIO/pu
 
 ***
 
-### explorerLink()
+### getExplorerTxUrl()?
 
-> **explorerLink**: (`transactionsPool`, `txKey`, `replacedTxHash?`) => `string`
+> `optional` **getExplorerTxUrl**: (`transactionsPool`, `txKey`, `replacedTxHash?`) => `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:223](https://github.com/TuwaIO/pulsar-core/blob/815bc21285ae9bacc614d9409dbf8732e5b5c450/packages/pulsar-core/src/types.ts#L223)
+Defined in: [packages/pulsar-core/src/types.ts:224](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-core/src/types.ts#L224)
 
 #### Parameters
 
@@ -148,11 +148,23 @@ Defined in: [packages/pulsar-core/src/types.ts:223](https://github.com/TuwaIO/pu
 
 ***
 
+### getExplorerUrl()
+
+> **getExplorerUrl**: () => `string` \| `undefined`
+
+Defined in: [packages/pulsar-core/src/types.ts:210](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-core/src/types.ts#L210)
+
+#### Returns
+
+`string` \| `undefined`
+
+***
+
 ### getWalletInfo()
 
 > **getWalletInfo**: () => `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:195](https://github.com/TuwaIO/pulsar-core/blob/815bc21285ae9bacc614d9409dbf8732e5b5c450/packages/pulsar-core/src/types.ts#L195)
+Defined in: [packages/pulsar-core/src/types.ts:195](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-core/src/types.ts#L195)
 
 #### Returns
 
@@ -174,7 +186,7 @@ Type of the wallet. (injected, wallet connect, etc.)
 
 > **key**: [`TransactionAdapter`](../enumerations/TransactionAdapter.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:194](https://github.com/TuwaIO/pulsar-core/blob/815bc21285ae9bacc614d9409dbf8732e5b5c450/packages/pulsar-core/src/types.ts#L194)
+Defined in: [packages/pulsar-core/src/types.ts:194](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-core/src/types.ts#L194)
 
 ***
 
@@ -187,7 +199,7 @@ Defined in: [packages/pulsar-core/src/types.ts:194](https://github.com/TuwaIO/pu
     handleTransaction,
   }`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:212](https://github.com/TuwaIO/pulsar-core/blob/815bc21285ae9bacc614d9409dbf8732e5b5c450/packages/pulsar-core/src/types.ts#L212)
+Defined in: [packages/pulsar-core/src/types.ts:213](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-core/src/types.ts#L213)
 
 #### Parameters
 
@@ -210,7 +222,7 @@ Defined in: [packages/pulsar-core/src/types.ts:212](https://github.com/TuwaIO/pu
 
 > `optional` **speedUpTxAction**: (`tx`) => `Promise`\<`string`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:211](https://github.com/TuwaIO/pulsar-core/blob/815bc21285ae9bacc614d9409dbf8732e5b5c450/packages/pulsar-core/src/types.ts#L211)
+Defined in: [packages/pulsar-core/src/types.ts:212](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-core/src/types.ts#L212)
 
 #### Parameters
 

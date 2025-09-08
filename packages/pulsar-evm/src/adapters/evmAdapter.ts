@@ -42,10 +42,12 @@ export function evmAdapter<T extends Transaction<TransactionTracker>>(
         ITxTrackingStore<TransactionTracker, T, ActionTxKey>,
         'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
       >) => checkAndInitializeTrackerInStore({ tracker: tx.tracker, tx, chains: appChains, ...rest }),
+      getExplorerUrl: () => {
+        const activeWallet = getAccount(config);
+        return activeWallet?.chain?.blockExplorers?.default.url;
+      },
       cancelTxAction: (tx) => cancelTxAction({ config, tx }),
       speedUpTxAction: (tx) => speedUpTxAction({ config, tx }),
-      explorerLink: (transactionsPool, txKey, replacedTxHash) =>
-        selectEvmTxExplorerLink(transactionsPool, appChains, txKey as `0x${string}`, replacedTxHash as `0x${string}`),
       retryTxAction: async ({ actions, onClose, txKey, handleTransaction, tx }) => {
         onClose(txKey);
         if (handleTransaction) {
@@ -62,6 +64,8 @@ export function evmAdapter<T extends Transaction<TransactionTracker>>(
           });
         }
       },
+      getExplorerTxUrl: (transactionsPool, txKey, replacedTxHash) =>
+        selectEvmTxExplorerLink(transactionsPool, appChains, txKey as `0x${string}`, replacedTxHash as `0x${string}`),
     };
   } else {
     throw new Error('EVM adapter requires a Wagmi config object.');
