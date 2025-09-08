@@ -1,4 +1,10 @@
 module.exports = {
+  branches: [
+    'main',
+    { name: 'dev/**', prerelease: 'alpha' },
+    { name: 'fix/**', prerelease: 'alpha' },
+    { name: 'feat/**', prerelease: 'alpha' },
+  ],
   tagFormat: 'v${version}',
   plugins: [
     '@semantic-release/commit-analyzer',
@@ -13,10 +19,21 @@ module.exports = {
           echo "NPM user:" &&
           npm whoami
         `,
-        prepareCmd: `pnpm -r exec pnpm dlx json -I -f package.json -e "this.version = '\${nextRelease.version}'"`,
+        prepareCmd: `
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          FINAL_VERSION="\${nextRelease.version}.\${SHORT_SHA}"
+          echo "Final version will be: \${FINAL_VERSION}"
+          pnpm -r exec pnpm dlx json -I -f package.json -e "this.version = '\${FINAL_VERSION}'"
+        `,
         publishCmd: 'pnpm publish --filter "@tuwaio/*" --no-git-checks --tag alpha --access public',
+        successCmd: `
+          VERSION=$(pnpm -r exec node -p "require('./package.json').version" | head -n 1)
+          echo "Creating Git tag and GitHub release for v\${VERSION}"
+          git tag "v\${VERSION}"
+          git push --tags origin
+          gh release create "v\${VERSION}" --generate-notes --prerelease -t "v\${VERSION}"
+        `,
       },
     ],
-    '@semantic-release/github',
   ],
 };
