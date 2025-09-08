@@ -167,7 +167,7 @@ export async function evmTrackerForStore<T extends Transaction<TransactionTracke
       updateTxParams({
         to: localTx.to ?? '',
         input: localTx.input,
-        value: localTx.value ? String(localTx.value) : undefined,
+        value: localTx.value || localTx.value === 0n ? String(localTx.value) : undefined,
         txKey: tx.txKey,
         pending: tx.pending,
         nonce: localTx.nonce,

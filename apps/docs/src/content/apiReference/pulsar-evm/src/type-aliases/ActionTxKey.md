@@ -6,7 +6,7 @@
 
 > **ActionTxKey** = `Hex` \| [`GelatoTxKey`](GelatoTxKey.md)
 
-Defined in: [packages/pulsar-evm/src/types.ts:28](https://github.com/TuwaIO/pulsar-core/blob/acc55b8ea88c057dc85e11294b5f67ddd97fb9bb/packages/pulsar-evm/src/types.ts#L28)
+Defined in: [packages/pulsar-evm/src/types.ts:28](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/types.ts#L28)
 
 Represents the unique identifier returned by an action function after a transaction is submitted.
 This key is used to determine which tracker should monitor the transaction.
