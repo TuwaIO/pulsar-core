@@ -16,7 +16,7 @@ import { speedUpTxAction } from '../utils/speedUpTxAction';
  * @param {Config} config - The configuration object for the Wagmi library, required to initialize the adapter.
  * @param {Chain[]} appChains - An array of available chain configurations for the application.
  * @return {TxAdapter<TransactionTracker, T, ActionTxKey>} The EVM transaction adapter with methods to interact with chains and transactions.
- * @throws {Error} Throws an error when the configuration object is not provided.
+ * @throws {Error} Throws an error when the configuration object is not provided .
  */
 export function evmAdapter<T extends Transaction<TransactionTracker>>(
   config: Config,
