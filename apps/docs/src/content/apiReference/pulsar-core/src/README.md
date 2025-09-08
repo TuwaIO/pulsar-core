@@ -38,4 +38,5 @@
 - [selectAllTransactionsByActiveWallet](functions/selectAllTransactionsByActiveWallet.md)
 - [selectPendingTransactions](functions/selectPendingTransactions.md)
 - [selectPendingTransactionsByActiveWallet](functions/selectPendingTransactionsByActiveWallet.md)
+- [selectTxAdapter](functions/selectTxAdapter.md)
 - [selectTXByKey](functions/selectTXByKey.md)

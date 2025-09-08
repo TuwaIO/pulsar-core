@@ -6,7 +6,7 @@
 
 import { StoreApi } from 'zustand';
 
-import { IInitializeTxTrackingStore } from './store/initializeTxTrackingStore';
+import { IInitializeTxTrackingStore, TransactionPool } from './store/initializeTxTrackingStore';
 
 /**
  * A utility type for creating modular Zustand store slices.
@@ -180,6 +180,13 @@ export type InitialTransaction = InitialTransactionParams & {
   localTimestamp: number;
 };
 
+/**
+ * Represents the type for a transaction adapter which provides utilities for handling transaction-related operations.
+ *
+ * @template TR - Represents the transaction tracker type.
+ * @template T - Represents the type of the transaction, extending the base Transaction<TR>.
+ * @template A - Represents the type for the action transaction key.
+ */
 export type TxAdapter<TR, T extends Transaction<TR>, A> = {
   key: TransactionAdapter;
   getWalletInfo: () => {
@@ -197,6 +204,13 @@ export type TxAdapter<TR, T extends Transaction<TR>, A> = {
     ITxTrackingStore<TR, T, A>,
     'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
   >) => Promise<void>;
+  cancelTxAction: (tx: T) => Promise<`0x${string}`>;
+  speedUpTxAction: (tx: T) => Promise<`0x${string}`>;
+  explorerLink: (
+    transactionsPool: TransactionPool<TR, T>,
+    txKey: `0x${string}`,
+    replacedTxHash?: `0x${string}`,
+  ) => string;
 };
 
 /**
