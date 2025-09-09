@@ -4,12 +4,11 @@
 
 # getAddress()
 
-> **getAddress**(`name`): `Promise`\<`undefined` \| `` `0x${string}` ``\>
+> **getAddress**(`name`): `Promise`\<`null` \| `` `0x${string}` ``\>
 
-Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:59](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/utils/ensUtils.ts#L59)
+Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:57](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/utils/ensUtils.ts#L57)
 
-Fetches the Ethereum address associated with a given ENS name.
-Performs the lookup on Ethereum Mainnet.
+Fetches the Ethereum address associated with a given ENS name from the Ethereum Mainnet.
 
 ## Parameters
 
@@ -21,6 +20,6 @@ The ENS name to resolve (e.g., 'vitalik.eth').
 
 ## Returns
 
-`Promise`\<`undefined` \| `` `0x${string}` ``\>
+`Promise`\<`null` \| `` `0x${string}` ``\>
 
-The associated Ethereum address (lowercase) or undefined if not found.
+The associated Ethereum address (lowercase) or null if not found.

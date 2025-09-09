@@ -4,9 +4,9 @@
 
 # TransactionAdapter
 
-Defined in: [packages/pulsar-core/src/types.ts:24](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/types.ts#L24)
+Defined in: [packages/pulsar-core/src/types.ts:32](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/types.ts#L32)
 
-Represents the blockchain adapter for a transaction.
+Defines the supported blockchain adapters. Each adapter corresponds to a specific chain architecture.
 
 ## Enumeration Members
 
@@ -14,9 +14,9 @@ Represents the blockchain adapter for a transaction.
 
 > **EVM**: `"evm"`
 
-Defined in: [packages/pulsar-core/src/types.ts:26](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/types.ts#L26)
+Defined in: [packages/pulsar-core/src/types.ts:34](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/types.ts#L34)
 
-EVM adapter.
+For Ethereum Virtual Machine (EVM) compatible chains like Ethereum, Polygon, etc.
 
 ***
 
@@ -24,16 +24,16 @@ EVM adapter.
 
 > **SOLANA**: `"solana"`
 
-Defined in: [packages/pulsar-core/src/types.ts:28](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/types.ts#L28)
+Defined in: [packages/pulsar-core/src/types.ts:36](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/types.ts#L36)
 
-Solana adapter.
+For the Solana blockchain.
 
 ***
 
 ### Starknet
 
-> **Starknet**: `"Starknet"`
+> **Starknet**: `"starknet"`
 
-Defined in: [packages/pulsar-core/src/types.ts:30](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/types.ts#L30)
+Defined in: [packages/pulsar-core/src/types.ts:38](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/types.ts#L38)
 
-Starknet adapter.
+For the Starknet L2 network.

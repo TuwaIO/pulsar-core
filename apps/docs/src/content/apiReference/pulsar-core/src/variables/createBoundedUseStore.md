@@ -6,10 +6,18 @@
 
 > `const` **createBoundedUseStore**: \<`S`\>(`store`) => \{(): `ExtractState`\<`S`\>; \<`T`\>(`selector`): `T`; \}
 
-Defined in: [packages/pulsar-core/src/utils/createBoundedUseStore.ts:25](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/utils/createBoundedUseStore.ts#L25)
+Defined in: [packages/pulsar-core/src/utils/createBoundedUseStore.ts:34](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/utils/createBoundedUseStore.ts#L34)
 
-Creates a bounded `useStore` hook from a vanilla Zustand store instance.
-The returned hook is fully typed and can be used with or without a selector.
+Creates a bounded `useStore` hook from a vanilla Zustand store.
+
+This function takes a vanilla Zustand store instance and returns a React hook
+that is pre-bound to that store. This approach provides a cleaner API and
+enhances type inference, eliminating the need to pass the store instance
+on every use.
+
+The returned hook supports two signatures:
+1. `useBoundedStore()`: Selects the entire state.
+2. `useBoundedStore(selector)`: Selects a slice of the state, returning only what the selector function specifies.
 
 ## Type Parameters
 
@@ -25,12 +33,11 @@ The type of the Zustand store (`StoreApi`).
 
 `S`
 
-The vanilla Zustand store instance.
+The vanilla Zustand store instance to bind the hook to.
 
 ## Returns
 
-A hook that can be called with an optional selector function.
-- When called with a selector (`useBoundedStore(state => state.someValue)`), it returns the selected slice of the state.
+A fully typed React hook for accessing the store's state.
 
 > (): `ExtractState`\<`S`\>
 

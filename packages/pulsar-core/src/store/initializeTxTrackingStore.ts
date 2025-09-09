@@ -19,23 +19,25 @@ export type TransactionPool<TR, T extends Transaction<TR>> = Record<string, T>;
  * that are updatable via the `updateTxParams` action.
  * @template TR - The type of the tracker identifier.
  */
-type UpdatedParamsFields<TR> = Pick<
-  EvmTransaction<TR>,
-  | 'to'
-  | 'nonce'
-  | 'txKey'
-  | 'pending'
-  | 'hash'
-  | 'status'
-  | 'replacedTxHash'
-  | 'errorMessage'
-  | 'finishedTimestamp'
-  | 'isTrackedModalOpen'
-  | 'isError'
-  | 'maxPriorityFeePerGas'
-  | 'maxFeePerGas'
-  | 'input'
-  | 'value'
+type UpdatableTransactionFields<TR> = Partial<
+  Pick<
+    EvmTransaction<TR>,
+    | 'to'
+    | 'nonce'
+    | 'txKey'
+    | 'pending'
+    | 'hash'
+    | 'status'
+    | 'replacedTxHash'
+    | 'errorMessage'
+    | 'finishedTimestamp'
+    | 'isTrackedModalOpen'
+    | 'isError'
+    | 'maxPriorityFeePerGas'
+    | 'maxFeePerGas'
+    | 'input'
+    | 'value'
+  >
 >;
 
 /**
@@ -44,7 +46,7 @@ type UpdatedParamsFields<TR> = Pick<
  * @template TR - The type of the tracker identifier.
  * @template T - The transaction type.
  */
-export type IInitializeTxTrackingStore<TR, T extends Transaction<TR>> = {
+export interface IInitializeTxTrackingStore<TR, T extends Transaction<TR>> {
   /** An optional callback function to be executed when a transaction successfully completes. */
   onSucceedCallbacks?: (tx: T) => Promise<void> | void;
   /** A pool of all transactions currently being tracked, indexed by their `txKey`. */
@@ -55,16 +57,16 @@ export type IInitializeTxTrackingStore<TR, T extends Transaction<TR>> = {
   initialTx?: InitialTransaction;
 
   /** Adds a new transaction to the tracking pool. */
-  addTxToPool: ({ tx }: { tx: T }) => void;
+  addTxToPool: (tx: T) => void;
   /** Updates one or more parameters of an existing transaction in the pool. */
-  updateTxParams: (fields: UpdatedParamsFields<TR>) => void;
+  updateTxParams: (txKey: string, fields: UpdatableTransactionFields<TR>) => void;
   /** Removes a transaction from the tracking pool using its key. */
   removeTxFromPool: (txKey: string) => void;
   /** Closes the tracking modal for a specific transaction. */
   closeTxTrackedModal: (txKey?: string) => void;
   /** Returns the key of the last transaction that was added to the pool. */
   getLastTxKey: () => string | undefined;
-};
+}
 
 /**
  * Creates a Zustand store slice containing the core logic for transaction tracking.
@@ -85,10 +87,10 @@ export function initializeTxTrackingStore<TR, T extends Transaction<TR>>({
     lastAddedTxKey: undefined,
     initialTx: undefined,
 
-    addTxToPool: ({ tx }) => {
-      set({ lastAddedTxKey: tx.txKey });
+    addTxToPool: (tx) => {
       set((state) =>
         produce(state, (draft) => {
+          draft.lastAddedTxKey = tx.txKey;
           if (tx.txKey) {
             draft.transactionsPool[tx.txKey] = {
               ...tx,
@@ -99,15 +101,13 @@ export function initializeTxTrackingStore<TR, T extends Transaction<TR>>({
       );
     },
 
-    updateTxParams: (tx) => {
+    updateTxParams: (txKey, fields) => {
       set((state) =>
         produce(state, (draft) => {
+          const tx = draft.transactionsPool[txKey];
           // Ensure the transaction exists before attempting to update
-          if (draft.transactionsPool[tx.txKey]) {
-            draft.transactionsPool[tx.txKey] = {
-              ...draft.transactionsPool[tx.txKey],
-              ...tx,
-            };
+          if (tx) {
+            Object.assign(tx, fields);
           }
         }),
       );
@@ -122,21 +122,17 @@ export function initializeTxTrackingStore<TR, T extends Transaction<TR>>({
     },
 
     closeTxTrackedModal: (txKey) => {
-      if (txKey) {
-        set((state) =>
-          produce(state, (draft) => {
-            if (draft.transactionsPool[txKey]) {
-              draft.transactionsPool[txKey].isTrackedModalOpen = false;
-            }
-          }),
-        );
-      }
-      // Always clear the initial transaction state when a modal is closed
-      set({ initialTx: undefined });
+      set((state) =>
+        produce(state, (draft) => {
+          if (txKey && draft.transactionsPool[txKey]) {
+            draft.transactionsPool[txKey].isTrackedModalOpen = false;
+          }
+          // Always clear the initial transaction state when a modal is closed
+          draft.initialTx = undefined;
+        }),
+      );
     },
 
-    getLastTxKey: () => {
-      return get().lastAddedTxKey;
-    },
+    getLastTxKey: () => get().lastAddedTxKey,
   });
 }

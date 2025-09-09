@@ -4,9 +4,15 @@
 
 # createPulsarStore()
 
-> **createPulsarStore**\<`TR`, `T`, `A`\>(`__namedParameters`): `Write`\<`StoreApi`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>, `StorePersist`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>, [`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>\>
+> **createPulsarStore**\<`TR`, `T`, `A`\>(`__namedParameters`): `WithPersist`\<`StoreApi`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>, [`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>
 
-Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:10](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/store/txTrackingStore.ts#L10)
+Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:34](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/store/txTrackingStore.ts#L34)
+
+Creates the main Pulsar store for transaction tracking.
+
+This function sets up a Zustand store with persistence, combining the core
+transaction slice with adapter-specific logic to handle the entire lifecycle
+of a transaction.
 
 ## Type Parameters
 
@@ -14,20 +20,28 @@ Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:10](https://githu
 
 `TR`
 
+The type of the tracker identifier (e.g., a string enum).
+
 ### T
 
 `T` *extends* [`Transaction`](../type-aliases/Transaction.md)\<`TR`\>
+
+The specific transaction type, extending the base `Transaction`.
 
 ### A
 
 `A`
 
+The type for the adapter-specific context or API.
+
 ## Parameters
 
 ### \_\_namedParameters
 
-`object` & `PersistOptions`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>, [`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>
+`object` & `PersistOptions`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>, [`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>, `unknown`\>
 
 ## Returns
 
-`Write`\<`StoreApi`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>, `StorePersist`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>, [`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>\>
+`WithPersist`\<`StoreApi`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>, [`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>
+
+A fully configured Zustand store instance.

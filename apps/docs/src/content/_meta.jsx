@@ -8,5 +8,5 @@ export default {
   evmStandalone: 'Pulsar EVM Standalone',
   libraryComparison: 'Library comparison',
   customization: 'Customization',
-  apiReference: 'API reference'
+  apiReference: 'API reference',
 };

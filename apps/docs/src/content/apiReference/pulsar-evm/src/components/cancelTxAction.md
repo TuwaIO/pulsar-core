@@ -6,10 +6,10 @@
 
 > **cancelTxAction**\<`T`\>(`params`): `Promise`\<`` `0x${string}` ``\>
 
-Defined in: [packages/pulsar-evm/src/utils/cancelTxAction.ts:34](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/utils/cancelTxAction.ts#L34)
+Defined in: [packages/pulsar-evm/src/utils/cancelTxAction.ts:48](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/utils/cancelTxAction.ts#L48)
 
-Cancels a pending transaction by sending a new, zero-value transaction to oneself
-with the same nonce but a higher gas price.
+Cancels a pending EVM transaction by sending a new, zero-value transaction to oneself
+with the same nonce but higher gas fees. This effectively replaces the original transaction.
 
 ## Type Parameters
 
@@ -17,11 +17,13 @@ with the same nonce but a higher gas price.
 
 `T` *extends* `Transaction`\<`any`\>
 
+The transaction type, which must be a valid EVM transaction.
+
 ## Parameters
 
 ### params
 
-The parameters for the cancellation.
+The parameters required to cancel the transaction.
 
 #### config
 
@@ -33,7 +35,7 @@ The wagmi configuration object.
 
 `T`
 
-The transaction object to be canceled. Must contain nonce, gas fees, etc.
+The original transaction object to be canceled. It must contain the nonce and gas fee fields.
 
 ## Returns
 
@@ -43,20 +45,24 @@ A promise that resolves with the hash of the new cancellation transaction.
 
 ## Throws
 
-Throws an error if the transaction is missing required fields or if sending fails.
+Throws an error if:
+- The transaction is not an EVM transaction.
+- The transaction is missing required fields (`nonce`, `maxFeePerGas`, etc.).
+- The wagmi config is not provided.
+- No connected account is found.
+- The `sendTransaction` call fails.
 
 ## Example
 
 ```ts
-import { cancelTxAction } from './cancelTxAction';
-
-const handleCancel = async () => {
+const handleCancel = async (stuckTransaction) => {
 try {
 const cancelTxHash = await cancelTxAction({
 config: wagmiConfig,
 tx: stuckTransaction,
 });
-console.log('Cancellation transaction sent:', cancelTxHash);
+console.log('Cancellation transaction sent with hash:', cancelTxHash);
+// You should now update your state to track this new transaction.
 } catch (error) {
 console.error('Failed to cancel transaction:', error);
 }

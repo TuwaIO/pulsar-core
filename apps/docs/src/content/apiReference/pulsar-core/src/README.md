@@ -9,15 +9,18 @@
 - [TransactionAdapter](enumerations/TransactionAdapter.md)
 - [TransactionStatus](enumerations/TransactionStatus.md)
 
+## Interfaces
+
+- [IInitializeTxTrackingStore](interfaces/IInitializeTxTrackingStore.md)
+
 ## Type Aliases
 
 - [BaseTransaction](type-aliases/BaseTransaction.md)
 - [EvmTransaction](type-aliases/EvmTransaction.md)
-- [IInitializeTxTrackingStore](type-aliases/IInitializeTxTrackingStore.md)
-- [InitializePollingTracker](type-aliases/InitializePollingTracker.md)
 - [InitialTransaction](type-aliases/InitialTransaction.md)
 - [InitialTransactionParams](type-aliases/InitialTransactionParams.md)
 - [ITxTrackingStore](type-aliases/ITxTrackingStore.md)
+- [PollingTrackerConfig](type-aliases/PollingTrackerConfig.md)
 - [SolanaTransaction](type-aliases/SolanaTransaction.md)
 - [StarknetTransaction](type-aliases/StarknetTransaction.md)
 - [StoreSlice](type-aliases/StoreSlice.md)
@@ -40,4 +43,4 @@
 - [selectAllTransactionsByActiveWallet](functions/selectAllTransactionsByActiveWallet.md)
 - [selectPendingTransactions](functions/selectPendingTransactions.md)
 - [selectPendingTransactionsByActiveWallet](functions/selectPendingTransactionsByActiveWallet.md)
-- [selectTXByKey](functions/selectTXByKey.md)
+- [selectTxByKey](functions/selectTxByKey.md)

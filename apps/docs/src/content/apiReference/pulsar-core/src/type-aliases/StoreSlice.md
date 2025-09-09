@@ -2,13 +2,13 @@
 
 ***
 
-# StoreSlice()\<T, E\>
+# StoreSlice()\<T, S\>
 
-> **StoreSlice**\<`T`, `E`\> = (`set`, `get`) => `T`
+> **StoreSlice**\<`T`, `S`\> = (`set`, `get`) => `T`
 
-Defined in: [packages/pulsar-core/src/types.ts:16](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/types.ts#L16)
+Defined in: [packages/pulsar-core/src/types.ts:20](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/types.ts#L20)
 
-A utility type for creating modular Zustand store slices.
+A utility type for creating modular Zustand store slices, enabling composable state management.
 
 ## Type Parameters
 
@@ -16,23 +16,23 @@ A utility type for creating modular Zustand store slices.
 
 `T` *extends* `object`
 
-The state slice type.
+The type of the state slice.
 
-### E
+### S
 
-`E` *extends* `object` = `T`
+`S` *extends* `object` = `T`
 
-The full store state type, defaults to T.
+The type of the full store state, defaulting to T.
 
 ## Parameters
 
 ### set
 
-`StoreApi`\<`E` *extends* `T` ? `E` : `E` & `T`\>\[`"setState"`\]
+`StoreApi`\<`S` *extends* `T` ? `S` : `S` & `T`\>\[`"setState"`\]
 
 ### get
 
-`StoreApi`\<`E` *extends* `T` ? `E` : `E` & `T`\>\[`"getState"`\]
+`StoreApi`\<`S` *extends* `T` ? `S` : `S` & `T`\>\[`"getState"`\]
 
 ## Returns
 

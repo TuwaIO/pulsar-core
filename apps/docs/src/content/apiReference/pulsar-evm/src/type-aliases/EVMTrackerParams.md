@@ -6,7 +6,7 @@
 
 > **EVMTrackerParams** = `object`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:27](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/evmTracker.ts#L27)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:29](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/evmTracker.ts#L29)
 
 Defines the parameters for the low-level EVM transaction tracker.
 
@@ -16,19 +16,15 @@ Defines the parameters for the low-level EVM transaction tracker.
 
 > **chains**: `Chain`[]
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:31](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/evmTracker.ts#L31)
-
-An array of `viem` chain objects supported by the application.
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:31](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/evmTracker.ts#L31)
 
 ***
 
-### onFailed()
+### onFailure()
 
-> **onFailed**: (`error?`) => `void`
+> **onFailure**: (`error?`) => `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:39](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/evmTracker.ts#L39)
-
-Callback executed if an error occurs during tracking or if the transaction fails.
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:35](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/evmTracker.ts#L35)
 
 #### Parameters
 
@@ -42,17 +38,45 @@ Callback executed if an error occurs during tracking or if the transaction fails
 
 ***
 
-### onFinished()
+### onInitialize()?
 
-> **onFinished**: (`localTx`, `receipt`, `client`) => `Promise`\<`void`\>
+> `optional` **onInitialize**: () => `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:35](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/evmTracker.ts#L35)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:36](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/evmTracker.ts#L36)
 
-Callback executed when the transaction is successfully mined and included in a block.
+#### Returns
+
+`void`
+
+***
+
+### onReplaced()
+
+> **onReplaced**: (`replacement`) => `void`
+
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:34](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/evmTracker.ts#L34)
 
 #### Parameters
 
-##### localTx
+##### replacement
+
+`ReplacementReturnType`
+
+#### Returns
+
+`void`
+
+***
+
+### onSuccess()
+
+> **onSuccess**: (`txDetails`, `receipt`, `client`) => `Promise`\<`void`\>
+
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:33](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/evmTracker.ts#L33)
+
+#### Parameters
+
+##### txDetails
 
 `GetTransactionReturnType`
 
@@ -70,51 +94,15 @@ Callback executed when the transaction is successfully mined and included in a b
 
 ***
 
-### onInitialize()?
+### onTxDetailsFetched()
 
-> `optional` **onInitialize**: () => `void`
+> **onTxDetailsFetched**: (`txDetails`) => `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:41](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/evmTracker.ts#L41)
-
-Optional callback executed once when the tracker starts.
-
-#### Returns
-
-`void`
-
-***
-
-### onReplaced()
-
-> **onReplaced**: (`replacement`) => `void`
-
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:37](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/evmTracker.ts#L37)
-
-Callback executed when the transaction is replaced (e.g., sped up or cancelled).
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:32](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/evmTracker.ts#L32)
 
 #### Parameters
 
-##### replacement
-
-`ReplacementReturnType`
-
-#### Returns
-
-`void`
-
-***
-
-### onTxDetailsGot()
-
-> **onTxDetailsGot**: (`localTx`) => `void`
-
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:33](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/evmTracker.ts#L33)
-
-Callback executed when the getTransaction info got successfully.
-
-#### Parameters
-
-##### localTx
+##### txDetails
 
 `GetTransactionReturnType`
 
@@ -128,9 +116,7 @@ Callback executed when the getTransaction info got successfully.
 
 > `optional` **retryCount**: `number`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:43](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/evmTracker.ts#L43)
-
-The number of times to retry fetching the transaction if it's not found initially. Defaults to 10.
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:37](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/evmTracker.ts#L37)
 
 ***
 
@@ -138,9 +124,7 @@ The number of times to retry fetching the transaction if it's not found initiall
 
 > `optional` **retryTimeout**: `number`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:45](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/evmTracker.ts#L45)
-
-The delay (in milliseconds) between retry attempts. Defaults to 3000ms.
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:38](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/evmTracker.ts#L38)
 
 ***
 
@@ -148,9 +132,7 @@ The delay (in milliseconds) between retry attempts. Defaults to 3000ms.
 
 > **tx**: `Pick`\<`Transaction`\<[`TransactionTracker`](../enumerations/TransactionTracker.md)\>, `"chainId"` \| `"txKey"`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:29](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/evmTracker.ts#L29)
-
-The transaction object to track, requiring at least `chainId` and `txKey` (the transaction hash).
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:30](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/evmTracker.ts#L30)
 
 ***
 
@@ -158,6 +140,4 @@ The transaction object to track, requiring at least `chainId` and `txKey` (the t
 
 > `optional` **waitForTransactionReceiptParams**: `WaitForTransactionReceiptParameters`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:47](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/evmTracker.ts#L47)
-
-Optional parameters to pass to viem's `waitForTransactionReceipt` function.
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:39](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/evmTracker.ts#L39)

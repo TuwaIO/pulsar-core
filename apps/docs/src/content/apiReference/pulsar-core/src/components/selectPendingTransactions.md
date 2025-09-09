@@ -6,9 +6,9 @@
 
 > **selectPendingTransactions**\<`TR`, `T`\>(`transactionsPool`): `T`[]
 
-Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:27](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/store/transactionsSelectors.ts#L27)
+Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:27](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/store/transactionsSelectors.ts#L27)
 
-Selects all transactions that are currently in a pending state.
+Selects all transactions that are currently in a pending state, sorted chronologically.
 
 ## Type Parameters
 
@@ -30,7 +30,7 @@ The transaction type.
 
 [`TransactionPool`](../type-aliases/TransactionPool.md)\<`TR`, `T`\>
 
-The entire pool of transactions from the store.
+The entire transaction pool from the store.
 
 ## Returns
 

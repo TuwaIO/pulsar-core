@@ -4,20 +4,20 @@
 
 # ITxTrackingStore\<TR, T, A\>
 
-> **ITxTrackingStore**\<`TR`, `T`, `A`\> = [`IInitializeTxTrackingStore`](IInitializeTxTrackingStore.md)\<`TR`, `T`\> & `object`
+> **ITxTrackingStore**\<`TR`, `T`, `A`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`TR`, `T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:234](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/types.ts#L234)
+Defined in: [packages/pulsar-core/src/types.ts:256](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/types.ts#L256)
 
-Interface for the complete transaction tracking store.
+The complete interface for the Pulsar transaction tracking store.
 
-## Type declaration
+## Type Declaration
 
 ### handleTransaction()
 
 > **handleTransaction**: (`params`) => `Promise`\<`void`\>
 
-A wrapper function that handles the entire lifecycle of a transaction.
-It creates an `InitialTransaction`, executes the on-chain action, and tracks its status.
+The core function that handles the entire lifecycle of a new transaction.
+It manages UI state, executes the on-chain action, and initiates background tracking.
 
 #### Parameters
 
@@ -29,17 +29,19 @@ The parameters for handling the transaction.
 
 () => `Promise`\<`A` \| `undefined`\>
 
-The async function to execute (e.g., a smart contract write call).
+The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined.
 
 ###### defaultTracker?
 
 `TR`
 
+The default tracker to use if it cannot be determined automatically.
+
 ###### params
 
 [`InitialTransactionParams`](InitialTransactionParams.md)
 
-The metadata for the transaction to be created, of type `InitialTransactionParams`.
+The metadata for the transaction.
 
 #### Returns
 
@@ -49,8 +51,8 @@ The metadata for the transaction to be created, of type `InitialTransactionParam
 
 > **initializeTransactionsPool**: () => `Promise`\<`void`\>
 
-Initializes all active trackers for pending transactions in the pool.
-This is useful for resuming tracking after a page reload.
+Initializes trackers for all pending transactions in the pool.
+This is essential for resuming tracking after a page reload.
 
 #### Returns
 
@@ -74,8 +76,4 @@ The transaction type.
 
 `A`
 
-The return type of the action function being wrapped.
-
-## Template
-
-The configuration object type (e.g., wagmi config).
+The return type of the `actionFunction`.

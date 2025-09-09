@@ -18,8 +18,8 @@ Simply define your overrides in your global CSS file.
 /* In your global stylesheet (e.g., app.css) */
 :root {
   /* Override primary text and accent colors */
-  --tuwa-text-primary: #111827;     /* e.g., dark gray */
-  --tuwa-text-accent: #4f46e5;      /* e.g., indigo */
+  --tuwa-text-primary: #111827; /* e.g., dark gray */
+  --tuwa-text-accent: #4f46e5; /* e.g., indigo */
 
   /* Override primary background colors */
   --tuwa-bg-primary: #ffffff;
@@ -36,11 +36,11 @@ Simply define your overrides in your global CSS file.
   --tuwa-bg-primary: #111827;
   --tuwa-bg-secondary: #1f2937;
 }
-````
+```
 
 For a full list of available CSS variables, you can refer to the `variables.css` file within the `@tuwaio/nova-core` package.
 
------
+---
 
 ## 2\. Customizing Text (Internationalization)
 
@@ -72,9 +72,9 @@ export function AppProviders({ children }) {
   return (
     <WagmiProvider config={config}>
       {/* Your other application providers */}
-      
+
       {children}
-      
+
       {/* 2. Pass the custom labels directly to NovaProvider */}
       <NovaProvider labels={customLabels} />
     </WagmiProvider>
@@ -82,7 +82,7 @@ export function AppProviders({ children }) {
 }
 ```
 
------
+---
 
 ## 3\. Advanced Customization (Headless)
 
@@ -90,7 +90,7 @@ For maximum control, you can use the `@tuwaio/pulsar-core` and `@tuwaio/pulsar-e
 
 Use the state logic exported from `@tuwaio/pulsar-core` to get the transaction state and build components that are 100% unique to your application.
 
------
+---
 
 ## Storybook
 

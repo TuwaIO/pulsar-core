@@ -1,150 +1,120 @@
 /**
- * @file This file implements the transaction tracking logic for Gnosis Safe (now Safe) multisig transactions.
+ * @file This file implements the transaction tracking logic for Safe (formerly Gnosis Safe) multisig transactions.
  * It uses a polling mechanism to query the Safe Transaction Service API for the status of a `safeTxHash`.
  */
 
 import {
-  InitializePollingTracker,
   initializePollingTracker,
   ITxTrackingStore,
+  PollingTrackerConfig,
   Transaction,
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
+import { TransactionAdapter } from '@tuwaio/pulsar-core/src';
 import dayjs from 'dayjs';
 import { Hex, zeroHash } from 'viem';
 
 import { ActionTxKey, TransactionTracker } from '../types';
 import { SafeTransactionServiceUrls } from '../utils/safeConstants';
 
-/**
- * Defines the shape of the transaction object passed to the Safe tracker.
- */
-type InitialSafeTx = Pick<Transaction<TransactionTracker>, 'txKey' | 'chainId' | 'from'> & {
-  pending?: boolean;
-};
+// =================================================================================================
+// 1. TYPES
+// =================================================================================================
 
 /**
  * Defines the shape of the primary response for a single transaction from the Safe Transaction Service API.
  */
 export type SafeTxStatusResponse = {
-  transactionHash: string;
-  safeTxHash: string;
+  transactionHash: Hex | null;
+  safeTxHash: Hex;
   isExecuted: boolean;
   isSuccessful: boolean | null;
   executionDate: string | null;
-  submissionDate: string | null;
+  submissionDate: string;
   modified: string;
   nonce: number;
-  replacedHash?: string; // Custom field for passing replacement info
 };
 
 /**
- * Defines the shape of the response when querying for multiple transactions (e.g., by nonce).
+ * The response shape when querying for multiple transactions (e.g., by nonce).
  */
 type SafeTxSameNonceResponse = {
   count: number;
   results: SafeTxStatusResponse[];
 };
 
-/**
- * Defines the parameters for the low-level `safeTracker` function.
- */
-export type SafeTrackerParams = Pick<
-  InitializePollingTracker<SafeTxStatusResponse, InitialSafeTx, TransactionTracker>,
-  | 'tx'
-  | 'removeTxFromPool'
-  | 'onInitialize'
-  | 'onSucceed'
-  | 'onFailed'
-  | 'onReplaced'
-  | 'onIntervalTick'
-  | 'pollingInterval'
-  | 'retryCount'
->;
+// =================================================================================================
+// 2. FETCHER IMPLEMENTATION
+// =================================================================================================
 
 /**
- * The fetcher function passed to `initializePollingTracker` to get the status of a Safe transaction.
- * @returns The raw response from the fetch call.
+ * A reusable fetcher for `initializePollingTracker` that queries the Safe Transaction Service API.
+ * It handles the complex logic of detecting executed, failed, and replaced multisig transactions.
  */
-export async function fetchTxFromSafeAPI({
-  tx,
-  onSucceed,
-  onFailed,
-  onIntervalTick,
-  onReplaced,
-  clearWatch,
-}: {
-  clearWatch: (withoutRemoving?: boolean) => void;
-} & Pick<SafeTrackerParams, 'onIntervalTick' | 'onSucceed' | 'onFailed' | 'onReplaced' | 'tx'>): Promise<Response> {
-  const primaryTxResponse = await fetch(
-    `${SafeTransactionServiceUrls[tx.chainId as number]}/multisig-transactions/${tx.txKey}/`,
-  );
+export const safeFetcher: PollingTrackerConfig<
+  SafeTxStatusResponse,
+  Transaction<TransactionTracker>,
+  TransactionTracker
+>['fetcher'] = async ({ tx, stopPolling, onSuccess, onFailure, onReplaced, onIntervalTick }) => {
+  const baseUrl = SafeTransactionServiceUrls[tx.chainId as number];
+  if (!baseUrl) {
+    throw new Error(`Safe Transaction Service URL not found for chainId: ${tx.chainId}`);
+  }
 
+  // 1. Fetch the status of the primary transaction.
+  const primaryTxResponse = await fetch(`${baseUrl}/multisig-transactions/${tx.txKey}/`);
   if (!primaryTxResponse.ok) {
-    return primaryTxResponse; // Let the polling tracker handle the retry
+    // Treat 404 as a terminal failure (transaction is lost).
+    if (primaryTxResponse.status === 404) {
+      onFailure();
+    }
+    throw new Error(`Safe API responded with status: ${primaryTxResponse.status}`);
   }
-
   const safeStatus = (await primaryTxResponse.json()) as SafeTxStatusResponse;
+  onIntervalTick?.(safeStatus);
 
-  // Fetch all other transactions with the same nonce to check for replacements.
-  const nonceTxsResponse = await fetch(
-    `${SafeTransactionServiceUrls[tx.chainId as number]}/safes/${tx.from}/multisig-transactions/?nonce=${safeStatus.nonce}`,
-  );
-
-  if (!nonceTxsResponse.ok) {
-    return nonceTxsResponse; // Let the polling tracker handle the retry
+  // 2. Check if the primary transaction itself has been executed.
+  if (safeStatus.isExecuted) {
+    if (safeStatus.isSuccessful) {
+      onSuccess(safeStatus);
+    } else {
+      onFailure(safeStatus);
+    }
+    return;
   }
 
+  // 3. If still pending, check for replacements.
+  // This is necessary because another transaction with the same nonce might have been executed.
+  const nonceTxsResponse = await fetch(`${baseUrl}/safes/${tx.from}/multisig-transactions/?nonce=${safeStatus.nonce}`);
+  if (!nonceTxsResponse.ok) {
+    throw new Error(`Safe API (nonce check) responded with status: ${nonceTxsResponse.status}`);
+  }
   const sameNonceTxs = (await nonceTxsResponse.json()) as SafeTxSameNonceResponse;
   const executedTx = sameNonceTxs.results.find((t) => t.isExecuted);
 
-  // Case 1: Another transaction with the same nonce was executed. This one was replaced.
-  if (executedTx && executedTx.safeTxHash !== safeStatus.safeTxHash) {
-    onReplaced?.({ ...safeStatus, replacedHash: executedTx.safeTxHash });
-    clearWatch(true);
-    return nonceTxsResponse;
+  if (executedTx) {
+    // If an executed transaction exists and it's not ours, our transaction was replaced.
+    onReplaced?.(executedTx);
+    return;
   }
 
-  // Case 2: The transaction itself was executed.
-  if (safeStatus.isExecuted) {
-    if (safeStatus.isSuccessful) {
-      onSucceed(safeStatus);
-    } else {
-      onFailed(safeStatus);
-    }
-    clearWatch(true);
-    return primaryTxResponse;
+  // 4. Safeguard: Stop polling for very old pending transactions.
+  if (dayjs().diff(dayjs(safeStatus.submissionDate), 'day') >= 1) {
+    stopPolling({ withoutRemoving: true });
   }
+};
 
-  // Case 3: The transaction is still pending.
-  // Safeguard: Stop polling for transactions that have been pending for over a day.
-  const modifiedDate = dayjs(safeStatus.modified);
-  if (dayjs().diff(modifiedDate, 'day') >= 1) {
-    clearWatch(); // Stop polling and remove from pool
-    return primaryTxResponse;
-  }
-
-  // Otherwise, just report the current status and continue polling.
-  onIntervalTick?.(safeStatus);
-
-  return primaryTxResponse;
-}
+// =================================================================================================
+// 3. STORE-CONNECTED TRACKER
+// =================================================================================================
 
 /**
- * A low-level tracker for monitoring Safe multisig transactions.
- * It wraps the generic polling tracker with the Safe-specific fetcher logic.
+ * A higher-level wrapper that integrates the Safe polling logic with the Pulsar store.
+ * It uses the generic `safeFetcher` and provides store-specific callbacks.
+ *
+ * @template T - The application-specific transaction type.
  */
-export async function safeTracker(params: SafeTrackerParams): Promise<void> {
-  await initializePollingTracker<SafeTxStatusResponse, InitialSafeTx, TransactionTracker>({
-    ...params,
-    fetcher: fetchTxFromSafeAPI,
-  });
-}
-
-/**
- * A higher-level wrapper for `safeTracker` that integrates directly with the Zustand store.
- */
-export async function safeTrackerForStore<T extends Transaction<TransactionTracker>>({
+export function safeTrackerForStore<T extends Transaction<TransactionTracker>>({
   tx,
   transactionsPool,
   updateTxParams,
@@ -156,15 +126,16 @@ export async function safeTrackerForStore<T extends Transaction<TransactionTrack
 > & {
   tx: T;
 }) {
-  return await safeTracker({
+  return initializePollingTracker<SafeTxStatusResponse, T, TransactionTracker>({
     tx,
+    fetcher: safeFetcher,
     removeTxFromPool,
-    onSucceed: async (response) => {
-      updateTxParams({
-        txKey: tx.txKey,
+    onSuccess: (response) => {
+      updateTxParams(tx.txKey, {
         status: TransactionStatus.Success,
         pending: false,
-        hash: response.transactionHash as Hex,
+        isError: false,
+        hash: response.transactionHash ?? undefined,
         finishedTimestamp: response.executionDate ? dayjs(response.executionDate).unix() : undefined,
       });
 
@@ -173,30 +144,29 @@ export async function safeTrackerForStore<T extends Transaction<TransactionTrack
         onSucceedCallbacks(updatedTx);
       }
     },
-    onIntervalTick: async (response) => {
-      updateTxParams({
-        pending: !response.isExecuted,
-        txKey: tx.txKey,
-        hash: response.transactionHash as Hex,
+    onIntervalTick: (response) => {
+      // Only update fields that might change while pending.
+      updateTxParams(tx.txKey, {
+        hash: response.transactionHash ?? undefined,
       });
     },
-    onFailed: (response) => {
-      updateTxParams({
-        txKey: tx.txKey,
+    onFailure: (response) => {
+      updateTxParams(tx.txKey, {
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
-        hash: response.transactionHash as Hex,
-        finishedTimestamp: response.executionDate ? dayjs(response.executionDate).unix() : undefined,
+        hash: response?.transactionHash ?? undefined,
+        errorMessage: response ? 'Safe transaction failed or was rejected.' : 'Transaction not found.',
+        finishedTimestamp: response?.executionDate ? dayjs(response.executionDate).unix() : undefined,
       });
     },
     onReplaced: (response) => {
-      updateTxParams({
-        txKey: tx.txKey,
+      updateTxParams(tx.txKey, {
         status: TransactionStatus.Replaced,
         pending: false,
-        hash: response.transactionHash as Hex,
-        replacedTxHash: (response.replacedHash ?? zeroHash) as Hex,
+        hash: tx.adapter === TransactionAdapter.EVM ? tx.hash : zeroHash,
+        // The `replacedTxHash` is the `safeTxHash` of the transaction that was executed instead.
+        replacedTxHash: response.safeTxHash ?? zeroHash,
         finishedTimestamp: response.executionDate ? dayjs(response.executionDate).unix() : undefined,
       });
     },

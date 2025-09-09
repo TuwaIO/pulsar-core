@@ -4,12 +4,11 @@
 
 # getAvatar()
 
-> **getAvatar**(`name`): `Promise`\<`undefined` \| `string`\>
+> **getAvatar**(`name`): `Promise`\<`null` \| `string`\>
 
-Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:41](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/utils/ensUtils.ts#L41)
+Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:40](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/utils/ensUtils.ts#L40)
 
-Fetches the avatar for a given ENS name.
-Performs the lookup on Ethereum Mainnet.
+Fetches the avatar URL for a given ENS name from the Ethereum Mainnet.
 
 ## Parameters
 
@@ -21,6 +20,6 @@ The ENS name (e.g., 'vitalik.eth').
 
 ## Returns
 
-`Promise`\<`undefined` \| `string`\>
+`Promise`\<`null` \| `string`\>
 
-The URL of the avatar image or undefined if an error occurs.
+The URL of the avatar image if found, otherwise null.

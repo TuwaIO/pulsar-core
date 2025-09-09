@@ -6,11 +6,11 @@
 
 > **checkAndInitializeTrackerInStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts:28](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts#L28)
+Defined in: [packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts:36](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts#L36)
 
 Initializes the appropriate tracker for a given transaction based on its `tracker` type.
 This function acts as a central router, delegating to the specific tracker implementation
-(e.g., EVM, Gelato, Safe).
+(e.g., standard EVM, Gelato, or Safe).
 
 ## Type Parameters
 
@@ -18,13 +18,13 @@ This function acts as a central router, delegating to the specific tracker imple
 
 `T` *extends* `Transaction`\<[`TransactionTracker`](../enumerations/TransactionTracker.md)\>
 
-The application-specific transaction union type.
+The application-specific transaction type, extending the base `Transaction`.
 
 ## Parameters
 
 ### params
 
-`Pick`\<`ITxTrackingStore`\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>, `"transactionsPool"` \| `"updateTxParams"` \| `"onSucceedCallbacks"` \| `"removeTxFromPool"`\> & `object`
+`InitializeTrackerParams`\<`T`\>
 
 The parameters for initializing the tracker.
 
@@ -32,4 +32,4 @@ The parameters for initializing the tracker.
 
 `Promise`\<`void`\>
 
-A promise that resolves once the tracking process has been initiated.
+A promise that resolves once the tracking process has been successfully initiated.

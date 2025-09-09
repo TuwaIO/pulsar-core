@@ -1,6 +1,6 @@
-@import "nextra-theme-docs/style.css";
+@import 'nextra-theme-docs/style.css';
 @import '@tuwaio/nova-core/dist/index.css';
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --tuwa-primary: #6366f1;
@@ -154,7 +154,7 @@
   border-right-color: rgb(55 65 81 / 0.8);
 }
 
-[data-nextra-sidebar] a[data-active="true"] {
+[data-nextra-sidebar] a[data-active='true'] {
   color: var(--tuwa-primary) !important;
   background-color: rgb(99 102 241 / 0.1) !important;
   border-color: var(--tuwa-primary) !important;
@@ -222,17 +222,17 @@
   text-decoration-color: var(--tuwa-primary);
 }
 
-[data-nextra-callout="info"] {
+[data-nextra-callout='info'] {
   border-color: var(--tuwa-primary) !important;
   background: rgb(99 102 241 / 0.05) !important;
 }
 
-[data-nextra-callout="warning"] {
+[data-nextra-callout='warning'] {
   border-color: var(--tuwa-warning) !important;
   background: rgb(245 158 11 / 0.05) !important;
 }
 
-[data-nextra-callout="error"] {
+[data-nextra-callout='error'] {
   border-color: var(--tuwa-error) !important;
   background: rgb(239 68 68 / 0.05) !important;
 }
@@ -245,12 +245,12 @@
   color: var(--tuwa-primary) !important;
 }
 
-[data-nextra-toc] a[data-active="true"] {
+[data-nextra-toc] a[data-active='true'] {
   color: var(--tuwa-primary) !important;
   border-color: var(--tuwa-primary) !important;
 }
 
-[data-nextra-nav] button[data-active="true"] {
+[data-nextra-nav] button[data-active='true'] {
   color: var(--tuwa-primary) !important;
 }
 
@@ -315,7 +315,7 @@
   color: var(--tuwa-primary) !important;
 }
 
-[data-nextra-content] a[href^="http"]:after {
+[data-nextra-content] a[href^='http']:after {
   filter: hue-rotate(210deg) saturate(1.5);
 }
 
@@ -335,8 +335,13 @@
 }
 
 @keyframes tuwa-float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-4px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .tuwa-float {
@@ -344,8 +349,13 @@
 }
 
 @keyframes tuwa-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .tuwa-pulse {
@@ -353,8 +363,13 @@
 }
 
 @keyframes tuwa-heartbeat {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 [data-nextra-content] :focus {

@@ -6,46 +6,54 @@
 import { useEffect } from 'react';
 
 /**
- * An internal helper function to safely execute the initialization process.
- * It wraps the call in a try-catch block to handle any potential errors.
- *
- * @param {() => Promise<void>} initializeTransactionsPool - The async function from the store that starts the tracking process for pending transactions.
- * @param {(error: Error) => void} errorHandler - A callback function to handle any errors that occur during initialization.
- * @returns {Promise<void>}
- */
-const loadTransactions = async (
-  initializeTransactionsPool: () => Promise<void>,
-  errorHandler: (error: Error) => void,
-): Promise<void> => {
-  try {
-    await initializeTransactionsPool();
-  } catch (error) {
-    errorHandler(error as Error);
-  }
-};
-
-/**
  * A React hook that triggers the initialization of the transaction pool when the component mounts.
- * This ensures that any pending transactions from a previous session are picked up and tracked again.
  *
- * @param {() => Promise<void>} initializeTransactionsPool - The `initializeTransactionsPool` function from the Zustand store.
- * @param {(error: Error) => void} [customErrorHandler] - An optional custom function to handle errors during initialization. Defaults to console.error.
- */
-export const useInitializeTransactionsPool = (
-  initializeTransactionsPool: () => Promise<void>,
-  customErrorHandler?: (error: Error) => void,
-) => {
-  const handleError = (error: Error) => {
-    if (customErrorHandler) {
-      customErrorHandler(error);
-    } else {
-      console.error('Failed to initialize transactions pool:', error);
-    }
-  };
+ * This should be used once in your application's layout or root component. It ensures that any
+ * pending transactions from a previous session (stored in `localStorage`) are picked up and
 
+ * their trackers are re-activated.
+ *
+ * @param {object} params - The parameters for the hook.
+ * @param {() => Promise<void>} params.initializeTransactionsPool - The `initializeTransactionsPool` function from your Pulsar store instance.
+ * @param {(error: Error) => void} [params.onError] - An optional custom function to handle any errors that occur during initialization. Defaults to `console.error`.
+ *
+ * @example
+ * ```tsx
+ * import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
+ * import { pulsarStore } from './path/to/your/store';
+ *
+ * function AppLayout({ children }) {
+ * // This hook will run once when the layout mounts.
+ * useInitializeTransactionsPool({
+ * initializeTransactionsPool: pulsarStore.getState().initializeTransactionsPool,
+ * onError: (err) => console.warn('Failed to re-initialize trackers:', err),
+ * });
+ *
+ * return <div>{children}</div>;
+ * }
+ * ```
+ */
+export const useInitializeTransactionsPool = ({
+  initializeTransactionsPool,
+  onError,
+}: {
+  initializeTransactionsPool: () => Promise<void>;
+  onError?: (error: Error) => void;
+}) => {
   useEffect(() => {
-    // The dependency array ensures this effect runs only when the function reference changes,
-    // which should typically be only on the initial render.
-    loadTransactions(initializeTransactionsPool, handleError);
-  }, [initializeTransactionsPool, customErrorHandler]);
+    const reinitializeTrackers = async () => {
+      try {
+        await initializeTransactionsPool();
+      } catch (error) {
+        const errorHandler = onError ?? ((e: Error) => console.error('Failed to initialize transactions pool:', e));
+        errorHandler(error as Error);
+      }
+    };
+
+    // Run the initialization process.
+    reinitializeTrackers();
+
+    // The dependency array is empty to ensure this effect runs only once on mount.
+    // The functions from a vanilla Zustand store are stable and do not need to be in the array.
+  }, [initializeTransactionsPool, onError]);
 };

@@ -4,17 +4,20 @@
 
 # safeTrackerForStore()
 
-> **safeTrackerForStore**\<`T`\>(`__namedParameters`): `Promise`\<`void`\>
+> **safeTrackerForStore**\<`T`\>(`__namedParameters`): `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/safeTracker.ts:147](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/safeTracker.ts#L147)
+Defined in: [packages/pulsar-evm/src/trackers/safeTracker.ts:117](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/safeTracker.ts#L117)
 
-A higher-level wrapper for `safeTracker` that integrates directly with the Zustand store.
+A higher-level wrapper that integrates the Safe polling logic with the Pulsar store.
+It uses the generic `safeFetcher` and provides store-specific callbacks.
 
 ## Type Parameters
 
 ### T
 
 `T` *extends* `Transaction`\<[`TransactionTracker`](../enumerations/TransactionTracker.md)\>
+
+The application-specific transaction type.
 
 ## Parameters
 
@@ -24,4 +27,4 @@ A higher-level wrapper for `safeTracker` that integrates directly with the Zusta
 
 ## Returns
 
-`Promise`\<`void`\>
+`void`

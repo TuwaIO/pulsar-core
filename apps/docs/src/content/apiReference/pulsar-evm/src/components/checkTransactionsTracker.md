@@ -6,15 +6,16 @@
 
 > **checkTransactionsTracker**(`actionTxKey`, `walletType`): `object`
 
-Defined in: [packages/pulsar-evm/src/utils/checkTransactionsTracker.ts:24](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/utils/checkTransactionsTracker.ts#L24)
+Defined in: [packages/pulsar-evm/src/utils/checkTransactionsTracker.ts:28](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/utils/checkTransactionsTracker.ts#L28)
 
 Determines which transaction tracker to use based on the format of the transaction key and the wallet type.
 
-This function is a critical routing step after a transaction is submitted.
-It follows a priority order:
-1. Checks for a Gelato Task ID.
-2. Checks if the wallet type is 'safe'.
-3. Defaults to a standard Ethereum tracker.
+This function is a critical routing step after a transaction is submitted. It inspects
+the key returned by the `actionFunction` and the wallet type to decide the tracking strategy.
+The logic follows a specific priority:
+1. Checks for a Gelato Task ID structure.
+2. Checks if the wallet type indicates a Safe transaction.
+3. Defaults to the standard on-chain EVM hash tracker.
 
 ## Parameters
 
@@ -28,7 +29,7 @@ The key returned from the transaction submission function (e.g., a hash or a Gel
 
 `string`
 
-The type of the wallet that initiated the action (e.g., 'safe', 'metaMask').
+The type of the wallet that initiated the action (e.g., 'safe', 'injected').
 
 ## Returns
 
@@ -43,3 +44,7 @@ An object containing the determined tracker type and the final string-based tran
 ### txKey
 
 > **txKey**: `string`
+
+## Throws
+
+Throws an error if the `actionTxKey` is not a valid Hex string after failing the Gelato check.

@@ -4,12 +4,16 @@
 
 # selectAdapterByKey()
 
-> **selectAdapterByKey**\<`TR`, `T`, `A`\>(`params`): [`TxAdapter`](../type-aliases/TxAdapter.md)\<`TR`, `T`, `A`\>
+> **selectAdapterByKey**\<`TR`, `T`, `A`\>(`params`): `undefined` \| [`TxAdapter`](../type-aliases/TxAdapter.md)\<`TR`, `T`, `A`\>
 
-Defined in: [packages/pulsar-core/src/utils/selectAdapterByKey.ts:17](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/utils/selectAdapterByKey.ts#L17)
+Defined in: [packages/pulsar-core/src/utils/selectAdapterByKey.ts:25](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/utils/selectAdapterByKey.ts#L25)
 
-Selects and returns a transaction adapter from a list of adapters based on the provided adapter key.
-If no matching adapter is found, the first adapter in the list is returned as a fallback.
+Selects a transaction adapter from a list based on a provided key.
+
+This function searches through an array of `TxAdapter` instances and returns the one
+that matches the given `adapterKey`. If no specific adapter is found, it logs a warning
+and returns the first adapter in the array as a fallback. This fallback mechanism
+ensures that the system can still function, but it highlights a potential configuration issue.
 
 ## Type Parameters
 
@@ -17,31 +21,31 @@ If no matching adapter is found, the first adapter in the list is returned as a 
 
 `TR`
 
-Represents the transaction response type.
+The type of the tracker identifier.
 
 ### T
 
 `T` *extends* [`Transaction`](../type-aliases/Transaction.md)\<`TR`\>
 
-Extends the Transaction type and represents the transaction entity.
+The transaction type, extending the base `Transaction`.
 
 ### A
 
 `A`
 
-Represents the adapter type.
+The type for the adapter-specific context or API.
 
 ## Parameters
 
 ### params
 
-Configuration object for selecting the adapter.
+The parameters for the selection.
 
 #### adapterKey
 
 [`TransactionAdapter`](../enumerations/TransactionAdapter.md)
 
-The key used to identify the desired transaction adapter.
+The key of the desired adapter.
 
 #### adapters
 
@@ -51,6 +55,6 @@ An array of available transaction adapters.
 
 ## Returns
 
-[`TxAdapter`](../type-aliases/TxAdapter.md)\<`TR`, `T`, `A`\>
+`undefined` \| [`TxAdapter`](../type-aliases/TxAdapter.md)\<`TR`, `T`, `A`\>
 
-The transaction adapter corresponding to the provided key, or the first adapter in the list.
+The found transaction adapter, the fallback adapter, or undefined if the adapters array is empty.

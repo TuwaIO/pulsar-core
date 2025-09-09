@@ -11,15 +11,19 @@ import { ActionTxKey, TransactionTracker } from '../types';
 /**
  * Determines which transaction tracker to use based on the format of the transaction key and the wallet type.
  *
- * This function is a critical routing step after a transaction is submitted.
- * It follows a priority order:
- * 1. Checks for a Gelato Task ID.
- * 2. Checks if the wallet type is 'safe'.
- * 3. Defaults to a standard Ethereum tracker.
+ * This function is a critical routing step after a transaction is submitted. It inspects
+ * the key returned by the `actionFunction` and the wallet type to decide the tracking strategy.
+ * The logic follows a specific priority:
+ * 1. Checks for a Gelato Task ID structure.
+ * 2. Checks if the wallet type indicates a Safe transaction.
+ * 3. Defaults to the standard on-chain EVM hash tracker.
  *
  * @param {ActionTxKey} actionTxKey - The key returned from the transaction submission function (e.g., a hash or a Gelato task object).
- * @param {string} walletType - The type of the wallet that initiated the action (e.g., 'safe', 'metaMask').
+ * @param {string} walletType - The type of the wallet that initiated the action (e.g., 'safe', 'injected').
+ *
  * @returns {{ tracker: TransactionTracker; txKey: string }} An object containing the determined tracker type and the final string-based transaction key.
+ *
+ * @throws {Error} Throws an error if the `actionTxKey` is not a valid Hex string after failing the Gelato check.
  */
 export function checkTransactionsTracker(
   actionTxKey: ActionTxKey,
@@ -33,14 +37,19 @@ export function checkTransactionsTracker(
     };
   }
 
-  // At this point, actionTxKey must be a Hex string (transaction hash or SafeTxHash).
-  // We can add a check for robustness, although TypeScript should infer this.
+  // At this point, actionTxKey must be a Hex string (e.g., a transaction hash or SafeTxHash).
+  // This check adds robustness in case of type mismatches.
   if (!isHex(actionTxKey)) {
-    throw new Error('Invalid transaction key format. Expected a Hex string or GelatoTxKey object.');
+    throw new Error(
+      `Invalid transaction key format. Expected a Hex string or a GelatoTxKey object, but received: ${JSON.stringify(
+        actionTxKey,
+      )}`,
+    );
   }
 
   // 2. Second priority: Check if the transaction came from a Safe wallet.
-  if (walletType === 'safe') {
+  // The check is case-insensitive for robustness.
+  if (walletType?.toLowerCase() === 'safe') {
     return {
       tracker: TransactionTracker.Safe,
       txKey: actionTxKey,

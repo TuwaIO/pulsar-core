@@ -4,9 +4,9 @@
 
 # TransactionStatus
 
-Defined in: [packages/pulsar-core/src/types.ts:36](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/types.ts#L36)
+Defined in: [packages/pulsar-core/src/types.ts:44](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/types.ts#L44)
 
-Represents the final status of a transaction.
+Represents the terminal status of a transaction after it has been processed.
 
 ## Enumeration Members
 
@@ -14,9 +14,9 @@ Represents the final status of a transaction.
 
 > **Failed**: `"Failed"`
 
-Defined in: [packages/pulsar-core/src/types.ts:38](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/types.ts#L38)
+Defined in: [packages/pulsar-core/src/types.ts:46](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/types.ts#L46)
 
-The transaction failed to execute.
+The transaction failed to execute due to an on-chain error or rejection.
 
 ***
 
@@ -24,9 +24,9 @@ The transaction failed to execute.
 
 > **Replaced**: `"Replaced"`
 
-Defined in: [packages/pulsar-core/src/types.ts:42](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/types.ts#L42)
+Defined in: [packages/pulsar-core/src/types.ts:50](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/types.ts#L50)
 
-The transaction was replaced by another (e.g., speed-up).
+The transaction was replaced by another with the same nonce (e.g., a speed-up or cancel).
 
 ***
 
@@ -34,6 +34,6 @@ The transaction was replaced by another (e.g., speed-up).
 
 > **Success**: `"Success"`
 
-Defined in: [packages/pulsar-core/src/types.ts:40](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/types.ts#L40)
+Defined in: [packages/pulsar-core/src/types.ts:48](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/types.ts#L48)
 
 The transaction was successfully mined and executed.

@@ -6,11 +6,11 @@
 
 > **StarknetTransaction**\<`T`\> = [`BaseTransaction`](BaseTransaction.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:132](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-core/src/types.ts#L132)
+Defined in: [packages/pulsar-core/src/types.ts:143](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-core/src/types.ts#L143)
 
 Represents a Starknet-specific transaction, extending the base properties.
 
-## Type declaration
+## Type Declaration
 
 ### actualFee?
 
@@ -29,8 +29,6 @@ The actual fee paid for the transaction.
 ### adapter
 
 > **adapter**: [`Starknet`](../enumerations/TransactionAdapter.md#starknet)
-
-The transaction adapter type.
 
 ### contractAddress?
 

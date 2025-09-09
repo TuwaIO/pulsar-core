@@ -4,12 +4,12 @@
 
 # gelatoTrackerForStore()
 
-> **gelatoTrackerForStore**\<`T`\>(`__namedParameters`): `Promise`\<`void`\>
+> **gelatoTrackerForStore**\<`T`\>(`__namedParameters`): `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:169](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L169)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:137](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L137)
 
-A higher-level wrapper for `gelatoTracker` that integrates directly with the Zustand store.
-It provides the necessary callbacks to update the transaction's state in the store.
+A higher-level wrapper that integrates the Gelato polling logic with the Pulsar store.
+It uses the generic `gelatoFetcher` and provides store-specific callbacks.
 
 ## Type Parameters
 
@@ -17,7 +17,7 @@ It provides the necessary callbacks to update the transaction's state in the sto
 
 `T` *extends* `Transaction`\<[`TransactionTracker`](../enumerations/TransactionTracker.md)\>
 
-The application-specific transaction union type.
+The application-specific transaction type.
 
 ## Parameters
 
@@ -27,4 +27,4 @@ The application-specific transaction union type.
 
 ## Returns
 
-`Promise`\<`void`\>
+`void`

@@ -4,16 +4,18 @@
 
 # isEnsName()
 
-> **isEnsName**(`address`): `boolean`
+> **isEnsName**(`nameOrAddress`): `boolean`
 
-Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:77](https://github.com/TuwaIO/pulsar-core/blob/30fab031cc560c10376add346b879fe90ade5298/packages/pulsar-evm/src/utils/ensUtils.ts#L77)
+Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:83](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/utils/ensUtils.ts#L83)
 
-A simple heuristic to check if a string could be an ENS name.
-It works by checking if the string is NOT a valid Ethereum address.
+A heuristic to check if a string is likely an ENS name.
+
+This is not a foolproof validation but a quick check. A valid ENS name
+must contain at least one dot and should not be a valid Ethereum address.
 
 ## Parameters
 
-### address
+### nameOrAddress
 
 `string`
 
@@ -23,4 +25,12 @@ The string to check.
 
 `boolean`
 
-True if the string is not in a valid address format.
+True if the string is likely an ENS name.
+
+## Example
+
+```ts
+isEnsName('vitalik.eth') // true
+isEnsName('0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045') // false
+isEnsName('notanaddress') // false (doesn't contain a dot)
+```
