@@ -6,9 +6,9 @@
 
 > **InitialTransactionParams** = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:149](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L149)
+Defined in: [packages/pulsar-core/src/types.ts:169](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L169)
 
-Represents the parameters required to initiate a new transaction.
+Represents the parameters required to initiate a new transaction tracking flow.
 
 ## Properties
 
@@ -16,9 +16,9 @@ Represents the parameters required to initiate a new transaction.
 
 > `optional` **actionKey**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:153](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L153)
+Defined in: [packages/pulsar-core/src/types.ts:172](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L172)
 
-A key identifying the retry logic from the actions registry.
+A key to identify the re-executable action from the `TxActions` registry.
 
 ***
 
@@ -26,9 +26,7 @@ A key identifying the retry logic from the actions registry.
 
 > **adapter**: [`TransactionAdapter`](../enumerations/TransactionAdapter.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:151](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L151)
-
-The transaction adapter type.
+Defined in: [packages/pulsar-core/src/types.ts:170](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L170)
 
 ***
 
@@ -36,9 +34,9 @@ The transaction adapter type.
 
 > `optional` **description**: `string` \| \[`string`, `string`, `string`, `string`\]
 
-Defined in: [packages/pulsar-core/src/types.ts:155](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L155)
+Defined in: [packages/pulsar-core/src/types.ts:174](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L174)
 
-A description for the transaction, with states for [pending, success, error, replaced].
+A user-facing description for the transaction.
 
 ***
 
@@ -46,9 +44,9 @@ A description for the transaction, with states for [pending, success, error, rep
 
 > **desiredChainID**: `number` \| `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:157](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L157)
+Defined in: [packages/pulsar-core/src/types.ts:176](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L176)
 
-The ID of the desired blockchain network.
+The target chain ID for the transaction.
 
 ***
 
@@ -56,9 +54,9 @@ The ID of the desired blockchain network.
 
 > `optional` **payload**: `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:159](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L159)
+Defined in: [packages/pulsar-core/src/types.ts:178](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L178)
 
-Any additional data to be associated with the transaction.
+Any custom data to associate with the transaction.
 
 ***
 
@@ -66,9 +64,9 @@ Any additional data to be associated with the transaction.
 
 > `optional` **title**: `string` \| \[`string`, `string`, `string`, `string`\]
 
-Defined in: [packages/pulsar-core/src/types.ts:161](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L161)
+Defined in: [packages/pulsar-core/src/types.ts:180](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L180)
 
-A title for the transaction, with states for [pending, success, error, replaced].
+A user-facing title for the transaction.
 
 ***
 
@@ -76,9 +74,9 @@ A title for the transaction, with states for [pending, success, error, replaced]
 
 > **type**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:163](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L163)
+Defined in: [packages/pulsar-core/src/types.ts:182](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L182)
 
-The type or category of the transaction (e.g., 'increment', 'approve').
+The application-specific type of the transaction.
 
 ***
 
@@ -86,6 +84,6 @@ The type or category of the transaction (e.g., 'increment', 'approve').
 
 > `optional` **withTrackedModal**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:165](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L165)
+Defined in: [packages/pulsar-core/src/types.ts:184](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L184)
 
-If true, the detailed tracking modal will open automatically for this transaction.
+If true, the detailed tracking modal will open automatically upon initiation.

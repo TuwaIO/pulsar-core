@@ -6,10 +6,12 @@
 
 > **checkChainForTx**(`chainId`, `config`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/utils/checkChainForTx.ts:18](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-evm/src/utils/checkChainForTx.ts#L18)
+Defined in: [packages/pulsar-evm/src/utils/checkChainForTx.ts:20](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-evm/src/utils/checkChainForTx.ts#L20)
 
 Checks if the user's wallet is connected to the specified chain. If not, it prompts
-the user to switch to the correct chain and waits for the operation to complete.
+the user to switch to the correct chain.
+
+This function is a crucial prerequisite for any action that requires a specific network.
 
 ## Parameters
 
@@ -29,9 +31,9 @@ The wagmi configuration object.
 
 `Promise`\<`void`\>
 
-A promise that resolves when the wallet is on the correct chain,
-or rejects if the user cancels the switch or an error occurs.
+A promise that resolves when the wallet is on the correct chain.
+It rejects if the user cancels the switch or if another error occurs.
 
 ## Throws
 
-Throws an error if the user rejects the chain switch or if the switch fails.
+Throws a specific error if the user rejects the chain switch or if the switch fails for other reasons.

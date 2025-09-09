@@ -6,27 +6,25 @@
 
 > **SolanaTransaction**\<`T`\> = [`BaseTransaction`](BaseTransaction.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:115](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L115)
+Defined in: [packages/pulsar-core/src/types.ts:127](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L127)
 
 Represents a Solana-specific transaction, extending the base properties.
 
-## Type declaration
+## Type Declaration
 
 ### adapter
 
 > **adapter**: [`SOLANA`](../enumerations/TransactionAdapter.md#solana)
 
-The transaction adapter type.
-
 ### fee?
 
 > `optional` **fee**: `number`
 
-The transaction fee.
+The transaction fee in lamports.
 
 ### instructions?
 
-> `optional` **instructions**: `any`[]
+> `optional` **instructions**: `unknown`[]
 
 The instructions included in the transaction.
 

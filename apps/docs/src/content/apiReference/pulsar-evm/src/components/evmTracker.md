@@ -6,10 +6,10 @@
 
 > **evmTracker**(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:57](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-evm/src/trackers/evmTracker.ts#L57)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:48](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-evm/src/trackers/evmTracker.ts#L48)
 
 A low-level tracker for monitoring a standard EVM transaction by its hash.
-It retries fetching the transaction and then waits for its receipt.
+It retries fetching the transaction and then waits for its receipt to determine the final status.
 
 ## Parameters
 
@@ -22,5 +22,3 @@ The configuration object for the tracker.
 ## Returns
 
 `Promise`\<`void`\>
-
-A promise that resolves when the tracking process is complete (or has terminally failed).

@@ -6,7 +6,13 @@
 
 > **evmAdapter**\<`T`\>(`config`, `appChains`): `TxAdapter`\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>
 
-Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:10](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-evm/src/adapters/evmAdapter.ts#L10)
+Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:34](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-evm/src/adapters/evmAdapter.ts#L34)
+
+Creates an EVM-specific transaction adapter.
+
+This function acts as a constructor for the EVM adapter, bundling all the necessary
+chain-specific utilities (like checking chain, ENS resolution, speeding up transactions, etc.)
+into a single object that conforms to the `TxAdapter` interface.
 
 ## Type Parameters
 
@@ -14,16 +20,28 @@ Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:10](https://github.c
 
 `T` *extends* `Transaction`\<[`TransactionTracker`](../enumerations/TransactionTracker.md)\>
 
+The application-specific transaction type.
+
 ## Parameters
 
 ### config
 
 `Config`
 
+The wagmi configuration object.
+
 ### appChains
 
 `Chain`[]
 
+An array of viem `Chain` objects supported by the application.
+
 ## Returns
 
 `TxAdapter`\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>
+
+The configured EVM transaction adapter.
+
+## Throws
+
+Throws an error if the wagmi `config` is not provided.

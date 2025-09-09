@@ -6,9 +6,10 @@
 
 > **BaseTransaction**\<`T`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:49](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L49)
+Defined in: [packages/pulsar-core/src/types.ts:58](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L58)
 
-The base structure for any transaction being tracked.
+The fundamental structure for any transaction being tracked by Pulsar.
+This forms the base upon which chain-specific transaction types are built.
 
 ## Type Parameters
 
@@ -16,7 +17,7 @@ The base structure for any transaction being tracked.
 
 `T`
 
-The type of the tracker identifier (e.g., 'evm', 'safe').
+The type of the tracker identifier (e.g., 'ethereum', 'gelato', 'safe').
 
 ## Properties
 
@@ -24,9 +25,9 @@ The type of the tracker identifier (e.g., 'evm', 'safe').
 
 > `optional` **actionKey**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:51](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L51)
+Defined in: [packages/pulsar-core/src/types.ts:60](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L60)
 
-A key identifying the retry logic for this transaction from the actions registry.
+A unique key identifying a re-executable action from the `TxActions` registry.
 
 ***
 
@@ -34,7 +35,7 @@ A key identifying the retry logic for this transaction from the actions registry
 
 > **chainId**: `number` \| `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:53](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L53)
+Defined in: [packages/pulsar-core/src/types.ts:62](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L62)
 
 The chain identifier (e.g., 1 for Ethereum Mainnet, 'SN_MAIN' for Starknet).
 
@@ -44,9 +45,9 @@ The chain identifier (e.g., 1 for Ethereum Mainnet, 'SN_MAIN' for Starknet).
 
 > `optional` **description**: `string` \| \[`string`, `string`, `string`, `string`\]
 
-Defined in: [packages/pulsar-core/src/types.ts:55](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L55)
+Defined in: [packages/pulsar-core/src/types.ts:64](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L64)
 
-A description for the transaction, with states for [pending, success, error, replaced].
+A user-facing description. Can be a single string or an array for [pending, success, error, replaced] states.
 
 ***
 
@@ -54,9 +55,9 @@ A description for the transaction, with states for [pending, success, error, rep
 
 > `optional` **errorMessage**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:57](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L57)
+Defined in: [packages/pulsar-core/src/types.ts:66](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L66)
 
-An error message if the transaction failed.
+The error message if the transaction failed.
 
 ***
 
@@ -64,9 +65,9 @@ An error message if the transaction failed.
 
 > `optional` **finishedTimestamp**: `number`
 
-Defined in: [packages/pulsar-core/src/types.ts:59](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L59)
+Defined in: [packages/pulsar-core/src/types.ts:68](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L68)
 
-The timestamp (in seconds) when the transaction was finalized on-chain.
+The on-chain timestamp (in seconds) when the transaction was finalized.
 
 ***
 
@@ -74,9 +75,9 @@ The timestamp (in seconds) when the transaction was finalized on-chain.
 
 > **from**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:61](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L61)
+Defined in: [packages/pulsar-core/src/types.ts:70](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L70)
 
-The sender's address.
+The sender's wallet address.
 
 ***
 
@@ -84,7 +85,7 @@ The sender's address.
 
 > `optional` **isError**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:63](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L63)
+Defined in: [packages/pulsar-core/src/types.ts:72](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L72)
 
 A flag indicating if the transaction is in a failed state.
 
@@ -94,9 +95,9 @@ A flag indicating if the transaction is in a failed state.
 
 > `optional` **isTrackedModalOpen**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:65](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L65)
+Defined in: [packages/pulsar-core/src/types.ts:74](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L74)
 
-A flag indicating if the detailed tracking modal should be open for this transaction. For UI purposes.
+A UI flag to control the visibility of a detailed tracking modal for this transaction.
 
 ***
 
@@ -104,9 +105,9 @@ A flag indicating if the detailed tracking modal should be open for this transac
 
 > **localTimestamp**: `number`
 
-Defined in: [packages/pulsar-core/src/types.ts:67](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L67)
+Defined in: [packages/pulsar-core/src/types.ts:76](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L76)
 
-The local timestamp (in seconds) when the transaction was initiated.
+The local timestamp (in seconds) when the transaction was initiated by the user.
 
 ***
 
@@ -114,9 +115,9 @@ The local timestamp (in seconds) when the transaction was initiated.
 
 > `optional` **payload**: `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:69](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L69)
+Defined in: [packages/pulsar-core/src/types.ts:78](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L78)
 
-Any additional data associated with the transaction.
+Any additional, custom data associated with the transaction.
 
 ***
 
@@ -124,9 +125,9 @@ Any additional data associated with the transaction.
 
 > **pending**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:71](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L71)
+Defined in: [packages/pulsar-core/src/types.ts:80](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L80)
 
-Indicates if the transaction is still pending confirmation.
+A flag indicating if the transaction is still awaiting on-chain confirmation.
 
 ***
 
@@ -134,9 +135,9 @@ Indicates if the transaction is still pending confirmation.
 
 > `optional` **status**: [`TransactionStatus`](../enumerations/TransactionStatus.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:73](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L73)
+Defined in: [packages/pulsar-core/src/types.ts:82](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L82)
 
-The final status of the transaction.
+The final on-chain status of the transaction.
 
 ***
 
@@ -144,9 +145,9 @@ The final status of the transaction.
 
 > `optional` **title**: `string` \| \[`string`, `string`, `string`, `string`\]
 
-Defined in: [packages/pulsar-core/src/types.ts:75](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L75)
+Defined in: [packages/pulsar-core/src/types.ts:84](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L84)
 
-A title for the transaction, with states for [pending, success, error, replaced].
+A user-facing title. Can be a single string or an array for [pending, success, error, replaced] states.
 
 ***
 
@@ -154,9 +155,9 @@ A title for the transaction, with states for [pending, success, error, replaced]
 
 > **tracker**: `T`
 
-Defined in: [packages/pulsar-core/src/types.ts:77](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L77)
+Defined in: [packages/pulsar-core/src/types.ts:86](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L86)
 
-The specific tracker responsible for monitoring this transaction (e.g., 'evm', 'safe', 'gelato', etc.).
+The specific tracker responsible for monitoring this transaction's status.
 
 ***
 
@@ -164,9 +165,9 @@ The specific tracker responsible for monitoring this transaction (e.g., 'evm', '
 
 > **txKey**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:79](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L79)
+Defined in: [packages/pulsar-core/src/types.ts:88](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L88)
 
-The unique key for the transaction within its tracker (e.g., EVM hash, Gelato task ID).
+The unique identifier for the transaction (e.g., EVM hash, Gelato task ID).
 
 ***
 
@@ -174,9 +175,9 @@ The unique key for the transaction within its tracker (e.g., EVM hash, Gelato ta
 
 > **type**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:81](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L81)
+Defined in: [packages/pulsar-core/src/types.ts:90](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L90)
 
-The type or category of the transaction (e.g., 'increment', 'approve').
+The application-specific type or category of the transaction (e.g., 'SWAP', 'APPROVE').
 
 ***
 
@@ -184,6 +185,6 @@ The type or category of the transaction (e.g., 'increment', 'approve').
 
 > **walletType**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:83](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L83)
+Defined in: [packages/pulsar-core/src/types.ts:92](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L92)
 
-The type of wallet used for the transaction.
+The type of wallet used to sign the transaction (e.g., 'injected', 'walletConnect').

@@ -49,10 +49,10 @@
     "zustand": ">=5"
   },
   "devDependencies": {
-    "dayjs": "^1.11.13",
-    "immer": "^10.1.1",
+    "dayjs": "^1.11.18",
+    "immer": "^10.1.3",
     "tsup": "^8.5.0",
     "typescript": "^5.9.2",
-    "zustand": "^5.0.7"
+    "zustand": "^5.0.8"
   }
 }

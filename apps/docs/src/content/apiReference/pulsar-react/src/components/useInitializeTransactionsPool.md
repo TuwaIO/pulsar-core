@@ -4,27 +4,52 @@
 
 # useInitializeTransactionsPool()
 
-> **useInitializeTransactionsPool**(`initializeTransactionsPool`, `customErrorHandler?`): `void`
+> **useInitializeTransactionsPool**(`params`): `void`
 
-Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:34](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L34)
+Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:36](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L36)
 
 A React hook that triggers the initialization of the transaction pool when the component mounts.
-This ensures that any pending transactions from a previous session are picked up and tracked again.
+
+This should be used once in your application's layout or root component. It ensures that any
+pending transactions from a previous session (stored in `localStorage`) are picked up and
+
+their trackers are re-activated.
 
 ## Parameters
 
-### initializeTransactionsPool
+### params
+
+The parameters for the hook.
+
+#### initializeTransactionsPool
 
 () => `Promise`\<`void`\>
 
-The `initializeTransactionsPool` function from the Zustand store.
+The `initializeTransactionsPool` function from your Pulsar store instance.
 
-### customErrorHandler?
+#### onError?
 
 (`error`) => `void`
 
-An optional custom function to handle errors during initialization. Defaults to console.error.
+An optional custom function to handle any errors that occur during initialization. Defaults to `console.error`.
 
 ## Returns
 
 `void`
+
+## Example
+
+```tsx
+import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
+import { pulsarStore } from './path/to/your/store';
+
+function AppLayout({ children }) {
+// This hook will run once when the layout mounts.
+useInitializeTransactionsPool({
+initializeTransactionsPool: pulsarStore.getState().initializeTransactionsPool,
+onError: (err) => console.warn('Failed to re-initialize trackers:', err),
+});
+
+return <div>{children}</div>;
+}
+```

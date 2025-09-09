@@ -16,13 +16,22 @@ export const metadata = {
   description:
     'Official documentation for the Pulsar Engine, the headless state management system for tracking Web3 transactions.',
 
-  keywords: ['Pulsar', 'headless', 'state management', 'transaction tracking', 'web3', 'zustand', 'wagmi', 'viem', 'typescript'],
+  keywords: [
+    'Pulsar',
+    'headless',
+    'state management',
+    'transaction tracking',
+    'web3',
+    'zustand',
+    'wagmi',
+    'viem',
+    'typescript',
+  ],
   authors: [{ name: 'TUWA', url: 'https://github.com/TuwaIO' }],
 
   openGraph: {
     title: 'Pulsar Engine Documentation',
-    description:
-      'The official documentation for the headless state management system for tracking Web3 transactions.',
+    description: 'The official documentation for the headless state management system for tracking Web3 transactions.',
     url: 'https://docs.tuwa.io/',
     siteName: 'Pulsar Engine Docs',
     images: [
@@ -39,8 +48,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Pulsar Engine Documentation',
-    description:
-      'The official documentation for the headless state management system for tracking Web3 transactions.',
+    description: 'The official documentation for the headless state management system for tracking Web3 transactions.',
     images: ['https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/preview-logo.png'],
   },
 };

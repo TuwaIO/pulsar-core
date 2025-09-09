@@ -1,32 +1,38 @@
 /**
- * @file This file contains a utility to ensure the user's wallet is connected to the correct chain before proceeding.
+ * @file This file contains a utility to ensure the user's wallet is connected to the correct chain before proceeding with a transaction.
  */
 
-import { Config, switchChain } from '@wagmi/core';
-import { getAccount } from '@wagmi/core';
+import { Config, getAccount, switchChain } from '@wagmi/core';
 
 /**
  * Checks if the user's wallet is connected to the specified chain. If not, it prompts
- * the user to switch to the correct chain and waits for the operation to complete.
+ * the user to switch to the correct chain.
+ *
+ * This function is a crucial prerequisite for any action that requires a specific network.
  *
  * @param {number} chainId - The ID of the desired blockchain network.
  * @param {Config} config - The wagmi configuration object.
- * @returns {Promise<void>} A promise that resolves when the wallet is on the correct chain,
- * or rejects if the user cancels the switch or an error occurs.
- * @throws {Error} Throws an error if the user rejects the chain switch or if the switch fails.
+ * @returns {Promise<void>} A promise that resolves when the wallet is on the correct chain.
+ * It rejects if the user cancels the switch or if another error occurs.
+ *
+ * @throws {Error} Throws a specific error if the user rejects the chain switch or if the switch fails for other reasons.
  */
 export async function checkChainForTx(chainId: number, config: Config): Promise<void> {
   const { connector, chainId: activeChainId } = getAccount(config);
 
-  // Proceed only if a wallet is connected and it's on the wrong chain.
+  // Proceed only if a wallet is connected and it is on a different chain than required.
   if (connector && activeChainId !== chainId) {
     try {
-      // Directly await the switchChain call. This pauses execution until the user responds.
+      // Pause execution and wait for the user to confirm the chain switch in their wallet.
       await switchChain(config, { chainId });
-    } catch (e) {
-      // The user rejected the request or an error occurred.
-      console.error('Failed to switch chain:', e);
-      throw new Error('User rejected chain switch or an error occurred.');
+    } catch (error) {
+      // Provide a more specific error message based on the type of error.
+      // This helps in distinguishing user rejection from other issues.
+      if ((error as any).cause?.name === 'UserRejectedRequestError') {
+        throw new Error('User rejected the request to switch network.');
+      }
+      console.error('Failed to switch network:', error);
+      throw new Error('An error occurred while switching the network.');
     }
   }
 }

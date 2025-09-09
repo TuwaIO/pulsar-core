@@ -6,65 +6,63 @@
 
 > **EvmTransaction**\<`T`\> = [`BaseTransaction`](BaseTransaction.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:90](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-core/src/types.ts#L90)
+Defined in: [packages/pulsar-core/src/types.ts:103](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L103)
 
-Represents an EVM-specific transaction, extending the base properties.
+Represents an EVM-specific transaction, extending the base properties with EVM fields.
 
-## Type declaration
+## Type Declaration
 
 ### adapter
 
 > **adapter**: [`EVM`](../enumerations/TransactionAdapter.md#evm)
 
-The transaction adapter type.
-
 ### hash?
 
-> `optional` **hash**: `string`
+> `optional` **hash**: `` `0x${string}` ``
 
 The on-chain transaction hash, available after submission.
 
 ### input?
 
-> `optional` **input**: `string`
+> `optional` **input**: `` `0x${string}` ``
 
-The data payload for the transaction, typically for contract interactions.
+The data payload for the transaction, typically for smart contract interactions.
 
 ### maxFeePerGas?
 
 > `optional` **maxFeePerGas**: `string`
 
-The maximum fee per gas for the transaction (EIP-1559).
+The maximum fee per gas for an EIP-1559 transaction (in wei).
 
 ### maxPriorityFeePerGas?
 
 > `optional` **maxPriorityFeePerGas**: `string`
 
-The maximum priority fee per gas for the transaction (EIP-1559).
+The maximum priority fee per gas for an EIP-1559 transaction (in wei).
 
 ### nonce?
 
 > `optional` **nonce**: `number`
 
-The transaction nonce.
+The transaction nonce, a sequential number for the sender's account.
 
 ### replacedTxHash?
 
-> `optional` **replacedTxHash**: `string`
+> `optional` **replacedTxHash**: `` `0x${string}` ``
 
-The hash of a transaction that this one replaced (e.g., for speed-up).
+The hash of a transaction that this one replaced.
 
 ### to?
 
-> `optional` **to**: `string`
+> `optional` **to**: `` `0x${string}` ``
 
-The recipient's address.
+The recipient's address or contract address.
 
 ### value?
 
 > `optional` **value**: `string`
 
-The value (in wei) being sent with the transaction.
+The amount of native currency (in wei) being sent.
 
 ## Type Parameters
 

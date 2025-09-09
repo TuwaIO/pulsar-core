@@ -6,10 +6,10 @@
 
 > **speedUpTxAction**\<`TR`, `T`\>(`params`): `Promise`\<`` `0x${string}` ``\>
 
-Defined in: [packages/pulsar-evm/src/utils/speedUpTxAction.ts:35](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-evm/src/utils/speedUpTxAction.ts#L35)
+Defined in: [packages/pulsar-evm/src/utils/speedUpTxAction.ts:49](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-evm/src/utils/speedUpTxAction.ts#L49)
 
-Speeds up a pending transaction by resubmitting it with the same nonce but higher gas fees.
-This is a common strategy to prevent a transaction from getting stuck.
+Speeds up a pending EVM transaction by resubmitting it with the same nonce but higher gas fees.
+This function is designed to work with wagmi's configuration and actions.
 
 ## Type Parameters
 
@@ -17,9 +17,13 @@ This is a common strategy to prevent a transaction from getting stuck.
 
 `TR`
 
+The type of the tracker identifier.
+
 ### T
 
 `T` *extends* `Transaction`\<`TR`\>
+
+The transaction type, which must be a valid EVM transaction.
 
 ## Parameters
 
@@ -37,7 +41,7 @@ The wagmi configuration object.
 
 `T`
 
-The original transaction object that needs to be sped up.
+The original transaction object that needs to be sped up. It must contain all necessary EVM fields.
 
 ## Returns
 
@@ -47,21 +51,24 @@ A promise that resolves with the hash of the new, speed-up transaction.
 
 ## Throws
 
-Throws an error if the wagmi config is not provided, the account is not found,
-or if the transaction is missing required fields (`nonce`, `maxFeePerGas`, etc.).
+Throws an error if:
+- The transaction is not an EVM transaction.
+- The transaction is missing required fields (`nonce`, `from`, `to`, `value`, `maxFeePerGas`, etc.).
+- The wagmi config is not provided.
+- No connected account is found.
+- The `sendTransaction` call fails for any reason.
 
 ## Example
 
 ```ts
-import { speedUpTxAction } from './speedUpTxAction';
-
-const handleSpeedUp = async () => {
+const handleSpeedUp = async (stuckTransaction) => {
 try {
 const newTxHash = await speedUpTxAction({
 config: wagmiConfig,
 tx: stuckTransaction,
 });
 console.log('Transaction sped up with new hash:', newTxHash);
+// You should now update your state to track this new transaction hash.
 } catch (error) {
 console.error('Failed to speed up transaction:', error);
 }

@@ -1,20 +1,27 @@
-import { selectTXByKey, Transaction, TransactionAdapter, TransactionPool } from '@tuwaio/pulsar-core';
+/**
+ * @file This file contains a selector utility for generating a block explorer URL for a given EVM transaction.
+ */
+
+import { selectTxByKey, Transaction, TransactionAdapter, TransactionPool } from '@tuwaio/pulsar-core';
 import { Chain, Hex } from 'viem';
 
 import { TransactionTracker } from '../types';
 import { gnosisSafeLinksHelper } from './safeConstants';
 
 /**
- * Generates a URL to a block explorer for a given transaction.
- * It handles different URL structures for standard EVM transactions and Safe transactions.
+ * Generates a URL to a block explorer or Safe UI for a given transaction.
+ * It handles different URL structures for standard EVM transactions and Safe multi-sig transactions.
  *
  * @template TR - The generic type for the tracker identifier.
  * @template T - The transaction type.
+ *
  * @param {TransactionPool<TR, T>} transactionsPool - The entire pool of transactions from the store.
- * @param {Chain[]} chains - An array of supported chain objects from viem.
- * @param {Hex} txKey - The tx key of the transaction for which to generate the link.
- * @param {Hex} [replacedTxHash] - Optional. If provided, the link will be generated for this hash instead of the original.
- * @returns {string} The URL to the transaction on the corresponding block explorer, or an empty string if not found.
+ * @param {Chain[]} chains - An array of supported chain objects, typically from `viem/chains`.
+ * @param {Hex} txKey - The unique key (`txKey`) of the transaction for which to generate the link.
+ * @param {Hex} [replacedTxHash] - Optional. If this is a speed-up/cancel transaction, this is the hash of the new transaction.
+ *
+ * @returns {string} The full URL to the transaction on the corresponding block explorer or Safe app,
+ * or an empty string if the transaction or required chain configuration is not found.
  */
 export const selectEvmTxExplorerLink = <TR, T extends Transaction<TR>>(
   transactionsPool: TransactionPool<TR, T>,
@@ -22,35 +29,33 @@ export const selectEvmTxExplorerLink = <TR, T extends Transaction<TR>>(
   txKey: Hex,
   replacedTxHash?: Hex,
 ): string => {
-  const tx = selectTXByKey(transactionsPool, txKey);
+  const tx = selectTxByKey(transactionsPool, txKey);
 
   if (!tx) {
     return '';
   }
 
-  /**
-   * Internal helper to construct the final URL based on the tracker type.
-   * @param {string} hash - The transaction hash to include in the URL.
-   * @returns {string} The constructed explorer URL.
-   */
-  const constructUrl = (hash: string): string => {
-    // For Safe transactions, generate a link to the Safe web app.
-    if (tx.tracker === TransactionTracker.Safe) {
-      const safeBaseUrl = gnosisSafeLinksHelper[tx.chainId as number];
-      return safeBaseUrl ? `${safeBaseUrl}${tx.from}/transactions/tx?id=multisig_${tx.from}_${tx.txKey}` : '';
-    }
+  // Handle Safe transactions, which link to the Safe web app instead of a block explorer.
+  if (tx.tracker === TransactionTracker.Safe) {
+    const safeBaseUrl = gnosisSafeLinksHelper[tx.chainId as number];
+    if (!safeBaseUrl) return '';
 
-    // For standard EVM transactions, find the chain's default block explorer.
-    const chain = chains.find((chain) => chain.id === tx.chainId);
+    return `${safeBaseUrl}${tx.from}/transactions/tx?id=multisig_${tx.from}_${tx.txKey}`;
+  }
 
-    if (!chain?.blockExplorers?.default.url) {
-      // Return empty string if the chain or its explorer URL is not configured.
-      return '';
-    }
+  // Handle standard EVM transactions.
+  const chain = chains.find((c) => c.id === tx.chainId);
+  const explorerUrl = chain?.blockExplorers?.default.url;
 
-    return `${chain.blockExplorers.default.url}/tx/${hash}`;
-  };
+  if (!explorerUrl) {
+    // Return empty string if the chain or its explorer URL is not configured.
+    return '';
+  }
 
-  // Prioritize the replaced hash if it exists, otherwise use the original.
-  return constructUrl(replacedTxHash || (tx.adapter === TransactionAdapter.EVM && tx.hash) || tx.txKey);
+  // Determine the correct hash to display. Prioritize the replaced hash for speed-up/cancel transactions.
+  const hash = replacedTxHash || (tx.adapter === TransactionAdapter.EVM ? tx.hash : tx.txKey);
+
+  if (!hash) return '';
+
+  return `${explorerUrl}/tx/${hash}`;
 };

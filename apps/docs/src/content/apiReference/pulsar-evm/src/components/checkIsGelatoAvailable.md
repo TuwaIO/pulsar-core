@@ -6,10 +6,12 @@
 
 > **checkIsGelatoAvailable**(`chainId`): `Promise`\<`boolean`\>
 
-Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:17](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L17)
+Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:20](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L20)
 
 Checks if the Gelato Relay service supports a given chain ID.
-The result is cached in memory for 5 minutes to avoid excessive network requests.
+
+This function fetches the list of supported chain IDs from the Gelato API and
+caches the result in memory for 5 minutes to reduce network requests.
 
 ## Parameters
 
@@ -23,4 +25,4 @@ The chain identifier to check.
 
 `Promise`\<`boolean`\>
 
-True if Gelato supports the chain, false otherwise.
+A promise that resolves to `true` if Gelato supports the chain, `false` otherwise.

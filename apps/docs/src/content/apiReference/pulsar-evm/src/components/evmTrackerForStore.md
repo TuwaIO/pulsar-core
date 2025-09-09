@@ -4,12 +4,12 @@
 
 # evmTrackerForStore()
 
-> **evmTrackerForStore**\<`T`\>(`__namedParameters`): `Promise`\<`void`\>
+> **evmTrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:143](https://github.com/TuwaIO/pulsar-core/blob/ea066c8cd65e6c1227300bf48fc7dcb6a33a8ab8/packages/pulsar-evm/src/trackers/evmTracker.ts#L143)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:127](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-evm/src/trackers/evmTracker.ts#L127)
 
-A higher-level wrapper for `evmTracker` that integrates directly with the Zustand store.
-It provides the necessary callbacks to update the transaction's state in the store.
+A higher-level wrapper for `evmTracker` that integrates directly with the Pulsar store.
+It provides the necessary callbacks to update a transaction's state throughout its lifecycle.
 
 ## Type Parameters
 
@@ -17,11 +17,11 @@ It provides the necessary callbacks to update the transaction's state in the sto
 
 `T` *extends* `Transaction`\<[`TransactionTracker`](../enumerations/TransactionTracker.md)\>
 
-The application-specific transaction union type.
+The application-specific transaction type.
 
 ## Parameters
 
-### \_\_namedParameters
+### params
 
 `Pick`\<[`EVMTrackerParams`](../type-aliases/EVMTrackerParams.md), `"chains"`\> & `Pick`\<`ITxTrackingStore`\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>, `"transactionsPool"` \| `"updateTxParams"` \| `"onSucceedCallbacks"`\> & `object`
 
