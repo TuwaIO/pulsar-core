@@ -6,7 +6,7 @@
 
 > **selectPendingTransactionsByActiveWallet**\<`TR`, `T`\>(`transactionsPool`, `from`): `T`[]
 
-Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:72](https://github.com/TuwaIO/pulsar-core/blob/ff59e866e33c339d5aa0ce3a95095cd1c8e289d9/packages/pulsar-core/src/store/transactionsSelectors.ts#L72)
+Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:72](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/store/transactionsSelectors.ts#L72)
 
 Selects all pending transactions for a specific wallet address, sorted chronologically.
 

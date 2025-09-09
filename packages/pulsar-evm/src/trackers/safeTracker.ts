@@ -8,9 +8,9 @@ import {
   ITxTrackingStore,
   PollingTrackerConfig,
   Transaction,
+  TransactionAdapter,
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
-import { TransactionAdapter } from '@tuwaio/pulsar-core/src';
 import dayjs from 'dayjs';
 import { Hex, zeroHash } from 'viem';
 

@@ -6,7 +6,7 @@
 
 > **InitialTransactionParams** = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:169](https://github.com/TuwaIO/pulsar-core/blob/ff59e866e33c339d5aa0ce3a95095cd1c8e289d9/packages/pulsar-core/src/types.ts#L169)
+Defined in: [packages/pulsar-core/src/types.ts:169](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L169)
 
 Represents the parameters required to initiate a new transaction tracking flow.
 
@@ -16,7 +16,7 @@ Represents the parameters required to initiate a new transaction tracking flow.
 
 > `optional` **actionKey**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:172](https://github.com/TuwaIO/pulsar-core/blob/ff59e866e33c339d5aa0ce3a95095cd1c8e289d9/packages/pulsar-core/src/types.ts#L172)
+Defined in: [packages/pulsar-core/src/types.ts:172](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L172)
 
 A key to identify the re-executable action from the `TxActions` registry.
 
@@ -26,7 +26,7 @@ A key to identify the re-executable action from the `TxActions` registry.
 
 > **adapter**: [`TransactionAdapter`](../enumerations/TransactionAdapter.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:170](https://github.com/TuwaIO/pulsar-core/blob/ff59e866e33c339d5aa0ce3a95095cd1c8e289d9/packages/pulsar-core/src/types.ts#L170)
+Defined in: [packages/pulsar-core/src/types.ts:170](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L170)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [packages/pulsar-core/src/types.ts:170](https://github.com/TuwaIO/pu
 
 > `optional` **description**: `string` \| \[`string`, `string`, `string`, `string`\]
 
-Defined in: [packages/pulsar-core/src/types.ts:174](https://github.com/TuwaIO/pulsar-core/blob/ff59e866e33c339d5aa0ce3a95095cd1c8e289d9/packages/pulsar-core/src/types.ts#L174)
+Defined in: [packages/pulsar-core/src/types.ts:174](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L174)
 
 A user-facing description for the transaction.
 
@@ -44,7 +44,7 @@ A user-facing description for the transaction.
 
 > **desiredChainID**: `number` \| `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:176](https://github.com/TuwaIO/pulsar-core/blob/ff59e866e33c339d5aa0ce3a95095cd1c8e289d9/packages/pulsar-core/src/types.ts#L176)
+Defined in: [packages/pulsar-core/src/types.ts:176](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L176)
 
 The target chain ID for the transaction.
 
@@ -54,7 +54,7 @@ The target chain ID for the transaction.
 
 > `optional` **payload**: `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:178](https://github.com/TuwaIO/pulsar-core/blob/ff59e866e33c339d5aa0ce3a95095cd1c8e289d9/packages/pulsar-core/src/types.ts#L178)
+Defined in: [packages/pulsar-core/src/types.ts:178](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L178)
 
 Any custom data to associate with the transaction.
 
@@ -64,7 +64,7 @@ Any custom data to associate with the transaction.
 
 > `optional` **title**: `string` \| \[`string`, `string`, `string`, `string`\]
 
-Defined in: [packages/pulsar-core/src/types.ts:180](https://github.com/TuwaIO/pulsar-core/blob/ff59e866e33c339d5aa0ce3a95095cd1c8e289d9/packages/pulsar-core/src/types.ts#L180)
+Defined in: [packages/pulsar-core/src/types.ts:180](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L180)
 
 A user-facing title for the transaction.
 
@@ -74,7 +74,7 @@ A user-facing title for the transaction.
 
 > **type**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:182](https://github.com/TuwaIO/pulsar-core/blob/ff59e866e33c339d5aa0ce3a95095cd1c8e289d9/packages/pulsar-core/src/types.ts#L182)
+Defined in: [packages/pulsar-core/src/types.ts:182](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L182)
 
 The application-specific type of the transaction.
 
@@ -84,6 +84,6 @@ The application-specific type of the transaction.
 
 > `optional` **withTrackedModal**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:184](https://github.com/TuwaIO/pulsar-core/blob/ff59e866e33c339d5aa0ce3a95095cd1c8e289d9/packages/pulsar-core/src/types.ts#L184)
+Defined in: [packages/pulsar-core/src/types.ts:184](https://github.com/TuwaIO/pulsar-core/blob/3307a45a24b5cbed98dc52a5d0d9d419fa72f5c9/packages/pulsar-core/src/types.ts#L184)
 
 If true, the detailed tracking modal will open automatically upon initiation.
