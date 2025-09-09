@@ -230,6 +230,10 @@ export type TxAdapter<TR, T extends Transaction<TR>, A> = {
   ) => Promise<void>;
   /** Returns the base URL for the blockchain explorer. */
   getExplorerUrl: () => string | undefined;
+  /** Optional: Fetches a name from a chain-specific name service (e.g., ENS). */
+  getName?: (address: string) => Promise<string | null>;
+  /** Optional: Fetches an avatar URL from a chain-specific name service. */
+  getAvatar?: (name: string) => Promise<string | null>;
   /** Optional: Logic to cancel a pending EVM transaction. */
   cancelTxAction?: (tx: T) => Promise<string>;
   /** Optional: Logic to speed up a pending EVM transaction. */

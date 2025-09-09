@@ -12,6 +12,7 @@ import { cancelTxAction } from '../utils/cancelTxAction';
 import { checkAndInitializeTrackerInStore } from '../utils/checkAndInitializeTrackerInStore';
 import { checkChainForTx } from '../utils/checkChainForTx';
 import { checkTransactionsTracker } from '../utils/checkTransactionsTracker';
+import { getAvatar, getName } from '../utils/ensUtils';
 import { selectEvmTxExplorerLink } from '../utils/selectEvmTxExplorerLink';
 import { speedUpTxAction } from '../utils/speedUpTxAction';
 
@@ -19,8 +20,8 @@ import { speedUpTxAction } from '../utils/speedUpTxAction';
  * Creates an EVM-specific transaction adapter.
  *
  * This function acts as a constructor for the EVM adapter, bundling all the necessary
- * chain-specific utilities (like checking chain, speeding up transactions, etc.) into a
- * single object that conforms to the `TxAdapter` interface required by `@tuwaio/pulsar-core`.
+ * chain-specific utilities (like checking chain, ENS resolution, speeding up transactions, etc.)
+ * into a single object that conforms to the `TxAdapter` interface.
  *
  * @template T - The application-specific transaction type.
  * @param {Config} config - The wagmi configuration object.
@@ -40,6 +41,8 @@ export function evmAdapter<T extends Transaction<TransactionTracker>>(
 
   return {
     key: TransactionAdapter.EVM,
+
+    // --- Core Methods ---
     getWalletInfo: () => {
       const activeWallet = getAccount(config);
       return {
@@ -51,14 +54,21 @@ export function evmAdapter<T extends Transaction<TransactionTracker>>(
     checkTransactionsTracker: (actionTxKey, walletType) => checkTransactionsTracker(actionTxKey, walletType),
     checkAndInitializeTrackerInStore: ({ tx, ...rest }) =>
       checkAndInitializeTrackerInStore({ tracker: tx.tracker, tx, chains: appChains, ...rest }),
+
+    // --- UI & Explorer Methods ---
     getExplorerUrl: () => {
       const { chain } = getAccount(config);
       return chain?.blockExplorers?.default.url;
     },
+    getExplorerTxUrl: (transactionsPool, txKey, replacedTxHash) =>
+      selectEvmTxExplorerLink(transactionsPool, appChains, txKey as `0x${string}`, replacedTxHash as `0x${string}`),
+    getName: (address: string) => getName(address as `0x${string}`),
+    getAvatar: (name: string) => getAvatar(name),
+
+    // --- Optional Actions ---
     cancelTxAction: (tx) => cancelTxAction({ config, tx }),
     speedUpTxAction: (tx) => speedUpTxAction({ config, tx }),
     retryTxAction: async ({ actions, onClose, txKey, handleTransaction, tx }) => {
-      // Always close the current modal/view before starting a new transaction flow.
       onClose(txKey);
 
       if (!handleTransaction) {
@@ -73,18 +83,12 @@ export function evmAdapter<T extends Transaction<TransactionTracker>>(
       const retryAction = actions[tx.actionKey];
 
       await handleTransaction({
-        actionFunction: () =>
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-expect-error
-          retryAction({
-            config,
-            ...tx.payload,
-          }),
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        actionFunction: () => retryAction({ config, ...tx.payload }),
         params: tx,
         defaultTracker: TransactionTracker.Ethereum,
       });
     },
-    getExplorerTxUrl: (transactionsPool, txKey, replacedTxHash) =>
-      selectEvmTxExplorerLink(transactionsPool, appChains, txKey as `0x${string}`, replacedTxHash as `0x${string}`),
   };
 }

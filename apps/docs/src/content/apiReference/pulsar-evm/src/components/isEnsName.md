@@ -6,7 +6,7 @@
 
 > **isEnsName**(`nameOrAddress`): `boolean`
 
-Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:83](https://github.com/TuwaIO/pulsar-core/blob/6f58c3c9fd82323ffe7018d4cd8562c3905e9a91/packages/pulsar-evm/src/utils/ensUtils.ts#L83)
+Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:83](https://github.com/TuwaIO/pulsar-core/blob/ff59e866e33c339d5aa0ce3a95095cd1c8e289d9/packages/pulsar-evm/src/utils/ensUtils.ts#L83)
 
 A heuristic to check if a string is likely an ENS name.
 
