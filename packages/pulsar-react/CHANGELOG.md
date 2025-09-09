@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.0.3...pulsar-react-v0.0.4) (2025-09-09)
+
+
+### Bug Fixes
+
+* adapters logic ([#14](https://github.com/TuwaIO/pulsar-core/issues/14)) ([b347711](https://github.com/TuwaIO/pulsar-core/commit/b3477117e051ceadaa75a119427c5ec9acecaeb6))
+
 ## [0.0.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.0.2...pulsar-react-v0.0.3) (2025-08-19)
 
 ### Bug Fixes

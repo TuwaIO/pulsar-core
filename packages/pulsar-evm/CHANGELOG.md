@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.11](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.10...pulsar-evm-v0.0.11) (2025-09-09)
+
+
+### Bug Fixes
+
+* adapters logic ([#14](https://github.com/TuwaIO/pulsar-core/issues/14)) ([b347711](https://github.com/TuwaIO/pulsar-core/commit/b3477117e051ceadaa75a119427c5ec9acecaeb6))
+
 ## [0.0.10](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.9...pulsar-evm-v0.0.10) (2025-08-20)
 
 ### Bug Fixes

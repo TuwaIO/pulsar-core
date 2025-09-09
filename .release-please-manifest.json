@@ -1,5 +1,5 @@
 {
-  "packages/pulsar-core": "0.0.4",
-  "packages/pulsar-evm": "0.0.10",
-  "packages/pulsar-react": "0.0.3"
+  "packages/pulsar-core": "0.0.5",
+  "packages/pulsar-evm": "0.0.11",
+  "packages/pulsar-react": "0.0.4"
 }
