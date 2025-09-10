@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.12](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.11...pulsar-evm-v0.0.12) (2025-09-10)
+
+
+### Bug Fixes
+
+* added donations to readme ([d7bfc79](https://github.com/TuwaIO/pulsar-core/commit/d7bfc79fb0d918c5af2e46224278a2ad9c64ea26))
+
 ## [0.0.11](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.10...pulsar-evm-v0.0.11) (2025-09-09)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.0.5...pulsar-core-v0.0.6) (2025-09-10)
+
+
+### Bug Fixes
+
+* added donations to readme ([d7bfc79](https://github.com/TuwaIO/pulsar-core/commit/d7bfc79fb0d918c5af2e46224278a2ad9c64ea26))
+
 ## [0.0.5](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.0.4...pulsar-core-v0.0.5) (2025-09-09)
 
 
