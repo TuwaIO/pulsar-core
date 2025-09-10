@@ -112,9 +112,13 @@ Pulsar is a modular ecosystem. Here’s how the pieces fit together:
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contributing & Support
 
-Contributions are welcome\! Please read our main **[Contribution Guidelines](https://github.com/TuwaIO/workflows/blob/main/CONTRIBUTING.md)** for details on our code of conduct and the process for submitting pull requests.
+Contributions are welcome! Please read our main **[Contribution Guidelines](https://github.com/TuwaIO/workflows/blob/main/CONTRIBUTING.md)**.
+
+If you find this library useful, please consider supporting its development. Every contribution helps!
+
+[**➡️ View Support Options**](https://github.com/TuwaIO/workflows/blob/main/Donation.md)
 
 ## 📄 License
 
