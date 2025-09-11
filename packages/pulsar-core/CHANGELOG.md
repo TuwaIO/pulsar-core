@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.0.6...pulsar-core-v0.1.0) (2025-09-11)
+
+
+### Features
+
+* initialize @tuwaio/pulsar-solana ([373dccc](https://github.com/TuwaIO/pulsar-core/commit/373dccce06ee13a18c95b474a67af22f01fbb980))
+
 ## [0.0.6](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.0.5...pulsar-core-v0.0.6) (2025-09-10)
 
 
