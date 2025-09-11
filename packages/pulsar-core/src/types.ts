@@ -134,6 +134,10 @@ export type SolanaTransaction<T> = BaseTransaction<T> & {
   recentBlockhash?: string;
   /** The slot in which the transaction was processed. */
   slot?: number;
+  /** The number of confirmations the transaction has received, or null if the transaction is still pending. */
+  confirmations?: number | null;
+  /** The RPC URL used for the transaction. */
+  rpcUrl?: string;
 };
 
 /**
@@ -182,6 +186,8 @@ export type InitialTransactionParams = {
   type: string;
   /** If true, the detailed tracking modal will open automatically upon initiation. */
   withTrackedModal?: boolean;
+  /** Required for Solana transactions. The RPC URL to use for the transaction. */
+  rpcUrl?: string;
 };
 
 /**

@@ -9,3 +9,4 @@
 - [pulsar-core/src](pulsar-core/src/README.md)
 - [pulsar-evm/src](pulsar-evm/src/README.md)
 - [pulsar-react/src](pulsar-react/src/README.md)
+- [pulsar-solana/src](pulsar-solana/src/README.md)

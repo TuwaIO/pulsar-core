@@ -12,6 +12,10 @@
     "packages/pulsar-react": {
       "package-name": "@tuwaio/pulsar-react",
       "release-type": "node"
+    },
+    "packages/pulsar-solana": {
+      "package-name": "@tuwaio/pulsar-solana",
+      "release-type": "node"
     }
   },
   "initial-version": "0.0.1"

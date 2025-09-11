@@ -5,7 +5,7 @@
 
 import { Draft, produce } from 'immer';
 
-import { EvmTransaction, InitialTransaction, StoreSlice, Transaction } from '../types';
+import { EvmTransaction, InitialTransaction, SolanaTransaction, StoreSlice, Transaction } from '../types';
 
 /**
  * Defines the structure of the transaction pool, which is a record of transactions indexed by their unique keys.
@@ -38,7 +38,10 @@ type UpdatableTransactionFields<TR> = Partial<
     | 'input'
     | 'value'
   >
->;
+> &
+  Partial<
+    Pick<SolanaTransaction<TR>, 'slot' | 'confirmations' | 'fee' | 'instructions' | 'recentBlockhash' | 'rpcUrl'>
+  >;
 
 /**
  * Defines the interface for the base transaction tracking store slice.

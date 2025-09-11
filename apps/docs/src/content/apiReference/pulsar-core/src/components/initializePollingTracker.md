@@ -6,7 +6,7 @@
 
 > **initializePollingTracker**\<`R`, `T`, `TR`\>(`config`): `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:73](https://github.com/TuwaIO/pulsar-core/blob/eacf1eb9ef4f00f2ac864ab92c14d4197d5c3ae1/packages/pulsar-core/src/utils/initializePollingTracker.ts#L73)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:73](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-core/src/utils/initializePollingTracker.ts#L73)
 
 Initializes a generic polling tracker that repeatedly calls a fetcher function
 to monitor the status of an asynchronous task.
