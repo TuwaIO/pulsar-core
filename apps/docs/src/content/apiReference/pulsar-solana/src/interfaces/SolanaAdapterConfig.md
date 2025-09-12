@@ -4,47 +4,26 @@
 
 # SolanaAdapterConfig
 
-Defined in: [packages/pulsar-solana/src/types.ts:21](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/types.ts#L21)
+Defined in: [packages/pulsar-solana/src/types.ts:24](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/types.ts#L24)
 
-Configuration object for the `solanaAdapter`.
-All properties are optional and are typically derived from the Solana wallet adapter hooks.
+The final, simplified configuration object for the solanaAdapter.
 
 ## Properties
 
-### cluster?
+### rpcUrls
 
-> `optional` **cluster**: [`SolanaCluster`](../type-aliases/SolanaCluster.md)
+> **rpcUrls**: `Record`\<`SolanaClusterMoniker`, `string`\>
 
-Defined in: [packages/pulsar-solana/src/types.ts:25](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/types.ts#L25)
+Defined in: [packages/pulsar-solana/src/types.ts:26](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/types.ts#L26)
 
-The specific cluster the app is connected to. Used for generating correct explorer links.
-
-***
-
-### connection?
-
-> `optional` **connection**: `ConnectionContextState`
-
-Defined in: [packages/pulsar-solana/src/types.ts:23](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/types.ts#L23)
-
-The state object from `useConnection()`. Required for on-chain operations like checking the network or using the Solana Name Service.
-
-***
-
-### explorerUrl?
-
-> `optional` **explorerUrl**: `string`
-
-Defined in: [packages/pulsar-solana/src/types.ts:24](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/types.ts#L24)
-
-The base URL for the transaction explorer (e.g., "https://solscan.io"). Defaults to Solscan if not provided.
+A map of RPC URLs for each supported Solana cluster.
 
 ***
 
 ### wallet?
 
-> `optional` **wallet**: `WalletContextState`
+> `optional` **wallet**: [`SolanaAdapterWallet`](SolanaAdapterWallet.md)
 
-Defined in: [packages/pulsar-solana/src/types.ts:22](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/types.ts#L22)
+Defined in: [packages/pulsar-solana/src/types.ts:25](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/types.ts#L25)
 
-The state object from `useWallet()`. Required for actions that need a connected wallet, like signing or retrying transactions.
+A simple object representing the current state of the user's wallet.

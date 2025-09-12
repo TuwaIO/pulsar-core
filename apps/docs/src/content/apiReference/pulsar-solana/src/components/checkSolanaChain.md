@@ -4,36 +4,33 @@
 
 # checkSolanaChain()
 
-> **checkSolanaChain**(`rpcUrl`, `requiredCluster`): `Promise`\<`void`\>
+> **checkSolanaChain**(`requiredChain`, `currentChain`): `void`
 
-Defined in: [packages/pulsar-solana/src/utils/checkSolanaChain.ts:26](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/utils/checkSolanaChain.ts#L26)
+Defined in: [packages/pulsar-solana/src/utils/checkSolanaChain.ts:17](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/utils/checkSolanaChain.ts#L17)
 
-Checks if an RPC endpoint is connected to the required Solana cluster.
-It fetches the genesis hash from the RPC endpoint and compares it
-with a known hash for the specified cluster.
+Checks if the wallet's current chain matches the required chain for a transaction.
+
+This function compares the `chain` property from the Wallet Standard account object
+with the required chain identifier (e.g., 'solana:mainnet').
 
 ## Parameters
 
-### rpcUrl
+### requiredChain
 
 `string`
 
-The RPC endpoint URL to check.
+The chain identifier that the transaction requires.
 
-### requiredCluster
+### currentChain
 
-[`SolanaCluster`](../type-aliases/SolanaCluster.md)
+`string`
 
-The cluster that the transaction requires (e.g., 'mainnet-beta').
+The chain identifier the wallet is currently connected to.
 
 ## Returns
 
-`Promise`\<`void`\>
+`void`
 
 ## Throws
 
-If the connected chain does not match the required cluster.
-
-## Throws
-
-If the cluster name is unknown or if the RPC call fails for other reasons.
+If the connected chain does not match the required chain.

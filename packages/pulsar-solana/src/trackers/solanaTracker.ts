@@ -3,7 +3,6 @@
  * It uses a polling mechanism to query the `getSignatureStatuses` RPC method.
  */
 
-import { createSolanaRpc, Rpc, Signature, SolanaRpcApi, TransactionError } from '@solana/kit';
 import {
   initializePollingTracker,
   ITxTrackingStore,
@@ -13,31 +12,10 @@ import {
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
 import dayjs from 'dayjs';
+import { Signature, TransactionError } from 'gill';
 
 import { SolanaActionTxKey, SolanaTransactionTracker } from '../types';
-
-// --- RPC Client Caching ---
-
-/**
- * An in-memory cache for RPC clients to avoid re-creating them on every poll.
- * @internal
- */
-const rpcCache = new Map<string, Rpc<SolanaRpcApi>>();
-
-/**
- * Retrieves a cached RPC client for a given URL or creates a new one.
- * @param rpcUrl - The RPC endpoint URL.
- * @returns The RPC client instance.
- * @internal
- */
-const getRpcClient = (rpcUrl: string): Rpc<SolanaRpcApi> => {
-  if (rpcCache.has(rpcUrl)) {
-    return rpcCache.get(rpcUrl)!;
-  }
-  const newRpc = createSolanaRpc(rpcUrl);
-  rpcCache.set(rpcUrl, newRpc);
-  return newRpc;
-};
+import { createSolanaRPC } from '../utils/createSolanaRPC';
 
 // --- Types ---
 
@@ -76,7 +54,7 @@ export async function solanaFetcher({ tx, stopPolling, onSuccess, onFailure, onI
     throw new Error('RPC URL is missing from the Solana transaction.');
   }
 
-  const rpc = getRpcClient(tx.rpcUrl);
+  const rpc = createSolanaRPC(tx.rpcUrl);
   const statuses = await rpc.getSignatureStatuses([tx.txKey as Signature]).send();
   const status = statuses?.value[0];
 

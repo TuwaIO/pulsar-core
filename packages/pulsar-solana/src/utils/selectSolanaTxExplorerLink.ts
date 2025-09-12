@@ -2,7 +2,7 @@
  * @file This file contains a utility function for generating Solana transaction explorer links.
  */
 
-import { SolanaCluster } from '../types';
+import { getExplorerLink, SolanaClusterMoniker } from 'gill';
 
 /**
  * Generates a full URL to a transaction on a Solana explorer like Solscan.
@@ -12,8 +12,9 @@ import { SolanaCluster } from '../types';
  * @param {SolanaCluster} [cluster] - The optional cluster name ('devnet', 'testnet') to add as a query parameter.
  * @returns {string} The full URL to the transaction on the explorer.
  */
-export const selectSolanaTxExplorerLink = (baseUrl: string, txKey: string, cluster?: SolanaCluster): string => {
+export const selectSolanaTxExplorerLink = (txKey: string, cluster?: SolanaClusterMoniker): string => {
   // Ensure there are no trailing slashes on the base URL for clean URL construction.
+  const baseUrl = getExplorerLink({ cluster });
   const sanitizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 
   // Build the cluster query parameter if provided.

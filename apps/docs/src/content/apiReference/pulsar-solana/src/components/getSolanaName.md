@@ -4,19 +4,20 @@
 
 # getSolanaName()
 
-> **getSolanaName**(`connection`, `address`): `Promise`\<`null` \| `string`\>
+> **getSolanaName**(`rpcUrl`, `address`): `Promise`\<`null` \| `string`\>
 
-Defined in: [packages/pulsar-solana/src/utils/snsUtils.ts:36](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/utils/snsUtils.ts#L36)
+Defined in: [packages/pulsar-solana/src/utils/snsUtils.ts:41](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/utils/snsUtils.ts#L41)
 
 Performs a reverse lookup to find the .sol domain name for a given wallet address.
+Results are cached to avoid redundant network requests.
 
 ## Parameters
 
-### connection
+### rpcUrl
 
-`ConnectionContextState`
+`string`
 
-The connection state object from the `useConnection` hook.
+The RPC endpoint URL.
 
 ### address
 

@@ -2,27 +2,28 @@
  * @file Defines the core types and enums specific to the @tuwaio/pulsar-solana package.
  */
 
-import { ConnectionContextState, WalletContextState } from '@solana/wallet-adapter-react';
+import type { SolanaClusterMoniker } from 'gill';
 
 /**
- * Defines the possible Solana network clusters.
+ * Describes the essential wallet information needed by the Solana adapter.
+ * This simple, library-agnostic interface allows any wallet connection library
+ * to be used with Pulsar, as long as it can provide this basic data.
  */
-export type SolanaCluster = 'mainnet-beta' | 'devnet' | 'testnet';
+export interface SolanaAdapterWallet {
+  walletAddress: string;
+  walletType: string;
+  walletActiveChain: SolanaClusterMoniker;
+}
 
 /**
- * Configuration object for the `solanaAdapter`.
- * All properties are optional and are typically derived from the Solana wallet adapter hooks.
+ * The final, simplified configuration object for the solanaAdapter.
  *
- * @property {WalletContextState} [wallet] - The state object from `useWallet()`. Required for actions that need a connected wallet, like signing or retrying transactions.
- * @property {ConnectionContextState} [connection] - The state object from `useConnection()`. Required for on-chain operations like checking the network or using the Solana Name Service.
- * @property {string} [explorerUrl] - The base URL for the transaction explorer (e.g., "https://solscan.io"). Defaults to Solscan if not provided.
- * @property {SolanaCluster} [cluster] - The specific cluster the app is connected to. Used for generating correct explorer links.
+ * @property {SolanaAdapterWallet} wallet - A simple object representing the current state of the user's wallet.
+ * @property {Record<SolanaClusterMoniker, string>} rpcUrls - A map of RPC URLs for each supported Solana cluster.
  */
 export interface SolanaAdapterConfig {
-  wallet?: WalletContextState;
-  connection?: ConnectionContextState;
-  explorerUrl?: string;
-  cluster?: SolanaCluster;
+  wallet?: SolanaAdapterWallet;
+  rpcUrls: Record<SolanaClusterMoniker, string>;
 }
 
 /**

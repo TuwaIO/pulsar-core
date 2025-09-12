@@ -15,16 +15,17 @@
 ## Interfaces
 
 - [SolanaAdapterConfig](interfaces/SolanaAdapterConfig.md)
+- [SolanaAdapterWallet](interfaces/SolanaAdapterWallet.md)
 
 ## Type Aliases
 
 - [SolanaActionTxKey](type-aliases/SolanaActionTxKey.md)
-- [SolanaCluster](type-aliases/SolanaCluster.md)
 
 ## Functions
 
 - [checkAndInitializeTrackerInStore](functions/checkAndInitializeTrackerInStore.md)
 - [checkSolanaChain](functions/checkSolanaChain.md)
+- [createSolanaRPC](functions/createSolanaRPC.md)
 - [getSolanaAvatar](functions/getSolanaAvatar.md)
 - [getSolanaName](functions/getSolanaName.md)
 - [selectSolanaTxExplorerLink](functions/selectSolanaTxExplorerLink.md)

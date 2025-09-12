@@ -6,11 +6,12 @@
 
 > **solanaAdapter**\<`T`\>(`config`): `TxAdapter`\<[`Solana`](../enumerations/SolanaTransactionTracker.md#solana), `T`, `string`\>
 
-Defined in: [packages/pulsar-solana/src/adapters/solanaAdapter.ts:22](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/adapters/solanaAdapter.ts#L22)
+Defined in: [packages/pulsar-solana/src/adapters/solanaAdapter.ts:25](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/adapters/solanaAdapter.ts#L25)
 
-Factory function to create a Solana adapter for Pulsar.
-This adapter provides all the necessary logic to interact with the Solana ecosystem,
-including wallet interactions, transaction tracking, and name services.
+Creates a Solana adapter for the Pulsar transaction tracking engine.
+This factory function produces a wallet-library-agnostic adapter that can be
+configured for multiple Solana clusters (e.g., mainnet-beta, devnet) and
+can operate even without a connected wallet for read-only tasks.
 
 ## Type Parameters
 
@@ -24,10 +25,10 @@ including wallet interactions, transaction tracking, and name services.
 
 [`SolanaAdapterConfig`](../interfaces/SolanaAdapterConfig.md)
 
-The configuration object, typically derived from Solana wallet adapter hooks.
+The configuration object for the adapter.
 
 ## Returns
 
 `TxAdapter`\<[`Solana`](../enumerations/SolanaTransactionTracker.md#solana), `T`, `string`\>
 
-An object conforming to the `TxAdapter` interface.
+An object implementing the `TxAdapter` interface for Solana.

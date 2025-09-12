@@ -6,7 +6,6 @@
  * @vitest-environment jsdom
  */
 
-import { Rpc, SolanaRpcApi, TransactionError } from '@solana/kit';
 import {
   initializePollingTracker,
   PollingTrackerConfig,
@@ -15,6 +14,7 @@ import {
 } from '@tuwaio/pulsar-core';
 import { TransactionAdapter } from '@tuwaio/pulsar-core/src';
 import dayjs from 'dayjs';
+import { TransactionError } from 'gill';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SolanaTransactionTracker } from '../types';
@@ -36,7 +36,6 @@ vi.mock('@tuwaio/pulsar-core', async (importActual) => {
 describe('solanaTrackerForStore', () => {
   let mockTx: SolanaTransaction<SolanaTransactionTracker>;
   let mockStoreParams: any;
-  let mockRpc: Rpc<SolanaRpcApi>;
 
   beforeEach(() => {
     // A complete and correctly typed mock transaction object.
@@ -47,7 +46,7 @@ describe('solanaTrackerForStore', () => {
       localTimestamp: dayjs().unix(),
       pending: true,
       from: 'So11111111111111111111111111111111111111112',
-      chainId: 'mainnet-beta',
+      chainId: 'solana:mainnet', // Updated to Wallet Standard chain format
       tracker: SolanaTransactionTracker.Solana,
       type: 'test',
       walletType: 'test',
@@ -60,9 +59,6 @@ describe('solanaTrackerForStore', () => {
       onSucceedCallbacks: vi.fn(),
       removeTxFromPool: vi.fn(),
     };
-
-    // This mock is now only for satisfying the function signature, its methods won't be called.
-    mockRpc = {} as Rpc<SolanaRpcApi>;
   });
 
   afterEach(() => {
@@ -70,7 +66,7 @@ describe('solanaTrackerForStore', () => {
   });
 
   test('should call initializePollingTracker with the correct parameters', async () => {
-    await solanaTrackerForStore({ tx: mockTx, rpc: mockRpc, ...mockStoreParams });
+    await solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
 
     // Check that our main tracker function correctly configures the generic poller.
     expect(initializePollingTracker).toHaveBeenCalled();
@@ -82,7 +78,7 @@ describe('solanaTrackerForStore', () => {
 
   test('should call updateTxParams with SUCCESS on the onSuccess callback', () => {
     // 1. Call the main function to get the config passed to the poller.
-    solanaTrackerForStore({ tx: mockTx, rpc: mockRpc, ...mockStoreParams });
+    solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
     const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
     // 2. Simulate the fetcher succeeding by manually calling the `onSuccess` callback.
@@ -109,7 +105,7 @@ describe('solanaTrackerForStore', () => {
   });
 
   test('should call updateTxParams with FAILED on the onFailure callback (on-chain error)', () => {
-    solanaTrackerForStore({ tx: mockTx, rpc: mockRpc, ...mockStoreParams });
+    solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
     const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
     const txError: TransactionError = { InstructionError: [0, { Custom: 123 }] };
@@ -131,7 +127,7 @@ describe('solanaTrackerForStore', () => {
   });
 
   test('should call updateTxParams with FAILED on the onFailure callback (timeout)', () => {
-    solanaTrackerForStore({ tx: mockTx, rpc: mockRpc, ...mockStoreParams });
+    solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
     const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
     // Simulate a timeout by calling onFailure with `undefined`, as the generic poller does.
@@ -147,7 +143,7 @@ describe('solanaTrackerForStore', () => {
   });
 
   test('should call updateTxParams with confirmations on the onIntervalTick callback', () => {
-    solanaTrackerForStore({ tx: mockTx, rpc: mockRpc, ...mockStoreParams });
+    solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
     const config: PollingTrackerConfig<any, any, any> = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
     const mockIntervalResponse = {
@@ -156,8 +152,8 @@ describe('solanaTrackerForStore', () => {
       err: null,
       confirmationStatus: 'confirmed' as const,
     };
-    // @ts-expect-error: We are testing the onIntervalTick callback, not the fetcher.
-    config?.onIntervalTick(mockIntervalResponse);
+
+    config.onIntervalTick?.(mockIntervalResponse);
 
     // Assert that only confirmations and slot are updated, not the terminal status.
     expect(mockStoreParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {

@@ -1,57 +1,83 @@
 /**
  * @file This file contains the factory function for creating the Solana adapter for Pulsar.
  */
+import type { Transaction, TxAdapter } from '@tuwaio/pulsar-core';
+import { TransactionAdapter } from '@tuwaio/pulsar-core';
+import { getExplorerLink, SolanaClusterMoniker } from 'gill';
 
-import { createSolanaRpc } from '@solana/kit';
-import { Transaction, TransactionAdapter, TransactionPool, TxAdapter } from '@tuwaio/pulsar-core';
-
-import { SolanaActionTxKey, SolanaAdapterConfig, SolanaCluster, SolanaTransactionTracker } from '../types';
+import { SolanaChainMismatchError } from '../errors';
+import { SolanaActionTxKey, SolanaAdapterConfig, SolanaTransactionTracker } from '../types';
 import { checkAndInitializeTrackerInStore } from '../utils/checkAndInitializeTrackerInStore';
 import { checkSolanaChain } from '../utils/checkSolanaChain';
+import { createSolanaRPC } from '../utils/createSolanaRPC';
 import { selectSolanaTxExplorerLink } from '../utils/selectSolanaTxExplorerLink';
 import { getSolanaAvatar, getSolanaName } from '../utils/snsUtils';
 
 /**
- * Factory function to create a Solana adapter for Pulsar.
- * This adapter provides all the necessary logic to interact with the Solana ecosystem,
- * including wallet interactions, transaction tracking, and name services.
+ * Creates a Solana adapter for the Pulsar transaction tracking engine.
+ * This factory function produces a wallet-library-agnostic adapter that can be
+ * configured for multiple Solana clusters (e.g., mainnet-beta, devnet) and
+ * can operate even without a connected wallet for read-only tasks.
  *
- * @param {SolanaAdapterConfig} config - The configuration object, typically derived from Solana wallet adapter hooks.
- * @returns {TxAdapter} An object conforming to the `TxAdapter` interface.
+ * @param config The configuration object for the adapter.
+ * @returns An object implementing the `TxAdapter` interface for Solana.
  */
 export function solanaAdapter<T extends Transaction<SolanaTransactionTracker>>(
   config: SolanaAdapterConfig,
 ): TxAdapter<SolanaTransactionTracker, T, SolanaActionTxKey> {
-  const { wallet, connection, explorerUrl, cluster } = config;
+  const { wallet, rpcUrls } = config;
+
+  /**
+   * Safely extracts the cluster moniker from a chain identifier.
+   * Handles both full chain IDs ('solana:mainnet-beta') and simple monikers ('mainnet-beta').
+   * @param chain The chain identifier or moniker.
+   * @returns The extracted cluster moniker.
+   */
+  const getCluster = (chain?: string): SolanaClusterMoniker => {
+    const defaultCluster: SolanaClusterMoniker = 'mainnet';
+    if (!chain) {
+      return wallet?.walletActiveChain ?? defaultCluster;
+    }
+    return (chain.includes(':') ? chain.split(':')[1] : chain) as SolanaClusterMoniker;
+  };
+
+  /**
+   * Retrieves the configured RPC URL for a given cluster moniker.
+   * @param cluster The target cluster. Defaults to the wallet's active chain.
+   * @returns The RPC URL or undefined if not found.
+   */
+  const getRpcUrlForCluster = (cluster?: SolanaClusterMoniker): string | undefined => {
+    const targetCluster = cluster ?? wallet?.walletActiveChain;
+    if (!targetCluster) return undefined;
+    return rpcUrls[targetCluster];
+  };
 
   return {
     key: TransactionAdapter.SOLANA,
 
-    // --- Core Methods ---
     getWalletInfo: () => ({
-      walletAddress: wallet?.publicKey?.toBase58() ?? '0x0',
-      walletType: wallet?.wallet?.adapter.name.toLowerCase() ?? 'unknown',
+      walletAddress: wallet?.walletAddress ?? '0x0',
+      walletType: wallet?.walletType ?? 'disconnected',
     }),
 
-    checkChainForTx: async (txCluster) => {
-      // Use the rpcEndpoint from the main connection context for pre-flight checks.
-      const currentRpcUrl = connection?.connection.rpcEndpoint;
-      if (!currentRpcUrl) {
-        // This can happen if the adapter is used in a read-only mode without a provider.
-        // We warn but do not throw, allowing tracking to continue if the rpcUrl is in the tx.
-        console.warn('Cannot check chain: connection context not provided to adapter.');
-        return;
+    checkChainForTx: async (txChain) => {
+      if (!wallet) {
+        throw new Error('Wallet not provided. Cannot perform chain check.');
       }
-      await checkSolanaChain(currentRpcUrl, txCluster as SolanaCluster);
+      try {
+        checkSolanaChain(txChain as string, wallet.walletActiveChain);
+      } catch (e) {
+        if (e instanceof SolanaChainMismatchError) throw e;
+        throw new Error(`Chain check failed: ${e instanceof Error ? e.message : String(e)}`);
+      }
     },
 
-    checkTransactionsTracker: (actionTxKey) => {
-      // For Solana, the actionTxKey is always the transaction signature.
-      return { tracker: SolanaTransactionTracker.Solana, txKey: actionTxKey };
-    },
+    checkTransactionsTracker: (actionTxKey) => ({
+      tracker: SolanaTransactionTracker.Solana,
+      txKey: actionTxKey,
+    }),
 
     checkAndInitializeTrackerInStore: ({ tx, ...rest }) => {
-      // Delegate to the tracker router utility.
       return checkAndInitializeTrackerInStore({
         tracker: tx.tracker,
         tx,
@@ -59,39 +85,40 @@ export function solanaAdapter<T extends Transaction<SolanaTransactionTracker>>(
       });
     },
 
-    // --- UI & Explorer Methods ---
     getExplorerUrl: () => {
-      return explorerUrl ?? 'https://solscan.io';
+      const cluster = wallet?.walletActiveChain ?? 'mainnet-beta';
+      return getExplorerLink({ cluster });
     },
 
-    getExplorerTxUrl: (txPool: TransactionPool<any, any>, txKey: string) => {
-      const baseUrl = explorerUrl ?? 'https://solscan.io';
-      return selectSolanaTxExplorerLink(baseUrl, txKey, cluster);
+    getExplorerTxUrl: (txPool, txKey) => {
+      const tx = txPool[txKey];
+      const cluster = getCluster(tx?.chainId as string);
+      return selectSolanaTxExplorerLink(txKey, cluster);
     },
 
-    // --- Optional Name Service Methods ---
-    getName: async (address: string) => {
-      if (!connection) {
-        console.warn('Cannot get name: connection context not provided to adapter.');
+    getName: async (address) => {
+      const rpcUrl = getRpcUrlForCluster(wallet?.walletActiveChain);
+      if (!rpcUrl) {
+        console.warn('Cannot get name: RPC URL for the current chain is not configured.');
         return null;
       }
-      return getSolanaName(connection, address);
+      return getSolanaName(rpcUrl, address);
     },
 
-    getAvatar: async (name: string) => {
-      if (!connection) {
-        console.warn('Cannot get avatar: connection context not provided to adapter.');
+    getAvatar: async (name) => {
+      const rpcUrl = getRpcUrlForCluster(wallet?.walletActiveChain);
+      if (!rpcUrl) {
+        console.warn('Cannot get avatar: RPC URL for the current chain is not configured.');
         return null;
       }
-      return getSolanaAvatar(connection, name);
+      return getSolanaAvatar(rpcUrl, name);
     },
 
-    // --- Optional Actions ---
     retryTxAction: async ({ actions, onClose, txKey, handleTransaction, tx }) => {
       onClose(txKey);
 
-      if (!wallet) {
-        throw new Error('Retry failed: A wallet must be connected to retry a transaction.');
+      if (!wallet || !wallet.walletAddress || wallet.walletAddress === '0x0') {
+        throw new Error('Retry failed: A wallet must be connected.');
       }
       if (!handleTransaction) {
         throw new Error('Retry failed: handleTransaction function is not provided.');
@@ -102,24 +129,24 @@ export function solanaAdapter<T extends Transaction<SolanaTransactionTracker>>(
         throw new Error(`Retry failed: No action found for actionKey "${actionKey}".`);
       }
 
-      const retryAction = actions[actionKey];
-
-      // Prioritize the RPC URL from the original transaction, falling back to the current connection.
-      const rpcUrlForRetry = tx.rpcUrl ?? connection?.connection.rpcEndpoint;
+      const clusterForRetry = getCluster(tx.desiredChainID as string);
+      const rpcUrlForRetry = tx.rpcUrl ?? getRpcUrlForCluster(clusterForRetry);
       if (!rpcUrlForRetry) {
-        throw new Error('Retry failed: Could not determine RPC endpoint.');
+        throw new Error('Retry failed: Could not determine RPC endpoint for the transaction chain.');
       }
 
-      const rpcForRetry = createSolanaRpc(rpcUrlForRetry);
+      const retryAction = actions[actionKey];
+      const rpcForRetry = createSolanaRPC(rpcUrlForRetry);
+
+      const actionFunction = () =>
+        (retryAction as any)({
+          wallet: config.wallet,
+          rpc: rpcForRetry,
+          ...tx.payload,
+        });
 
       await handleTransaction({
-        actionFunction: () =>
-          (retryAction as any)({
-            wallet,
-            connection: connection?.connection,
-            rpc: rpcForRetry,
-            ...tx.payload,
-          }),
+        actionFunction,
         params: tx,
         defaultTracker: SolanaTransactionTracker.Solana,
       });

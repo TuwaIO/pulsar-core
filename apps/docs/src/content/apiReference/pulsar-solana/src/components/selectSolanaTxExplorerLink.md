@@ -4,19 +4,13 @@
 
 # selectSolanaTxExplorerLink()
 
-> **selectSolanaTxExplorerLink**(`baseUrl`, `txKey`, `cluster?`): `string`
+> **selectSolanaTxExplorerLink**(`txKey`, `cluster?`): `string`
 
-Defined in: [packages/pulsar-solana/src/utils/selectSolanaTxExplorerLink.ts:15](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/utils/selectSolanaTxExplorerLink.ts#L15)
+Defined in: [packages/pulsar-solana/src/utils/selectSolanaTxExplorerLink.ts:15](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/utils/selectSolanaTxExplorerLink.ts#L15)
 
 Generates a full URL to a transaction on a Solana explorer like Solscan.
 
 ## Parameters
-
-### baseUrl
-
-`string`
-
-The base URL of the explorer (e.g., "https://solscan.io").
 
 ### txKey
 
@@ -26,7 +20,7 @@ The transaction signature (hash).
 
 ### cluster?
 
-[`SolanaCluster`](../type-aliases/SolanaCluster.md)
+`SolanaClusterMoniker`
 
 The optional cluster name ('devnet', 'testnet') to add as a query parameter.
 

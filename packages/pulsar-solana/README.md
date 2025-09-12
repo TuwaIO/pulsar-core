@@ -1,45 +1,45 @@
 # Pulsar Solana Adapter & Toolkit
 
-[](https://www.npmjs.com/package/@tuwaio/pulsar-solana)
-[](https://www.google.com/search?q=./LICENSE)
-[](https://github.com/TuwaIO/pulsar-core/actions)
+[![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-solana.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-solana)
+[![License](https://img.shields.io/npm/l/@tuwaio/pulsar-solana.svg)](./LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-An advanced toolkit for the Pulsar Engine that adds comprehensive support for tracking transactions on the Solana blockchain. It integrates seamlessly with **`@solana/kit`** and the **`@solana/wallet-adapter-react`** ecosystem.
+An advanced toolkit for the Pulsar Engine that adds comprehensive support for tracking transactions on the Solana blockchain. It is built to be **wallet-library agnostic**, integrating with any setup via a simple configuration object, and uses **`gill-sdk`** for modern blockchain interaction.
 
 -----
 
 ## 🏛️ What is `@tuwaio/pulsar-solana`?
 
-This package is a powerful, official adapter for `@tuwaio/pulsar-core`. It contains all the necessary logic to interact with the Solana blockchain, acting as the primary logic provider for Solana-based dApps using Pulsar.
+This package is a powerful, official adapter for `@tuwaio/pulsar-core`. It's designed to be universally compatible with any wallet connection library. By providing a simple wallet state object, you can leverage Pulsar's powerful transaction tracking engine without being locked into a specific ecosystem like the Wallet Standard.
 
-While its main export is the `solanaAdapter`, it also includes a suite of standalone trackers and utilities that can be used for advanced or custom implementations. The architecture is designed for robustness, ensuring transactions can be tracked even after a page reload by storing the relevant RPC endpoint within each transaction object.
+The architecture is designed for multi-chain robustness. You can provide RPC endpoints for different Solana clusters (e.g., Mainnet Beta, Devnet), and the adapter will automatically use the correct one based on the user's connected wallet state.
 
 -----
 
 ## ✨ Core Features
 
-- **🔌 Simple Integration:** A single `solanaAdapter` factory function to easily plug full Solana support into `@tuwaio/pulsar-core`.
-- **🛰️ Robust Polling Tracker:** A durable transaction tracker that polls for signature statuses until finality, built on Pulsar's generic polling utility.
-- **🔗 RPC Persistence:** The tracker is designed to be self-contained, storing the `rpcUrl` within each transaction to guarantee tracking can resume after page reloads, independent of the current wallet connection.
-- **🌐 Network Verification:** Includes a utility (`checkSolanaChain`) to robustly verify the connected network via its genesis hash, preventing transactions from being sent to the wrong cluster.
-- **👤 Name Service Support:** Built-in support for **Solana Name Service (SNS)** via Bonfida, allowing for easy resolution of `.sol` domain names and associated avatars.
-- **🛠️ Utility Suite:** Exports a rich set of helpers, including the SNS resolvers (`getSolanaName`, `getSolanaAvatar`) and an explorer link generator (`selectSolanaTxExplorerLink`).
+- **🔌 Universal Integration:** A single `solanaAdapter` factory that works with **any wallet library**.
+- **🔗 Multi-Chain RPC:** Configure with a map of RPC URLs for different clusters; the adapter intelligently selects the correct one.
+- **🛰️ Robust Polling Tracker:** A durable transaction tracker that polls for signature statuses until finality.
+- **🌐 Network Verification:** Includes a utility (`checkSolanaChain`) to robustly verify that the connected wallet's cluster matches the one required by the transaction.
+- **👤 Name Service Support:** Built-in support for **Solana Name Service (SNS)** on the currently active network.
+- **💡 Optional Wallet:** The adapter can be initialized without a wallet for read-only operations, such as displaying transaction history.
 
 -----
 
 ## 💾 Installation
 
-This package is designed for use in a React environment with `@solana/wallet-adapter-react` and requires `@solana/kit`. Install all necessary packages together:
+The package has minimal dependencies, requiring only `gill-sdk` for core functionality.
 
 ```bash
 # Using pnpm
-pnpm add @tuwaio/pulsar-solana @tuwaio/pulsar-core @solana/kit @solana/wallet-adapter-react zustand immer
+pnpm add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill zustand immer
 
 # Using npm
-npm install @tuwaio/pulsar-solana @tuwaio/pulsar-core @solana/kit @solana/wallet-adapter-react zustand immer
+npm install @tuwaio/pulsar-solana @tuwaio/pulsar-core gill zustand immer
 
 # Using yarn
-yarn add @tuwaio/pulsar-solana @tuwaio/pulsar-core @solana/kit @solana/wallet-adapter-react zustand immer
+yarn add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill zustand immer
 ```
 
 -----
@@ -48,68 +48,98 @@ yarn add @tuwaio/pulsar-solana @tuwaio/pulsar-core @solana/kit @solana/wallet-ad
 
 ### 1\. Primary Usage: The `solanaAdapter`
 
-For most applications, you'll need to import the `solanaAdapter` and pass it to your `createPulsarStore` configuration. The adapter should be initialized within a React component to access the necessary hooks from `@solana/wallet-adapter-react`.
+The key is to construct a simple `wallet` object from your chosen wallet library and pass it to the adapter's configuration. This object acts as a bridge, telling Pulsar the current state of the user's wallet.
 
-```tsx
+**Example with `@solana/wallet-adapter-react`:**
+
+```typescript
 // src/store/pulsarStore.ts
 import { createPulsarStore } from '@tuwaio/pulsar-core';
-import { solanaAdapter } from '@tuwaio/pulsar-solana';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { solanaAdapter, SolanaAdapterWallet } from '@tuwaio/pulsar-solana';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useMemo } from 'react';
 
-// It's best to create the store instance via a hook to access wallet/connection hooks.
+// This hook creates a Pulsar store instance that is memoized and updates
+// reactively when the wallet's state changes.
 export const useMyPulsarStore = () => {
-  const wallet = useWallet();
-  const connection = useConnection();
+  const { publicKey, wallet } = useWallet();
+  const walletAdapter = useWallet();
 
-  // useMemo ensures the store is created only once.
+  // 1. Create the simple wallet object required by the adapter.
+  const pulsarWallet: SolanaAdapterWallet | undefined = useMemo(() => {
+    if (!publicKey || !wallet) return undefined;
+
+    return {
+      walletAddress: publicKey.toBase58(),
+      walletType: wallet.adapter.name.toLowerCase(),
+      // You must determine the active cluster, e.g., from your app's state.
+      walletActiveChain: 'mainnet',
+    };
+  }, [publicKey, wallet]);
+
+  // 2. Create the Pulsar store.
   return useMemo(() => {
     return createPulsarStore({
-      // A unique name for localStorage persistence
       name: 'my-solana-dapp-transactions',
-      // Provide the solanaAdapter with the hook contexts
-      adapters: [solanaAdapter({ wallet, connection })],
-      // Optional: Add global callbacks for all successful transactions
-      onSucceedCallbacks: (tx) => {
-        console.log(`Transaction ${tx.txKey} succeeded!`);
-      },
+      adapters: [
+        solanaAdapter({
+          // The wallet object can be undefined if no wallet is connected.
+          wallet: pulsarWallet,
+          rpcUrls: {
+            'mainnet': 'https://api.mainnet-beta.solana.com',
+            'devnet': 'https://api.devnet.solana.com',
+          },
+        }),
+      ],
+      // 3. Register your transaction actions. These will receive the raw wallet
+      // object for signing.
+      actions: {
+        myAction: (params: { walletAdapter: any; rpc: any; }) => mySolanaAction(params)
+      }
     });
-  }, [wallet, connection]);
+  }, [pulsarWallet]);
 };
 ```
 
 ### 2\. Initiating a Transaction
 
-When calling `handleTransaction`, you must now provide the `rpcUrl` for the transaction. This ensures the tracker can function correctly even after a page reload.
+When calling `handleTransaction`, provide the `desiredChainId` with the **cluster moniker** (e.g., `'mainnet'`). Your `actionFunction` (registered in the store) is now fully responsible for signing and sending the transaction using the raw wallet object passed in the payload.
 
 ```tsx
 // src/components/MyTransactionButton.tsx
-import { usePulsar } from '@tuwaio/pulsar-react'; // Or your custom hook
-import { useConnection } from '@solana/wallet-adapter-react';
+import { usePulsar } from '@tuwaio/pulsar-react';
 import { TransactionAdapter } from '@tuwaio/pulsar-core';
+import { useWallet } from '@solana/wallet-adapter-react'; // Your chosen wallet library
 
-// An example action that returns a transaction signature
-async function mySolanaAction(): Promise<string> {
-  // ... your logic to build and send a transaction ...
-  const signature = await sendTransaction(...);
+// The action function receives the raw wallet instance and an RPC client.
+// It must handle the entire transaction creation and sending process.
+async function mySolanaAction({ walletAdapter, rpc }): Promise<string> {
+  // `walletAdapter` is the original instance from your wallet library.
+  const { sendTransaction } = walletAdapter;
+  
+  // ... your logic to build the transaction ...
+  const signature = await sendTransaction(transaction, rpc.connection);
   return signature;
 }
 
 function MyTransactionButton() {
   const { handleTransaction } = usePulsar();
-  const { connection } = useConnection();
+  const walletAdapter = useWallet(); // Get the raw wallet object
 
   const handleClick = async () => {
+    if (!walletAdapter.connected) {
+        // Handle wallet not connected
+        return;
+    }
     await handleTransaction({
-      actionFunction: () => mySolanaAction(),
+      // The key for your action, which is registered in the store config.
+      actionKey: 'myAction',
       params: {
         adapter: TransactionAdapter.SOLANA,
-        // The RPC endpoint must be provided for tracking.
-        rpcUrl: connection.rpcEndpoint,
-        desiredChainID: 'mainnet-beta', // The cluster name for the pre-flight check
+        rpcUrl: connection.connection.rpcEndpoint,
+        desiredChainId: 'mainnet',
         type: 'MY_ACTION',
         title: 'My Action',
-        description: 'Executing my custom action.',
       },
     });
   };
@@ -120,34 +150,32 @@ function MyTransactionButton() {
 
 ### 3\. Using Standalone Utilities
 
-You can use exported utilities, like the SNS resolvers, to enrich your UI.
+You can use exported utilities, like the SNS resolvers, to enrich your UI. These utilities need an RPC URL, which should ideally be sourced from your central configuration.
 
 **Example: Displaying a user's .sol domain name**
 
 ```tsx
 // src/components/DisplayName.tsx
 import { getSolanaName } from '@tuwaio/pulsar-solana';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useEffect, useState } from 'react';
 
-function DisplayName() {
-  const { publicKey } = useWallet();
-  const connection = useConnection();
+// Assume you have access to the wallet address and the appropriate RPC URL
+function DisplayName({ address, rpcUrl }: { address: string; rpcUrl: string }) {
   const [name, setName] = useState<string | null>(null);
 
   useEffect(() => {
-    if (publicKey && connection) {
-      getSolanaName(connection, publicKey.toBase58()).then(setName);
+    if (address && rpcUrl) {
+      getSolanaName(rpcUrl, address).then(setName);
     }
-  }, [publicKey, connection]);
+  }, [address, rpcUrl]);
 
-  if (!publicKey) return null;
+  if (!address) return null;
 
-  return <span>{name || publicKey.toBase58()}</span>;
+  return <span>{name || address}</span>;
 }
 ```
 
----
+-----
 
 ## 🤝 Contributing & Support
 

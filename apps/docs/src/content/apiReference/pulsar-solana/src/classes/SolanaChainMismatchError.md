@@ -4,9 +4,9 @@
 
 # SolanaChainMismatchError
 
-Defined in: [packages/pulsar-solana/src/errors.ts:13](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/errors.ts#L13)
+Defined in: [packages/pulsar-solana/src/errors.ts:11](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/errors.ts#L11)
 
-Thrown when the connected Solana cluster does not match the required cluster for a transaction.
+Thrown when the connected Solana chain does not match the required chain for a transaction.
 
 This allows consuming applications to `catch` this specific error and
 implement custom logic, such as prompting the user to switch networks.
@@ -19,17 +19,17 @@ implement custom logic, such as prompting the user to switch networks.
 
 ### Constructor
 
-> **new SolanaChainMismatchError**(`requiredCluster`, `currentCluster`): `SolanaChainMismatchError`
+> **new SolanaChainMismatchError**(`requiredChain`, `currentChain`): `SolanaChainMismatchError`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:21](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/errors.ts#L21)
+Defined in: [packages/pulsar-solana/src/errors.ts:19](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/errors.ts#L19)
 
 #### Parameters
 
-##### requiredCluster
+##### requiredChain
 
-[`SolanaCluster`](../type-aliases/SolanaCluster.md)
+`string`
 
-##### currentCluster
+##### currentChain
 
 `string`
 
@@ -55,13 +55,13 @@ Defined in: node\_modules/.pnpm/typescript@5.9.2/node\_modules/typescript/lib/li
 
 ***
 
-### currentCluster
+### currentChain
 
-> **currentCluster**: `string`
+> **currentChain**: `string`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:19](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/errors.ts#L19)
+Defined in: [packages/pulsar-solana/src/errors.ts:17](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/errors.ts#L17)
 
-The cluster the wallet is currently connected to.
+The chain the wallet is currently connected to.
 
 ***
 
@@ -81,7 +81,7 @@ Defined in: node\_modules/.pnpm/typescript@5.9.2/node\_modules/typescript/lib/li
 
 > **name**: `string` = `'SolanaChainMismatchError'`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:15](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/errors.ts#L15)
+Defined in: [packages/pulsar-solana/src/errors.ts:13](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/errors.ts#L13)
 
 The name of the error, for easy identification.
 
@@ -91,13 +91,13 @@ The name of the error, for easy identification.
 
 ***
 
-### requiredCluster
+### requiredChain
 
-> **requiredCluster**: [`SolanaCluster`](../type-aliases/SolanaCluster.md)
+> **requiredChain**: `string`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:17](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-solana/src/errors.ts#L17)
+Defined in: [packages/pulsar-solana/src/errors.ts:15](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/errors.ts#L15)
 
-The cluster that the transaction requires (e.g., 'mainnet-beta').
+The chain that the transaction requires (e.g., 'solana:mainnet').
 
 ***
 

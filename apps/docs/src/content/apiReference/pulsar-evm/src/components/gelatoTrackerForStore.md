@@ -6,7 +6,7 @@
 
 > **gelatoTrackerForStore**\<`T`\>(`__namedParameters`): `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:137](https://github.com/TuwaIO/pulsar-core/blob/985edec1767ef15f98a2291cd2f4c155d4746f3b/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L137)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:137](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L137)
 
 A higher-level wrapper that integrates the Gelato polling logic with the Pulsar store.
 It uses the generic `gelatoFetcher` and provides store-specific callbacks.
