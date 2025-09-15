@@ -6,7 +6,7 @@
 
 > **ITxTrackingStore**\<`TR`, `T`, `A`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`TR`, `T`, `A`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:257](https://github.com/TuwaIO/pulsar-core/blob/6809762408e3f6b3c6a6abf36acf33e3e88891f1/packages/pulsar-core/src/types.ts#L257)
+Defined in: [packages/pulsar-core/src/types.ts:257](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/types.ts#L257)
 
 The complete interface for the Pulsar transaction tracking store.
 
@@ -39,7 +39,7 @@ The default tracker to use if it cannot be determined automatically.
 
 ###### params
 
-[`InitialTransactionParams`](InitialTransactionParams.md)\<`A`\>
+`Omit`\<[`InitialTransactionParams`](InitialTransactionParams.md)\<`A`\>, `"actionFunction"`\>
 
 The metadata for the transaction.
 

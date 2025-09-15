@@ -75,6 +75,7 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
           set({
             initialTx: {
               ...params,
+              actionFunction,
               localTimestamp,
               isInitializing: true,
             },

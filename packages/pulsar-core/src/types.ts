@@ -264,7 +264,7 @@ export type ITxTrackingStore<TR, T extends Transaction<TR>, A> = IInitializeTxTr
     /** The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined. */
     actionFunction: () => Promise<A | undefined>;
     /** The metadata for the transaction. */
-    params: InitialTransactionParams<A>;
+    params: Omit<InitialTransactionParams<A>, 'actionFunction'>;
     /** The default tracker to use if it cannot be determined automatically. */
     defaultTracker?: TR;
   }) => Promise<void>;
