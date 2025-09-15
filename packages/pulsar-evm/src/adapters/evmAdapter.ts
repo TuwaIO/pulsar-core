@@ -68,24 +68,16 @@ export function evmAdapter<T extends Transaction<TransactionTracker>>(
     // --- Optional Actions ---
     cancelTxAction: (tx) => cancelTxAction({ config, tx }),
     speedUpTxAction: (tx) => speedUpTxAction({ config, tx }),
-    retryTxAction: async ({ actions, onClose, txKey, handleTransaction, tx }) => {
+    retryTxAction: async ({ onClose, txKey, handleTransaction, tx }) => {
       onClose(txKey);
 
       if (!handleTransaction) {
         console.error('Retry failed: handleTransaction function is not provided.');
         return;
       }
-      if (!tx.actionKey || !actions?.[tx.actionKey]) {
-        console.error(`Retry failed: No action found for actionKey "${tx.actionKey}".`);
-        return;
-      }
-
-      const retryAction = actions[tx.actionKey];
 
       await handleTransaction({
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
-        actionFunction: () => retryAction({ config, ...tx.payload }),
+        actionFunction: () => tx.actionFunction({ config, ...tx.payload }),
         params: tx,
         defaultTracker: TransactionTracker.Ethereum,
       });

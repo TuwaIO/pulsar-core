@@ -56,8 +56,6 @@ export enum TransactionStatus {
  * @template T - The type of the tracker identifier (e.g., 'ethereum', 'gelato', 'safe').
  */
 export type BaseTransaction<T> = {
-  /** A unique key identifying a re-executable action from the `TxActions` registry. */
-  actionKey?: string;
   /** The chain identifier (e.g., 1 for Ethereum Mainnet, 'SN_MAIN' for Starknet). */
   chainId: number | string;
   /** A user-facing description. Can be a single string or an array for [pending, success, error, replaced] states. */
@@ -158,22 +156,16 @@ export type StarknetTransaction<T> = BaseTransaction<T> & {
 export type Transaction<T> = EvmTransaction<T> | SolanaTransaction<T> | StarknetTransaction<T>;
 
 // =================================================================================================
-// 4. INITIAL TRANSACTION AND ACTION TYPES
+// 4. INITIAL TRANSACTION TYPES
 // =================================================================================================
-
-/**
- * A registry of functions that can be re-executed, keyed by `actionKey`.
- * Used for implementing "Retry" functionality.
- */
-export type TxActions = Record<string, (...args: any[]) => Promise<unknown>>;
 
 /**
  * Represents the parameters required to initiate a new transaction tracking flow.
  */
-export type InitialTransactionParams = {
+export type InitialTransactionParams<A> = {
   adapter: TransactionAdapter;
-  /** A key to identify the re-executable action from the `TxActions` registry. */
-  actionKey?: string;
+  /** A function that can be re-executed. */
+  actionFunction: (...args: any[]) => Promise<A | undefined>;
   /** A user-facing description for the transaction. */
   description?: string | [string, string, string, string];
   /** The target chain ID for the transaction. */
@@ -194,7 +186,7 @@ export type InitialTransactionParams = {
  * Represents a transaction in its temporary, pre-submission state.
  * This is used for UI feedback while the transaction is being signed and sent.
  */
-export type InitialTransaction = InitialTransactionParams & {
+export type InitialTransaction<A> = InitialTransactionParams<A> & {
   /** An error message if the initialization fails (e.g., user rejects signature). */
   errorMessage?: string;
   /** A flag indicating if the transaction is being processed (e.g., waiting for signature). */
@@ -248,8 +240,7 @@ export type TxAdapter<TR, T extends Transaction<TR>, A> = {
   retryTxAction?: (
     params: {
       txKey: string;
-      tx: InitialTransactionParams;
-      actions?: TxActions;
+      tx: InitialTransactionParams<A>;
       onClose: (txKey?: string) => void;
     } & Partial<Pick<ITxTrackingStore<TR, T, A>, 'handleTransaction'>>,
   ) => Promise<void>;
@@ -263,7 +254,7 @@ export type TxAdapter<TR, T extends Transaction<TR>, A> = {
  * @template T - The transaction type.
  * @template A - The return type of the `actionFunction`.
  */
-export type ITxTrackingStore<TR, T extends Transaction<TR>, A> = IInitializeTxTrackingStore<TR, T> & {
+export type ITxTrackingStore<TR, T extends Transaction<TR>, A> = IInitializeTxTrackingStore<TR, T, A> & {
   /**
    * The core function that handles the entire lifecycle of a new transaction.
    * It manages UI state, executes the on-chain action, and initiates background tracking.
@@ -273,7 +264,7 @@ export type ITxTrackingStore<TR, T extends Transaction<TR>, A> = IInitializeTxTr
     /** The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined. */
     actionFunction: () => Promise<A | undefined>;
     /** The metadata for the transaction. */
-    params: InitialTransactionParams;
+    params: InitialTransactionParams<A>;
     /** The default tracker to use if it cannot be determined automatically. */
     defaultTracker?: TR;
   }) => Promise<void>;

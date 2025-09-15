@@ -114,7 +114,7 @@ export function solanaAdapter<T extends Transaction<SolanaTransactionTracker>>(
       return getSolanaAvatar(rpcUrl, name);
     },
 
-    retryTxAction: async ({ actions, onClose, txKey, handleTransaction, tx }) => {
+    retryTxAction: async ({ onClose, txKey, handleTransaction, tx }) => {
       onClose(txKey);
 
       if (!wallet || !wallet.walletAddress || wallet.walletAddress === '0x0') {
@@ -124,29 +124,21 @@ export function solanaAdapter<T extends Transaction<SolanaTransactionTracker>>(
         throw new Error('Retry failed: handleTransaction function is not provided.');
       }
 
-      const actionKey = tx.actionKey;
-      if (!actionKey || !actions?.[actionKey]) {
-        throw new Error(`Retry failed: No action found for actionKey "${actionKey}".`);
-      }
-
       const clusterForRetry = getCluster(tx.desiredChainID as string);
       const rpcUrlForRetry = tx.rpcUrl ?? getRpcUrlForCluster(clusterForRetry);
       if (!rpcUrlForRetry) {
         throw new Error('Retry failed: Could not determine RPC endpoint for the transaction chain.');
       }
 
-      const retryAction = actions[actionKey];
       const rpcForRetry = createSolanaRPC(rpcUrlForRetry);
 
-      const actionFunction = () =>
-        (retryAction as any)({
-          wallet: config.wallet,
-          rpc: rpcForRetry,
-          ...tx.payload,
-        });
-
       await handleTransaction({
-        actionFunction,
+        actionFunction: () =>
+          tx.actionFunction({
+            wallet: config.wallet,
+            rpc: rpcForRetry,
+            ...tx.payload,
+          }),
         params: tx,
         defaultTracker: SolanaTransactionTracker.Solana,
       });

@@ -6,7 +6,7 @@
  */
 
 import dayjs from 'dayjs';
-import { Draft, produce } from 'immer';
+import { produce } from 'immer';
 import { persist, PersistOptions } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
@@ -42,7 +42,7 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
   return createStore<ITxTrackingStore<TR, T, A>>()(
     persist(
       (set, get) => ({
-        ...initializeTxTrackingStore<TR, T>({ onSucceedCallbacks })(set, get),
+        ...initializeTxTrackingStore<TR, T, A>({ onSucceedCallbacks })(set, get),
 
         /**
          * Initializes trackers for all pending transactions upon store creation.
@@ -117,7 +117,7 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
               txKey: '', // Will be populated shortly
               pending: false,
               isTrackedModalOpen: params.withTrackedModal,
-            } as Draft<T>;
+            };
 
             // 5. Determine the correct tracker and final txKey based on the action result
             const { tracker: updatedTracker, txKey: finalTxKey } = adapter.checkTransactionsTracker(
@@ -129,8 +129,8 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
               ...txInitialParams,
               tracker: updatedTracker,
               txKey: finalTxKey,
-              hash: updatedTracker === 'ethereum' ? txKeyFromAction : undefined,
-            } as T;
+              hash: (updatedTracker === 'ethereum' ? txKeyFromAction : undefined) as `0x${string}`,
+            };
 
             // 6. Add the finalized transaction to the pool
             get().addTxToPool(newTx);

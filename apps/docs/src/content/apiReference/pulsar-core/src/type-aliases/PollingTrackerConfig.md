@@ -6,7 +6,7 @@
 
 > **PollingTrackerConfig**\<`R`, `T`, `TR`\> = `object`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:35](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/utils/initializePollingTracker.ts#L35)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:35](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/utils/initializePollingTracker.ts#L35)
 
 Defines the configuration object for the `initializePollingTracker` function.
 
@@ -36,7 +36,7 @@ The type of the tracker identifier.
 
 > **fetcher**: (`params`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:39](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/utils/initializePollingTracker.ts#L39)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:39](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/utils/initializePollingTracker.ts#L39)
 
 The function that performs the data fetching (e.g., an API call) on each interval.
 
@@ -56,7 +56,7 @@ The function that performs the data fetching (e.g., an API call) on each interva
 
 > `optional` **maxRetries**: `number`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:55](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/utils/initializePollingTracker.ts#L55)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:55](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/utils/initializePollingTracker.ts#L55)
 
 The number of consecutive failed fetches before stopping the tracker. Defaults to 10.
 
@@ -66,7 +66,7 @@ The number of consecutive failed fetches before stopping the tracker. Defaults t
 
 > **onFailure**: (`response?`) => `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:43](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/utils/initializePollingTracker.ts#L43)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:43](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/utils/initializePollingTracker.ts#L43)
 
 Callback to be invoked when the transaction fails.
 
@@ -86,7 +86,7 @@ Callback to be invoked when the transaction fails.
 
 > `optional` **onInitialize**: () => `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:45](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/utils/initializePollingTracker.ts#L45)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:45](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/utils/initializePollingTracker.ts#L45)
 
 Optional callback executed once when the tracker is initialized.
 
@@ -100,7 +100,7 @@ Optional callback executed once when the tracker is initialized.
 
 > `optional` **onIntervalTick**: (`response`) => `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:47](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/utils/initializePollingTracker.ts#L47)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:47](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/utils/initializePollingTracker.ts#L47)
 
 Optional callback for each successful poll.
 
@@ -120,7 +120,7 @@ Optional callback for each successful poll.
 
 > `optional` **onReplaced**: (`response`) => `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:49](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/utils/initializePollingTracker.ts#L49)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:49](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/utils/initializePollingTracker.ts#L49)
 
 Optional callback for when a transaction is replaced.
 
@@ -140,7 +140,7 @@ Optional callback for when a transaction is replaced.
 
 > **onSuccess**: (`response`) => `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:41](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/utils/initializePollingTracker.ts#L41)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:41](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/utils/initializePollingTracker.ts#L41)
 
 Callback to be invoked when the transaction successfully completes.
 
@@ -160,7 +160,7 @@ Callback to be invoked when the transaction successfully completes.
 
 > `optional` **pollingInterval**: `number`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:53](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/utils/initializePollingTracker.ts#L53)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:53](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/utils/initializePollingTracker.ts#L53)
 
 The interval (in milliseconds) between polling attempts. Defaults to 5000ms.
 
@@ -170,7 +170,7 @@ The interval (in milliseconds) between polling attempts. Defaults to 5000ms.
 
 > `optional` **removeTxFromPool**: (`txKey`) => `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:51](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/utils/initializePollingTracker.ts#L51)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:51](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/utils/initializePollingTracker.ts#L51)
 
 Optional function to remove the transaction from the main pool, typically after polling stops.
 
@@ -190,6 +190,6 @@ Optional function to remove the transaction from the main pool, typically after 
 
 > **tx**: `T` & `Pick`\<[`Transaction`](Transaction.md)\<`TR`\>, `"txKey"` \| `"pending"`\>
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:37](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/utils/initializePollingTracker.ts#L37)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:37](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/utils/initializePollingTracker.ts#L37)
 
 The transaction object to be tracked. It must include `txKey` and `pending` status.

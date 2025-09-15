@@ -49,7 +49,7 @@ type UpdatableTransactionFields<TR> = Partial<
  * @template TR - The type of the tracker identifier.
  * @template T - The transaction type.
  */
-export interface IInitializeTxTrackingStore<TR, T extends Transaction<TR>> {
+export interface IInitializeTxTrackingStore<TR, T extends Transaction<TR>, A> {
   /** An optional callback function to be executed when a transaction successfully completes. */
   onSucceedCallbacks?: (tx: T) => Promise<void> | void;
   /** A pool of all transactions currently being tracked, indexed by their `txKey`. */
@@ -57,10 +57,10 @@ export interface IInitializeTxTrackingStore<TR, T extends Transaction<TR>> {
   /** The key of the most recently added transaction. */
   lastAddedTxKey?: string;
   /** The state of a transaction that is currently being initiated but not yet submitted. */
-  initialTx?: InitialTransaction;
+  initialTx?: InitialTransaction<A>;
 
   /** Adds a new transaction to the tracking pool. */
-  addTxToPool: (tx: T) => void;
+  addTxToPool: (tx: Transaction<TR>) => void;
   /** Updates one or more parameters of an existing transaction in the pool. */
   updateTxParams: (txKey: string, fields: UpdatableTransactionFields<TR>) => void;
   /** Removes a transaction from the tracking pool using its key. */
@@ -78,11 +78,11 @@ export interface IInitializeTxTrackingStore<TR, T extends Transaction<TR>> {
  * @param {function} [options.onSucceedCallbacks] - An optional async callback to run when a transaction succeeds.
  * @returns {StoreSlice<IInitializeTxTrackingStore<TR, T>>} A Zustand store slice.
  */
-export function initializeTxTrackingStore<TR, T extends Transaction<TR>>({
+export function initializeTxTrackingStore<TR, T extends Transaction<TR>, A>({
   onSucceedCallbacks,
 }: {
   onSucceedCallbacks?: (tx: T) => Promise<void> | void;
-}): StoreSlice<IInitializeTxTrackingStore<TR, T>> {
+}): StoreSlice<IInitializeTxTrackingStore<TR, T, A>> {
   return (set, get) => ({
     onSucceedCallbacks,
 
