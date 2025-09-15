@@ -4,7 +4,7 @@
 
 # SolanaChainMismatchError
 
-Defined in: [packages/pulsar-solana/src/errors.ts:11](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-solana/src/errors.ts#L11)
+Defined in: [packages/pulsar-solana/src/errors.ts:11](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-solana/src/errors.ts#L11)
 
 Thrown when the connected Solana chain does not match the required chain for a transaction.
 
@@ -21,7 +21,7 @@ implement custom logic, such as prompting the user to switch networks.
 
 > **new SolanaChainMismatchError**(`requiredChain`, `currentChain`): `SolanaChainMismatchError`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:19](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-solana/src/errors.ts#L19)
+Defined in: [packages/pulsar-solana/src/errors.ts:19](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-solana/src/errors.ts#L19)
 
 #### Parameters
 
@@ -59,7 +59,7 @@ Defined in: node\_modules/.pnpm/typescript@5.9.2/node\_modules/typescript/lib/li
 
 > **currentChain**: `string`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:17](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-solana/src/errors.ts#L17)
+Defined in: [packages/pulsar-solana/src/errors.ts:17](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-solana/src/errors.ts#L17)
 
 The chain the wallet is currently connected to.
 
@@ -81,7 +81,7 @@ Defined in: node\_modules/.pnpm/typescript@5.9.2/node\_modules/typescript/lib/li
 
 > **name**: `string` = `'SolanaChainMismatchError'`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:13](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-solana/src/errors.ts#L13)
+Defined in: [packages/pulsar-solana/src/errors.ts:13](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-solana/src/errors.ts#L13)
 
 The name of the error, for easy identification.
 
@@ -95,7 +95,7 @@ The name of the error, for easy identification.
 
 > **requiredChain**: `string`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:15](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-solana/src/errors.ts#L15)
+Defined in: [packages/pulsar-solana/src/errors.ts:15](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-solana/src/errors.ts#L15)
 
 The chain that the transaction requires (e.g., 'solana:mainnet').
 

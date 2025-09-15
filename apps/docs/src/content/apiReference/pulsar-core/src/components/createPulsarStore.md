@@ -6,13 +6,13 @@
 
 > **createPulsarStore**\<`TR`, `T`, `A`\>(`__namedParameters`): `WithPersist`\<`StoreApi`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>, [`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`TR`, `T`, `A`\>\>
 
-Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:34](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/store/txTrackingStore.ts#L34)
+Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:33](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/store/txTrackingStore.ts#L33)
 
 Creates the main Pulsar store for transaction tracking.
 
-This function sets up a Zustand store with persistence, combining the core
-transaction slice with adapter-specific logic to handle the entire lifecycle
-of a transaction.
+This function configures a Zustand store enhanced with persistence. It combines the core transaction management
+slice with a powerful orchestration logic that leverages chain-specific adapters to handle the entire
+lifecycle of a transaction—from initiation and chain validation to execution and background status tracking.
 
 ## Type Parameters
 
@@ -32,7 +32,7 @@ The specific transaction type, extending the base `Transaction`.
 
 `A`
 
-The type for the adapter-specific context or API.
+The type of the key returned by the `actionFunction` (e.g., a transaction hash).
 
 ## Parameters
 

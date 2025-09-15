@@ -6,7 +6,7 @@
 
 > **ITxTrackingStore**\<`TR`, `T`, `A`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`TR`, `T`, `A`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:257](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/types.ts#L257)
+Defined in: [packages/pulsar-core/src/types.ts:274](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L274)
 
 The complete interface for the Pulsar transaction tracking store.
 
@@ -16,7 +16,7 @@ The complete interface for the Pulsar transaction tracking store.
 
 > **handleTransaction**: (`params`) => `Promise`\<`void`\>
 
-The core function that handles the entire lifecycle of a new transaction.
+The primary method for initiating and tracking a new transaction from start to finish.
 It manages UI state, executes the on-chain action, and initiates background tracking.
 
 #### Parameters

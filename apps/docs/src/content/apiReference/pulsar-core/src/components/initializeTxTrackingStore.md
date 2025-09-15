@@ -6,10 +6,10 @@
 
 > **initializeTxTrackingStore**\<`TR`, `T`, `A`\>(`options`): [`StoreSlice`](../type-aliases/StoreSlice.md)\<[`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`TR`, `T`, `A`\>\>
 
-Defined in: [packages/pulsar-core/src/store/initializeTxTrackingStore.ts:81](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/store/initializeTxTrackingStore.ts#L81)
+Defined in: [packages/pulsar-core/src/store/initializeTxTrackingStore.ts:87](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/store/initializeTxTrackingStore.ts#L87)
 
-Creates a Zustand store slice containing the core logic for transaction tracking.
-This function is a slice creator and is meant to be used within `createStore` from Zustand.
+Creates a Zustand store slice with the core logic for transaction state management.
+This function is a slice creator intended for use with Zustand's `create` function.
 
 ## Type Parameters
 
@@ -17,19 +17,25 @@ This function is a slice creator and is meant to be used within `createStore` fr
 
 `TR`
 
+The type of the tracker identifier.
+
 ### T
 
 `T` *extends* [`Transaction`](../type-aliases/Transaction.md)\<`TR`\>
+
+The specific transaction type.
 
 ### A
 
 `A`
 
+The return type of the initial action function.
+
 ## Parameters
 
 ### options
 
-Configuration options for the store slice.
+Configuration for the store slice.
 
 #### onSucceedCallbacks?
 
@@ -41,4 +47,4 @@ An optional async callback to run when a transaction succeeds.
 
 [`StoreSlice`](../type-aliases/StoreSlice.md)\<[`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`TR`, `T`, `A`\>\>
 
-A Zustand store slice.
+A Zustand store slice implementing `IInitializeTxTrackingStore`.

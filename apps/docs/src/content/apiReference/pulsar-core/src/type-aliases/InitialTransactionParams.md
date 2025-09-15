@@ -6,7 +6,7 @@
 
 > **InitialTransactionParams**\<`A`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:165](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/types.ts#L165)
+Defined in: [packages/pulsar-core/src/types.ts:179](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L179)
 
 Represents the parameters required to initiate a new transaction tracking flow.
 
@@ -22,9 +22,9 @@ Represents the parameters required to initiate a new transaction tracking flow.
 
 > **actionFunction**: (...`args`) => `Promise`\<`A` \| `undefined`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:168](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/types.ts#L168)
+Defined in: [packages/pulsar-core/src/types.ts:182](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L182)
 
-A function that can be re-executed.
+The function that executes the on-chain action (e.g., sending a transaction) and returns a preliminary identifier like a hash.
 
 #### Parameters
 
@@ -42,7 +42,7 @@ A function that can be re-executed.
 
 > **adapter**: [`TransactionAdapter`](../enumerations/TransactionAdapter.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:166](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/types.ts#L166)
+Defined in: [packages/pulsar-core/src/types.ts:180](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L180)
 
 ***
 
@@ -50,9 +50,9 @@ Defined in: [packages/pulsar-core/src/types.ts:166](https://github.com/TuwaIO/pu
 
 > `optional` **description**: `string` \| \[`string`, `string`, `string`, `string`\]
 
-Defined in: [packages/pulsar-core/src/types.ts:170](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/types.ts#L170)
+Defined in: [packages/pulsar-core/src/types.ts:184](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L184)
 
-A user-facing description for the transaction.
+A user-facing description for the transaction. Supports state-specific descriptions.
 
 ***
 
@@ -60,7 +60,7 @@ A user-facing description for the transaction.
 
 > **desiredChainID**: `number` \| `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:172](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/types.ts#L172)
+Defined in: [packages/pulsar-core/src/types.ts:186](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L186)
 
 The target chain ID for the transaction.
 
@@ -70,7 +70,7 @@ The target chain ID for the transaction.
 
 > `optional` **payload**: `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:174](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/types.ts#L174)
+Defined in: [packages/pulsar-core/src/types.ts:188](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L188)
 
 Any custom data to associate with the transaction.
 
@@ -80,9 +80,9 @@ Any custom data to associate with the transaction.
 
 > `optional` **rpcUrl**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:182](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/types.ts#L182)
+Defined in: [packages/pulsar-core/src/types.ts:196](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L196)
 
-Required for Solana transactions. The RPC URL to use for the transaction.
+The RPC URL to use for the transaction. Required for Solana transactions.
 
 ***
 
@@ -90,9 +90,9 @@ Required for Solana transactions. The RPC URL to use for the transaction.
 
 > `optional` **title**: `string` \| \[`string`, `string`, `string`, `string`\]
 
-Defined in: [packages/pulsar-core/src/types.ts:176](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/types.ts#L176)
+Defined in: [packages/pulsar-core/src/types.ts:190](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L190)
 
-A user-facing title for the transaction.
+A user-facing title for the transaction. Supports state-specific titles.
 
 ***
 
@@ -100,7 +100,7 @@ A user-facing title for the transaction.
 
 > **type**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:178](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/types.ts#L178)
+Defined in: [packages/pulsar-core/src/types.ts:192](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L192)
 
 The application-specific type of the transaction.
 
@@ -110,6 +110,6 @@ The application-specific type of the transaction.
 
 > `optional` **withTrackedModal**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:180](https://github.com/TuwaIO/pulsar-core/blob/f8e82052c304404b9a8504de7ebd7c17c4293051/packages/pulsar-core/src/types.ts#L180)
+Defined in: [packages/pulsar-core/src/types.ts:194](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L194)
 
 If true, the detailed tracking modal will open automatically upon initiation.
