@@ -6,7 +6,7 @@
 
 > **createSolanaRPC**(`rpcUrl`): `Rpc`\<`SolanaRpcApi`\>
 
-Defined in: [packages/pulsar-solana/src/utils/createSolanaRPC.ts:17](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-solana/src/utils/createSolanaRPC.ts#L17)
+Defined in: [packages/pulsar-solana/src/utils/createSolanaRPC.ts:17](https://github.com/TuwaIO/pulsar-core/blob/6809762408e3f6b3c6a6abf36acf33e3e88891f1/packages/pulsar-solana/src/utils/createSolanaRPC.ts#L17)
 
 **`Internal`**
 

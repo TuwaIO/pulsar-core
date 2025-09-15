@@ -4,7 +4,7 @@
 
 # TransactionStatus
 
-Defined in: [packages/pulsar-core/src/types.ts:44](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/types.ts#L44)
+Defined in: [packages/pulsar-core/src/types.ts:44](https://github.com/TuwaIO/pulsar-core/blob/6809762408e3f6b3c6a6abf36acf33e3e88891f1/packages/pulsar-core/src/types.ts#L44)
 
 Represents the terminal status of a transaction after it has been processed.
 
@@ -14,7 +14,7 @@ Represents the terminal status of a transaction after it has been processed.
 
 > **Failed**: `"Failed"`
 
-Defined in: [packages/pulsar-core/src/types.ts:46](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/types.ts#L46)
+Defined in: [packages/pulsar-core/src/types.ts:46](https://github.com/TuwaIO/pulsar-core/blob/6809762408e3f6b3c6a6abf36acf33e3e88891f1/packages/pulsar-core/src/types.ts#L46)
 
 The transaction failed to execute due to an on-chain error or rejection.
 
@@ -24,7 +24,7 @@ The transaction failed to execute due to an on-chain error or rejection.
 
 > **Replaced**: `"Replaced"`
 
-Defined in: [packages/pulsar-core/src/types.ts:50](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/types.ts#L50)
+Defined in: [packages/pulsar-core/src/types.ts:50](https://github.com/TuwaIO/pulsar-core/blob/6809762408e3f6b3c6a6abf36acf33e3e88891f1/packages/pulsar-core/src/types.ts#L50)
 
 The transaction was replaced by another with the same nonce (e.g., a speed-up or cancel).
 
@@ -34,6 +34,6 @@ The transaction was replaced by another with the same nonce (e.g., a speed-up or
 
 > **Success**: `"Success"`
 
-Defined in: [packages/pulsar-core/src/types.ts:48](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-core/src/types.ts#L48)
+Defined in: [packages/pulsar-core/src/types.ts:48](https://github.com/TuwaIO/pulsar-core/blob/6809762408e3f6b3c6a6abf36acf33e3e88891f1/packages/pulsar-core/src/types.ts#L48)
 
 The transaction was successfully mined and executed.

@@ -6,7 +6,7 @@
 
 > **selectSolanaTxExplorerLink**(`txKey`, `cluster?`): `string`
 
-Defined in: [packages/pulsar-solana/src/utils/selectSolanaTxExplorerLink.ts:15](https://github.com/TuwaIO/pulsar-core/blob/7fb56ca30ef24d2c4e269e064078286600c47032/packages/pulsar-solana/src/utils/selectSolanaTxExplorerLink.ts#L15)
+Defined in: [packages/pulsar-solana/src/utils/selectSolanaTxExplorerLink.ts:15](https://github.com/TuwaIO/pulsar-core/blob/6809762408e3f6b3c6a6abf36acf33e3e88891f1/packages/pulsar-solana/src/utils/selectSolanaTxExplorerLink.ts#L15)
 
 Generates a full URL to a transaction on a Solana explorer like Solscan.
 

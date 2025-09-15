@@ -1,9 +1,18 @@
 module.exports = {
   branches: [
     'main',
-    { name: 'dev/**', prerelease: 'alpha' },
-    { name: 'fix/**', prerelease: 'alpha' },
-    { name: 'feat/**', prerelease: 'alpha' },
+    {
+      name: 'dev/**',
+      prerelease: '${name.replace(/\\//g, "-").toLowerCase()}-alpha',
+    },
+    {
+      name: 'fix/**',
+      prerelease: '${name.replace(/\\//g, "-").toLowerCase()}-alpha',
+    },
+    {
+      name: 'feature/**',
+      prerelease: '${name.replace(/\\//g, "-").toLowerCase()}-alpha',
+    },
   ],
   tagFormat: 'v${version}',
   plugins: [
