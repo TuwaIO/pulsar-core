@@ -1,12 +1,11 @@
 /**
- * @file This file is the heart of the Pulsar store, orchestrating transaction handling,
- * state management, and communication with various blockchain adapters. It leverages
- * Zustand for state management, Immer for immutable updates, and a persistent middleware
- * to maintain state across sessions.
+ * @file This file is the nucleus of the Pulsar store, orchestrating transaction handling, state management,
+ * and communication with blockchain adapters. It utilizes Zustand for state management, Immer for safe,
+ * immutable updates, and a persistence middleware to maintain state across user sessions.
  */
 
 import dayjs from 'dayjs';
-import { Draft, produce } from 'immer';
+import { produce } from 'immer';
 import { persist, PersistOptions } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
@@ -17,18 +16,18 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 /**
  * Creates the main Pulsar store for transaction tracking.
  *
- * This function sets up a Zustand store with persistence, combining the core
- * transaction slice with adapter-specific logic to handle the entire lifecycle
- * of a transaction.
+ * This function configures a Zustand store enhanced with persistence. It combines the core transaction management
+ * slice with a powerful orchestration logic that leverages chain-specific adapters to handle the entire
+ * lifecycle of a transaction—from initiation and chain validation to execution and background status tracking.
  *
- * @template TR - The type of the tracker identifier (e.g., a string enum).
- * @template T - The specific transaction type, extending the base `Transaction`.
- * @template A - The type for the adapter-specific context or API.
+ * @template TR The type of the tracker identifier (e.g., a string enum).
+ * @template T The specific transaction type, extending the base `Transaction`.
+ * @template A The type of the key returned by the `actionFunction` (e.g., a transaction hash).
  *
- * @param {object} config - Configuration object for creating the store.
- * @param {function} [config.onSucceedCallbacks] - Optional async callback executed on transaction success.
- * @param {TxAdapter<TR, T, A>[]} config.adapters - An array of adapters for different transaction types or chains.
- * @param {PersistOptions<ITxTrackingStore<TR, T, A>>} [options] - Configuration for the Zustand persist middleware.
+ * @param config Configuration object for creating the store.
+ * @param config.onSucceedCallbacks Optional async callback executed on transaction success.
+ * @param config.adapters An array of adapters for different chains or transaction types.
+ * @param options Configuration for the Zustand `persist` middleware.
  * @returns A fully configured Zustand store instance.
  */
 export function createPulsarStore<TR, T extends Transaction<TR>, A>({
@@ -42,7 +41,8 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
   return createStore<ITxTrackingStore<TR, T, A>>()(
     persist(
       (set, get) => ({
-        ...initializeTxTrackingStore<TR, T>({ onSucceedCallbacks })(set, get),
+        // Initialize the base store slice with core state and actions
+        ...initializeTxTrackingStore<TR, T, A>({ onSucceedCallbacks })(set, get),
 
         /**
          * Initializes trackers for all pending transactions upon store creation.
@@ -51,30 +51,36 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
         initializeTransactionsPool: async () => {
           const pendingTxs = Object.values(get().transactionsPool).filter((tx) => tx.pending);
 
+          // Concurrently initialize trackers for all pending transactions
           await Promise.all(
             pendingTxs.map((tx) => {
               const adapter = selectAdapterByKey({
                 adapterKey: tx.adapter,
                 adapters,
               });
-              return adapter?.checkAndInitializeTrackerInStore({ tx, ...get() });
+              // Delegate tracker initialization to the appropriate adapter
+              return adapter?.checkAndInitializeTrackerInStore({
+                tx,
+                ...get(),
+              });
             }),
           );
         },
 
         /**
-         * The core function to orchestrate sending and tracking a new transaction.
-         * It manages the entire lifecycle, including chain switching, wallet interactions,
-         * state updates, and tracker initialization.
+         * The primary function to orchestrate sending and tracking a new transaction.
+         * It manages the entire lifecycle, from UI state updates and chain switching to
+         * signing, submission, and background tracker initialization.
          */
         handleTransaction: async ({ defaultTracker, actionFunction, params }) => {
           const { desiredChainID, ...restParams } = params;
           const localTimestamp = dayjs().unix();
 
-          // 1. Set initial state for immediate UI feedback
+          // Step 1: Set initial state for immediate UI feedback (e.g., loading spinner).
           set({
             initialTx: {
               ...params,
+              actionFunction,
               localTimestamp,
               isInitializing: true,
             },
@@ -85,79 +91,8 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
             adapters,
           });
 
-          if (!adapter) {
-            const error = new Error('No adapter found for this transaction.');
-            handleTxError(error);
-            throw error; // Re-throw to allow the caller to handle it
-          }
-
-          try {
-            const { walletType, walletAddress } = adapter.getWalletInfo();
-
-            // 2. Ensure the wallet is connected to the correct chain
-            await adapter.checkChainForTx(desiredChainID);
-
-            // 3. Execute the provided action function (e.g., signing a transaction)
-            const txKeyFromAction = await actionFunction();
-
-            if (!txKeyFromAction) {
-              // If the user cancelled the action, clear the initial state.
-              set({ initialTx: undefined });
-              return;
-            }
-
-            // 4. Prepare the initial transaction object
-            const txInitialParams = {
-              ...restParams,
-              walletType,
-              from: walletAddress,
-              tracker: defaultTracker,
-              chainId: desiredChainID,
-              localTimestamp,
-              txKey: '', // Will be populated shortly
-              pending: false,
-              isTrackedModalOpen: params.withTrackedModal,
-            } as Draft<T>;
-
-            // 5. Determine the correct tracker and final txKey based on the action result
-            const { tracker: updatedTracker, txKey: finalTxKey } = adapter.checkTransactionsTracker(
-              txKeyFromAction,
-              txInitialParams.walletType,
-            );
-
-            const newTx = {
-              ...txInitialParams,
-              tracker: updatedTracker,
-              txKey: finalTxKey,
-              hash: updatedTracker === 'ethereum' ? txKeyFromAction : undefined,
-            } as T;
-
-            // 6. Add the finalized transaction to the pool
-            get().addTxToPool(newTx);
-
-            // 7. Update the initial state to reflect completion
-            set((state) =>
-              produce(state, (draft) => {
-                if (draft.initialTx) {
-                  draft.initialTx.isInitializing = false;
-                  draft.initialTx.lastTxKey = finalTxKey;
-                }
-              }),
-            );
-
-            // 8. Initialize the background tracker for the new transaction
-            const tx = get().transactionsPool[finalTxKey];
-            await adapter.checkAndInitializeTrackerInStore({ tx, ...get() });
-          } catch (e) {
-            handleTxError(e);
-            throw e; // Re-throw for external handling
-          }
-
-          /**
-           * A centralized error handler for the transaction process.
-           * @param {unknown} e - The error object.
-           */
-          function handleTxError(e: unknown) {
+          // Centralized error handler for this transaction flow
+          const handleTxError = (e: unknown) => {
             const errorMessage = e instanceof Error ? e.message : String(e);
             set((state) =>
               produce(state, (draft) => {
@@ -167,11 +102,74 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
                 }
               }),
             );
+          };
+
+          if (!adapter) {
+            const error = new Error('No adapter found for this transaction.');
+            handleTxError(error);
+            throw error; // Re-throw to allow the caller to handle it.
+          }
+
+          try {
+            const { walletType, walletAddress } = adapter.getWalletInfo();
+
+            // Step 2: Ensure the wallet is connected to the correct chain.
+            await adapter.checkChainForTx(desiredChainID);
+
+            // Step 3: Execute the provided action (e.g., signing and sending the transaction).
+            const txKeyFromAction = await actionFunction();
+
+            // If `txKeyFromAction` is undefined, it indicates the user cancelled the action.
+            if (!txKeyFromAction) {
+              set({ initialTx: undefined });
+              return;
+            }
+
+            // Step 4: Determine the final tracker and txKey from the action's result.
+            const { tracker: updatedTracker, txKey: finalTxKey } = adapter.checkTransactionsTracker(
+              txKeyFromAction,
+              walletType,
+            );
+
+            // Step 5: Construct the full transaction object for the pool.
+            const newTx = {
+              ...restParams,
+              walletType,
+              from: walletAddress,
+              tracker: (updatedTracker || defaultTracker) as TR,
+              chainId: desiredChainID,
+              localTimestamp,
+              txKey: finalTxKey,
+              // For EVM, the hash is often the preliminary key from the action.
+              hash: updatedTracker === 'ethereum' ? (txKeyFromAction as `0x${string}`) : undefined,
+              pending: false, // will be set to true by addTxToPool
+              isTrackedModalOpen: params.withTrackedModal,
+            };
+
+            // Step 6: Add the transaction to the pool.
+            get().addTxToPool(newTx);
+
+            // Step 7: Update the initial state to link it with the newly created transaction.
+            set((state) =>
+              produce(state, (draft) => {
+                if (draft.initialTx) {
+                  draft.initialTx.isInitializing = false;
+                  draft.initialTx.lastTxKey = finalTxKey;
+                }
+              }),
+            );
+
+            // Step 8: Initialize the background tracker for the transaction.
+            const tx = get().transactionsPool[finalTxKey];
+            await adapter.checkAndInitializeTrackerInStore({ tx, ...get() });
+          } catch (e) {
+            handleTxError(e);
+            throw e; // Re-throw for external handling if needed.
           }
         },
       }),
       {
-        ...options, // Zustand persist middleware options
+        ...options, // Merges user-provided persistence options.
       },
     ),
   );

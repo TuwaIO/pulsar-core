@@ -26,7 +26,6 @@
 - [StoreSlice](type-aliases/StoreSlice.md)
 - [Transaction](type-aliases/Transaction.md)
 - [TransactionPool](type-aliases/TransactionPool.md)
-- [TxActions](type-aliases/TxActions.md)
 - [TxAdapter](type-aliases/TxAdapter.md)
 
 ## Variables

@@ -23,7 +23,7 @@ export interface SolanaAdapterWallet {
  */
 export interface SolanaAdapterConfig {
   wallet?: SolanaAdapterWallet;
-  rpcUrls: Record<SolanaClusterMoniker, string>;
+  rpcUrls: Record<Partial<SolanaClusterMoniker>, string>;
 }
 
 /**

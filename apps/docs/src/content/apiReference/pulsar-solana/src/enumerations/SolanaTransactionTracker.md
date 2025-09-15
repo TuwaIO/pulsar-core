@@ -4,7 +4,7 @@
 
 # SolanaTransactionTracker
 
-Defined in: [packages/pulsar-solana/src/types.ts:32](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/types.ts#L32)
+Defined in: [packages/pulsar-solana/src/types.ts:32](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-solana/src/types.ts#L32)
 
 Defines the tracker identifiers available in the Solana adapter.
 
@@ -14,6 +14,6 @@ Defines the tracker identifiers available in the Solana adapter.
 
 > **Solana**: `"solana"`
 
-Defined in: [packages/pulsar-solana/src/types.ts:34](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-solana/src/types.ts#L34)
+Defined in: [packages/pulsar-solana/src/types.ts:34](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-solana/src/types.ts#L34)
 
 The default tracker for monitoring standard Solana transaction signatures.

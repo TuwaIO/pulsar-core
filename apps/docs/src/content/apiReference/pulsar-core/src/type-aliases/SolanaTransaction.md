@@ -6,7 +6,7 @@
 
 > **SolanaTransaction**\<`T`\> = [`BaseTransaction`](BaseTransaction.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:127](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/types.ts#L127)
+Defined in: [packages/pulsar-core/src/types.ts:139](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L139)
 
 Represents a Solana-specific transaction, extending the base properties.
 
@@ -20,7 +20,7 @@ Represents a Solana-specific transaction, extending the base properties.
 
 > `optional` **confirmations**: `number` \| `null`
 
-The number of confirmations the transaction has received, or null if the transaction is still pending.
+The number of confirmations received. `null` if the transaction is pending or unconfirmed.
 
 ### fee?
 
@@ -44,7 +44,7 @@ The recent blockhash used for the transaction.
 
 > `optional` **rpcUrl**: `string`
 
-The RPC URL used for the transaction.
+The RPC URL used to submit and track this transaction.
 
 ### slot?
 

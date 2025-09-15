@@ -4,9 +4,9 @@
 
 # ITxTrackingStore\<TR, T, A\>
 
-> **ITxTrackingStore**\<`TR`, `T`, `A`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`TR`, `T`\> & `object`
+> **ITxTrackingStore**\<`TR`, `T`, `A`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`TR`, `T`, `A`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:266](https://github.com/TuwaIO/pulsar-core/blob/494f4105ae0c6206b7fb474bf50e2b00399fd8c0/packages/pulsar-core/src/types.ts#L266)
+Defined in: [packages/pulsar-core/src/types.ts:274](https://github.com/TuwaIO/pulsar-core/blob/49e2be453c5891a31fcb434545cf86cd26d1ee47/packages/pulsar-core/src/types.ts#L274)
 
 The complete interface for the Pulsar transaction tracking store.
 
@@ -16,7 +16,7 @@ The complete interface for the Pulsar transaction tracking store.
 
 > **handleTransaction**: (`params`) => `Promise`\<`void`\>
 
-The core function that handles the entire lifecycle of a new transaction.
+The primary method for initiating and tracking a new transaction from start to finish.
 It manages UI state, executes the on-chain action, and initiates background tracking.
 
 #### Parameters
@@ -39,7 +39,7 @@ The default tracker to use if it cannot be determined automatically.
 
 ###### params
 
-[`InitialTransactionParams`](InitialTransactionParams.md)
+`Omit`\<[`InitialTransactionParams`](InitialTransactionParams.md)\<`A`\>, `"actionFunction"`\>
 
 The metadata for the transaction.
 
