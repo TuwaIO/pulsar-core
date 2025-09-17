@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.7...pulsar-solana-v0.1.8) (2025-09-17)
+
+
+### Bug Fixes
+
+* polling in trackers ([766ca07](https://github.com/TuwaIO/pulsar-core/commit/766ca07465802ca7a4d6961bf6874f6bbc225a36))
+
 ## [0.1.7](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.6...pulsar-solana-v0.1.7) (2025-09-17)
 
 
