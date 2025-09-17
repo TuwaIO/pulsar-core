@@ -4,23 +4,17 @@
 
 # selectTxByKey()
 
-> **selectTxByKey**\<`TR`, `T`\>(`transactionsPool`, `key`): `undefined` \| `T`
+> **selectTxByKey**\<`T`\>(`transactionsPool`, `key`): `undefined` \| `T`
 
-Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:41](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-core/src/store/transactionsSelectors.ts#L41)
+Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:36](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-core/src/store/transactionsSelectors.ts#L36)
 
 Selects a single transaction from the pool by its unique key (`txKey`).
 
 ## Type Parameters
 
-### TR
-
-`TR`
-
-The type of the tracker identifier.
-
 ### T
 
-`T` *extends* [`Transaction`](../type-aliases/Transaction.md)\<`TR`\>
+`T` *extends* [`Transaction`](../type-aliases/Transaction.md)
 
 The transaction type.
 
@@ -28,7 +22,7 @@ The transaction type.
 
 ### transactionsPool
 
-[`TransactionPool`](../type-aliases/TransactionPool.md)\<`TR`, `T`\>
+[`TransactionPool`](../type-aliases/TransactionPool.md)\<`T`\>
 
 The entire transaction pool from the store.
 

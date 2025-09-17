@@ -8,8 +8,8 @@ import { Transaction } from '../types';
 /**
  * Defines the parameters for the fetcher function used within the polling tracker.
  * The fetcher is the core logic that performs the actual API call.
- * @template R - The expected type of the successful API response.
- * @template T - The type of the transaction object being tracked.
+ * @template R The expected type of the successful API response.
+ * @template T The type of the transaction object being tracked.
  */
 type PollingFetcherParams<R, T> = {
   /** The transaction object being tracked. */
@@ -28,13 +28,12 @@ type PollingFetcherParams<R, T> = {
 
 /**
  * Defines the configuration object for the `initializePollingTracker` function.
- * @template R - The expected type of the successful API response.
- * @template T - The type of the transaction object.
- * @template TR - The type of the tracker identifier.
+ * @template R The expected type of the successful API response.
+ * @template T The type of the transaction object.
  */
-export type PollingTrackerConfig<R, T, TR> = {
+export type PollingTrackerConfig<R, T extends Transaction> = {
   /** The transaction object to be tracked. It must include `txKey` and `pending` status. */
-  tx: T & Pick<Transaction<TR>, 'txKey' | 'pending'>;
+  tx: T & Pick<Transaction, 'txKey' | 'pending'>;
   /** The function that performs the data fetching (e.g., an API call) on each interval. */
   fetcher: (params: PollingFetcherParams<R, T>) => Promise<void>;
   /** Callback to be invoked when the transaction successfully completes. */
@@ -67,10 +66,9 @@ const DEFAULT_MAX_RETRIES = 10;
  *
  * @template R The expected type of the API response.
  * @template T The type of the transaction object.
- * @template TR The type of the tracker identifier.
- * @param {PollingTrackerConfig<R, T, TR>} config - The configuration for the tracker.
+ * @param {PollingTrackerConfig<R, T>} config - The configuration for the tracker.
  */
-export function initializePollingTracker<R, T, TR>(config: PollingTrackerConfig<R, T, TR>): void {
+export function initializePollingTracker<R, T extends Transaction>(config: PollingTrackerConfig<R, T>): void {
   const {
     tx,
     fetcher,

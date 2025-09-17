@@ -14,7 +14,6 @@ const GAS_INCREASE_PERCENTAGE = 1.15;
  * Speeds up a pending EVM transaction by resubmitting it with the same nonce but higher gas fees.
  * This function is designed to work with wagmi's configuration and actions.
  *
- * @template TR - The type of the tracker identifier.
  * @template T - The transaction type, which must be a valid EVM transaction.
  *
  * @param {object} params - The parameters required to speed up the transaction.
@@ -46,13 +45,7 @@ const GAS_INCREASE_PERCENTAGE = 1.15;
  * };
  * ```
  */
-export async function speedUpTxAction<TR, T extends Transaction<TR>>({
-  config,
-  tx,
-}: {
-  config: Config;
-  tx: T;
-}): Promise<Hex> {
+export async function speedUpTxAction<T extends Transaction>({ config, tx }: { config: Config; tx: T }): Promise<Hex> {
   // 1. Validate the transaction type
   if (tx.adapter !== TransactionAdapter.EVM) {
     throw new Error(`Speed up is only available for EVM transactions. Received adapter type: '${tx.adapter}'.`);

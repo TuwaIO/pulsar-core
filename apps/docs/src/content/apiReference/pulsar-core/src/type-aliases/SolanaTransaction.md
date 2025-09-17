@@ -2,11 +2,11 @@
 
 ***
 
-# SolanaTransaction\<T\>
+# SolanaTransaction
 
-> **SolanaTransaction**\<`T`\> = [`BaseTransaction`](BaseTransaction.md)\<`T`\> & `object`
+> **SolanaTransaction** = [`BaseTransaction`](BaseTransaction.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:139](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-core/src/types.ts#L139)
+Defined in: [packages/pulsar-core/src/types.ts:171](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-core/src/types.ts#L171)
 
 Represents a Solana-specific transaction, extending the base properties.
 
@@ -51,11 +51,3 @@ The RPC URL used to submit and track this transaction.
 > `optional` **slot**: `number`
 
 The slot in which the transaction was processed.
-
-## Type Parameters
-
-### T
-
-`T`
-
-The type of the tracker identifier.

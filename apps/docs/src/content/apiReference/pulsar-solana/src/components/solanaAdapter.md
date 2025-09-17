@@ -4,9 +4,9 @@
 
 # solanaAdapter()
 
-> **solanaAdapter**\<`T`\>(`config`): `TxAdapter`\<[`Solana`](../enumerations/SolanaTransactionTracker.md#solana), `T`, `string`\>
+> **solanaAdapter**\<`T`\>(`config`): `TxAdapter`\<`T`\>
 
-Defined in: [packages/pulsar-solana/src/adapters/solanaAdapter.ts:25](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-solana/src/adapters/solanaAdapter.ts#L25)
+Defined in: [packages/pulsar-solana/src/adapters/solanaAdapter.ts:28](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-solana/src/adapters/solanaAdapter.ts#L28)
 
 Creates a Solana adapter for the Pulsar transaction tracking engine.
 This factory function produces a wallet-library-agnostic adapter that can be
@@ -17,7 +17,9 @@ can operate even without a connected wallet for read-only tasks.
 
 ### T
 
-`T` *extends* `Transaction`\<[`Solana`](../enumerations/SolanaTransactionTracker.md#solana)\>
+`T` *extends* `Transaction`
+
+The application-specific transaction type.
 
 ## Parameters
 
@@ -29,6 +31,10 @@ The configuration object for the adapter.
 
 ## Returns
 
-`TxAdapter`\<[`Solana`](../enumerations/SolanaTransactionTracker.md#solana), `T`, `string`\>
+`TxAdapter`\<`T`\>
 
-An object implementing the `TxAdapter` interface for Solana.
+The configured Solana transaction adapter.
+
+## Throws
+
+Throws an error if the wagmi `config` is not provided.

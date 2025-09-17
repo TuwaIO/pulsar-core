@@ -65,7 +65,7 @@ const pulsarStore = createPulsarStore({
 
   // An array of adapters for different blockchain ecosystems.
   // Each adapter provides chain-specific logic.
-  adapters: [
+  adapter: [
     evmAdapter(wagmiConfig, chains),
     // ... add other adapters like solanaAdapter here
   ],

@@ -6,7 +6,7 @@
 
 > **solanaTrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-solana/src/trackers/solanaTracker.ts:161](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-solana/src/trackers/solanaTracker.ts#L161)
+Defined in: [packages/pulsar-solana/src/trackers/solanaTracker.ts:154](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-solana/src/trackers/solanaTracker.ts#L154)
 
 A higher-level tracker that integrates the Solana polling logic with the Pulsar store.
 
@@ -14,7 +14,7 @@ A higher-level tracker that integrates the Solana polling logic with the Pulsar 
 
 ### T
 
-`T` *extends* `Transaction`\<[`Solana`](../enumerations/SolanaTransactionTracker.md#solana)\>
+`T` *extends* `Transaction`
 
 The application-specific Solana transaction type.
 
@@ -22,7 +22,7 @@ The application-specific Solana transaction type.
 
 ### params
 
-`Pick`\<`ITxTrackingStore`\<[`Solana`](../enumerations/SolanaTransactionTracker.md#solana), `T`, `string`\>, `"transactionsPool"` \| `"updateTxParams"` \| `"onSucceedCallbacks"` \| `"removeTxFromPool"`\> & `object`
+`Pick`\<`ITxTrackingStore`\<`T`\>, `"transactionsPool"` \| `"updateTxParams"` \| `"onSucceedCallbacks"` \| `"removeTxFromPool"`\> & `object`
 
 Parameters to connect the Solana tracker with the store.
 

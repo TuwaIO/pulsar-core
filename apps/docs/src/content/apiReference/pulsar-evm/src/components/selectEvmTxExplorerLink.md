@@ -4,52 +4,50 @@
 
 # selectEvmTxExplorerLink()
 
-> **selectEvmTxExplorerLink**\<`TR`, `T`\>(`transactionsPool`, `chains`, `txKey`, `replacedTxHash?`): `string`
+> **selectEvmTxExplorerLink**\<`T`\>(`params`): `string`
 
-Defined in: [packages/pulsar-evm/src/utils/selectEvmTxExplorerLink.ts:26](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/utils/selectEvmTxExplorerLink.ts#L26)
+Defined in: [packages/pulsar-evm/src/utils/selectEvmTxExplorerLink.ts:31](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-evm/src/utils/selectEvmTxExplorerLink.ts#L31)
 
 Generates a URL to a block explorer or Safe UI for a given transaction.
 It handles different URL structures for standard EVM transactions and Safe multi-sig transactions.
 
 ## Type Parameters
 
-### TR
-
-`TR`
-
-The generic type for the tracker identifier.
-
 ### T
 
-`T` *extends* `Transaction`\<`TR`\>
+`T` *extends* `Transaction`
 
-The transaction type.
+The transaction type, extending the base `Transaction`.
 
 ## Parameters
 
-### transactionsPool
+### params
 
-`TransactionPool`\<`TR`, `T`\>
+The parameters for the selection.
 
-The entire pool of transactions from the store.
-
-### chains
+#### chains
 
 `Chain`[]
 
 An array of supported chain objects, typically from `viem/chains`.
 
-### txKey
-
-`` `0x${string}` ``
-
-The unique key (`txKey`) of the transaction for which to generate the link.
-
-### replacedTxHash?
+#### replacedTxHash?
 
 `` `0x${string}` ``
 
 Optional. If this is a speed-up/cancel transaction, this is the hash of the new transaction.
+
+#### transactionsPool
+
+`TransactionPool`\<`T`\>
+
+The entire pool of transactions from the store.
+
+#### txKey
+
+`` `0x${string}` ``
+
+The unique key (`txKey`) of the transaction for which to generate the link.
 
 ## Returns
 

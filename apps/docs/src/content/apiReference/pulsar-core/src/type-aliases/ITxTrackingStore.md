@@ -2,11 +2,11 @@
 
 ***
 
-# ITxTrackingStore\<TR, T, A\>
+# ITxTrackingStore\<T\>
 
-> **ITxTrackingStore**\<`TR`, `T`, `A`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`TR`, `T`, `A`\> & `object`
+> **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:272](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-core/src/types.ts#L272)
+Defined in: [packages/pulsar-core/src/types.ts:302](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-core/src/types.ts#L302)
 
 The complete interface for the Pulsar transaction tracking store.
 
@@ -27,19 +27,19 @@ The parameters for handling the transaction.
 
 ###### actionFunction
 
-() => `Promise`\<`A` \| `undefined`\>
+() => `Promise`\<[`ActionTxKey`](ActionTxKey.md) \| `undefined`\>
 
 The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined.
 
 ###### defaultTracker?
 
-`TR`
+[`TransactionTracker`](../enumerations/TransactionTracker.md)
 
 The default tracker to use if it cannot be determined automatically.
 
 ###### params
 
-`Omit`\<[`InitialTransactionParams`](InitialTransactionParams.md)\<`A`\>, `"actionFunction"`\>
+`Omit`\<[`InitialTransactionParams`](InitialTransactionParams.md), `"actionFunction"`\>
 
 The metadata for the transaction.
 
@@ -60,20 +60,8 @@ This is essential for resuming tracking after a page reload.
 
 ## Type Parameters
 
-### TR
-
-`TR`
-
-The type of the tracker identifier.
-
 ### T
 
-`T` *extends* [`Transaction`](Transaction.md)\<`TR`\>
+`T` *extends* [`Transaction`](Transaction.md)
 
 The transaction type.
-
-### A
-
-`A`
-
-The return type of the `actionFunction`.

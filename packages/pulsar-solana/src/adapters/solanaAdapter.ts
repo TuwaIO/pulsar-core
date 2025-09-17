@@ -1,12 +1,12 @@
 /**
  * @file This file contains the factory function for creating the Solana adapter for Pulsar.
  */
-import type { Transaction, TxAdapter } from '@tuwaio/pulsar-core';
-import { TransactionAdapter } from '@tuwaio/pulsar-core';
+
+import { Transaction, TransactionAdapter, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
 import { getExplorerLink, SolanaClusterMoniker } from 'gill';
 
 import { SolanaChainMismatchError } from '../errors';
-import { SolanaActionTxKey, SolanaAdapterConfig, SolanaTransactionTracker } from '../types';
+import { SolanaAdapterConfig } from '../types';
 import { checkAndInitializeTrackerInStore } from '../utils/checkAndInitializeTrackerInStore';
 import { checkSolanaChain } from '../utils/checkSolanaChain';
 import { createSolanaRPC } from '../utils/createSolanaRPC';
@@ -19,12 +19,13 @@ import { getSolanaAvatar, getSolanaName } from '../utils/snsUtils';
  * configured for multiple Solana clusters (e.g., mainnet-beta, devnet) and
  * can operate even without a connected wallet for read-only tasks.
  *
- * @param config The configuration object for the adapter.
- * @returns An object implementing the `TxAdapter` interface for Solana.
+ * @template T - The application-specific transaction type.
+ * @param {SolanaAdapterConfig} config - The configuration object for the adapter.
+ * @returns {TxAdapter<T>} The configured Solana transaction adapter.
+ *
+ * @throws {Error} Throws an error if the wagmi `config` is not provided.
  */
-export function solanaAdapter<T extends Transaction<SolanaTransactionTracker>>(
-  config: SolanaAdapterConfig,
-): TxAdapter<SolanaTransactionTracker, T, SolanaActionTxKey> {
+export function solanaAdapter<T extends Transaction>(config: SolanaAdapterConfig): TxAdapter<T> {
   const { wallet, rpcUrls } = config;
 
   /**
@@ -57,7 +58,7 @@ export function solanaAdapter<T extends Transaction<SolanaTransactionTracker>>(
 
     getWalletInfo: () => ({
       walletAddress: wallet?.walletAddress ?? '0x0',
-      walletType: wallet?.walletType ?? 'disconnected',
+      walletType: wallet?.walletType ?? 'unknown',
     }),
 
     checkChainForTx: async (txChain) => {
@@ -73,8 +74,8 @@ export function solanaAdapter<T extends Transaction<SolanaTransactionTracker>>(
     },
 
     checkTransactionsTracker: (actionTxKey) => ({
-      tracker: SolanaTransactionTracker.Solana,
-      txKey: actionTxKey,
+      tracker: TransactionTracker.Solana,
+      txKey: actionTxKey as string,
     }),
 
     checkAndInitializeTrackerInStore: ({ tx, ...rest }) => {
@@ -90,8 +91,8 @@ export function solanaAdapter<T extends Transaction<SolanaTransactionTracker>>(
       return getExplorerLink({ cluster });
     },
 
-    getExplorerTxUrl: (txPool, txKey) => {
-      const tx = txPool[txKey];
+    getExplorerTxUrl: (transactionsPool, txKey) => {
+      const tx = transactionsPool[txKey];
       const cluster = getCluster(tx?.chainId as string);
       return selectSolanaTxExplorerLink(txKey, cluster);
     },
@@ -140,7 +141,7 @@ export function solanaAdapter<T extends Transaction<SolanaTransactionTracker>>(
             ...tx.payload,
           }),
         params: tx,
-        defaultTracker: SolanaTransactionTracker.Solana,
+        defaultTracker: TransactionTracker.Solana,
       });
     },
   };

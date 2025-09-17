@@ -7,14 +7,11 @@
 ## Enumerations
 
 - [GelatoTaskState](enumerations/GelatoTaskState.md)
-- [TransactionTracker](enumerations/TransactionTracker.md)
 
 ## Type Aliases
 
-- [ActionTxKey](type-aliases/ActionTxKey.md)
 - [EVMTrackerParams](type-aliases/EVMTrackerParams.md)
 - [GelatoTaskStatusResponse](type-aliases/GelatoTaskStatusResponse.md)
-- [GelatoTxKey](type-aliases/GelatoTxKey.md)
 - [SafeTxStatusResponse](type-aliases/SafeTxStatusResponse.md)
 
 ## Variables

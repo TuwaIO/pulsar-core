@@ -20,9 +20,7 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  * slice with a powerful orchestration logic that leverages chain-specific adapters to handle the entire
  * lifecycle of a transaction—from initiation and chain validation to execution and background status tracking.
  *
- * @template TR The type of the tracker identifier (e.g., a string enum).
  * @template T The specific transaction type, extending the base `Transaction`.
- * @template A The type of the key returned by the `actionFunction` (e.g., a transaction hash).
  *
  * @param config Configuration object for creating the store.
  * @param config.onSucceedCallbacks Optional async callback executed on transaction success.
@@ -30,19 +28,19 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  * @param options Configuration for the Zustand `persist` middleware.
  * @returns A fully configured Zustand store instance.
  */
-export function createPulsarStore<TR, T extends Transaction<TR>, A>({
+export function createPulsarStore<T extends Transaction>({
   onSucceedCallbacks,
   adapter,
   ...options
 }: {
   onSucceedCallbacks?: (tx: T) => Promise<void> | void;
-  adapter: TxAdapter<TR, T, A> | TxAdapter<TR, T, A>[];
-} & PersistOptions<ITxTrackingStore<TR, T, A>>) {
-  return createStore<ITxTrackingStore<TR, T, A>>()(
+  adapter: TxAdapter<T> | TxAdapter<T>[];
+} & PersistOptions<ITxTrackingStore<T>>) {
+  return createStore<ITxTrackingStore<T>>()(
     persist(
       (set, get) => ({
         // Initialize the base store slice with core state and actions
-        ...initializeTxTrackingStore<TR, T, A>({ onSucceedCallbacks })(set, get),
+        ...initializeTxTrackingStore<T>({ onSucceedCallbacks })(set, get),
 
         /**
          * Initializes trackers for all pending transactions upon store creation.
@@ -136,7 +134,7 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
               ...restParams,
               walletType,
               from: walletAddress,
-              tracker: (updatedTracker || defaultTracker) as TR,
+              tracker: updatedTracker || defaultTracker,
               chainId: desiredChainID,
               localTimestamp,
               txKey: finalTxKey,
@@ -147,7 +145,7 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
             };
 
             // Step 6: Add the transaction to the pool.
-            get().addTxToPool(newTx);
+            get().addTxToPool(newTx as T);
 
             // Step 7: Update the initial state to link it with the newly created transaction.
             set((state) =>

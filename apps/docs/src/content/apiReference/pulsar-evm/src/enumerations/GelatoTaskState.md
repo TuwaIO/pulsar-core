@@ -4,7 +4,7 @@
 
 # GelatoTaskState
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:42](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L42)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:35](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L35)
 
 Enum representing the possible states of a Gelato task.
 
@@ -18,7 +18,7 @@ https://docs.gelato.network/developer-services/relay/api/get-task-status
 
 > **Cancelled**: `"Cancelled"`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:48](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L48)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:41](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L41)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:48](https://githu
 
 > **CheckPending**: `"CheckPending"`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:43](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L43)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:36](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L36)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:43](https://githu
 
 > **ExecPending**: `"ExecPending"`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:44](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L44)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:37](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L37)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:44](https://githu
 
 > **ExecReverted**: `"ExecReverted"`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:47](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L47)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:40](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L40)
 
 ***
 
@@ -50,7 +50,7 @@ Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:47](https://githu
 
 > **ExecSuccess**: `"ExecSuccess"`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:46](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L46)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:39](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L39)
 
 ***
 
@@ -58,7 +58,7 @@ Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:46](https://githu
 
 > **NotFound**: `"NotFound"`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:49](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L49)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:42](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L42)
 
 ***
 
@@ -66,4 +66,4 @@ Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:49](https://githu
 
 > **WaitingForConfirmation**: `"WaitingForConfirmation"`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:45](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L45)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:38](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L38)

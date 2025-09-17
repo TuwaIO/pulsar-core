@@ -3,20 +3,19 @@
  * Based on a transaction's `tracker` property, it delegates the tracking task to the appropriate implementation.
  */
 
-import { ITxTrackingStore, Transaction } from '@tuwaio/pulsar-core';
+import { ITxTrackingStore, Transaction, TransactionTracker } from '@tuwaio/pulsar-core';
 import { Chain } from 'viem';
 
 import { evmTrackerForStore } from '../trackers/evmTracker';
 import { gelatoTrackerForStore } from '../trackers/gelatoTracker';
 import { safeTrackerForStore } from '../trackers/safeTracker';
-import { ActionTxKey, TransactionTracker } from '../types';
 
 /**
  * The parameters required to initialize a tracker.
  * @template T - The application-specific transaction type.
  */
-type InitializeTrackerParams<T extends Transaction<TransactionTracker>> = Pick<
-  ITxTrackingStore<TransactionTracker, T, ActionTxKey>,
+type InitializeTrackerParams<T extends Transaction> = Pick<
+  ITxTrackingStore<T>,
   'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
 > & {
   chains: Chain[];
@@ -33,7 +32,7 @@ type InitializeTrackerParams<T extends Transaction<TransactionTracker>> = Pick<
  * @param {InitializeTrackerParams<T>} params - The parameters for initializing the tracker.
  * @returns {Promise<void>} A promise that resolves once the tracking process has been successfully initiated.
  */
-export async function checkAndInitializeTrackerInStore<T extends Transaction<TransactionTracker>>({
+export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   tracker,
   tx,
   chains,

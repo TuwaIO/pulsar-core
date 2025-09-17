@@ -3,11 +3,10 @@
  * This adapter encapsulates all the logic required to interact with EVM-based chains using wagmi.
  */
 
-import { Transaction, TransactionAdapter, TxAdapter } from '@tuwaio/pulsar-core';
+import { Transaction, TransactionAdapter, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
 import { Config, getAccount } from '@wagmi/core';
 import { Chain, zeroAddress } from 'viem';
 
-import { ActionTxKey, TransactionTracker } from '../types';
 import { cancelTxAction } from '../utils/cancelTxAction';
 import { checkAndInitializeTrackerInStore } from '../utils/checkAndInitializeTrackerInStore';
 import { checkChainForTx } from '../utils/checkChainForTx';
@@ -27,14 +26,11 @@ import { speedUpTxAction } from '../utils/speedUpTxAction';
  * @param {Config} config - The wagmi configuration object.
  * @param {Chain[]} appChains - An array of viem `Chain` objects supported by the application.
  *
- * @returns {TxAdapter<TransactionTracker, T, ActionTxKey>} The configured EVM transaction adapter.
+ * @returns {TxAdapter<T>} The configured EVM transaction adapter.
  *
  * @throws {Error} Throws an error if the wagmi `config` is not provided.
  */
-export function evmAdapter<T extends Transaction<TransactionTracker>>(
-  config: Config,
-  appChains: Chain[],
-): TxAdapter<TransactionTracker, T, ActionTxKey> {
+export function evmAdapter<T extends Transaction>(config: Config, appChains: Chain[]): TxAdapter<T> {
   if (!config) {
     throw new Error('EVM adapter requires a wagmi config object.');
   }
@@ -61,13 +57,18 @@ export function evmAdapter<T extends Transaction<TransactionTracker>>(
       return chain?.blockExplorers?.default.url;
     },
     getExplorerTxUrl: (transactionsPool, txKey, replacedTxHash) =>
-      selectEvmTxExplorerLink(transactionsPool, appChains, txKey as `0x${string}`, replacedTxHash as `0x${string}`),
+      selectEvmTxExplorerLink({
+        transactionsPool,
+        chains: appChains,
+        txKey: txKey as `0x${string}`,
+        replacedTxHash: replacedTxHash as `0x${string}`,
+      }),
     getName: (address: string) => getName(address as `0x${string}`),
     getAvatar: (name: string) => getAvatar(name),
 
     // --- Optional Actions ---
-    cancelTxAction: (tx) => cancelTxAction({ config, tx }),
-    speedUpTxAction: (tx) => speedUpTxAction({ config, tx }),
+    cancelTxAction: (tx) => cancelTxAction({ config, tx: tx as T }),
+    speedUpTxAction: (tx) => speedUpTxAction({ config, tx: tx as T }),
     retryTxAction: async ({ onClose, txKey, handleTransaction, tx }) => {
       onClose(txKey);
 

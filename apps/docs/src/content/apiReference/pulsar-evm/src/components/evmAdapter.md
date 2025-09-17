@@ -4,9 +4,9 @@
 
 # evmAdapter()
 
-> **evmAdapter**\<`T`\>(`config`, `appChains`): `TxAdapter`\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>
+> **evmAdapter**\<`T`\>(`config`, `appChains`): `TxAdapter`\<`T`\>
 
-Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:34](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/adapters/evmAdapter.ts#L34)
+Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:33](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-evm/src/adapters/evmAdapter.ts#L33)
 
 Creates an EVM-specific transaction adapter.
 
@@ -18,7 +18,7 @@ into a single object that conforms to the `TxAdapter` interface.
 
 ### T
 
-`T` *extends* `Transaction`\<[`TransactionTracker`](../enumerations/TransactionTracker.md)\>
+`T` *extends* `Transaction`
 
 The application-specific transaction type.
 
@@ -38,7 +38,7 @@ An array of viem `Chain` objects supported by the application.
 
 ## Returns
 
-`TxAdapter`\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>
+`TxAdapter`\<`T`\>
 
 The configured EVM transaction adapter.
 

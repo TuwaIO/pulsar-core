@@ -32,18 +32,3 @@ export interface SolanaAdapterConfig {
   wallet?: SolanaAdapterWallet;
   rpcUrls: Partial<Record<SolanaClusterMoniker, string>>;
 }
-
-/**
- * Enum defining the available transaction tracker types in the Solana adapter.
- */
-export enum SolanaTransactionTracker {
-  /** The tracker for monitoring standard Solana transaction signatures. */
-  Solana = 'solana',
-}
-
-/**
- * Represents the unique identifier for a transaction action initiated on Solana.
- *
- * - For standard Solana transactions, this is the transaction signature encoded as a base58 string.
- */
-export type SolanaActionTxKey = string;

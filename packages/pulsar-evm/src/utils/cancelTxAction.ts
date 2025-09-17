@@ -45,13 +45,7 @@ const GAS_INCREASE_PERCENTAGE = 1.15;
  * };
  * ```
  */
-export async function cancelTxAction<T extends Transaction<any>>({
-  config,
-  tx,
-}: {
-  config: Config;
-  tx: T;
-}): Promise<Hex> {
+export async function cancelTxAction<T extends Transaction>({ config, tx }: { config: Config; tx: T }): Promise<Hex> {
   // 1. Validate the transaction type
   if (tx.adapter !== TransactionAdapter.EVM) {
     throw new Error(`Cancellation is only available for EVM transactions. Received adapter type: '${tx.adapter}'.`);

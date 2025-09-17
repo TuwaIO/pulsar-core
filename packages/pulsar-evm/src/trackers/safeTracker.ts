@@ -14,7 +14,6 @@ import {
 import dayjs from 'dayjs';
 import { Hex, zeroHash } from 'viem';
 
-import { ActionTxKey, TransactionTracker } from '../types';
 import { SafeTransactionServiceUrls } from '../utils/safeConstants';
 
 // =================================================================================================
@@ -51,11 +50,14 @@ type SafeTxSameNonceResponse = {
  * A reusable fetcher for `initializePollingTracker` that queries the Safe Transaction Service API.
  * It handles the complex logic of detecting executed, failed, and replaced multisig transactions.
  */
-export const safeFetcher: PollingTrackerConfig<
-  SafeTxStatusResponse,
-  Transaction<TransactionTracker>,
-  TransactionTracker
->['fetcher'] = async ({ tx, stopPolling, onSuccess, onFailure, onReplaced, onIntervalTick }) => {
+export const safeFetcher: PollingTrackerConfig<SafeTxStatusResponse, Transaction>['fetcher'] = async ({
+  tx,
+  stopPolling,
+  onSuccess,
+  onFailure,
+  onReplaced,
+  onIntervalTick,
+}) => {
   const baseUrl = SafeTransactionServiceUrls[tx.chainId as number];
   if (!baseUrl) {
     throw new Error(`Safe Transaction Service URL not found for chainId: ${tx.chainId}`);
@@ -117,19 +119,16 @@ export const safeFetcher: PollingTrackerConfig<
  *
  * @template T - The application-specific transaction type.
  */
-export function safeTrackerForStore<T extends Transaction<TransactionTracker>>({
+export function safeTrackerForStore<T extends Transaction>({
   tx,
   transactionsPool,
   updateTxParams,
   onSucceedCallbacks,
   removeTxFromPool,
-}: Pick<
-  ITxTrackingStore<TransactionTracker, T, ActionTxKey>,
-  'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
-> & {
+}: Pick<ITxTrackingStore<T>, 'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'> & {
   tx: T;
 }) {
-  return initializePollingTracker<SafeTxStatusResponse, T, TransactionTracker>({
+  return initializePollingTracker<SafeTxStatusResponse, T>({
     tx,
     fetcher: safeFetcher,
     removeTxFromPool,

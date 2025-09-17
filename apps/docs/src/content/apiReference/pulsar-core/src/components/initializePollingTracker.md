@@ -4,9 +4,9 @@
 
 # initializePollingTracker()
 
-> **initializePollingTracker**\<`R`, `T`, `TR`\>(`config`): `void`
+> **initializePollingTracker**\<`R`, `T`\>(`config`): `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:73](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-core/src/utils/initializePollingTracker.ts#L73)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:71](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-core/src/utils/initializePollingTracker.ts#L71)
 
 Initializes a generic polling tracker that repeatedly calls a fetcher function
 to monitor the status of an asynchronous task.
@@ -24,21 +24,15 @@ The expected type of the API response.
 
 ### T
 
-`T`
+`T` *extends* [`Transaction`](../type-aliases/Transaction.md)
 
 The type of the transaction object.
-
-### TR
-
-`TR`
-
-The type of the tracker identifier.
 
 ## Parameters
 
 ### config
 
-[`PollingTrackerConfig`](../type-aliases/PollingTrackerConfig.md)\<`R`, `T`, `TR`\>
+[`PollingTrackerConfig`](../type-aliases/PollingTrackerConfig.md)\<`R`, `T`\>
 
 The configuration for the tracker.
 

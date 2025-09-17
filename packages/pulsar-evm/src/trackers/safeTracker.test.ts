@@ -144,7 +144,7 @@ describe('safeFetcher', () => {
 
     await safeFetcher({ tx: mockTx, ...pollingCallbacks });
 
-    expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
+    expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith();
   });
 
   test('should throw an error if the primary fetch fails', async () => {

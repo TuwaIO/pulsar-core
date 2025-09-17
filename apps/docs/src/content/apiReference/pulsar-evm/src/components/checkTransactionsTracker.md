@@ -6,7 +6,7 @@
 
 > **checkTransactionsTracker**(`actionTxKey`, `walletType`): `object`
 
-Defined in: [packages/pulsar-evm/src/utils/checkTransactionsTracker.ts:28](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/utils/checkTransactionsTracker.ts#L28)
+Defined in: [packages/pulsar-evm/src/utils/checkTransactionsTracker.ts:28](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-evm/src/utils/checkTransactionsTracker.ts#L28)
 
 Determines which transaction tracker to use based on the format of the transaction key and the wallet type.
 
@@ -21,7 +21,7 @@ The logic follows a specific priority:
 
 ### actionTxKey
 
-[`ActionTxKey`](../type-aliases/ActionTxKey.md)
+`ActionTxKey`
 
 The key returned from the transaction submission function (e.g., a hash or a Gelato task object).
 
@@ -39,7 +39,7 @@ An object containing the determined tracker type and the final string-based tran
 
 ### tracker
 
-> **tracker**: [`TransactionTracker`](../enumerations/TransactionTracker.md)
+> **tracker**: `TransactionTracker`
 
 ### txKey
 

@@ -4,6 +4,8 @@
  */
 
 import {
+  ActionTxKey,
+  GelatoTxKey,
   initializePollingTracker,
   ITxTrackingStore,
   PollingTrackerConfig,
@@ -13,18 +15,9 @@ import {
 import dayjs from 'dayjs';
 import { Hex } from 'viem';
 
-import { ActionTxKey, TransactionTracker } from '../types';
-
 // =================================================================================================
 // 1. TYPES AND TYPE GUARDS
 // =================================================================================================
-
-/**
- * Defines the shape of the identifier for a Gelato transaction task.
- */
-export type GelatoTxKey = {
-  taskId: string;
-};
 
 /**
  * A type guard to determine if an ActionTxKey is a GelatoTxKey.
@@ -89,11 +82,13 @@ function isGelatoTxPending(gelatoStatus: GelatoTaskState): boolean {
  * A reusable fetcher function for `initializePollingTracker` that queries the Gelato API for a task's status.
  * It handles the logic for interpreting Gelato's task states and calls the appropriate polling callbacks.
  */
-export const gelatoFetcher: PollingTrackerConfig<
-  GelatoTaskStatusResponse,
-  Transaction<TransactionTracker>,
-  TransactionTracker
->['fetcher'] = async ({ tx, stopPolling, onSuccess, onFailure, onIntervalTick }) => {
+export const gelatoFetcher: PollingTrackerConfig<GelatoTaskStatusResponse, Transaction>['fetcher'] = async ({
+  tx,
+  stopPolling,
+  onSuccess,
+  onFailure,
+  onIntervalTick,
+}) => {
   const response = await fetch(`${GELATO_API_BASE_URL}${tx.txKey}`);
 
   if (!response.ok) {
@@ -137,19 +132,16 @@ export const gelatoFetcher: PollingTrackerConfig<
  *
  * @template T - The application-specific transaction type.
  */
-export function gelatoTrackerForStore<T extends Transaction<TransactionTracker>>({
+export function gelatoTrackerForStore<T extends Transaction>({
   tx,
   transactionsPool,
   updateTxParams,
   onSucceedCallbacks,
   removeTxFromPool,
-}: Pick<
-  ITxTrackingStore<TransactionTracker, T, ActionTxKey>,
-  'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
-> & {
+}: Pick<ITxTrackingStore<T>, 'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'> & {
   tx: T;
 }) {
-  return initializePollingTracker<GelatoTaskStatusResponse, T, TransactionTracker>({
+  return initializePollingTracker<GelatoTaskStatusResponse, T>({
     tx,
     fetcher: gelatoFetcher, // Use the exported, reusable fetcher
     removeTxFromPool,

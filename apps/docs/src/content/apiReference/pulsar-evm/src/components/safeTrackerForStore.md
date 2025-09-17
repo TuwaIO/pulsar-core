@@ -6,7 +6,7 @@
 
 > **safeTrackerForStore**\<`T`\>(`__namedParameters`): `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/safeTracker.ts:120](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/trackers/safeTracker.ts#L120)
+Defined in: [packages/pulsar-evm/src/trackers/safeTracker.ts:122](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-evm/src/trackers/safeTracker.ts#L122)
 
 A higher-level wrapper that integrates the Safe polling logic with the Pulsar store.
 It uses the generic `safeFetcher` and provides store-specific callbacks.
@@ -15,7 +15,7 @@ It uses the generic `safeFetcher` and provides store-specific callbacks.
 
 ### T
 
-`T` *extends* `Transaction`\<[`TransactionTracker`](../enumerations/TransactionTracker.md)\>
+`T` *extends* `Transaction`
 
 The application-specific transaction type.
 
@@ -23,7 +23,7 @@ The application-specific transaction type.
 
 ### \_\_namedParameters
 
-`Pick`\<`ITxTrackingStore`\<[`TransactionTracker`](../enumerations/TransactionTracker.md), `T`, [`ActionTxKey`](../type-aliases/ActionTxKey.md)\>, `"transactionsPool"` \| `"updateTxParams"` \| `"onSucceedCallbacks"` \| `"removeTxFromPool"`\> & `object`
+`Pick`\<`ITxTrackingStore`\<`T`\>, `"transactionsPool"` \| `"updateTxParams"` \| `"onSucceedCallbacks"` \| `"removeTxFromPool"`\> & `object`
 
 ## Returns
 

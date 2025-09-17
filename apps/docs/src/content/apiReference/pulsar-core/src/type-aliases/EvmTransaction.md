@@ -2,11 +2,11 @@
 
 ***
 
-# EvmTransaction\<T\>
+# EvmTransaction
 
-> **EvmTransaction**\<`T`\> = [`BaseTransaction`](BaseTransaction.md)\<`T`\> & `object`
+> **EvmTransaction** = [`BaseTransaction`](BaseTransaction.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:115](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-core/src/types.ts#L115)
+Defined in: [packages/pulsar-core/src/types.ts:148](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-core/src/types.ts#L148)
 
 Represents an EVM-specific transaction, extending the base properties with EVM fields.
 
@@ -63,11 +63,3 @@ The recipient's address or contract address.
 > `optional` **value**: `string`
 
 The amount of native currency (in wei) being sent.
-
-## Type Parameters
-
-### T
-
-`T`
-
-The type of the tracker identifier.

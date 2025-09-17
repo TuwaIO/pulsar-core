@@ -17,7 +17,6 @@ import {
 } from 'viem';
 import { getBlock, getTransaction, waitForTransactionReceipt } from 'viem/actions';
 
-import { ActionTxKey, TransactionTracker } from '../types';
 import { createViemClient } from '../utils/createViemClient';
 
 const DEFAULT_RETRY_COUNT = 10;
@@ -27,7 +26,7 @@ const DEFAULT_RETRY_TIMEOUT_MS = 3000;
  * Defines the parameters for the low-level EVM transaction tracker.
  */
 export type EVMTrackerParams = {
-  tx: Pick<Transaction<TransactionTracker>, 'chainId' | 'txKey'>;
+  tx: Pick<Transaction, 'chainId' | 'txKey'>;
   chains: Chain[];
   onTxDetailsFetched: (txDetails: GetTransactionReturnType) => void;
   onSuccess: (txDetails: GetTransactionReturnType, receipt: TransactionReceipt, client: Client) => Promise<void>;
@@ -124,12 +123,9 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
  *
  * @template T - The application-specific transaction type.
  */
-export async function evmTrackerForStore<T extends Transaction<TransactionTracker>>(
+export async function evmTrackerForStore<T extends Transaction>(
   params: Pick<EVMTrackerParams, 'chains'> &
-    Pick<
-      ITxTrackingStore<TransactionTracker, T, ActionTxKey>,
-      'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks'
-    > & { tx: T },
+    Pick<ITxTrackingStore<T>, 'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks'> & { tx: T },
 ) {
   const { tx, chains, transactionsPool, updateTxParams, onSucceedCallbacks } = params;
 

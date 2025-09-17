@@ -8,6 +8,7 @@
 
 - [TransactionAdapter](enumerations/TransactionAdapter.md)
 - [TransactionStatus](enumerations/TransactionStatus.md)
+- [TransactionTracker](enumerations/TransactionTracker.md)
 
 ## Interfaces
 
@@ -15,8 +16,10 @@
 
 ## Type Aliases
 
+- [ActionTxKey](type-aliases/ActionTxKey.md)
 - [BaseTransaction](type-aliases/BaseTransaction.md)
 - [EvmTransaction](type-aliases/EvmTransaction.md)
+- [GelatoTxKey](type-aliases/GelatoTxKey.md)
 - [InitialTransaction](type-aliases/InitialTransaction.md)
 - [InitialTransactionParams](type-aliases/InitialTransactionParams.md)
 - [ITxTrackingStore](type-aliases/ITxTrackingStore.md)

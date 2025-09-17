@@ -39,6 +39,21 @@ export enum TransactionAdapter {
 }
 
 /**
+ * Enum representing the different tracking strategies available for EVM transactions.
+ * Each tracker corresponds to a specific method of monitoring a transaction's lifecycle.
+ */
+export enum TransactionTracker {
+  /** For standard on-chain EVM transactions tracked by their hash. */
+  Ethereum = 'ethereum',
+  /** For multi-signature transactions managed and executed via a Safe contract. */
+  Safe = 'safe',
+  /** For meta-transactions relayed and executed by the Gelato Network. */
+  Gelato = 'gelato',
+  /** The tracker for monitoring standard Solana transaction signatures. */
+  Solana = 'solana',
+}
+
+/**
  * Represents the terminal status of a transaction after it has been processed.
  */
 export enum TransactionStatus {
@@ -51,11 +66,30 @@ export enum TransactionStatus {
 }
 
 /**
+ * Defines the shape of the identifier for a Gelato transaction task.
+ */
+export type GelatoTxKey = {
+  taskId: string;
+};
+
+/**
+ * A union type representing the unique identifier returned by an `actionFunction`
+ * after a transaction is submitted to the network or a relay service.
+ *
+ * This key is crucial for the EVM adapter to determine which tracker should
+ * monitor the transaction.
+ *
+ * It can be one of the following:
+ * - A standard `0x...` transaction hash (`Hex`).
+ * - A structured object from a relay service like Gelato (`GelatoTxKey`).
+ */
+export type ActionTxKey = `0x${string}` | GelatoTxKey | string;
+
+/**
  * The fundamental structure for any transaction being tracked by Pulsar.
  * This serves as the base upon which chain-specific transaction types are built.
- * @template T The type of the tracker identifier (e.g., 'ethereum', 'gelato').
  */
-export type BaseTransaction<T> = {
+export type BaseTransaction = {
   /** The chain identifier (e.g., 1 for Ethereum Mainnet, 'SN_MAIN' for Starknet). */
   chainId: number | string;
   /**
@@ -95,7 +129,7 @@ export type BaseTransaction<T> = {
    */
   title?: string | [string, string, string, string];
   /** The specific tracker responsible for monitoring this transaction's status. */
-  tracker: T;
+  tracker: TransactionTracker;
   /** The unique identifier for the transaction (e.g., EVM hash, Gelato task ID). */
   txKey: string;
   /** The application-specific type or category of the transaction (e.g., 'SWAP', 'APPROVE'). */
@@ -110,9 +144,8 @@ export type BaseTransaction<T> = {
 
 /**
  * Represents an EVM-specific transaction, extending the base properties with EVM fields.
- * @template T The type of the tracker identifier.
  */
-export type EvmTransaction<T> = BaseTransaction<T> & {
+export type EvmTransaction = BaseTransaction & {
   adapter: TransactionAdapter.EVM;
   /** The on-chain transaction hash, available after submission. */
   hash?: `0x${string}`;
@@ -134,9 +167,8 @@ export type EvmTransaction<T> = BaseTransaction<T> & {
 
 /**
  * Represents a Solana-specific transaction, extending the base properties.
- * @template T The type of the tracker identifier.
  */
-export type SolanaTransaction<T> = BaseTransaction<T> & {
+export type SolanaTransaction = BaseTransaction & {
   adapter: TransactionAdapter.SOLANA;
   /** The transaction fee in lamports. */
   fee?: number;
@@ -154,9 +186,8 @@ export type SolanaTransaction<T> = BaseTransaction<T> & {
 
 /**
  * Represents a Starknet-specific transaction, extending the base properties.
- * @template T The type of the tracker identifier.
  */
-export type StarknetTransaction<T> = BaseTransaction<T> & {
+export type StarknetTransaction = BaseTransaction & {
   adapter: TransactionAdapter.Starknet;
   /** The actual fee paid for the transaction. */
   actualFee?: { amount: string; unit: string };
@@ -165,7 +196,7 @@ export type StarknetTransaction<T> = BaseTransaction<T> & {
 };
 
 /** A union type representing any possible transaction structure that Pulsar can handle. */
-export type Transaction<T> = EvmTransaction<T> | SolanaTransaction<T> | StarknetTransaction<T>;
+export type Transaction = EvmTransaction | SolanaTransaction | StarknetTransaction;
 
 // =================================================================================================
 // 4. INITIAL TRANSACTION TYPES
@@ -174,10 +205,10 @@ export type Transaction<T> = EvmTransaction<T> | SolanaTransaction<T> | Starknet
 /**
  * Represents the parameters required to initiate a new transaction tracking flow.
  */
-export type InitialTransactionParams<A> = {
+export type InitialTransactionParams = {
   adapter: TransactionAdapter;
   /** The function that executes the on-chain action (e.g., sending a transaction) and returns a preliminary identifier like a hash. */
-  actionFunction: (...args: any[]) => Promise<A | undefined>;
+  actionFunction: (...args: any[]) => Promise<ActionTxKey | undefined>;
   /** A user-facing description for the transaction. Supports state-specific descriptions. */
   description?: string | [string, string, string, string];
   /** The target chain ID for the transaction. */
@@ -198,7 +229,7 @@ export type InitialTransactionParams<A> = {
  * Represents a transaction in its temporary, pre-submission state.
  * This is used for UI feedback while the transaction is being signed and sent.
  */
-export type InitialTransaction<A> = InitialTransactionParams<A> & {
+export type InitialTransaction = InitialTransactionParams & {
   /** An error message if the initialization fails (e.g., user rejects signature). */
   errorMessage?: string;
   /** A flag indicating if the transaction is being processed (e.g., waiting for signature). */
@@ -215,11 +246,9 @@ export type InitialTransaction<A> = InitialTransactionParams<A> & {
 
 /**
  * Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
- * @template TR The type of the tracker identifier (e.g., a string enum).
- * @template T The specific transaction type, extending `Transaction<TR>`.
- * @template A The type of the key returned by the `actionFunction` (e.g., a transaction hash).
+ * @template T The specific transaction type, extending `Transaction`.
  */
-export type TxAdapter<TR, T extends Transaction<TR>, A> = {
+export type TxAdapter<T extends Transaction> = {
   /** The unique key identifying this adapter. */
   key: TransactionAdapter;
   /** Returns information about the currently connected wallet. */
@@ -230,11 +259,14 @@ export type TxAdapter<TR, T extends Transaction<TR>, A> = {
   /** Ensures the connected wallet is on the correct network for the transaction. Throws an error if the chain is mismatched. */
   checkChainForTx: (chainId: string | number) => Promise<void>;
   /** Determines the appropriate tracker and final `txKey` from the result of an action. */
-  checkTransactionsTracker: (actionTxKey: A, walletType: string) => { txKey: string; tracker: TR };
+  checkTransactionsTracker: (
+    actionTxKey: ActionTxKey,
+    walletType: string,
+  ) => { txKey: string; tracker: TransactionTracker };
   /** Selects and initializes the correct background tracker for a given transaction. */
   checkAndInitializeTrackerInStore: (
     params: { tx: T } & Pick<
-      ITxTrackingStore<TR, T, A>,
+      ITxTrackingStore<T>,
       'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
     >,
   ) => Promise<void>;
@@ -252,24 +284,22 @@ export type TxAdapter<TR, T extends Transaction<TR>, A> = {
   retryTxAction?: (
     params: {
       txKey: string;
-      tx: InitialTransactionParams<A>;
+      tx: InitialTransactionParams;
       onClose: (txKey?: string) => void;
-    } & Partial<Pick<ITxTrackingStore<TR, T, A>, 'handleTransaction'>>,
+    } & Partial<Pick<ITxTrackingStore<T>, 'handleTransaction'>>,
   ) => Promise<void>;
   /**
    * Optional: Constructs a full explorer URL for a specific transaction.
    * May require the full transaction pool to resolve details for replaced transactions.
    */
-  getExplorerTxUrl?: (transactionsPool: TransactionPool<TR, T>, txKey: string, replacedTxHash?: string) => string;
+  getExplorerTxUrl?: (transactionsPool: TransactionPool<T>, txKey: string, replacedTxHash?: string) => string;
 };
 
 /**
  * The complete interface for the Pulsar transaction tracking store.
- * @template TR The type of the tracker identifier.
  * @template T The transaction type.
- * @template A The return type of the `actionFunction`.
  */
-export type ITxTrackingStore<TR, T extends Transaction<TR>, A> = IInitializeTxTrackingStore<TR, T, A> & {
+export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore<T> & {
   /**
    * The primary method for initiating and tracking a new transaction from start to finish.
    * It manages UI state, executes the on-chain action, and initiates background tracking.
@@ -277,11 +307,11 @@ export type ITxTrackingStore<TR, T extends Transaction<TR>, A> = IInitializeTxTr
    */
   handleTransaction: (params: {
     /** The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined. */
-    actionFunction: () => Promise<A | undefined>;
+    actionFunction: () => Promise<ActionTxKey | undefined>;
     /** The metadata for the transaction. */
-    params: Omit<InitialTransactionParams<A>, 'actionFunction'>;
+    params: Omit<InitialTransactionParams, 'actionFunction'>;
     /** The default tracker to use if it cannot be determined automatically. */
-    defaultTracker?: TR;
+    defaultTracker?: TransactionTracker;
   }) => Promise<void>;
 
   /**

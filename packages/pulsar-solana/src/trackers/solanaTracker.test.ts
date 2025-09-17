@@ -10,14 +10,14 @@ import {
   initializePollingTracker,
   PollingTrackerConfig,
   SolanaTransaction,
+  TransactionAdapter,
   TransactionStatus,
+  TransactionTracker,
 } from '@tuwaio/pulsar-core';
-import { TransactionAdapter } from '@tuwaio/pulsar-core/src';
 import dayjs from 'dayjs';
 import { TransactionError } from 'gill';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { SolanaTransactionTracker } from '../types';
 import { solanaTrackerForStore } from './solanaTracker';
 
 // --- Mocks ---
@@ -34,7 +34,7 @@ vi.mock('@tuwaio/pulsar-core', async (importActual) => {
 // --- Test Suite ---
 
 describe('solanaTrackerForStore', () => {
-  let mockTx: SolanaTransaction<SolanaTransactionTracker>;
+  let mockTx: SolanaTransaction;
   let mockStoreParams: any;
 
   beforeEach(() => {
@@ -47,7 +47,7 @@ describe('solanaTrackerForStore', () => {
       pending: true,
       from: 'mockAddress',
       chainId: 'mainnet',
-      tracker: SolanaTransactionTracker.Solana,
+      tracker: TransactionTracker.Solana,
       type: 'mockType',
       walletType: 'mockWalletType',
     };
@@ -146,7 +146,7 @@ describe('solanaTrackerForStore', () => {
 
   test('should call updateTxParams with confirmations on onIntervalTick callback', () => {
     solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
-    const config: PollingTrackerConfig<any, any, any> = vi.mocked(initializePollingTracker).mock.calls[0][0];
+    const config: PollingTrackerConfig<any, any> = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
     // Mock the intermediate response.
     const mockIntervalResponse = {

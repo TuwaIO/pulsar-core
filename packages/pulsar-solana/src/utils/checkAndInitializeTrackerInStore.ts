@@ -2,35 +2,34 @@
  * @file This file contains the primary router for initializing transaction trackers.
  */
 
-import { ITxTrackingStore, Transaction, TransactionStatus } from '@tuwaio/pulsar-core';
+import { ITxTrackingStore, Transaction, TransactionStatus, TransactionTracker } from '@tuwaio/pulsar-core';
 
 import { solanaTrackerForStore } from '../trackers/solanaTracker';
-import { SolanaActionTxKey, SolanaTransactionTracker } from '../types';
 
 /**
  * Initializes the correct background tracker for a given Solana transaction.
  * This function acts as a router, selecting the appropriate tracker based on the `tx.tracker` property.
  *
- * @template T - The transaction type, constrained to Solana transactions.
+ * @template T - The transaction type.
  * @param {object} params - The parameters for initializing the tracker.
  * @param {T} params.tx - The transaction object to be tracked.
- * @param {SolanaTransactionTracker} params.tracker - The specific tracker to use.
+ * @param {TransactionTracker} params.tracker - The specific tracker to use.
  * @param {object} params.rest - The rest of the store's methods and state needed by the tracker.
  * @returns {Promise<void>} A promise that resolves when the tracker has been initialized.
  */
-export async function checkAndInitializeTrackerInStore<T extends Transaction<SolanaTransactionTracker>>({
+export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   tx,
   tracker,
   ...rest
 }: {
   tx: T;
-  tracker: SolanaTransactionTracker;
+  tracker: TransactionTracker;
 } & Pick<
-  ITxTrackingStore<SolanaTransactionTracker, T, SolanaActionTxKey>,
+  ITxTrackingStore<T>,
   'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
 >): Promise<void> {
   switch (tracker) {
-    case SolanaTransactionTracker.Solana:
+    case TransactionTracker.Solana:
       await solanaTrackerForStore({
         tx,
         ...rest,

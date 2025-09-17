@@ -3,10 +3,10 @@
  * based on the key returned by the submission function and the wallet type.
  */
 
+import { ActionTxKey, TransactionTracker } from '@tuwaio/pulsar-core';
 import { isHex } from 'viem';
 
 import { isGelatoTxKey } from '../trackers/gelatoTracker';
-import { ActionTxKey, TransactionTracker } from '../types';
 
 /**
  * Determines which transaction tracker to use based on the format of the transaction key and the wallet type.

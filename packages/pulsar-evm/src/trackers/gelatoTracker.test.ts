@@ -37,7 +37,7 @@ const createMockResponse = (taskState: GelatoTaskState, creationDate?: string): 
 
 describe('gelatoTrackerForStore', () => {
   let mockStoreParams: any;
-  let fetcher: PollingTrackerConfig<any, any, any>['fetcher'];
+  let fetcher: PollingTrackerConfig<any, any>['fetcher'];
 
   beforeEach(() => {
     // Basic store parameters that will be passed to the tracker.
@@ -152,7 +152,7 @@ describe('gelatoTrackerForStore', () => {
 
     await fetcher({ tx: mockStoreParams.tx, ...pollingCallbacks });
 
-    expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
+    expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith();
   });
 
   test('should throw an error if the fetch response is not ok (and not 404)', async () => {

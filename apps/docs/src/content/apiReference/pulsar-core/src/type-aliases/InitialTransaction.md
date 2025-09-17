@@ -2,11 +2,11 @@
 
 ***
 
-# InitialTransaction\<A\>
+# InitialTransaction
 
-> **InitialTransaction**\<`A`\> = [`InitialTransactionParams`](InitialTransactionParams.md)\<`A`\> & `object`
+> **InitialTransaction** = [`InitialTransactionParams`](InitialTransactionParams.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:201](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-core/src/types.ts#L201)
+Defined in: [packages/pulsar-core/src/types.ts:232](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-core/src/types.ts#L232)
 
 Represents a transaction in its temporary, pre-submission state.
 This is used for UI feedback while the transaction is being signed and sent.
@@ -36,9 +36,3 @@ The `txKey` of the on-chain transaction that this action produced, used for link
 > **localTimestamp**: `number`
 
 The local timestamp when the user initiated the action.
-
-## Type Parameters
-
-### A
-
-`A`

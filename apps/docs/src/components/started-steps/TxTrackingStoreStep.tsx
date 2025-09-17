@@ -21,7 +21,7 @@ export const usePulsarStore = createBoundedUseStore(
     name: storageName,
     onSucceedCallbacks,
     // 4. Pass the wagmi config to the evmAdapter
-    adapters: [evmAdapter(config, appChains)],
+    adapter: evmAdapter(config, appChains),
   }),
 );
 `;

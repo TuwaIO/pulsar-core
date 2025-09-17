@@ -4,10 +4,6 @@
 
 # pulsar-solana/src
 
-## Enumerations
-
-- [SolanaTransactionTracker](enumerations/SolanaTransactionTracker.md)
-
 ## Classes
 
 - [SolanaChainMismatchError](classes/SolanaChainMismatchError.md)
@@ -16,10 +12,6 @@
 
 - [SolanaAdapterConfig](interfaces/SolanaAdapterConfig.md)
 - [SolanaAdapterWallet](interfaces/SolanaAdapterWallet.md)
-
-## Type Aliases
-
-- [SolanaActionTxKey](type-aliases/SolanaActionTxKey.md)
 
 ## Functions
 

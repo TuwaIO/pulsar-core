@@ -81,7 +81,7 @@ export const useMyPulsarStore = () => {
   return useMemo(() => {
     return createPulsarStore({
       name: 'my-solana-dapp-transactions',
-      adapters: [
+      adapter: [
         solanaAdapter({
           // The wallet object can be undefined if no wallet is connected.
           wallet: pulsarWallet,

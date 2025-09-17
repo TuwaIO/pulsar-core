@@ -9,20 +9,18 @@ import { EvmTransaction, InitialTransaction, SolanaTransaction, StoreSlice, Tran
 
 /**
  * Defines the structure of the transaction pool, a key-value store of transactions indexed by their unique keys.
- * @template TR The type of the tracker identifier.
- * @template T The transaction type.
+ * @template T The type of the transaction object being tracked.
  */
-export type TransactionPool<TR, T extends Transaction<TR>> = Record<string, T>;
+export type TransactionPool<T extends Transaction> = Record<string, T>;
 
 /**
  * A utility type that creates a union of all fields that can be safely updated
  * on a transaction object via the `updateTxParams` action. This ensures type safety
  * and prevents accidental modification of immutable properties.
- * @template TR The type of the tracker identifier.
  */
-type UpdatableTransactionFields<TR> = Partial<
+type UpdatableTransactionFields = Partial<
   Pick<
-    EvmTransaction<TR>,
+    EvmTransaction,
     | 'to'
     | 'nonce'
     | 'txKey'
@@ -40,31 +38,27 @@ type UpdatableTransactionFields<TR> = Partial<
     | 'value'
   >
 > &
-  Partial<
-    Pick<SolanaTransaction<TR>, 'slot' | 'confirmations' | 'fee' | 'instructions' | 'recentBlockhash' | 'rpcUrl'>
-  >;
+  Partial<Pick<SolanaTransaction, 'slot' | 'confirmations' | 'fee' | 'instructions' | 'recentBlockhash' | 'rpcUrl'>>;
 
 /**
  * The interface for the base transaction tracking store slice.
  * It includes the state and actions for managing the transaction lifecycle.
- * @template TR The type of the tracker identifier.
  * @template T The specific transaction type.
- * @template A The return type of the initial action function.
  */
-export interface IInitializeTxTrackingStore<TR, T extends Transaction<TR>, A> {
+export interface IInitializeTxTrackingStore<T extends Transaction> {
   /** A callback function executed when any transaction successfully completes. */
   onSucceedCallbacks?: (tx: T) => Promise<void> | void;
   /** A pool of all transactions currently being tracked, indexed by `txKey`. */
-  transactionsPool: TransactionPool<TR, T>;
+  transactionsPool: TransactionPool<T>;
   /** The `txKey` of the most recently added transaction. */
   lastAddedTxKey?: string;
   /** The state for a transaction being initiated, used for UI feedback before it's submitted to the chain. */
-  initialTx?: InitialTransaction<A>;
+  initialTx?: InitialTransaction;
 
   /** Adds a new transaction to the tracking pool and marks it as pending. */
-  addTxToPool: (tx: Transaction<TR>) => void;
+  addTxToPool: (tx: T) => void;
   /** Updates one or more properties of an existing transaction in the pool. */
-  updateTxParams: (txKey: string, fields: UpdatableTransactionFields<TR>) => void;
+  updateTxParams: (txKey: string, fields: UpdatableTransactionFields) => void;
   /** Removes a transaction from the tracking pool by its key. */
   removeTxFromPool: (txKey: string) => void;
   /** Closes the tracking modal for a transaction and clears any initial transaction state. */
@@ -77,18 +71,16 @@ export interface IInitializeTxTrackingStore<TR, T extends Transaction<TR>, A> {
  * Creates a Zustand store slice with the core logic for transaction state management.
  * This function is a slice creator intended for use with Zustand's `create` function.
  *
- * @template TR The type of the tracker identifier.
  * @template T The specific transaction type.
- * @template A The return type of the initial action function.
  * @param options Configuration for the store slice.
  * @param options.onSucceedCallbacks An optional async callback to run when a transaction succeeds.
  * @returns A Zustand store slice implementing `IInitializeTxTrackingStore`.
  */
-export function initializeTxTrackingStore<TR, T extends Transaction<TR>, A>({
+export function initializeTxTrackingStore<T extends Transaction>({
   onSucceedCallbacks,
 }: {
   onSucceedCallbacks?: (tx: T) => Promise<void> | void;
-}): StoreSlice<IInitializeTxTrackingStore<TR, T, A>> {
+}): StoreSlice<IInitializeTxTrackingStore<T>> {
   return (set, get) => ({
     onSucceedCallbacks,
 

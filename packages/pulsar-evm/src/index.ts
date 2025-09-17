@@ -2,7 +2,6 @@ export * from './adapters/evmAdapter';
 export * from './trackers/evmTracker';
 export * from './trackers/gelatoTracker';
 export * from './trackers/safeTracker';
-export * from './types';
 export * from './utils/cancelTxAction';
 export * from './utils/checkAndInitializeTrackerInStore';
 export * from './utils/checkChainForTx';

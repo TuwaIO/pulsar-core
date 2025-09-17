@@ -2,33 +2,43 @@
  * @file This file contains a selector utility for generating a block explorer URL for a given EVM transaction.
  */
 
-import { selectTxByKey, Transaction, TransactionAdapter, TransactionPool } from '@tuwaio/pulsar-core';
+import {
+  selectTxByKey,
+  Transaction,
+  TransactionAdapter,
+  TransactionPool,
+  TransactionTracker,
+} from '@tuwaio/pulsar-core';
 import { Chain, Hex } from 'viem';
 
-import { TransactionTracker } from '../types';
 import { gnosisSafeLinksHelper } from './safeConstants';
 
 /**
  * Generates a URL to a block explorer or Safe UI for a given transaction.
  * It handles different URL structures for standard EVM transactions and Safe multi-sig transactions.
  *
- * @template TR - The generic type for the tracker identifier.
- * @template T - The transaction type.
+ * @template T - The transaction type, extending the base `Transaction`.
  *
- * @param {TransactionPool<TR, T>} transactionsPool - The entire pool of transactions from the store.
- * @param {Chain[]} chains - An array of supported chain objects, typically from `viem/chains`.
- * @param {Hex} txKey - The unique key (`txKey`) of the transaction for which to generate the link.
- * @param {Hex} [replacedTxHash] - Optional. If this is a speed-up/cancel transaction, this is the hash of the new transaction.
+ * @param {object} params - The parameters for the selection.
+ * @param {TransactionPool<T>} params.transactionsPool - The entire pool of transactions from the store.
+ * @param {Chain[]} params.chains - An array of supported chain objects, typically from `viem/chains`.
+ * @param {Hex} params.txKey - The unique key (`txKey`) of the transaction for which to generate the link.
+ * @param {Hex} [params.replacedTxHash] - Optional. If this is a speed-up/cancel transaction, this is the hash of the new transaction.
  *
  * @returns {string} The full URL to the transaction on the corresponding block explorer or Safe app,
  * or an empty string if the transaction or required chain configuration is not found.
  */
-export const selectEvmTxExplorerLink = <TR, T extends Transaction<TR>>(
-  transactionsPool: TransactionPool<TR, T>,
-  chains: Chain[],
-  txKey: Hex,
-  replacedTxHash?: Hex,
-): string => {
+export const selectEvmTxExplorerLink = <T extends Transaction>({
+  transactionsPool,
+  chains,
+  txKey,
+  replacedTxHash,
+}: {
+  transactionsPool: TransactionPool<T>;
+  chains: Chain[];
+  txKey: Hex;
+  replacedTxHash?: Hex;
+}): string => {
   const tx = selectTxByKey(transactionsPool, txKey);
 
   if (!tx) {

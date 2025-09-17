@@ -2,11 +2,11 @@
 
 ***
 
-# StarknetTransaction\<T\>
+# StarknetTransaction
 
-> **StarknetTransaction**\<`T`\> = [`BaseTransaction`](BaseTransaction.md)\<`T`\> & `object`
+> **StarknetTransaction** = [`BaseTransaction`](BaseTransaction.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:159](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-core/src/types.ts#L159)
+Defined in: [packages/pulsar-core/src/types.ts:190](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-core/src/types.ts#L190)
 
 Represents a Starknet-specific transaction, extending the base properties.
 
@@ -35,11 +35,3 @@ The actual fee paid for the transaction.
 > `optional` **contractAddress**: `string`
 
 The address of the contract being interacted with.
-
-## Type Parameters
-
-### T
-
-`T`
-
-The type of the tracker identifier.

@@ -15,7 +15,6 @@ import {
 import dayjs from 'dayjs';
 import { Signature, TransactionError } from 'gill';
 
-import { SolanaActionTxKey, SolanaTransactionTracker } from '../types';
 import { createSolanaRPC } from '../utils/createSolanaRPC';
 
 /**
@@ -44,13 +43,7 @@ type SolanaSignatureStatusResponse = {
  * @typedef SolanaFetcherParams
  * Parameters used for the Solana fetcher function.
  */
-type SolanaFetcherParams = Parameters<
-  PollingTrackerConfig<
-    SolanaSignatureStatusResponse,
-    Transaction<SolanaTransactionTracker>,
-    SolanaTransactionTracker
-  >['fetcher']
->[0];
+type SolanaFetcherParams = Parameters<PollingTrackerConfig<SolanaSignatureStatusResponse, Transaction>['fetcher']>[0];
 
 /**
  * Fetches and tracks Solana transactions using the `getSignatureStatuses` RPC method.
@@ -158,16 +151,13 @@ export async function solanaFetcher({
  * @param {Function} [params.removeTxFromPool] - A function to remove a completed or canceled transaction from the store.
  * @returns {Promise<void>} Resolves when the tracker is successfully initialized.
  */
-export async function solanaTrackerForStore<T extends Transaction<SolanaTransactionTracker>>({
+export async function solanaTrackerForStore<T extends Transaction>({
   tx,
   ...rest
-}: Pick<
-  ITxTrackingStore<SolanaTransactionTracker, T, SolanaActionTxKey>,
-  'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
-> & {
+}: Pick<ITxTrackingStore<T>, 'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'> & {
   tx: T;
 }): Promise<void> {
-  return initializePollingTracker<SolanaSignatureStatusResponse, T, SolanaTransactionTracker>({
+  return initializePollingTracker<SolanaSignatureStatusResponse, T>({
     tx,
     fetcher: solanaFetcher,
     removeTxFromPool: rest.removeTxFromPool,
