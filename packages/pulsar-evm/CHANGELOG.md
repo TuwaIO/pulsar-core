@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.15](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.14...pulsar-evm-v0.0.15) (2025-09-17)
+
+
+### Bug Fixes
+
+* polling in trackers ([766ca07](https://github.com/TuwaIO/pulsar-core/commit/766ca07465802ca7a4d6961bf6874f6bbc225a36))
+
 ## [0.0.14](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.13...pulsar-evm-v0.0.14) (2025-09-17)
 
 
