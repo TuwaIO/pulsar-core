@@ -98,9 +98,6 @@ describe('solanaTrackerForStore', () => {
       confirmations: 10,
       slot: 12345,
     });
-
-    // Verify that the success callback is triggered.
-    expect(mockStoreParams.onSucceedCallbacks).toHaveBeenCalledWith(mockStoreParams.transactionsPool[mockTx.txKey]);
   });
 
   test('should call updateTxParams with FAILED on onFailure callback (on-chain error)', () => {

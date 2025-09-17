@@ -6,7 +6,7 @@
 
 > **getSolanaAvatar**(`rpcUrl`, `name`): `Promise`\<`null` \| `string`\>
 
-Defined in: [packages/pulsar-solana/src/utils/snsUtils.ts:79](https://github.com/TuwaIO/pulsar-core/blob/3ba2d01231ada5db5bd141e51fda8a3427ad1f9d/packages/pulsar-solana/src/utils/snsUtils.ts#L79)
+Defined in: [packages/pulsar-solana/src/utils/snsUtils.ts:79](https://github.com/TuwaIO/pulsar-core/blob/6a657679559c2bafbe8c9280c593db265ce3faeb/packages/pulsar-solana/src/utils/snsUtils.ts#L79)
 
 Retrieves the avatar URL from the 'pic' record of a .sol domain name.
 
