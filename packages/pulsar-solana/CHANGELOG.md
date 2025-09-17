@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.5...pulsar-solana-v0.1.6) (2025-09-17)
+
+
+### Bug Fixes
+
+* solana tracker ([5a77c63](https://github.com/TuwaIO/pulsar-core/commit/5a77c63bd61f19c3a458e95040b5dbfa87803d41))
+
 ## [0.1.5](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.4...pulsar-solana-v0.1.5) (2025-09-17)
 
 
