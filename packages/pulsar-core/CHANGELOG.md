@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.1.4...pulsar-core-v0.1.5) (2025-09-17)
+
+
+### Bug Fixes
+
+* rework onSuccessCallback logic ([77da5c0](https://github.com/TuwaIO/pulsar-core/commit/77da5c0b0eefc5928c5a9c42082fc4f9cc9c4da1))
+
 ## [0.1.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.1.3...pulsar-core-v0.1.4) (2025-09-17)
 
 

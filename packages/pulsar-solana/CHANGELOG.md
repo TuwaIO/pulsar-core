@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.12](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.11...pulsar-solana-v0.1.12) (2025-09-17)
+
+
+### Bug Fixes
+
+* rework onSuccessCallback logic ([77da5c0](https://github.com/TuwaIO/pulsar-core/commit/77da5c0b0eefc5928c5a9c42082fc4f9cc9c4da1))
+
 ## [0.1.11](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.10...pulsar-solana-v0.1.11) (2025-09-17)
 
 
