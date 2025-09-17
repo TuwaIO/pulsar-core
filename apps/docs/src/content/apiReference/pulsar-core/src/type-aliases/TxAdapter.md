@@ -6,7 +6,7 @@
 
 > **TxAdapter**\<`TR`, `T`, `A`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:224](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L224)
+Defined in: [packages/pulsar-core/src/types.ts:224](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L224)
 
 Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
 
@@ -36,7 +36,7 @@ The type of the key returned by the `actionFunction` (e.g., a transaction hash).
 
 > `optional` **cancelTxAction**: (`tx`) => `Promise`\<`string`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:250](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L250)
+Defined in: [packages/pulsar-core/src/types.ts:250](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L250)
 
 Optional: Logic to cancel a pending EVM transaction.
 
@@ -56,7 +56,7 @@ Optional: Logic to cancel a pending EVM transaction.
 
 > **checkAndInitializeTrackerInStore**: (`params`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:237](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L237)
+Defined in: [packages/pulsar-core/src/types.ts:237](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L237)
 
 Selects and initializes the correct background tracker for a given transaction.
 
@@ -76,7 +76,7 @@ Selects and initializes the correct background tracker for a given transaction.
 
 > **checkChainForTx**: (`chainId`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:233](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L233)
+Defined in: [packages/pulsar-core/src/types.ts:233](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L233)
 
 Ensures the connected wallet is on the correct network for the transaction. Throws an error if the chain is mismatched.
 
@@ -96,7 +96,7 @@ Ensures the connected wallet is on the correct network for the transaction. Thro
 
 > **checkTransactionsTracker**: (`actionTxKey`, `walletType`) => `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:235](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L235)
+Defined in: [packages/pulsar-core/src/types.ts:235](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L235)
 
 Determines the appropriate tracker and final `txKey` from the result of an action.
 
@@ -128,7 +128,7 @@ Determines the appropriate tracker and final `txKey` from the result of an actio
 
 > `optional` **getAvatar**: (`name`) => `Promise`\<`string` \| `null`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:248](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L248)
+Defined in: [packages/pulsar-core/src/types.ts:248](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L248)
 
 Optional: Fetches an avatar URL from a chain-specific name service.
 
@@ -148,7 +148,7 @@ Optional: Fetches an avatar URL from a chain-specific name service.
 
 > `optional` **getExplorerTxUrl**: (`transactionsPool`, `txKey`, `replacedTxHash?`) => `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:265](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L265)
+Defined in: [packages/pulsar-core/src/types.ts:265](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L265)
 
 Optional: Constructs a full explorer URL for a specific transaction.
 May require the full transaction pool to resolve details for replaced transactions.
@@ -177,7 +177,7 @@ May require the full transaction pool to resolve details for replaced transactio
 
 > **getExplorerUrl**: () => `string` \| `undefined`
 
-Defined in: [packages/pulsar-core/src/types.ts:244](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L244)
+Defined in: [packages/pulsar-core/src/types.ts:244](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L244)
 
 Returns the base URL for the blockchain explorer for the current network.
 
@@ -191,7 +191,7 @@ Returns the base URL for the blockchain explorer for the current network.
 
 > `optional` **getName**: (`address`) => `Promise`\<`string` \| `null`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:246](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L246)
+Defined in: [packages/pulsar-core/src/types.ts:246](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L246)
 
 Optional: Fetches a name from a chain-specific name service (e.g., ENS).
 
@@ -211,7 +211,7 @@ Optional: Fetches a name from a chain-specific name service (e.g., ENS).
 
 > **getWalletInfo**: () => `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:228](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L228)
+Defined in: [packages/pulsar-core/src/types.ts:228](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L228)
 
 Returns information about the currently connected wallet.
 
@@ -233,7 +233,7 @@ Returns information about the currently connected wallet.
 
 > **key**: [`TransactionAdapter`](../enumerations/TransactionAdapter.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:226](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L226)
+Defined in: [packages/pulsar-core/src/types.ts:226](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L226)
 
 The unique key identifying this adapter.
 
@@ -243,7 +243,7 @@ The unique key identifying this adapter.
 
 > `optional` **retryTxAction**: (`params`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:254](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L254)
+Defined in: [packages/pulsar-core/src/types.ts:254](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L254)
 
 Optional: Logic to retry a failed transaction.
 
@@ -263,7 +263,7 @@ Optional: Logic to retry a failed transaction.
 
 > `optional` **speedUpTxAction**: (`tx`) => `Promise`\<`string`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:252](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L252)
+Defined in: [packages/pulsar-core/src/types.ts:252](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L252)
 
 Optional: Logic to speed up a pending EVM transaction.
 

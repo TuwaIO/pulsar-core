@@ -4,19 +4,22 @@
 
 # SolanaAdapterConfig
 
-Defined in: [packages/pulsar-solana/src/types.ts:24](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-solana/src/types.ts#L24)
+Defined in: [packages/pulsar-solana/src/types.ts:31](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-solana/src/types.ts#L31)
 
-The final, simplified configuration object for the solanaAdapter.
+Represents the simplified configuration object for the Solana adapter.
+
+This configuration enables both wallet-based (connected) and read-only (disconnected) modes,
+supporting operations like transaction tracking, name/identity resolution, and more.
 
 ## Properties
 
 ### rpcUrls
 
-> **rpcUrls**: `Record`\<`Partial`\<`SolanaClusterMoniker`\>, `string`\>
+> **rpcUrls**: `Partial`\<`Record`\<`SolanaClusterMoniker`, `string`\>\>
 
-Defined in: [packages/pulsar-solana/src/types.ts:26](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-solana/src/types.ts#L26)
+Defined in: [packages/pulsar-solana/src/types.ts:33](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-solana/src/types.ts#L33)
 
-A map of RPC URLs for each supported Solana cluster.
+A mapping of cluster names to their respective RPC endpoints.
 
 ***
 
@@ -24,6 +27,6 @@ A map of RPC URLs for each supported Solana cluster.
 
 > `optional` **wallet**: [`SolanaAdapterWallet`](SolanaAdapterWallet.md)
 
-Defined in: [packages/pulsar-solana/src/types.ts:25](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-solana/src/types.ts#L25)
+Defined in: [packages/pulsar-solana/src/types.ts:32](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-solana/src/types.ts#L32)
 
-A simple object representing the current state of the user's wallet.
+An optional object describing the connected wallet's state.

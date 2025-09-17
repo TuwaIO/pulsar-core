@@ -4,19 +4,27 @@
 
 # solanaFetcher()
 
-> **solanaFetcher**(`__namedParameters`): `Promise`\<`void`\>
+> **solanaFetcher**(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-solana/src/trackers/solanaTracker.ts:51](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-solana/src/trackers/solanaTracker.ts#L51)
+Defined in: [packages/pulsar-solana/src/trackers/solanaTracker.ts:62](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-solana/src/trackers/solanaTracker.ts#L62)
 
-A reusable fetcher for `initializePollingTracker` that queries the Solana RPC for a transaction's signature status.
-This is the core polling logic that powers the tracker.
+The core polling fetcher function for Solana transactions.
+
+This function queries the Solana RPC for updates on a transaction's status.
+It processes the response and triggers appropriate callbacks (`onSuccess`, `onFailure`, etc.)
+based on the transaction's state.
 
 ## Parameters
 
-### \_\_namedParameters
+### params
 
 `PollingFetcherParams`
+
+The parameters for the fetcher, including the transaction object
+and various callbacks for handling updates.
 
 ## Returns
 
 `Promise`\<`void`\>
+
+A promise that resolves once the fetcher function completes.

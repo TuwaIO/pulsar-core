@@ -5,9 +5,13 @@
 import type { SolanaClusterMoniker } from 'gill';
 
 /**
- * Describes the essential wallet information needed by the Solana adapter.
- * This simple, library-agnostic interface allows any wallet connection library
- * to be used with Pulsar, as long as it can provide this basic data.
+ * Represents the essential wallet information required by the Solana adapter.
+ * This interface provides a simple, library-agnostic abstraction for wallet connections,
+ * enabling integration with any wallet library that meets these basic requirements.
+ *
+ * @property {string} walletAddress - The public address of the connected wallet on Solana.
+ * @property {string} walletType - The type or name of the wallet (e.g., 'Phantom', 'Solflare').
+ * @property {SolanaClusterMoniker} walletActiveChain - The current chain or cluster the wallet is connected to.
  */
 export interface SolanaAdapterWallet {
   walletAddress: string;
@@ -16,26 +20,30 @@ export interface SolanaAdapterWallet {
 }
 
 /**
- * The final, simplified configuration object for the solanaAdapter.
+ * Represents the simplified configuration object for the Solana adapter.
  *
- * @property {SolanaAdapterWallet} wallet - A simple object representing the current state of the user's wallet.
- * @property {Record<SolanaClusterMoniker, string>} rpcUrls - A map of RPC URLs for each supported Solana cluster.
+ * This configuration enables both wallet-based (connected) and read-only (disconnected) modes,
+ * supporting operations like transaction tracking, name/identity resolution, and more.
+ *
+ * @property {SolanaAdapterWallet} [wallet] - An optional object describing the connected wallet's state.
+ * @property {Partial<Record<SolanaClusterMoniker, string>>} rpcUrls - A mapping of cluster names to their respective RPC endpoints.
  */
 export interface SolanaAdapterConfig {
   wallet?: SolanaAdapterWallet;
-  rpcUrls: Record<Partial<SolanaClusterMoniker>, string>;
+  rpcUrls: Partial<Record<SolanaClusterMoniker, string>>;
 }
 
 /**
- * Defines the tracker identifiers available in the Solana adapter.
+ * Enum defining the available transaction tracker types in the Solana adapter.
  */
 export enum SolanaTransactionTracker {
-  /** The default tracker for monitoring standard Solana transaction signatures. */
+  /** The tracker for monitoring standard Solana transaction signatures. */
   Solana = 'solana',
 }
 
 /**
- * Represents the unique key returned by a transaction-creating action on Solana.
- * For standard Solana transactions, this is always the transaction signature as a base58 string.
+ * Represents the unique identifier for a transaction action initiated on Solana.
+ *
+ * - For standard Solana transactions, this is the transaction signature encoded as a base58 string.
  */
 export type SolanaActionTxKey = string;

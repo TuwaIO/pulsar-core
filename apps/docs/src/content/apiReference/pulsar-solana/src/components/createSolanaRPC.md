@@ -4,21 +4,22 @@
 
 # createSolanaRPC()
 
-> **createSolanaRPC**(`rpcUrl`): `Rpc`\<`SolanaRpcApi`\>
+> **createSolanaRPC**(`rpcUrlOrMoniker`): `Rpc`\<`SolanaRpcApi`\>
 
-Defined in: [packages/pulsar-solana/src/utils/createSolanaRPC.ts:17](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-solana/src/utils/createSolanaRPC.ts#L17)
+Defined in: [packages/pulsar-solana/src/utils/createSolanaRPC.ts:44](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-solana/src/utils/createSolanaRPC.ts#L44)
 
 **`Internal`**
 
-Retrieves a cached RPC client for a given URL or creates a new one.
+Retrieves a cached RPC client for a given URL or cluster moniker.
+If no cached client exists, it creates a new instance.
 
 ## Parameters
 
-### rpcUrl
+### rpcUrlOrMoniker
 
 `string`
 
-The RPC endpoint URL.
+Either a full RPC URL or a cluster moniker like 'mainnet'.
 
 ## Returns
 

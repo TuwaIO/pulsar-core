@@ -17,7 +17,7 @@ It is designed to be consumed by any UI layer, with our official implementation 
 The architecture is modular and layered:
 
 - 🧠 **Core (`@tuwaio/pulsar-core`):** A framework-agnostic state machine that knows _how_ to manage state but nothing about specific blockchains.
-- 🔌 **Adapters (`@tuwaio/pulsar-evm`):** Platform-specific modules that plug into the core. They teach Pulsar _how_ to interact with a specific ecosystem (e.g., EVM chains via Viem).
+- 🔌 **Adapters (`@tuwaio/pulsar-evm`, `@tuwaio/pulsar-solana`):** Platform-specific modules that plug into the core. They teach Pulsar _how_ to interact with specific ecosystems like EVM or Solana.
 - ⚛️ **Bindings (`@tuwaio/pulsar-react`):** Framework-specific packages that provide hooks and utilities to easily connect Pulsar to a UI framework's lifecycle.
 
 ---
@@ -27,7 +27,9 @@ The architecture is modular and layered:
 - **Framework-Agnostic Core:** Built with Zustand and Immer for maximum portability.
 - **Multi-Chain by Design:** The adapter pattern allows for extending support to any blockchain.
 - **Persistent State:** Automatically resumes tracking pending transactions after a page reload.
-- **Rich EVM Support:** The official EVM adapter includes trackers for standard transactions, Safe multisigs, and Gelato meta-transactions.
+- **Rich Ecosystem Support:**
+  - **EVM Adapter:** Supports standard transactions, Safe multisigs, and Gelato meta-transactions.
+  - **Solana Adapter:** Supports Solana cluster management, RPC integration, and transaction tracking.
 - **Type-Safe:** Written entirely in TypeScript to ensure a robust developer experience.
 
 ---
@@ -36,11 +38,12 @@ The architecture is modular and layered:
 
 This repository is a monorepo managed using `pnpm` workspaces.
 
-| Package                       | Version                                                                                                                     | Description                                                                    |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| 🧠 **`@tuwaio/pulsar-core`**  | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-core.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-core)   | The framework-agnostic core with the main state machine, types, and utilities. |
-| 🔌 **`@tuwaio/pulsar-evm`**   | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)     | An adapter for EVM-compatible chains. Integrates with Wagmi and Viem.          |
-| ⚛️ **`@tuwaio/pulsar-react`** | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react) | React bindings, including the `useInitializeTransactionsPool` hook.            |
+| Package                          | Version                                                                                                                         | Description                                                                     |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 🧠 **`@tuwaio/pulsar-core`**     | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-core.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-core)       | The framework-agnostic core with the main state machine, types, and utilities.  |
+| 🔌 **`@tuwaio/pulsar-evm`**      | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)         | An adapter for EVM-compatible chains. Integrates with Wagmi and Viem.           |
+| 🔌 **`@tuwaio/pulsar-solana`**   | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-solana.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-solana)   | An adapter for Solana chains. Supports cluster management and transaction tracking. |
+| ⚛️ **`@tuwaio/pulsar-react`**    | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react)     | React bindings, including the `useInitializeTransactionsPool` hook.             |
 
 ---
 
@@ -49,27 +52,23 @@ This repository is a monorepo managed using `pnpm` workspaces.
 Follow these steps to set up the development environment on your local machine.
 
 ### 1. Clone the Repository
-
 ```bash
-git clone [https://github.com/TuwaIO/pulsar-core.git](https://github.com/TuwaIO/pulsar-core.git)
-cd pulsar-core
-```
+ git clone [https://github.com/TuwaIO/pulsar-core.git](https://github.com/TuwaIO/pulsar-core.git) cd pulsar-core
+``` 
 
-### 2\. Install Dependencies
+### 2. Install Dependencies
 
 This project uses `pnpm` as its package manager.
+```bash 
+ pnpm install
+``` 
 
-```bash
-pnpm install
-```
-
-### 3\. Build All Packages
+### 3. Build All Packages
 
 After installation, build all packages to ensure the monorepo is correctly linked.
-
 ```bash
-pnpm build
-```
+ pnpm build
+``` 
 
 ---
 
@@ -78,17 +77,15 @@ pnpm build
 ### Running Tests
 
 Testing is the primary development workflow. To run the test suite for all packages, use the following command from the root directory:
-
 ```bash
-pnpm test
-```
+ pnpm test
+``` 
 
 You can also run tests in **watch mode** for a specific package:
-
 ```bash
-# Example for the EVM package
-pnpm --filter @tuwaio/pulsar-evm test --watch
-```
+# Example for the Solana package
+pnpm --filter @tuwaio/pulsar-solana test --watch
+``` 
 
 ---
 

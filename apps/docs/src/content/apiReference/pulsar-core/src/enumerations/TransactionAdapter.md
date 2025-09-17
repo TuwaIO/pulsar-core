@@ -4,7 +4,7 @@
 
 # TransactionAdapter
 
-Defined in: [packages/pulsar-core/src/types.ts:32](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L32)
+Defined in: [packages/pulsar-core/src/types.ts:32](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L32)
 
 Defines the supported blockchain adapters. Each adapter corresponds to a specific chain architecture.
 
@@ -14,7 +14,7 @@ Defines the supported blockchain adapters. Each adapter corresponds to a specifi
 
 > **EVM**: `"evm"`
 
-Defined in: [packages/pulsar-core/src/types.ts:34](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L34)
+Defined in: [packages/pulsar-core/src/types.ts:34](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L34)
 
 For Ethereum Virtual Machine (EVM) compatible chains like Ethereum, Polygon, etc.
 
@@ -24,7 +24,7 @@ For Ethereum Virtual Machine (EVM) compatible chains like Ethereum, Polygon, etc
 
 > **SOLANA**: `"solana"`
 
-Defined in: [packages/pulsar-core/src/types.ts:36](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L36)
+Defined in: [packages/pulsar-core/src/types.ts:36](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L36)
 
 For the Solana blockchain.
 
@@ -34,6 +34,6 @@ For the Solana blockchain.
 
 > **Starknet**: `"starknet"`
 
-Defined in: [packages/pulsar-core/src/types.ts:38](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-core/src/types.ts#L38)
+Defined in: [packages/pulsar-core/src/types.ts:38](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-core/src/types.ts#L38)
 
 For the Starknet L2 network.

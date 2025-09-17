@@ -4,12 +4,15 @@
 
 # solanaTrackerForStore()
 
-> **solanaTrackerForStore**\<`T`\>(`__namedParameters`): `Promise`\<`void`\>
+> **solanaTrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-solana/src/trackers/solanaTracker.ts:96](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-solana/src/trackers/solanaTracker.ts#L96)
+Defined in: [packages/pulsar-solana/src/trackers/solanaTracker.ts:131](https://github.com/TuwaIO/pulsar-core/blob/ec5ee833ca939943dee97a8e5938dc68d269fd66/packages/pulsar-solana/src/trackers/solanaTracker.ts#L131)
 
-A higher-level wrapper that integrates the Solana polling logic with the Pulsar store.
-It uses the generic `solanaFetcher` and provides store-specific callbacks.
+A higher-level polling tracker that integrates the Solana transaction tracking logic
+with the Pulsar store's transaction management.
+
+This function initializes and manages the lifecycle of polling for a Solana transaction's status.
+It dynamically updates the transaction state in the store based on polling results.
 
 ## Type Parameters
 
@@ -17,14 +20,18 @@ It uses the generic `solanaFetcher` and provides store-specific callbacks.
 
 `T` *extends* `Transaction`\<[`Solana`](../enumerations/SolanaTransactionTracker.md#solana)\>
 
-The application-specific transaction type, constrained to Transaction.
+The application-specific type for the transaction, extending `Transaction`.
 
 ## Parameters
 
-### \_\_namedParameters
+### params
 
 `Pick`\<`ITxTrackingStore`\<[`Solana`](../enumerations/SolanaTransactionTracker.md#solana), `T`, `string`\>, `"transactionsPool"` \| `"updateTxParams"` \| `"onSucceedCallbacks"` \| `"removeTxFromPool"`\> & `object`
+
+The parameters for the store-connected tracker.
 
 ## Returns
 
 `Promise`\<`void`\>
+
+A promise that resolves once the tracking process is initialized.
