@@ -162,8 +162,6 @@ export type StarknetTransaction<T> = BaseTransaction<T> & {
   actualFee?: { amount: string; unit: string };
   /** The address of the contract being interacted with. */
   contractAddress?: string;
-  /** The reason for transaction failure, if applicable. */
-  revertReason?: string;
 };
 
 /** A union type representing any possible transaction structure that Pulsar can handle. */

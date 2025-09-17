@@ -1,7 +1,7 @@
 /**
- * @file Implements the transaction tracking logic for standard Solana transactions.
- * It uses a polling mechanism to query the `getSignatureStatuses` RPC method
- * and updates the transaction's state in the Pulsar store.
+ * @file Implements the transaction tracking logic for Solana transactions.
+ * It integrates with the Pulsar store and uses a polling mechanism to query the
+ * `getSignatureStatuses` RPC method for updates on transaction status.
  */
 
 import {
@@ -18,25 +18,31 @@ import { Signature, TransactionError } from 'gill';
 import { SolanaActionTxKey, SolanaTransactionTracker } from '../types';
 import { createSolanaRPC } from '../utils/createSolanaRPC';
 
-// --- Types ---
-
 /**
- * The structure of the status object returned by the Solana RPC `getSignatureStatuses` method.
- * It represents the real-time status of a Solana transaction.
- * Note: `slot and confirmations` is received as a `bigint` but converted to `number` before being processed.
- * @internal
+ * @typedef SolanaSignatureStatusResponse
+ * Represents the status of a Solana transaction and includes additional metadata.
+ *
+ * @property {number} slot - The slot in which the transaction was processed.
+ * @property {number | null} confirmations - The number of confirmations received.
+ * @property {TransactionError | null} err - The error, if any, associated with the transaction.
+ * @property {'processed' | 'confirmed' | 'finalized' | null} confirmationStatus - The status of the transaction's confirmation.
+ * @property {number} [fee] - The transaction fee in lamports.
+ * @property {string} [recentBlockhash] - The blockhash used for the transaction.
+ * @property {unknown[]} [instructions] - The instructions included in the transaction.
  */
 type SolanaSignatureStatusResponse = {
   slot: number;
   confirmations: number | null;
   err: TransactionError | null;
   confirmationStatus: 'processed' | 'confirmed' | 'finalized' | null;
+  fee?: number;
+  recentBlockhash?: string;
+  instructions?: unknown[];
 };
 
 /**
- * The function parameters for the `solanaFetcher` function.
- * These are automatically derived from the generic `PollingTrackerConfig` fetcher function.
- * @internal
+ * @typedef SolanaFetcherParams
+ * Parameters used for the Solana fetcher function.
  */
 type SolanaFetcherParams = Parameters<
   PollingTrackerConfig<
@@ -46,18 +52,13 @@ type SolanaFetcherParams = Parameters<
   >['fetcher']
 >[0];
 
-// --- Fetcher Implementation ---
-
 /**
- * The core polling fetcher function for Solana transactions.
+ * Fetches and tracks Solana transactions using the `getSignatureStatuses` RPC method.
+ * Transaction details (`getTransaction`) are only fetched once, if not already present in the transaction object.
  *
- * This function queries the Solana RPC for updates on a transaction's status.
- * It processes the response and triggers appropriate callbacks (`onSuccess`, `onFailure`, etc.)
- * based on the transaction's state.
- *
- * @param {SolanaFetcherParams} params - The parameters for the fetcher, including the transaction object
- * and various callbacks for handling updates.
- * @returns {Promise<void>} A promise that resolves once the fetcher function completes.
+ * @param {SolanaFetcherParams} params - The fetcher parameters, automatically provided by the tracker.
+ * @throws Will throw an error if the transaction adapter is not set to Solana.
+ * @returns {Promise<void>} Resolves when the fetcher completes execution for the current polling cycle.
  */
 export async function solanaFetcher({
   tx,
@@ -66,69 +67,94 @@ export async function solanaFetcher({
   onFailure,
   onIntervalTick,
 }: SolanaFetcherParams): Promise<void> {
+  // Validate that the transaction uses the Solana adapter
   if (tx.adapter !== TransactionAdapter.SOLANA) {
-    throw new Error('Tx adapter is not Solana. Please set adapter to "solana" in the transaction object.');
+    throw new Error('Tx adapter is not Solana. Please set the adapter to "solana" in the transaction object.');
   }
 
-  // Fetch the transaction status from the Solana RPC.
-  const rpc = createSolanaRPC(tx.rpcUrl ?? (tx.chainId as string));
-  const statuses = await rpc.getSignatureStatuses([tx.txKey as Signature]).send();
-  const status = statuses?.value[0];
+  try {
+    // Initialize the Solana RPC client
+    const rpc = createSolanaRPC(tx.rpcUrl ?? (tx.chainId as string));
 
-  if (!status) {
-    // Skip processing if the transaction is not yet found by the RPC node.
-    return;
-  }
+    // Fetch transaction signature status
+    const statuses = await rpc.getSignatureStatuses([tx.txKey as Signature]).send();
+    const status = statuses?.value?.[0];
 
-  // Convert `slot` and `confirmations` to a number and process the response.
-  const typedStatus: SolanaSignatureStatusResponse = {
-    ...status,
-    slot: Number(status.slot),
-    confirmations: Number(status.confirmations ?? 0),
-  };
+    // Skip further processing if no status is found
+    if (!status) {
+      return;
+    }
 
-  // Trigger onIntervalTick for intermediate updates.
-  onIntervalTick?.(typedStatus);
+    // Extract or fetch transaction details only when missing
+    let { fee, recentBlockhash, instructions } = tx;
 
-  if (typedStatus.err) {
-    // Handle a terminal error state if an error exists in the response.
-    onFailure(typedStatus);
-    stopPolling({ withoutRemoving: true });
-    return;
-  }
+    if (!fee || !recentBlockhash || !instructions) {
+      const txDetails = await rpc.getTransaction(tx.txKey as Signature, { encoding: 'json' }).send();
+      const { meta, transaction } = txDetails || {};
 
-  if (typedStatus.confirmationStatus === 'finalized') {
-    // Handle a terminal success state when the transaction is finalized.
-    onSuccess(typedStatus);
-    stopPolling({ withoutRemoving: true });
-    return;
-  }
+      // If no transaction details are found, skip further processing
+      if (!meta || !transaction) {
+        return;
+      }
 
-  // Safeguard: Stop polling for transactions pending longer than 1 day.
-  const elapsedDays = dayjs().diff(dayjs.unix(tx.localTimestamp), 'day');
-  if (elapsedDays >= 1) {
-    onFailure(typedStatus);
+      // Extract details from RPC response
+      fee = Number(meta.fee ?? 0);
+      recentBlockhash = transaction.message.recentBlockhash?.toString();
+      instructions = transaction.message.instructions as unknown[];
+    }
+
+    // Construct the extended transaction status object
+    const typedStatus: SolanaSignatureStatusResponse = {
+      ...status,
+      slot: Number(status.slot),
+      confirmations: Number(status.confirmations ?? 0),
+      fee,
+      recentBlockhash,
+      instructions,
+    };
+
+    // Trigger periodic updates for transaction tracking
+    onIntervalTick?.(typedStatus);
+
+    // Handle transaction error state
+    if (typedStatus.err) {
+      onFailure(typedStatus);
+      stopPolling({ withoutRemoving: true });
+      return;
+    }
+
+    // Handle finalized transaction state
+    if (typedStatus.confirmationStatus === 'finalized') {
+      onSuccess(typedStatus);
+      stopPolling({ withoutRemoving: true });
+      return;
+    }
+
+    // Stop polling if the transaction is unconfirmed for more than 1 day
+    const elapsedDays = dayjs().diff(dayjs.unix(tx.localTimestamp), 'day');
+    if (elapsedDays >= 1) {
+      onFailure(typedStatus);
+      stopPolling();
+    }
+  } catch (error) {
+    console.error('Error in solanaFetcher:', error);
+    onFailure({ err: error } as SolanaSignatureStatusResponse);
     stopPolling();
   }
 }
 
-// --- Store-Connected Tracker ---
-
 /**
- * A higher-level polling tracker that integrates the Solana transaction tracking logic
- * with the Pulsar store's transaction management.
+ * A higher-level tracker that integrates the Solana polling logic with the Pulsar store.
  *
- * This function initializes and manages the lifecycle of polling for a Solana transaction's status.
- * It dynamically updates the transaction state in the store based on polling results.
+ * @template T - The application-specific Solana transaction type.
  *
- * @template T - The application-specific type for the transaction, extending `Transaction`.
- * @param {object} params - The parameters for the store-connected tracker.
- * @param {T} params.tx - The Solana transaction object to be tracked.
- * @param {Record<string, T>} params.transactionsPool - The current pool of transactions in the store.
- * @param {Function} params.updateTxParams - A function to update specific fields of a transaction in the store.
- * @param {Function} [params.onSucceedCallbacks] - Optional callbacks to trigger on a successful tracking outcome.
- * @param {Function} [params.removeTxFromPool] - A function to remove the tracked transaction from the pool.
- * @returns {Promise<void>} A promise that resolves once the tracking process is initialized.
+ * @param {object} params - Parameters to connect the Solana tracker with the store.
+ * @param {T} params.tx - The Solana transaction being tracked.
+ * @param {Record<string, T>} params.transactionsPool - A pool of tracked transactions in the store.
+ * @param {Function} params.updateTxParams - A callback to update specific fields of a transaction in the store.
+ * @param {Function} [params.onSucceedCallbacks] - Optional callbacks executed upon successful transaction completion.
+ * @param {Function} [params.removeTxFromPool] - A function to remove a completed or canceled transaction from the store.
+ * @returns {Promise<void>} Resolves when the tracker is successfully initialized.
  */
 export async function solanaTrackerForStore<T extends Transaction<SolanaTransactionTracker>>({
   tx,
@@ -143,37 +169,55 @@ export async function solanaTrackerForStore<T extends Transaction<SolanaTransact
     tx,
     fetcher: solanaFetcher,
     removeTxFromPool: rest.removeTxFromPool,
-    pollingInterval: 2500, // Poll every 2.5 seconds.
-    maxRetries: 10, // Limit retries to 10 attempts.
+    pollingInterval: 2500, // Polling interval: 2.5 seconds
+    maxRetries: 10, // Max retries: 10 times
 
+    /**
+     * Success handler - updates the Pulsar store with finalized transaction details.
+     *
+     * @param {SolanaSignatureStatusResponse} response - The finalized transaction details.
+     */
     onSuccess: (response) => {
-      // Update the store on a successful transaction outcome.
       rest.updateTxParams(tx.txKey, {
         status: TransactionStatus.Success,
         pending: false,
         isError: false,
         finishedTimestamp: dayjs().unix(),
+        fee: response.fee,
+        instructions: response.instructions,
+        recentBlockhash: response.recentBlockhash,
         confirmations: response.confirmations ?? 1,
         slot: response.slot,
       });
 
-      // Trigger global success callbacks if provided.
+      // Trigger global success callbacks, if applicable
       const updatedTx = rest.transactionsPool[tx.txKey];
       if (rest.onSucceedCallbacks && updatedTx) {
         rest.onSucceedCallbacks(updatedTx);
       }
     },
 
+    /**
+     * Interval handler - updates interim transaction details in the store.
+     *
+     * @param {SolanaSignatureStatusResponse} response - The latest transaction status update.
+     */
     onIntervalTick: (response) => {
-      // Update fields at each polling interval (e.g., confirmations and slot).
       rest.updateTxParams(tx.txKey, {
         confirmations: response.confirmations ?? 0,
         slot: response.slot,
+        fee: response.fee,
+        instructions: response.instructions,
+        recentBlockhash: response.recentBlockhash,
       });
     },
 
+    /**
+     * Failure handler - updates the store when the transaction fails or times out.
+     *
+     * @param {SolanaSignatureStatusResponse} response - The failure response details.
+     */
     onFailure: (response) => {
-      // Handle a failure state for the transaction.
       const errorMessage = response?.err
         ? `Transaction failed: ${JSON.stringify(response.err)}`
         : 'Transaction tracking timed out or the transaction was not found.';
