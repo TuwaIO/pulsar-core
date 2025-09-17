@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.17](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.16...pulsar-evm-v0.0.17) (2025-09-17)
+
+
+### Bug Fixes
+
+* rework onSuccessCallback logic ([77da5c0](https://github.com/TuwaIO/pulsar-core/commit/77da5c0b0eefc5928c5a9c42082fc4f9cc9c4da1))
+
 ## [0.0.16](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.15...pulsar-evm-v0.0.16) (2025-09-17)
 
 
