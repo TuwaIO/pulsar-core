@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.10...pulsar-solana-v0.1.11) (2025-09-17)
+
+
+### Bug Fixes
+
+* update generic types ([edaede8](https://github.com/TuwaIO/pulsar-core/commit/edaede861fb6cb145a3efa13c0c6f0ff17761c1f))
+
 ## [0.1.10](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.9...pulsar-solana-v0.1.10) (2025-09-17)
 
 
