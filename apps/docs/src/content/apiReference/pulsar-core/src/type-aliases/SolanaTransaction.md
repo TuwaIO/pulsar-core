@@ -6,7 +6,7 @@
 
 > **SolanaTransaction**\<`T`\> = [`BaseTransaction`](BaseTransaction.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:139](https://github.com/TuwaIO/pulsar-core/blob/2549443ce7aac31e7aaa13b9eb5f687e5d4297b4/packages/pulsar-core/src/types.ts#L139)
+Defined in: [packages/pulsar-core/src/types.ts:139](https://github.com/TuwaIO/pulsar-core/blob/16038c5bbc96d2d466608fdc95d4789c6f06d211/packages/pulsar-core/src/types.ts#L139)
 
 Represents a Solana-specific transaction, extending the base properties.
 

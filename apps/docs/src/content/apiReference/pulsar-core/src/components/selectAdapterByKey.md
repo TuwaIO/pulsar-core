@@ -6,7 +6,7 @@
 
 > **selectAdapterByKey**\<`TR`, `T`, `A`\>(`params`): `undefined` \| [`TxAdapter`](../type-aliases/TxAdapter.md)\<`TR`, `T`, `A`\>
 
-Defined in: [packages/pulsar-core/src/utils/selectAdapterByKey.ts:25](https://github.com/TuwaIO/pulsar-core/blob/2549443ce7aac31e7aaa13b9eb5f687e5d4297b4/packages/pulsar-core/src/utils/selectAdapterByKey.ts#L25)
+Defined in: [packages/pulsar-core/src/utils/selectAdapterByKey.ts:25](https://github.com/TuwaIO/pulsar-core/blob/16038c5bbc96d2d466608fdc95d4789c6f06d211/packages/pulsar-core/src/utils/selectAdapterByKey.ts#L25)
 
 Selects a transaction adapter from a list based on a provided key.
 
@@ -41,17 +41,17 @@ The type for the adapter-specific context or API.
 
 The parameters for the selection.
 
+#### adapter
+
+[`TxAdapter`](../type-aliases/TxAdapter.md)\<`TR`, `T`, `A`\> \| [`TxAdapter`](../type-aliases/TxAdapter.md)\<`TR`, `T`, `A`\>[]
+
+Adapter or an array of adapters for different chains or transaction types.
+
 #### adapterKey
 
 [`TransactionAdapter`](../enumerations/TransactionAdapter.md)
 
 The key of the desired adapter.
-
-#### adapters
-
-[`TxAdapter`](../type-aliases/TxAdapter.md)\<`TR`, `T`, `A`\>[]
-
-An array of available transaction adapters.
 
 ## Returns
 

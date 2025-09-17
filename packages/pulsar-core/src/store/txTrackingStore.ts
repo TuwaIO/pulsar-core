@@ -26,17 +26,17 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  *
  * @param config Configuration object for creating the store.
  * @param config.onSucceedCallbacks Optional async callback executed on transaction success.
- * @param config.adapters An array of adapters for different chains or transaction types.
+ * @param config.adapter Adapter or an array of adapters for different chains or transaction types.
  * @param options Configuration for the Zustand `persist` middleware.
  * @returns A fully configured Zustand store instance.
  */
 export function createPulsarStore<TR, T extends Transaction<TR>, A>({
   onSucceedCallbacks,
-  adapters,
+  adapter,
   ...options
 }: {
   onSucceedCallbacks?: (tx: T) => Promise<void> | void;
-  adapters: TxAdapter<TR, T, A>[];
+  adapter: TxAdapter<TR, T, A> | TxAdapter<TR, T, A>[];
 } & PersistOptions<ITxTrackingStore<TR, T, A>>) {
   return createStore<ITxTrackingStore<TR, T, A>>()(
     persist(
@@ -54,12 +54,12 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
           // Concurrently initialize trackers for all pending transactions
           await Promise.all(
             pendingTxs.map((tx) => {
-              const adapter = selectAdapterByKey({
+              const foundAdapter = selectAdapterByKey({
                 adapterKey: tx.adapter,
-                adapters,
+                adapter,
               });
               // Delegate tracker initialization to the appropriate adapter
-              return adapter?.checkAndInitializeTrackerInStore({
+              return foundAdapter?.checkAndInitializeTrackerInStore({
                 tx,
                 ...get(),
               });
@@ -86,9 +86,9 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
             },
           });
 
-          const adapter = selectAdapterByKey({
+          const foundAdapter = selectAdapterByKey({
             adapterKey: restParams.adapter,
-            adapters,
+            adapter,
           });
 
           // Centralized error handler for this transaction flow
@@ -104,17 +104,17 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
             );
           };
 
-          if (!adapter) {
+          if (!foundAdapter) {
             const error = new Error('No adapter found for this transaction.');
             handleTxError(error);
             throw error; // Re-throw to allow the caller to handle it.
           }
 
           try {
-            const { walletType, walletAddress } = adapter.getWalletInfo();
+            const { walletType, walletAddress } = foundAdapter.getWalletInfo();
 
             // Step 2: Ensure the wallet is connected to the correct chain.
-            await adapter.checkChainForTx(desiredChainID);
+            await foundAdapter.checkChainForTx(desiredChainID);
 
             // Step 3: Execute the provided action (e.g., signing and sending the transaction).
             const txKeyFromAction = await actionFunction();
@@ -126,7 +126,7 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
             }
 
             // Step 4: Determine the final tracker and txKey from the action's result.
-            const { tracker: updatedTracker, txKey: finalTxKey } = adapter.checkTransactionsTracker(
+            const { tracker: updatedTracker, txKey: finalTxKey } = foundAdapter.checkTransactionsTracker(
               txKeyFromAction,
               walletType,
             );
@@ -161,7 +161,7 @@ export function createPulsarStore<TR, T extends Transaction<TR>, A>({
 
             // Step 8: Initialize the background tracker for the transaction.
             const tx = get().transactionsPool[finalTxKey];
-            await adapter.checkAndInitializeTrackerInStore({ tx, ...get() });
+            await foundAdapter.checkAndInitializeTrackerInStore({ tx, ...get() });
           } catch (e) {
             handleTxError(e);
             throw e; // Re-throw for external handling if needed.

@@ -18,30 +18,33 @@ import { Transaction, TransactionAdapter, TxAdapter } from '../types';
  *
  * @param {object} params - The parameters for the selection.
  * @param {TransactionAdapter} params.adapterKey - The key of the desired adapter.
- * @param {TxAdapter<TR, T, A>[]} params.adapters - An array of available transaction adapters.
+ * @param {TxAdapter<TR, T, A> | TxAdapter<TR, T, A>[]} params.adapter - Adapter or an array of adapters for different chains or transaction types.
  *
  * @returns {TxAdapter<TR, T, A> | undefined} The found transaction adapter, the fallback adapter, or undefined if the adapters array is empty.
  */
 export const selectAdapterByKey = <TR, T extends Transaction<TR>, A>({
   adapterKey,
-  adapters,
+  adapter,
 }: {
   adapterKey: TransactionAdapter;
-  adapters: TxAdapter<TR, T, A>[];
+  adapter: TxAdapter<TR, T, A> | TxAdapter<TR, T, A>[];
 }): TxAdapter<TR, T, A> | undefined => {
-  if (!adapters || adapters.length === 0) {
-    console.error('Adapter selection failed: The provided adapters array is empty.');
-    return undefined;
-  }
+  if (Array.isArray(adapter)) {
+    if (adapter.length === 0) {
+      console.error('Adapter selection failed: The provided adapters array is empty.');
+      return undefined;
+    }
 
-  const adapter = adapters.find((a) => a.key === adapterKey);
+    const foundAdapter = adapter.find((a) => a.key === adapterKey);
 
-  if (adapter) {
-    return adapter;
-  } else {
-    console.warn(
-      `No adapter found for key: "${adapterKey}". Falling back to the first available adapter: "${adapters[0].key}".`,
-    );
-    return adapters[0];
+    if (foundAdapter) {
+      return foundAdapter;
+    } else {
+      console.warn(
+        `No adapter found for key: "${adapterKey}". Falling back to the first available adapter: "${adapter[0].key}".`,
+      );
+      return adapter[0];
+    }
   }
+  return adapter;
 };
