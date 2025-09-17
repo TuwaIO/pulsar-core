@@ -24,10 +24,7 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
 }: {
   tx: T;
   tracker: TransactionTracker;
-} & Pick<
-  ITxTrackingStore<T>,
-  'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
->): Promise<void> {
+} & Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool'>): Promise<void> {
   switch (tracker) {
     case TransactionTracker.Solana:
       await solanaTrackerForStore({

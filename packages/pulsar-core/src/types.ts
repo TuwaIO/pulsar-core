@@ -6,7 +6,7 @@
 
 import { StoreApi } from 'zustand';
 
-import { IInitializeTxTrackingStore, TransactionPool } from './store/initializeTxTrackingStore';
+import { IInitializeTxTrackingStore } from './store/initializeTxTrackingStore';
 
 // =================================================================================================
 // 1. ZUSTAND UTILITY TYPES
@@ -265,10 +265,7 @@ export type TxAdapter<T extends Transaction> = {
   ) => { txKey: string; tracker: TransactionTracker };
   /** Selects and initializes the correct background tracker for a given transaction. */
   checkAndInitializeTrackerInStore: (
-    params: { tx: T } & Pick<
-      ITxTrackingStore<T>,
-      'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
-    >,
+    params: { tx: T } & Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool'>,
   ) => Promise<void>;
   /** Returns the base URL for the blockchain explorer for the current network. */
   getExplorerUrl: () => string | undefined;
@@ -292,7 +289,7 @@ export type TxAdapter<T extends Transaction> = {
    * Optional: Constructs a full explorer URL for a specific transaction.
    * May require the full transaction pool to resolve details for replaced transactions.
    */
-  getExplorerTxUrl?: (transactionsPool: TransactionPool<T>, txKey: string, replacedTxHash?: string) => string;
+  getExplorerTxUrl?: (tx: T) => string;
 };
 
 /**
@@ -312,6 +309,8 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
     params: Omit<InitialTransactionParams, 'actionFunction'>;
     /** The default tracker to use if it cannot be determined automatically. */
     defaultTracker?: TransactionTracker;
+    /** Callback to execute when the transaction is successfully submitted. */
+    onSucceedCallback?: (tx: T) => Promise<void> | void;
   }) => Promise<void>;
 
   /**

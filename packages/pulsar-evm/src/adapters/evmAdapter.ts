@@ -56,12 +56,10 @@ export function evmAdapter<T extends Transaction>(config: Config, appChains: Cha
       const { chain } = getAccount(config);
       return chain?.blockExplorers?.default.url;
     },
-    getExplorerTxUrl: (transactionsPool, txKey, replacedTxHash) =>
+    getExplorerTxUrl: (tx) =>
       selectEvmTxExplorerLink({
-        transactionsPool,
         chains: appChains,
-        txKey: txKey as `0x${string}`,
-        replacedTxHash: replacedTxHash as `0x${string}`,
+        tx,
       }),
     getName: (address: string) => getName(address as `0x${string}`),
     getAvatar: (name: string) => getAvatar(name),

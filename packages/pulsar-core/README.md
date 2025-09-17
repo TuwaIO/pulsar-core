@@ -62,20 +62,12 @@ import { wagmiConfig, chains } from './path/to/your/wagmi/config';
 const pulsarStore = createPulsarStore({
   // A unique name for Zustand's persistence middleware. This will be the key in localStorage.
   name: 'my-app-pulsar-storage',
-
   // An array of adapters for different blockchain ecosystems.
   // Each adapter provides chain-specific logic.
   adapter: [
     evmAdapter(wagmiConfig, chains),
     // ... add other adapters like solanaAdapter here
   ],
-
-  // (Optional) A callback function to execute on every successful transaction.
-  // Ideal for global logic like showing a success notification.
-  onSucceedCallbacks: (tx) => {
-    console.log('Transaction succeeded!', tx);
-    // e.g., showToast('Success!', { type: 'success' });
-  },
 });
 
 export default pulsarStore;

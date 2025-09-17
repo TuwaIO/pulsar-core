@@ -9,7 +9,7 @@ import { produce } from 'immer';
 import { persist, PersistOptions } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
-import { ITxTrackingStore, Transaction, TxAdapter } from '../types';
+import { ITxTrackingStore, Transaction, TransactionStatus, TxAdapter } from '../types';
 import { selectAdapterByKey } from '../utils/selectAdapterByKey';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 
@@ -23,24 +23,21 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  * @template T The specific transaction type, extending the base `Transaction`.
  *
  * @param config Configuration object for creating the store.
- * @param config.onSucceedCallbacks Optional async callback executed on transaction success.
  * @param config.adapter Adapter or an array of adapters for different chains or transaction types.
  * @param options Configuration for the Zustand `persist` middleware.
  * @returns A fully configured Zustand store instance.
  */
 export function createPulsarStore<T extends Transaction>({
-  onSucceedCallbacks,
   adapter,
   ...options
 }: {
-  onSucceedCallbacks?: (tx: T) => Promise<void> | void;
   adapter: TxAdapter<T> | TxAdapter<T>[];
 } & PersistOptions<ITxTrackingStore<T>>) {
   return createStore<ITxTrackingStore<T>>()(
     persist(
       (set, get) => ({
         // Initialize the base store slice with core state and actions
-        ...initializeTxTrackingStore<T>({ onSucceedCallbacks })(set, get),
+        ...initializeTxTrackingStore<T>()(set, get),
 
         /**
          * Initializes trackers for all pending transactions upon store creation.
@@ -70,7 +67,7 @@ export function createPulsarStore<T extends Transaction>({
          * It manages the entire lifecycle, from UI state updates and chain switching to
          * signing, submission, and background tracker initialization.
          */
-        handleTransaction: async ({ defaultTracker, actionFunction, params }) => {
+        handleTransaction: async ({ defaultTracker, actionFunction, onSucceedCallback, params }) => {
           const { desiredChainID, ...restParams } = params;
           const localTimestamp = dayjs().unix();
 
@@ -160,6 +157,12 @@ export function createPulsarStore<T extends Transaction>({
             // Step 8: Initialize the background tracker for the transaction.
             const tx = get().transactionsPool[finalTxKey];
             await foundAdapter.checkAndInitializeTrackerInStore({ tx, ...get() });
+
+            // Step 9: Initialize the callback after the transaction is confirmed and successful.
+            const updatedTx = get().transactionsPool[tx.txKey];
+            if (updatedTx.status === TransactionStatus.Success && onSucceedCallback && updatedTx) {
+              onSucceedCallback(updatedTx);
+            }
           } catch (e) {
             handleTxError(e);
             throw e; // Re-throw for external handling if needed.

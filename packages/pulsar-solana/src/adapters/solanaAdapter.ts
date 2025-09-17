@@ -91,10 +91,9 @@ export function solanaAdapter<T extends Transaction>(config: SolanaAdapterConfig
       return getExplorerLink({ cluster });
     },
 
-    getExplorerTxUrl: (transactionsPool, txKey) => {
-      const tx = transactionsPool[txKey];
+    getExplorerTxUrl: (tx) => {
       const cluster = getCluster(tx?.chainId as string);
-      return selectSolanaTxExplorerLink(txKey, cluster);
+      return selectSolanaTxExplorerLink(tx.txKey, cluster);
     },
 
     getName: async (address) => {

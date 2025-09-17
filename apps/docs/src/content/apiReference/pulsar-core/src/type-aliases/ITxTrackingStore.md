@@ -6,7 +6,7 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:302](https://github.com/TuwaIO/pulsar-core/blob/588f0298eed13d576622f00b75515bcca31625e2/packages/pulsar-core/src/types.ts#L302)
+Defined in: [packages/pulsar-core/src/types.ts:299](https://github.com/TuwaIO/pulsar-core/blob/3ba2d01231ada5db5bd141e51fda8a3427ad1f9d/packages/pulsar-core/src/types.ts#L299)
 
 The complete interface for the Pulsar transaction tracking store.
 
@@ -36,6 +36,12 @@ The async function to execute (e.g., a smart contract write call). Must return a
 [`TransactionTracker`](../enumerations/TransactionTracker.md)
 
 The default tracker to use if it cannot be determined automatically.
+
+###### onSucceedCallback?
+
+(`tx`) => `Promise`\<`void`\> \| `void`
+
+Callback to execute when the transaction is successfully submitted.
 
 ###### params
 

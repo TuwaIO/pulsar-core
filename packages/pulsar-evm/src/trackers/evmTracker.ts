@@ -124,10 +124,9 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
  * @template T - The application-specific transaction type.
  */
 export async function evmTrackerForStore<T extends Transaction>(
-  params: Pick<EVMTrackerParams, 'chains'> &
-    Pick<ITxTrackingStore<T>, 'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks'> & { tx: T },
+  params: Pick<EVMTrackerParams, 'chains'> & Pick<ITxTrackingStore<T>, 'updateTxParams'> & { tx: T },
 ) {
-  const { tx, chains, transactionsPool, updateTxParams, onSucceedCallbacks } = params;
+  const { tx, chains, updateTxParams } = params;
 
   return evmTracker({
     tx,
@@ -158,13 +157,6 @@ export async function evmTrackerForStore<T extends Transaction>(
         pending: false,
         finishedTimestamp: timestamp,
       });
-
-      // After the final state update, retrieve the latest version of the transaction
-      // and trigger the global success callback if applicable.
-      const updatedTx = transactionsPool[tx.txKey];
-      if (isSuccess && onSucceedCallbacks && updatedTx) {
-        onSucceedCallbacks(updatedTx);
-      }
     },
     onReplaced: (replacement) => {
       updateTxParams(tx.txKey, {

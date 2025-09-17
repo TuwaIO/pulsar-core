@@ -2,14 +2,8 @@
  * @file This file contains a selector utility for generating a block explorer URL for a given EVM transaction.
  */
 
-import {
-  selectTxByKey,
-  Transaction,
-  TransactionAdapter,
-  TransactionPool,
-  TransactionTracker,
-} from '@tuwaio/pulsar-core';
-import { Chain, Hex } from 'viem';
+import { Transaction, TransactionAdapter, TransactionTracker } from '@tuwaio/pulsar-core';
+import { Chain } from 'viem';
 
 import { gnosisSafeLinksHelper } from './safeConstants';
 
@@ -28,23 +22,7 @@ import { gnosisSafeLinksHelper } from './safeConstants';
  * @returns {string} The full URL to the transaction on the corresponding block explorer or Safe app,
  * or an empty string if the transaction or required chain configuration is not found.
  */
-export const selectEvmTxExplorerLink = <T extends Transaction>({
-  transactionsPool,
-  chains,
-  txKey,
-  replacedTxHash,
-}: {
-  transactionsPool: TransactionPool<T>;
-  chains: Chain[];
-  txKey: Hex;
-  replacedTxHash?: Hex;
-}): string => {
-  const tx = selectTxByKey(transactionsPool, txKey);
-
-  if (!tx) {
-    return '';
-  }
-
+export const selectEvmTxExplorerLink = <T extends Transaction>({ chains, tx }: { chains: Chain[]; tx: T }): string => {
   // Handle Safe transactions, which link to the Safe web app instead of a block explorer.
   if (tx.tracker === TransactionTracker.Safe) {
     const safeBaseUrl = gnosisSafeLinksHelper[tx.chainId as number];
@@ -63,7 +41,9 @@ export const selectEvmTxExplorerLink = <T extends Transaction>({
   }
 
   // Determine the correct hash to display. Prioritize the replaced hash for speed-up/cancel transactions.
-  const hash = replacedTxHash || (tx.adapter === TransactionAdapter.EVM ? tx.hash : tx.txKey);
+  const hash =
+    (tx.adapter === TransactionAdapter.EVM ? tx.replacedTxHash : tx.txKey) ||
+    (tx.adapter === TransactionAdapter.EVM ? tx.hash : tx.txKey);
 
   if (!hash) return '';
 

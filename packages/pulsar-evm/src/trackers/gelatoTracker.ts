@@ -134,11 +134,9 @@ export const gelatoFetcher: PollingTrackerConfig<GelatoTaskStatusResponse, Trans
  */
 export function gelatoTrackerForStore<T extends Transaction>({
   tx,
-  transactionsPool,
   updateTxParams,
-  onSucceedCallbacks,
   removeTxFromPool,
-}: Pick<ITxTrackingStore<T>, 'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'> & {
+}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool'> & {
   tx: T;
 }) {
   return initializePollingTracker<GelatoTaskStatusResponse, T>({
@@ -153,11 +151,6 @@ export function gelatoTrackerForStore<T extends Transaction>({
         hash: response.task.transactionHash,
         finishedTimestamp: response.task.executionDate ? dayjs(response.task.executionDate).unix() : undefined,
       });
-
-      const updatedTx = transactionsPool[tx.txKey];
-      if (onSucceedCallbacks && updatedTx) {
-        onSucceedCallbacks(updatedTx);
-      }
     },
     onIntervalTick: (response) => {
       updateTxParams(tx.txKey, {

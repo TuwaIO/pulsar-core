@@ -10,16 +10,24 @@ import { ActionTxKey, evmAdapter, TransactionTracker } from '@tuwaio/pulsar-evm'
 
 // 1. Import your wagmi config and chains
 import { appChains, config } from '@/configs/wagmiConfig';
-// 2. Import your typed callbacks from the previous step
-import { onSucceedCallbacks, TransactionUnion } from '@/transactions/onSucceedCallbacks';
 
 const storageName = 'transactions-tracking-storage';
+
+// 2. Define a typed transaction for the 'increment' action
+type IncrementTx = Transaction & {
+  type: 'increment';
+  payload: {
+    value: number; // Example payload: the new value of the counter
+  };
+};
+
+// Create a union of all possible transaction types
+export type TransactionUnion = IncrementTx;
 
 // 3. Create and export the store
 export const usePulsarStore = createBoundedUseStore(
   createPulsarStore<TransactionTracker, TransactionUnion, ActionTxKey>({
     name: storageName,
-    onSucceedCallbacks,
     // 4. Pass the wagmi config to the evmAdapter
     adapter: evmAdapter(config, appChains),
   }),
@@ -29,7 +37,7 @@ export const usePulsarStore = createBoundedUseStore(
 export function TxTrackingStoreStep() {
   return (
     <div className="mt-4">
-      <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 5: Create the Transaction Store</h3>
+      <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 4: Create the Transaction Store</h3>
       <p className="mb-2 text-[var(--tuwa-text-secondary)]">
         Next, create the central Zustand store that will manage the state of all transactions. This is where the{' '}
         <strong>Pulsar</strong> engine is initialized. The `createPulsarStore` function takes your configuration,

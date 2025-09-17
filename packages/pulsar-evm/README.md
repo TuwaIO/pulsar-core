@@ -62,15 +62,8 @@ import { wagmiConfig, chains } from '../configs/wagmi'; // Your wagmi config
 export const pulsarStore = createPulsarStore({
   // A unique name for localStorage persistence
   name: 'my-dapp-transactions',
-
   // Provide the evmAdapter with your wagmi config and supported chains
-  adapters: [evmAdapter(wagmiConfig, chains)],
-
-  // Optional: Add global callbacks for all successful transactions
-  onSucceedCallbacks: (tx) => {
-    console.log(`Transaction ${tx.txKey} succeeded on chain ${tx.chainId}!`);
-    // Example: show a success toast
-  },
+  adapter: evmAdapter(wagmiConfig, chains),
 });
 ```
 
@@ -123,12 +116,11 @@ You can use exported utilities, like selectors, to get derived data for your UI.
 // src/components/ExplorerLink.tsx
 import { selectEvmTxExplorerLink } from '@tuwaio/pulsar-evm';
 import { usePulsar } from '@tuwaio/pulsar-react';
-import { mainnet, sepolia } from 'viem/chains';
+import { chains } from '../configs/wagmi'; // Your wagmi config
 
-function ExplorerLink({ txKey }) {
-  const { transactionsPool } = usePulsar();
-  // The selector needs the pool, your app's chains, and the transaction key.
-  const explorerLink = selectEvmTxExplorerLink(transactionsPool, [mainnet, sepolia], txKey);
+function ExplorerLink({ tx }) {
+  // The selector needs your app's chains, and the transaction.
+  const explorerLink = selectEvmTxExplorerLink({ chains, tx });
 
   if (!explorerLink) return null;
 

@@ -1,7 +1,6 @@
 import { PackageInstallationTabs } from '@/components/PackageInstallationTabs';
 import { ABIStep } from '@/components/started-steps/ABIStep';
 import { ActionStep } from '@/components/started-steps/ActionStep';
-import { OnSucceedCallbacksStep } from '@/components/started-steps/OnSucceedCallbacksStep';
 import { TxTrackingStoreStep } from '@/components/started-steps/TxTrackingStoreStep';
 
 export function CombineSteps() {
@@ -13,7 +12,6 @@ export function CombineSteps() {
       <PackageInstallationTabs />
       <ABIStep />
       <ActionStep />
-      <OnSucceedCallbacksStep />
       <TxTrackingStoreStep />
     </>
   );

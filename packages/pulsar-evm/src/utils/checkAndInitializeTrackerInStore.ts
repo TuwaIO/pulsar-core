@@ -16,7 +16,7 @@ import { safeTrackerForStore } from '../trackers/safeTracker';
  */
 type InitializeTrackerParams<T extends Transaction> = Pick<
   ITxTrackingStore<T>,
-  'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'
+  'updateTxParams' | 'removeTxFromPool'
 > & {
   chains: Chain[];
   tx: T;

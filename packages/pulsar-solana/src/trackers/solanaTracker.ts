@@ -145,16 +145,14 @@ export async function solanaFetcher({
  *
  * @param {object} params - Parameters to connect the Solana tracker with the store.
  * @param {T} params.tx - The Solana transaction being tracked.
- * @param {Record<string, T>} params.transactionsPool - A pool of tracked transactions in the store.
  * @param {Function} params.updateTxParams - A callback to update specific fields of a transaction in the store.
- * @param {Function} [params.onSucceedCallbacks] - Optional callbacks executed upon successful transaction completion.
  * @param {Function} [params.removeTxFromPool] - A function to remove a completed or canceled transaction from the store.
  * @returns {Promise<void>} Resolves when the tracker is successfully initialized.
  */
 export async function solanaTrackerForStore<T extends Transaction>({
   tx,
   ...rest
-}: Pick<ITxTrackingStore<T>, 'transactionsPool' | 'updateTxParams' | 'onSucceedCallbacks' | 'removeTxFromPool'> & {
+}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool'> & {
   tx: T;
 }): Promise<void> {
   return initializePollingTracker<SolanaSignatureStatusResponse, T>({
@@ -181,12 +179,6 @@ export async function solanaTrackerForStore<T extends Transaction>({
         confirmations: response.confirmations ?? 1,
         slot: response.slot,
       });
-
-      // Trigger global success callbacks, if applicable
-      const updatedTx = rest.transactionsPool[tx.txKey];
-      if (rest.onSucceedCallbacks && updatedTx) {
-        rest.onSucceedCallbacks(updatedTx);
-      }
     },
 
     /**

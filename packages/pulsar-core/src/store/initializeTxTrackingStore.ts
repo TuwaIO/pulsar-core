@@ -46,8 +46,6 @@ type UpdatableTransactionFields = Partial<
  * @template T The specific transaction type.
  */
 export interface IInitializeTxTrackingStore<T extends Transaction> {
-  /** A callback function executed when any transaction successfully completes. */
-  onSucceedCallbacks?: (tx: T) => Promise<void> | void;
   /** A pool of all transactions currently being tracked, indexed by `txKey`. */
   transactionsPool: TransactionPool<T>;
   /** The `txKey` of the most recently added transaction. */
@@ -73,17 +71,10 @@ export interface IInitializeTxTrackingStore<T extends Transaction> {
  *
  * @template T The specific transaction type.
  * @param options Configuration for the store slice.
- * @param options.onSucceedCallbacks An optional async callback to run when a transaction succeeds.
  * @returns A Zustand store slice implementing `IInitializeTxTrackingStore`.
  */
-export function initializeTxTrackingStore<T extends Transaction>({
-  onSucceedCallbacks,
-}: {
-  onSucceedCallbacks?: (tx: T) => Promise<void> | void;
-}): StoreSlice<IInitializeTxTrackingStore<T>> {
+export function initializeTxTrackingStore<T extends Transaction>(): StoreSlice<IInitializeTxTrackingStore<T>> {
   return (set, get) => ({
-    onSucceedCallbacks,
-
     transactionsPool: {},
     lastAddedTxKey: undefined,
     initialTx: undefined,

@@ -1,29 +1,27 @@
 # Using EVM Trackers Standalone
 
-While the Pulsar suite provides a comprehensive solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture is modular. This means you can use the low-level **trackers** (`evmTracker`, `gelatoFetcher`, `safeFetcher`) from `@tuwaio/pulsar-evm` directly, without installing or configuring the core state management store.
+While the Pulsar suite offers a full stack solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture remains modular and flexible. This means you can utilize the low-level **trackers** (`evmTracker`, `gelatoFetcher`, `safeFetcher`) from `@tuwaio/pulsar-evm` directly, without installing or configuring the complete state management store.
 
-This is incredibly useful if:
+This flexibility is ideal if:
 
--   You already have your own state management solution (Redux, MobX, Valtio, etc.) and want to integrate only the tracking logic.
--   You need tracking logic on the server-side, where a client-side store is unnecessary.
--   You want maximum, granular control over every stage of the transaction lifecycle.
+- You already have your own state management solution (Redux, MobX, Valtio, etc.) and want to integrate only the transaction tracking logic.
+- You require tracking on the server-side, where a client-centric store isn't necessary.
+- You desire granular control over each stage of a transaction’s lifecycle for custom workflows.
 
 ---
 
 ## Why Use `evmTracker`?
 
-One might ask, "Why do I need `evmTracker` if I can just use `waitForTransactionReceipt` from `viem`?"
+Some might ask, "Why should I use `evmTracker` when I can just call `waitForTransactionReceipt` from `viem`?" While `waitForTransactionReceipt` is effective, it only addresses part of the problem. `evmTracker` provides a more robust, comprehensive, and ready-to-use solution.
 
-While `waitForTransactionReceipt` is an excellent function, it only solves part of the problem. `evmTracker` provides a more robust and complete solution out-of-the-box.
+| Feature                     | `waitForTransactionReceipt` (viem)                                                                     | `evmTracker` (Pulsar)                                                                                                                             |
+|----------------------------|-----------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Handles RPC Lags**       | ❌ No. If called immediately after submission, the RPC node might not have indexed the transaction yet, causing errors. | ✅ **Yes.** Built-in retry mechanism to wait for the transaction to appear in the mempool, mitigating RPC delays.                              |
+| **Full Lifecycle Support** | 🤷‍♂️ Limited. Mainly reacts once the transaction is confirmed or replaced.                              | ✅ **Yes.** Provides callbacks for each stage: initialization, details fetched, mined, replaced, failed, etc.                              |
+| **Fetches Full Tx Details** | ❌ No. Doesn't return complete info such as nonce, value, etc.                                | ✅ **Yes.** Calls `getTransaction` internally, passing all transaction details to callbacks.                                               |
+| **Abstraction Level**       | Low. You must manage the tracking states manually.                                                    | High. Encapsulates the entire process into a single, convenient async function, simplifying implementation.                                |
 
-| Feature                | `waitForTransactionReceipt` (viem)                                                                                                      | `evmTracker` (Pulsar)                                                                                                                                                                |
-| :--------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Handles RPC Lags** | ❌ No. If called immediately after submission, the RPC node might not see the transaction yet, causing a "transaction not found" error. | ✅ **Yes.** Includes a built-in retry mechanism to wait for the transaction to appear in the mempool.                                                                                |
-| **Full Lifecycle** | 🤷‍♂️ Limited. Mainly reacts to transaction completion or replacement.                                                                     | ✅ **Yes.** Provides callbacks for every stage: `onInitialize` (start), `onTxDetailsFetched` (details received), `onSuccess` (mined), `onReplaced` (replacement), `onFailure` (error). |
-| **Fetches Tx Details** | ❌ No. Does not return full transaction details like `nonce`, `value`, etc.                                                             | ✅ **Yes.** Internally calls `getTransaction` and passes the full transaction data to the callbacks.                                                                                 |
-| **Abstraction Level** | Low. Requires the developer to orchestrate the tracking logic themselves.                                                               | High. Encapsulates the entire tracking process into one convenient async function.                                                                                                   |
-
-Simply put, `evmTracker` is a reliable wrapper around `viem`'s functions that solves common edge cases and significantly simplifies your code.
+In essence, `evmTracker` is a reliable wrapper around `viem` functions, addressing common edge cases and significantly reducing manual effort.
 
 ---
 
@@ -31,147 +29,148 @@ Simply put, `evmTracker` is a reliable wrapper around `viem`'s functions that so
 
 ### 1. EVM Tracker
 
-This is the primary tracker for monitoring standard on-chain transactions in EVM networks. It operates using a transaction hash.
+This is the primary tracker for monitoring standard transactions on EVM-compatible chains, identified via transaction hash.
 
 #### How It Works
 
-`evmTracker` first tries to fetch transaction details using `getTransaction`. If the RPC node hasn't indexed the transaction yet, it will retry several times. Once the details are fetched, it begins waiting for the receipt using `waitForTransactionReceipt`.
+`evmTracker` initially fetches transaction details using `getTransaction`. If unavailable (due to RPC indexing delay), it retries several times. Once the details are available, it actively waits for the transaction receipt using `waitForTransactionReceipt`.
 
 #### Example Usage
-
 ```tsx
 import { evmTracker } from '@tuwaio/pulsar-evm';
 import { mainnet } from 'viem/chains';
 
 async function trackMyTransaction(txHash) {
   console.log(`Starting to track transaction: ${txHash}`);
-
   await evmTracker({
-    // `chains` array is needed to create a viem client internally
-    chains: [mainnet],
+    chains: [mainnet], // Chains array for internal client creation
     tx: {
-      txKey: txHash, // The transaction hash
-      chainId: 1,    // The network ID
+      txKey: txHash, // Transaction hash
+      chainId: 1, // Chain ID (e.g., 1 for Ethereum Mainnet)
     },
-
-    // Callback when transaction details are successfully fetched
     onTxDetailsFetched: (txDetails) => {
       console.log('Transaction details received:', txDetails);
-      // Here you can update your state to show nonce, gas, etc.
+      // Update your UI/state with nonce, gas, etc.
     },
 
-    // Callback when the transaction is successfully mined (even if reverted)
     onSuccess: (txDetails, receipt) => {
       console.log('Transaction mined!', receipt);
       if (receipt.status === 'success') {
-        // Update your state to 'Success'
+        // Update status as successful
       } else {
-        // Update your state to 'Failed'
+        // Update status as failed
       }
     },
 
-    // Callback if the transaction was replaced (sped up/cancelled)
     onReplaced: (replacement) => {
       console.log('Transaction was replaced:', replacement);
-      // Update your state to 'Replaced'
+      // Handle replacement logic
     },
 
-    // Callback on any error during the tracking process
     onFailure: (error) => {
       console.error('Tracking failed:', error);
-      // Update your state to 'Failed'
+      // Handle errors
     },
   });
 }
-````
+``` 
 
-### 2\. Gelato & Safe Fetchers
+---
 
-For polling-based trackers like **Gelato** and **Safe**, we export the `fetcher` functions directly. You can use these with Pulsar's `initializePollingTracker` or your own custom polling logic.
+### 2. Gelato & Safe Fetchers
 
-#### How They Work
+For polling-based tracking, especially for **Gelato** and **Safe** multisig transactions, we expose fetcher functions. You can integrate these directly with Pulsar's `initializePollingTracker` or your custom polling setup.
 
-The `gelatoFetcher` and `safeFetcher` are designed to be used with `@tuwaio/pulsar-core`'s `initializePollingTracker`. They contain the logic to query the respective APIs and call the correct callbacks (`onSuccess`, `onFailure`, etc.) when a transaction reaches a terminal state.
-
-#### Example Usage with `initializePollingTracker`
-
+#### Example for Handling Gelato & Safe Transactions
 ```tsx
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
 import { gelatoFetcher, safeFetcher } from '@tuwaio/pulsar-evm';
 
-// Example for Gelato
+// Tracking a Gelato relay task
 async function trackGelatoTask(taskId) {
   await initializePollingTracker({
     tx: { txKey: taskId },
     fetcher: gelatoFetcher,
-    onSuccess: (gelatoStatus) => {
-      console.log('Gelato task succeeded!', gelatoStatus);
+    onSuccess: (status) => {
+      console.log('Gelato task succeeded:', status);
     },
-    onFailure: (gelatoStatus) => {
-      console.error('Gelato task failed.', gelatoStatus);
+    onFailure: (status) => {
+      console.error('Gelato task failed:', status);
     },
   });
 }
 
-// Example for Safe
+// Tracking a Safe multisig transaction
 async function trackSafeTx(safeTxHash, chainId, fromAddress) {
   await initializePollingTracker({
     tx: { txKey: safeTxHash, chainId, from: fromAddress },
     fetcher: safeFetcher,
-    onSuccess: (safeStatus) => {
-      console.log('Safe transaction succeeded!', safeStatus);
+    onSuccess: (status) => {
+      console.log('Safe transaction succeeded:', status);
     },
-    onFailure: (safeStatus) => {
-      console.error('Safe transaction failed.', safeStatus);
+    onFailure: (status) => {
+      console.error('Safe transaction failed:', status);
     },
     onReplaced: (replacement) => {
-      console.warn('Safe tx was replaced!', replacement);
-    }
+      console.warn('Transaction was replaced:', replacement);
+    },
   });
 }
-```
+``` 
 
------
+---
 
 ## Helper Functions
 
-The `@tuwaio/pulsar-evm` package also exports several utilities that are useful even without the full Pulsar store.
+Additionally, the package provides several utilities for managing transaction states and chain interactions:
 
 ### `checkTransactionsTracker`
 
-A key routing function. After you submit a transaction, you get back a key. This function helps you determine which tracker to use for that key.
-
+Determines which tracker is suitable based on a transaction key.
 ```tsx
-import { checkTransactionsTracker, TransactionTracker } from '@tuwaio/pulsar-evm';
+import { checkTransactionsTracker } from '@tuwaio/pulsar-evm';
 
-// Example 1: Regular hash
-const { tracker, txKey } = checkTransactionsTracker('0x...', 'injected');
-// tracker -> 'ethereum', txKey -> '0x...'
-
-// Example 2: Key from Gelato
-const { tracker, txKey } = checkTransactionsTracker({ taskId: '0x123...' }, 'injected');
-// tracker -> 'gelato', txKey -> '0x123...'
-
-// Example 3: Hash from Safe
-const { tracker, txKey } = checkTransactionsTracker('0xabc...', 'safe');
-// tracker -> 'safe', txKey -> '0xabc...'
-```
+const { tracker, txKey } = checkTransactionsTracker('0xabc...', 'injected');
+// tracker -> 'ethereum' or relevant tracker type
+// txKey -> same as input or derived key
+``` 
 
 ### `checkChainForTx`
 
-A utility that checks if the user is on the correct network and prompts them to switch using your `wagmi` config.
-
+Verifies if the user is connected to the correct network and prompts for a switch if necessary.
 ```tsx
 import { checkChainForTx } from '@tuwaio/pulsar-evm';
-import { wagmiConfig } from './config'; // Your wagmi config
+import { wagmiConfig } from './config';
 
-async function safeSendTransaction(targetChainId) {
+async function ensureCorrectNetwork(chainId: number | string) {
   try {
-    await checkChainForTx(targetChainId, wagmiConfig);
-    console.log('Network is correct, sending transaction...');
-    // ...your transaction sending logic...
+    await checkChainForTx(chainId, wagmiConfig);
+    console.log('Network is correct, proceeding...');
+    // Proceed with your transaction or other logic here
   } catch (error) {
-    console.error(error.message); // e.g., "User rejected the request to switch network."
+    console.error(error.message);
+    // Handle error, e.g., showing a message to the user about network mismatch
   }
 }
-```
+``` 
+
+---
+
+## Integration with Pulsar Store
+
+The `evmTrackerForStore` function simplifies tracking integration with your application's state store, automatically updating transaction statuses at each lifecycle stage.
+```tsx
+import { evmTrackerForStore } from '@tuwaio/pulsar-evm';
+
+evmTrackerForStore({
+  chains: yourChainsArray,
+  tx: yourTransactionObject,
+  updateTxParams: yourStateUpdateFunction // e.g., store.setTransaction
+});
+``` 
+
+This approach ensures your UI reflects real-time transaction states without manual polling or state management overhead.
+
+---
+
+Feel free to ask for further customization examples or clarifications on implementing specific trackers or utilities!

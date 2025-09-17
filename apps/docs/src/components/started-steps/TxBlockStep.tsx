@@ -20,7 +20,6 @@ import { sepolia } from 'viem/chains';
 import { config } from '@/configs/wagmiConfig';
 import { usePulsarStore } from '@/hooks/txTrackingHooks';
 import { increment } from '@/transactions/actions/increment';
-import { TxType } from '@/transactions/onSucceedCallbacks';
 
 export const Increment = () => {
   const initializeTransactionsPool = usePulsarStore(state => state.initializeTransactionsPool);
@@ -35,7 +34,7 @@ export const Increment = () => {
       actionFunction: () => increment({ wagmiConfig: config }),
       // Params describe the transaction for the Pulsar store.
       params: {
-        type: TxType.increment,
+        type: 'increment',
         adapter: TransactionAdapter.EVM,
         desiredChainID: sepolia.id,
         payload: {
@@ -68,7 +67,7 @@ export function TxBlockStep({ importLine, buttonLine }: TxBlockStepCodeGenerateP
 
   return (
     <div className="mt-4">
-      <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 6: Trigger the Transaction</h3>
+      <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 5: Trigger the Transaction</h3>
       <p className="mb-2 text-[var(--tuwa-text-secondary)]">
         Finally, create a component to trigger the transaction. When a user clicks 'Increment,' the `handleTransaction`
         function orchestrates the entire process. It dispatches the transaction, adds it to the pool, and from this
