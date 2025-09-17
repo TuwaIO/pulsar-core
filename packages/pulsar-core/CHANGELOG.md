@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.1.3...pulsar-core-v0.1.4) (2025-09-17)
+
+
+### Bug Fixes
+
+* update generic types ([edaede8](https://github.com/TuwaIO/pulsar-core/commit/edaede861fb6cb145a3efa13c0c6f0ff17761c1f))
+
 ## [0.1.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.1.2...pulsar-core-v0.1.3) (2025-09-17)
 
 

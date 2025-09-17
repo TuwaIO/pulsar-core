@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.16](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.15...pulsar-evm-v0.0.16) (2025-09-17)
+
+
+### Bug Fixes
+
+* update generic types ([edaede8](https://github.com/TuwaIO/pulsar-core/commit/edaede861fb6cb145a3efa13c0c6f0ff17761c1f))
+
 ## [0.0.15](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.0.14...pulsar-evm-v0.0.15) (2025-09-17)
 
 
