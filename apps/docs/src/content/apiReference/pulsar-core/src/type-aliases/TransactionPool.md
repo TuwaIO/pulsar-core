@@ -6,7 +6,7 @@
 
 > **TransactionPool**\<`TR`, `T`\> = `Record`\<`string`, `T`\>
 
-Defined in: [packages/pulsar-core/src/store/initializeTxTrackingStore.ts:15](https://github.com/TuwaIO/pulsar-core/blob/6e853cdf24205aa65c8aaa854fb54ff9fbe3d2ad/packages/pulsar-core/src/store/initializeTxTrackingStore.ts#L15)
+Defined in: [packages/pulsar-core/src/store/initializeTxTrackingStore.ts:15](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-core/src/store/initializeTxTrackingStore.ts#L15)
 
 Defines the structure of the transaction pool, a key-value store of transactions indexed by their unique keys.
 

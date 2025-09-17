@@ -6,7 +6,7 @@
 
 > **getSolanaName**(`rpcUrl`, `address`): `Promise`\<`null` \| `string`\>
 
-Defined in: [packages/pulsar-solana/src/utils/snsUtils.ts:41](https://github.com/TuwaIO/pulsar-core/blob/6e853cdf24205aa65c8aaa854fb54ff9fbe3d2ad/packages/pulsar-solana/src/utils/snsUtils.ts#L41)
+Defined in: [packages/pulsar-solana/src/utils/snsUtils.ts:41](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-solana/src/utils/snsUtils.ts#L41)
 
 Performs a reverse lookup to find the .sol domain name for a given wallet address.
 Results are cached to avoid redundant network requests.

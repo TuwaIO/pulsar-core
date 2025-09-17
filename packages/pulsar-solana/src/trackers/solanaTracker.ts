@@ -89,7 +89,9 @@ export async function solanaFetcher({
     let { fee, recentBlockhash, instructions } = tx;
 
     if (!fee || !recentBlockhash || !instructions) {
-      const txDetails = await rpc.getTransaction(tx.txKey as Signature, { encoding: 'json' }).send();
+      const txDetails = await rpc
+        .getTransaction(tx.txKey as Signature, { encoding: 'json', maxSupportedTransactionVersion: 0 })
+        .send();
       const { meta, transaction } = txDetails || {};
 
       // If no transaction details are found, skip further processing

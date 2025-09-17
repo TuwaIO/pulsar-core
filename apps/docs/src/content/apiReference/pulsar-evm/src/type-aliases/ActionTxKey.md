@@ -6,7 +6,7 @@
 
 > **ActionTxKey** = `Hex` \| [`GelatoTxKey`](GelatoTxKey.md)
 
-Defined in: [packages/pulsar-evm/src/types.ts:35](https://github.com/TuwaIO/pulsar-core/blob/6e853cdf24205aa65c8aaa854fb54ff9fbe3d2ad/packages/pulsar-evm/src/types.ts#L35)
+Defined in: [packages/pulsar-evm/src/types.ts:35](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-evm/src/types.ts#L35)
 
 A union type representing the unique identifier returned by an `actionFunction`
 after a transaction is submitted to the network or a relay service.

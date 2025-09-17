@@ -6,7 +6,7 @@
 
 > **SolanaActionTxKey** = `string`
 
-Defined in: [packages/pulsar-solana/src/types.ts:49](https://github.com/TuwaIO/pulsar-core/blob/6e853cdf24205aa65c8aaa854fb54ff9fbe3d2ad/packages/pulsar-solana/src/types.ts#L49)
+Defined in: [packages/pulsar-solana/src/types.ts:49](https://github.com/TuwaIO/pulsar-core/blob/b6b6c3a1756747dcac62deff3f3b4bb3716a2405/packages/pulsar-solana/src/types.ts#L49)
 
 Represents the unique identifier for a transaction action initiated on Solana.
 
