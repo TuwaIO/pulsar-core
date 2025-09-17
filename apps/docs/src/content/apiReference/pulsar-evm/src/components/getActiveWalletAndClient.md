@@ -6,7 +6,7 @@
 
 > **getActiveWalletAndClient**(`config`): `object`
 
-Defined in: [packages/pulsar-evm/src/utils/getActiveWalletAndClient.ts:22](https://github.com/TuwaIO/pulsar-core/blob/c3ad8144f2008a57a67fac346389a8c64145db47/packages/pulsar-evm/src/utils/getActiveWalletAndClient.ts#L22)
+Defined in: [packages/pulsar-evm/src/utils/getActiveWalletAndClient.ts:22](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-evm/src/utils/getActiveWalletAndClient.ts#L22)
 
 Retrieves the active wallet account and the viem Wallet Client from the wagmi config.
 This function acts as a safeguard, ensuring that a wallet is connected before

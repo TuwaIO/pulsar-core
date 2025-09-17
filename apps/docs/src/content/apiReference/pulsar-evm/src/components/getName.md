@@ -6,7 +6,7 @@
 
 > **getName**(`address`): `Promise`\<`null` \| `string`\>
 
-Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:23](https://github.com/TuwaIO/pulsar-core/blob/c3ad8144f2008a57a67fac346389a8c64145db47/packages/pulsar-evm/src/utils/ensUtils.ts#L23)
+Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:23](https://github.com/TuwaIO/pulsar-core/blob/bbb9e2e0f0f23382d49e10f4e6c8ee38979bf353/packages/pulsar-evm/src/utils/ensUtils.ts#L23)
 
 Fetches the primary ENS name for a given Ethereum address from the Ethereum Mainnet.
 

@@ -14,8 +14,6 @@
 
 ## Interfaces
 
-- [GetProgramAccountsConfig](interfaces/GetProgramAccountsConfig.md)
-- [GetProgramAccountsDecodedConfig](interfaces/GetProgramAccountsDecodedConfig.md)
 - [SolanaAdapterConfig](interfaces/SolanaAdapterConfig.md)
 - [SolanaAdapterWallet](interfaces/SolanaAdapterWallet.md)
 
@@ -28,8 +26,6 @@
 - [checkAndInitializeTrackerInStore](functions/checkAndInitializeTrackerInStore.md)
 - [checkSolanaChain](functions/checkSolanaChain.md)
 - [createSolanaRPC](functions/createSolanaRPC.md)
-- [getProgramAccounts](functions/getProgramAccounts.md)
-- [getProgramAccountsDecoded](functions/getProgramAccountsDecoded.md)
 - [getSolanaAvatar](functions/getSolanaAvatar.md)
 - [getSolanaName](functions/getSolanaName.md)
 - [selectSolanaTxExplorerLink](functions/selectSolanaTxExplorerLink.md)
