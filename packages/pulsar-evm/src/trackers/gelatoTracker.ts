@@ -99,7 +99,7 @@ export const gelatoFetcher: PollingTrackerConfig<
   if (!response.ok) {
     if (response.status === 404) {
       onFailure(); // Treat 404 as a terminal failure.
-      stopPolling({ withoutRemoving: true });
+      stopPolling();
       return;
     }
     // For other errors, let the polling tracker's retry mechanism handle it.
@@ -113,7 +113,7 @@ export const gelatoFetcher: PollingTrackerConfig<
 
   // Safeguard: Stop polling for tasks that have been pending for over a day.
   if (creationDate && dayjs().diff(dayjs(creationDate), 'day') >= 1 && isGelatoTxPending(taskState)) {
-    stopPolling({ withoutRemoving: true });
+    stopPolling();
     return;
   }
 

@@ -104,11 +104,11 @@ export async function solanaFetcher({
     return;
   }
 
-  // Safeguard: Stop polling for transactions pending longer than 30 minutes.
-  const elapsedMinutes = dayjs().diff(dayjs.unix(tx.localTimestamp), 'minute');
-  if (elapsedMinutes >= 30) {
-    stopPolling({ withoutRemoving: true });
+  // Safeguard: Stop polling for transactions pending longer than 1 day.
+  const elapsedDays = dayjs().diff(dayjs.unix(tx.localTimestamp), 'day');
+  if (elapsedDays >= 1) {
     onFailure(typedStatus);
+    stopPolling();
   }
 }
 

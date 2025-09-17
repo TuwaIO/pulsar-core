@@ -67,7 +67,7 @@ export const safeFetcher: PollingTrackerConfig<
     // Treat 404 as a terminal failure (transaction is lost).
     if (primaryTxResponse.status === 404) {
       onFailure();
-      stopPolling({ withoutRemoving: true });
+      stopPolling();
     }
     throw new Error(`Safe API responded with status: ${primaryTxResponse.status}`);
   }
@@ -103,7 +103,7 @@ export const safeFetcher: PollingTrackerConfig<
 
   // 4. Safeguard: Stop polling for very old pending transactions.
   if (dayjs().diff(dayjs(safeStatus.submissionDate), 'day') >= 1) {
-    stopPolling({ withoutRemoving: true });
+    stopPolling();
   }
 };
 
