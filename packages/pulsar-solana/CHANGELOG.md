@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.9...pulsar-solana-v0.1.10) (2025-09-17)
+
+
+### Bug Fixes
+
+* maxSupportedTransactionVersion in solana tracker ([fc9bbbb](https://github.com/TuwaIO/pulsar-core/commit/fc9bbbb8dd951010388f18dfb7923086681f98d8))
+
 ## [0.1.9](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.8...pulsar-solana-v0.1.9) (2025-09-17)
 
 
