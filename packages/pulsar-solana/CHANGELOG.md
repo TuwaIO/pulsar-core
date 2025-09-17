@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.8...pulsar-solana-v0.1.9) (2025-09-17)
+
+
+### Bug Fixes
+
+* update solana tracker to get more tx params ([c9934e8](https://github.com/TuwaIO/pulsar-core/commit/c9934e82ee1ba89de9b8287dd42cbebd70edc529))
+
 ## [0.1.8](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.7...pulsar-solana-v0.1.8) (2025-09-17)
 
 
