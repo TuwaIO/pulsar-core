@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.4...pulsar-solana-v0.1.5) (2025-09-17)
+
+
+### Bug Fixes
+
+* solana tracker and typing; prepared for stable release ([05f9931](https://github.com/TuwaIO/pulsar-core/commit/05f9931869d420d6ff50486ae72272520f90249a))
+
 ## [0.1.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.3...pulsar-solana-v0.1.4) (2025-09-17)
 
 
