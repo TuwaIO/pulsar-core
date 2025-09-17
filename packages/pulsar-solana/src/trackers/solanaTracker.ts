@@ -66,12 +66,12 @@ export async function solanaFetcher({
   onFailure,
   onIntervalTick,
 }: SolanaFetcherParams): Promise<void> {
-  if (tx.adapter !== TransactionAdapter.SOLANA || !tx.rpcUrl) {
-    throw new Error('RPC URL is missing or invalid for the Solana transaction.');
+  if (tx.adapter !== TransactionAdapter.SOLANA) {
+    throw new Error('Tx adapter is not Solana. Please set adapter to "solana" in the transaction object.');
   }
 
   // Fetch the transaction status from the Solana RPC.
-  const rpc = createSolanaRPC(tx.rpcUrl);
+  const rpc = createSolanaRPC(tx.rpcUrl ?? (tx.chainId as string));
   const statuses = await rpc.getSignatureStatuses([tx.txKey as Signature]).send();
   const status = statuses?.value[0];
 
@@ -80,25 +80,27 @@ export async function solanaFetcher({
     return;
   }
 
-  // Convert `slot and confirmations` to a number and process the response.
+  // Convert `slot` and `confirmations` to a number and process the response.
   const typedStatus: SolanaSignatureStatusResponse = {
     ...status,
     slot: Number(status.slot),
     confirmations: Number(status.confirmations ?? 0),
   };
 
-  // Trigger onIntervalTick for non-terminal updates.
+  // Trigger onIntervalTick for intermediate updates.
   onIntervalTick?.(typedStatus);
 
   if (typedStatus.err) {
     // Handle a terminal error state if an error exists in the response.
     onFailure(typedStatus);
+    stopPolling(); // Stop polling after the error has been processed.
     return;
   }
 
   if (typedStatus.confirmationStatus === 'finalized') {
     // Handle a terminal success state when the transaction is finalized.
     onSuccess(typedStatus);
+    stopPolling(); // Stop polling after the success has been processed.
     return;
   }
 
