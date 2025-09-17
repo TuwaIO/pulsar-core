@@ -93,14 +93,14 @@ export async function solanaFetcher({
   if (typedStatus.err) {
     // Handle a terminal error state if an error exists in the response.
     onFailure(typedStatus);
-    stopPolling(); // Stop polling after the error has been processed.
+    stopPolling({ withoutRemoving: true });
     return;
   }
 
   if (typedStatus.confirmationStatus === 'finalized') {
     // Handle a terminal success state when the transaction is finalized.
     onSuccess(typedStatus);
-    stopPolling(); // Stop polling after the success has been processed.
+    stopPolling({ withoutRemoving: true });
     return;
   }
 

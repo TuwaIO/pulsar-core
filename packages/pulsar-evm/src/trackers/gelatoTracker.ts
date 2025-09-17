@@ -99,6 +99,7 @@ export const gelatoFetcher: PollingTrackerConfig<
   if (!response.ok) {
     if (response.status === 404) {
       onFailure(); // Treat 404 as a terminal failure.
+      stopPolling({ withoutRemoving: true });
       return;
     }
     // For other errors, let the polling tracker's retry mechanism handle it.
@@ -119,8 +120,10 @@ export const gelatoFetcher: PollingTrackerConfig<
   // Check for terminal states to stop the polling.
   if (taskState === GelatoTaskState.ExecSuccess) {
     onSuccess(data);
+    stopPolling({ withoutRemoving: true });
   } else if (GELATO_TERMINAL_FAILURE_STATES.has(taskState)) {
     onFailure(data);
+    stopPolling({ withoutRemoving: true });
   }
 };
 

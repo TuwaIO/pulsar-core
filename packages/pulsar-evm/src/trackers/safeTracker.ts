@@ -67,6 +67,7 @@ export const safeFetcher: PollingTrackerConfig<
     // Treat 404 as a terminal failure (transaction is lost).
     if (primaryTxResponse.status === 404) {
       onFailure();
+      stopPolling({ withoutRemoving: true });
     }
     throw new Error(`Safe API responded with status: ${primaryTxResponse.status}`);
   }
@@ -80,6 +81,7 @@ export const safeFetcher: PollingTrackerConfig<
     } else {
       onFailure(safeStatus);
     }
+    stopPolling({ withoutRemoving: true });
     return;
   }
 
@@ -95,6 +97,7 @@ export const safeFetcher: PollingTrackerConfig<
   if (executedTx) {
     // If an executed transaction exists and it's not ours, our transaction was replaced.
     onReplaced?.(executedTx);
+    stopPolling({ withoutRemoving: true });
     return;
   }
 
