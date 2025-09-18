@@ -3,14 +3,14 @@
  */
 
 import { Transaction, TransactionAdapter, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
-import { getExplorerLink, SolanaClusterMoniker } from 'gill';
+import { SolanaClusterMoniker } from 'gill';
 
 import { SolanaChainMismatchError } from '../errors';
 import { SolanaAdapterConfig } from '../types';
 import { checkAndInitializeTrackerInStore } from '../utils/checkAndInitializeTrackerInStore';
 import { checkSolanaChain } from '../utils/checkSolanaChain';
 import { createSolanaRPC } from '../utils/createSolanaRPC';
-import { selectSolanaTxExplorerLink } from '../utils/selectSolanaTxExplorerLink';
+import { getSolanaExplorerLink } from '../utils/getSolanaExplorerLink';
 import { getSolanaAvatar, getSolanaName } from '../utils/snsUtils';
 
 /**
@@ -86,14 +86,14 @@ export function solanaAdapter<T extends Transaction>(config: SolanaAdapterConfig
       });
     },
 
-    getExplorerUrl: () => {
-      const cluster = wallet?.walletActiveChain ?? 'mainnet-beta';
-      return getExplorerLink({ cluster });
+    getExplorerUrl: (url) => {
+      const cluster = wallet?.walletActiveChain ?? 'mainnet';
+      return getSolanaExplorerLink(url, cluster);
     },
 
     getExplorerTxUrl: (tx) => {
       const cluster = getCluster(tx?.chainId as string);
-      return selectSolanaTxExplorerLink(tx.txKey, cluster);
+      return getSolanaExplorerLink(`/tx/${tx.txKey}`, cluster);
     },
 
     getName: async (address) => {

@@ -6,7 +6,7 @@
 
 > **getAvatar**(`name`): `Promise`\<`null` \| `string`\>
 
-Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:40](https://github.com/TuwaIO/pulsar-core/blob/6a657679559c2bafbe8c9280c593db265ce3faeb/packages/pulsar-evm/src/utils/ensUtils.ts#L40)
+Defined in: [packages/pulsar-evm/src/utils/ensUtils.ts:40](https://github.com/TuwaIO/pulsar-core/blob/2c6f93125183d258e3ab6bfaceb7a8c25afd5e6b/packages/pulsar-evm/src/utils/ensUtils.ts#L40)
 
 Fetches the avatar URL for a given ENS name from the Ethereum Mainnet.
 

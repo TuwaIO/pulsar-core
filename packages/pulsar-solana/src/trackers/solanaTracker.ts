@@ -176,7 +176,7 @@ export async function solanaTrackerForStore<T extends Transaction>({
         fee: response.fee,
         instructions: response.instructions,
         recentBlockhash: response.recentBlockhash,
-        confirmations: response.confirmations ?? 1,
+        confirmations: 'MAX',
         slot: response.slot,
       });
     },

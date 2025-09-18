@@ -4,7 +4,7 @@
 
 # SolanaAdapterWallet
 
-Defined in: [packages/pulsar-solana/src/types.ts:16](https://github.com/TuwaIO/pulsar-core/blob/6a657679559c2bafbe8c9280c593db265ce3faeb/packages/pulsar-solana/src/types.ts#L16)
+Defined in: [packages/pulsar-solana/src/types.ts:16](https://github.com/TuwaIO/pulsar-core/blob/2c6f93125183d258e3ab6bfaceb7a8c25afd5e6b/packages/pulsar-solana/src/types.ts#L16)
 
 Represents the essential wallet information required by the Solana adapter.
 This interface provides a simple, library-agnostic abstraction for wallet connections,
@@ -16,7 +16,7 @@ enabling integration with any wallet library that meets these basic requirements
 
 > **walletActiveChain**: `SolanaClusterMoniker`
 
-Defined in: [packages/pulsar-solana/src/types.ts:19](https://github.com/TuwaIO/pulsar-core/blob/6a657679559c2bafbe8c9280c593db265ce3faeb/packages/pulsar-solana/src/types.ts#L19)
+Defined in: [packages/pulsar-solana/src/types.ts:19](https://github.com/TuwaIO/pulsar-core/blob/2c6f93125183d258e3ab6bfaceb7a8c25afd5e6b/packages/pulsar-solana/src/types.ts#L19)
 
 The current chain or cluster the wallet is connected to.
 
@@ -26,7 +26,7 @@ The current chain or cluster the wallet is connected to.
 
 > **walletAddress**: `string`
 
-Defined in: [packages/pulsar-solana/src/types.ts:17](https://github.com/TuwaIO/pulsar-core/blob/6a657679559c2bafbe8c9280c593db265ce3faeb/packages/pulsar-solana/src/types.ts#L17)
+Defined in: [packages/pulsar-solana/src/types.ts:17](https://github.com/TuwaIO/pulsar-core/blob/2c6f93125183d258e3ab6bfaceb7a8c25afd5e6b/packages/pulsar-solana/src/types.ts#L17)
 
 The public address of the connected wallet on Solana.
 
@@ -36,6 +36,6 @@ The public address of the connected wallet on Solana.
 
 > **walletType**: `string`
 
-Defined in: [packages/pulsar-solana/src/types.ts:18](https://github.com/TuwaIO/pulsar-core/blob/6a657679559c2bafbe8c9280c593db265ce3faeb/packages/pulsar-solana/src/types.ts#L18)
+Defined in: [packages/pulsar-solana/src/types.ts:18](https://github.com/TuwaIO/pulsar-core/blob/2c6f93125183d258e3ab6bfaceb7a8c25afd5e6b/packages/pulsar-solana/src/types.ts#L18)
 
 The type or name of the wallet (e.g., 'Phantom', 'Solflare').

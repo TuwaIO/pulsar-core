@@ -178,8 +178,8 @@ export type SolanaTransaction = BaseTransaction & {
   recentBlockhash?: string;
   /** The slot in which the transaction was processed. */
   slot?: number;
-  /** The number of confirmations received. `null` if the transaction is pending or unconfirmed. */
-  confirmations?: number | null;
+  /** The number of confirmations received. `string` when tx successed. `null` if the transaction is pending or unconfirmed. */
+  confirmations?: number | string | null;
   /** The RPC URL used to submit and track this transaction. */
   rpcUrl?: string;
 };
@@ -268,7 +268,7 @@ export type TxAdapter<T extends Transaction> = {
     params: { tx: T } & Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool'>,
   ) => Promise<void>;
   /** Returns the base URL for the blockchain explorer for the current network. */
-  getExplorerUrl: () => string | undefined;
+  getExplorerUrl: (url?: string) => string | undefined;
   /** Optional: Fetches a name from a chain-specific name service (e.g., ENS). */
   getName?: (address: string) => Promise<string | null>;
   /** Optional: Fetches an avatar URL from a chain-specific name service. */

@@ -160,6 +160,7 @@ export function createPulsarStore<T extends Transaction>({
 
             // Step 9: Initialize the callback after the transaction is confirmed and successful.
             const updatedTx = get().transactionsPool[tx.txKey];
+            console.log('updatedTx', updatedTx);
             if (updatedTx.status === TransactionStatus.Success && onSucceedCallback && updatedTx) {
               onSucceedCallback(updatedTx);
             }
