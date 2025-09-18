@@ -185,6 +185,8 @@ export async function solanaTrackerForStore<T extends Transaction>({
 
       // Trigger global success callbacks, if applicable
       const updatedTx = rest.transactionsPool[tx.txKey];
+      console.log('updatedTx', updatedTx);
+      console.log('onSuccessCallback', onSuccessCallback);
       if (onSuccessCallback && updatedTx) {
         onSuccessCallback(updatedTx);
       }
