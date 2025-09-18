@@ -156,8 +156,7 @@ export async function solanaTrackerForStore<T extends Transaction>({
   ...rest
 }: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> & {
   tx: T;
-  onSuccessCallback?: OnSuccessCallback<T>;
-}): Promise<void> {
+} & OnSuccessCallback<T>): Promise<void> {
   return initializePollingTracker<SolanaSignatureStatusResponse, T>({
     tx,
     fetcher: solanaFetcher,
@@ -185,8 +184,6 @@ export async function solanaTrackerForStore<T extends Transaction>({
 
       // Trigger global success callbacks, if applicable
       const updatedTx = rest.transactionsPool[tx.txKey];
-      console.log('updatedTx', updatedTx);
-      console.log('onSuccessCallback', onSuccessCallback);
       if (onSuccessCallback && updatedTx) {
         onSuccessCallback(updatedTx);
       }

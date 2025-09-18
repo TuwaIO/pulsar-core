@@ -141,8 +141,7 @@ export function gelatoTrackerForStore<T extends Transaction>({
   onSuccessCallback,
 }: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> & {
   tx: T;
-  onSuccessCallback?: OnSuccessCallback<T>;
-}) {
+} & OnSuccessCallback<T>) {
   return initializePollingTracker<GelatoTaskStatusResponse, T>({
     tx,
     fetcher: gelatoFetcher, // Use the exported, reusable fetcher

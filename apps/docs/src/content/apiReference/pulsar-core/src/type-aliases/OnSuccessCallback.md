@@ -2,11 +2,11 @@
 
 ***
 
-# OnSuccessCallback()\<T\>
+# OnSuccessCallback\<T\>
 
-> **OnSuccessCallback**\<`T`\> = (`tx`) => `Promise`\<`void`\> \| `void`
+> **OnSuccessCallback**\<`T`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:88](https://github.com/TuwaIO/pulsar-core/blob/c81eb98e6cdcf718f4d05b7d7444cbfda0dec5d9/packages/pulsar-core/src/types.ts#L88)
+Defined in: [packages/pulsar-core/src/types.ts:88](https://github.com/TuwaIO/pulsar-core/blob/e3b3acb31f38fb0ca8440f76b033c6f46b9062cd/packages/pulsar-core/src/types.ts#L88)
 
 ## Type Parameters
 
@@ -14,12 +14,22 @@ Defined in: [packages/pulsar-core/src/types.ts:88](https://github.com/TuwaIO/pul
 
 `T`
 
-## Parameters
+## Properties
 
-### tx
+### onSuccessCallback()?
+
+> `optional` **onSuccessCallback**: (`tx`) => `Promise`\<`void`\> \| `void`
+
+Defined in: [packages/pulsar-core/src/types.ts:90](https://github.com/TuwaIO/pulsar-core/blob/e3b3acb31f38fb0ca8440f76b033c6f46b9062cd/packages/pulsar-core/src/types.ts#L90)
+
+Callback to execute when the transaction is successfully submitted.
+
+#### Parameters
+
+##### tx
 
 `T`
 
-## Returns
+#### Returns
 
 `Promise`\<`void`\> \| `void`

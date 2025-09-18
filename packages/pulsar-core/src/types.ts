@@ -85,7 +85,10 @@ export type GelatoTxKey = {
  */
 export type ActionTxKey = `0x${string}` | GelatoTxKey | string;
 
-export type OnSuccessCallback<T> = (tx: T) => Promise<void> | void;
+export type OnSuccessCallback<T> = {
+  /** Callback to execute when the transaction is successfully submitted. */
+  onSuccessCallback?: (tx: T) => Promise<void> | void;
+};
 
 /**
  * The fundamental structure for any transaction being tracked by Pulsar.
@@ -267,10 +270,8 @@ export type TxAdapter<T extends Transaction> = {
   ) => { txKey: string; tracker: TransactionTracker };
   /** Selects and initializes the correct background tracker for a given transaction. */
   checkAndInitializeTrackerInStore: (
-    params: { tx: T; onSucceedCallback?: OnSuccessCallback<T> } & Pick<
-      ITxTrackingStore<T>,
-      'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
-    >,
+    params: { tx: T } & OnSuccessCallback<T> &
+      Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>,
   ) => Promise<void>;
   /** Returns the base URL for the blockchain explorer for the current network. */
   getExplorerUrl: (url?: string) => string | undefined;
@@ -307,16 +308,16 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
    * It manages UI state, executes the on-chain action, and initiates background tracking.
    * @param params The parameters for handling the transaction.
    */
-  handleTransaction: (params: {
-    /** The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined. */
-    actionFunction: () => Promise<ActionTxKey | undefined>;
-    /** The metadata for the transaction. */
-    params: Omit<InitialTransactionParams, 'actionFunction'>;
-    /** The default tracker to use if it cannot be determined automatically. */
-    defaultTracker?: TransactionTracker;
-    /** Callback to execute when the transaction is successfully submitted. */
-    onSucceedCallback?: OnSuccessCallback<T>;
-  }) => Promise<void>;
+  handleTransaction: (
+    params: {
+      /** The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined. */
+      actionFunction: () => Promise<ActionTxKey | undefined>;
+      /** The metadata for the transaction. */
+      params: Omit<InitialTransactionParams, 'actionFunction'>;
+      /** The default tracker to use if it cannot be determined automatically. */
+      defaultTracker?: TransactionTracker;
+    } & OnSuccessCallback<T>,
+  ) => Promise<void>;
 
   /**
    * Initializes trackers for all pending transactions in the pool.

@@ -21,7 +21,7 @@ type InitializeTrackerParams<T extends Transaction> = Pick<
   chains: Chain[];
   tx: T;
   tracker: TransactionTracker;
-};
+} & OnSuccessCallback<T>;
 
 /**
  * Initializes the appropriate tracker for a given transaction based on its `tracker` type.
@@ -39,7 +39,7 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   transactionsPool,
   onSuccessCallback,
   ...rest
-}: InitializeTrackerParams<T> & { onSuccessCallback?: OnSuccessCallback<T> }): Promise<void> {
+}: InitializeTrackerParams<T>): Promise<void> {
   switch (tracker) {
     case TransactionTracker.Ethereum:
       return evmTrackerForStore({ tx, chains, transactionsPool, onSuccessCallback, ...rest });

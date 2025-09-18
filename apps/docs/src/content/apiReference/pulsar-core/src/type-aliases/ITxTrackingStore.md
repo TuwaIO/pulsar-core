@@ -6,7 +6,7 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:304](https://github.com/TuwaIO/pulsar-core/blob/c81eb98e6cdcf718f4d05b7d7444cbfda0dec5d9/packages/pulsar-core/src/types.ts#L304)
+Defined in: [packages/pulsar-core/src/types.ts:305](https://github.com/TuwaIO/pulsar-core/blob/e3b3acb31f38fb0ca8440f76b033c6f46b9062cd/packages/pulsar-core/src/types.ts#L305)
 
 The complete interface for the Pulsar transaction tracking store.
 
@@ -23,31 +23,9 @@ It manages UI state, executes the on-chain action, and initiates background trac
 
 ##### params
 
+`object` & [`OnSuccessCallback`](OnSuccessCallback.md)\<`T`\>
+
 The parameters for handling the transaction.
-
-###### actionFunction
-
-() => `Promise`\<[`ActionTxKey`](ActionTxKey.md) \| `undefined`\>
-
-The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined.
-
-###### defaultTracker?
-
-[`TransactionTracker`](../enumerations/TransactionTracker.md)
-
-The default tracker to use if it cannot be determined automatically.
-
-###### onSucceedCallback?
-
-[`OnSuccessCallback`](OnSuccessCallback.md)\<`T`\>
-
-Callback to execute when the transaction is successfully submitted.
-
-###### params
-
-`Omit`\<[`InitialTransactionParams`](InitialTransactionParams.md), `"actionFunction"`\>
-
-The metadata for the transaction.
 
 #### Returns
 

@@ -127,8 +127,7 @@ export async function evmTrackerForStore<T extends Transaction>(
   params: Pick<EVMTrackerParams, 'chains'> &
     Pick<ITxTrackingStore<T>, 'updateTxParams' | 'transactionsPool'> & {
       tx: T;
-      onSuccessCallback?: OnSuccessCallback<T>;
-    },
+    } & OnSuccessCallback<T>,
 ) {
   const { tx, chains, updateTxParams, transactionsPool, onSuccessCallback } = params;
 
