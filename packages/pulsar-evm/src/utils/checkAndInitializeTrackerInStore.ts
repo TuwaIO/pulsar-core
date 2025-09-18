@@ -3,7 +3,7 @@
  * Based on a transaction's `tracker` property, it delegates the tracking task to the appropriate implementation.
  */
 
-import { ITxTrackingStore, Transaction, TransactionTracker } from '@tuwaio/pulsar-core';
+import { ITxTrackingStore, OnSuccessCallback, Transaction, TransactionTracker } from '@tuwaio/pulsar-core';
 import { Chain } from 'viem';
 
 import { evmTrackerForStore } from '../trackers/evmTracker';
@@ -16,7 +16,7 @@ import { safeTrackerForStore } from '../trackers/safeTracker';
  */
 type InitializeTrackerParams<T extends Transaction> = Pick<
   ITxTrackingStore<T>,
-  'updateTxParams' | 'removeTxFromPool'
+  'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
 > & {
   chains: Chain[];
   tx: T;
@@ -36,24 +36,26 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   tracker,
   tx,
   chains,
+  transactionsPool,
+  onSuccessCallback,
   ...rest
-}: InitializeTrackerParams<T>): Promise<void> {
+}: InitializeTrackerParams<T> & { onSuccessCallback?: OnSuccessCallback<T> }): Promise<void> {
   switch (tracker) {
     case TransactionTracker.Ethereum:
-      return evmTrackerForStore({ tx, chains, ...rest });
+      return evmTrackerForStore({ tx, chains, transactionsPool, onSuccessCallback, ...rest });
 
     case TransactionTracker.Gelato:
       // The Gelato tracker does not need the `chains` param as it uses its own API endpoints.
-      return gelatoTrackerForStore({ tx, ...rest });
+      return gelatoTrackerForStore({ tx, transactionsPool, onSuccessCallback, ...rest });
 
     case TransactionTracker.Safe:
       // The Safe tracker also uses its own API endpoints.
-      return safeTrackerForStore({ tx, ...rest });
+      return safeTrackerForStore({ tx, transactionsPool, onSuccessCallback, ...rest });
 
     // The default case handles any unknown or unspecified tracker types.
     // It logs a warning and treats them as standard EVM transactions.
     default:
       console.warn(`Unknown tracker type: '${tracker}'. Falling back to default EVM tracker.`);
-      return evmTrackerForStore({ tx, chains, ...rest });
+      return evmTrackerForStore({ tx, chains, transactionsPool, onSuccessCallback, ...rest });
   }
 }

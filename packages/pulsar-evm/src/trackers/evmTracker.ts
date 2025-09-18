@@ -4,7 +4,7 @@
  * a transaction's lifecycle from submission to finality.
  */
 
-import { ITxTrackingStore, Transaction, TransactionStatus } from '@tuwaio/pulsar-core';
+import { ITxTrackingStore, OnSuccessCallback, Transaction, TransactionStatus } from '@tuwaio/pulsar-core';
 import {
   Chain,
   Client,
@@ -124,9 +124,13 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
  * @template T - The application-specific transaction type.
  */
 export async function evmTrackerForStore<T extends Transaction>(
-  params: Pick<EVMTrackerParams, 'chains'> & Pick<ITxTrackingStore<T>, 'updateTxParams'> & { tx: T },
+  params: Pick<EVMTrackerParams, 'chains'> &
+    Pick<ITxTrackingStore<T>, 'updateTxParams' | 'transactionsPool'> & {
+      tx: T;
+      onSuccessCallback?: OnSuccessCallback<T>;
+    },
 ) {
-  const { tx, chains, updateTxParams } = params;
+  const { tx, chains, updateTxParams, transactionsPool, onSuccessCallback } = params;
 
   return evmTracker({
     tx,
@@ -157,6 +161,13 @@ export async function evmTrackerForStore<T extends Transaction>(
         pending: false,
         finishedTimestamp: timestamp,
       });
+
+      // After the final state update, retrieve the latest version of the transaction
+      // and trigger the global success callback if applicable.
+      const updatedTx = transactionsPool[tx.txKey];
+      if (isSuccess && onSuccessCallback && updatedTx) {
+        onSuccessCallback(updatedTx);
+      }
     },
     onReplaced: (replacement) => {
       updateTxParams(tx.txKey, {

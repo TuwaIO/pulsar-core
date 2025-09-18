@@ -85,6 +85,8 @@ export type GelatoTxKey = {
  */
 export type ActionTxKey = `0x${string}` | GelatoTxKey | string;
 
+export type OnSuccessCallback<T> = (tx: T) => Promise<void> | void;
+
 /**
  * The fundamental structure for any transaction being tracked by Pulsar.
  * This serves as the base upon which chain-specific transaction types are built.
@@ -265,7 +267,10 @@ export type TxAdapter<T extends Transaction> = {
   ) => { txKey: string; tracker: TransactionTracker };
   /** Selects and initializes the correct background tracker for a given transaction. */
   checkAndInitializeTrackerInStore: (
-    params: { tx: T } & Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool'>,
+    params: { tx: T; onSucceedCallback?: OnSuccessCallback<T> } & Pick<
+      ITxTrackingStore<T>,
+      'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
+    >,
   ) => Promise<void>;
   /** Returns the base URL for the blockchain explorer for the current network. */
   getExplorerUrl: (url?: string) => string | undefined;
@@ -310,7 +315,7 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
     /** The default tracker to use if it cannot be determined automatically. */
     defaultTracker?: TransactionTracker;
     /** Callback to execute when the transaction is successfully submitted. */
-    onSucceedCallback?: (tx: T) => Promise<void> | void;
+    onSucceedCallback?: OnSuccessCallback<T>;
   }) => Promise<void>;
 
   /**

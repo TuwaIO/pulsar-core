@@ -9,7 +9,7 @@ import { produce } from 'immer';
 import { persist, PersistOptions } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
-import { ITxTrackingStore, Transaction, TransactionStatus, TxAdapter } from '../types';
+import { ITxTrackingStore, Transaction, TxAdapter } from '../types';
 import { selectAdapterByKey } from '../utils/selectAdapterByKey';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 
@@ -156,14 +156,7 @@ export function createPulsarStore<T extends Transaction>({
 
             // Step 8: Initialize the background tracker for the transaction.
             const tx = get().transactionsPool[finalTxKey];
-            await foundAdapter.checkAndInitializeTrackerInStore({ tx, ...get() });
-
-            // Step 9: Initialize the callback after the transaction is confirmed and successful.
-            const updatedTx = get().transactionsPool[tx.txKey];
-            console.log('updatedTx', updatedTx);
-            if (updatedTx.status === TransactionStatus.Success && onSucceedCallback && updatedTx) {
-              onSucceedCallback(updatedTx);
-            }
+            await foundAdapter.checkAndInitializeTrackerInStore({ tx, onSucceedCallback, ...get() });
           } catch (e) {
             handleTxError(e);
             throw e; // Re-throw for external handling if needed.

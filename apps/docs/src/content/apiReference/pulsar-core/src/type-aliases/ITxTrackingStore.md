@@ -6,7 +6,7 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:299](https://github.com/TuwaIO/pulsar-core/blob/2c6f93125183d258e3ab6bfaceb7a8c25afd5e6b/packages/pulsar-core/src/types.ts#L299)
+Defined in: [packages/pulsar-core/src/types.ts:304](https://github.com/TuwaIO/pulsar-core/blob/227594b111c3b7431fc1b2bfe3380cc9ee0fa156/packages/pulsar-core/src/types.ts#L304)
 
 The complete interface for the Pulsar transaction tracking store.
 
@@ -39,7 +39,7 @@ The default tracker to use if it cannot be determined automatically.
 
 ###### onSucceedCallback?
 
-(`tx`) => `Promise`\<`void`\> \| `void`
+[`OnSuccessCallback`](OnSuccessCallback.md)\<`T`\>
 
 Callback to execute when the transaction is successfully submitted.
 

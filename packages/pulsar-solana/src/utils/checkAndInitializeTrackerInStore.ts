@@ -2,7 +2,13 @@
  * @file This file contains the primary router for initializing transaction trackers.
  */
 
-import { ITxTrackingStore, Transaction, TransactionStatus, TransactionTracker } from '@tuwaio/pulsar-core';
+import {
+  ITxTrackingStore,
+  OnSuccessCallback,
+  Transaction,
+  TransactionStatus,
+  TransactionTracker,
+} from '@tuwaio/pulsar-core';
 
 import { solanaTrackerForStore } from '../trackers/solanaTracker';
 
@@ -24,7 +30,8 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
 }: {
   tx: T;
   tracker: TransactionTracker;
-} & Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool'>): Promise<void> {
+  onSuccessCallback?: OnSuccessCallback<T>;
+} & Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>): Promise<void> {
   switch (tracker) {
     case TransactionTracker.Solana:
       await solanaTrackerForStore({
