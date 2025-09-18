@@ -6,7 +6,7 @@
 
 > **checkAndInitializeTrackerInStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-solana/src/utils/checkAndInitializeTrackerInStore.ts:20](https://github.com/TuwaIO/pulsar-core/blob/6a657679559c2bafbe8c9280c593db265ce3faeb/packages/pulsar-solana/src/utils/checkAndInitializeTrackerInStore.ts#L20)
+Defined in: [packages/pulsar-solana/src/utils/checkAndInitializeTrackerInStore.ts:26](https://github.com/TuwaIO/pulsar-core/blob/e3b3acb31f38fb0ca8440f76b033c6f46b9062cd/packages/pulsar-solana/src/utils/checkAndInitializeTrackerInStore.ts#L26)
 
 Initializes the correct background tracker for a given Solana transaction.
 This function acts as a router, selecting the appropriate tracker based on the `tx.tracker` property.
@@ -23,7 +23,7 @@ The transaction type.
 
 ### params
 
-`object` & `Pick`\<`ITxTrackingStore`\<`T`\>, `"updateTxParams"` \| `"removeTxFromPool"`\>
+`object` & `OnSuccessCallback`\<`T`\> & `Pick`\<`ITxTrackingStore`\<`T`\>, `"updateTxParams"` \| `"removeTxFromPool"` \| `"transactionsPool"`\>
 
 The parameters for initializing the tracker.
 

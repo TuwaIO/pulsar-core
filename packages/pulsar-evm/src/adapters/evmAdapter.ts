@@ -52,9 +52,10 @@ export function evmAdapter<T extends Transaction>(config: Config, appChains: Cha
       checkAndInitializeTrackerInStore({ tracker: tx.tracker, tx, chains: appChains, ...rest }),
 
     // --- UI & Explorer Methods ---
-    getExplorerUrl: () => {
+    getExplorerUrl: (url) => {
       const { chain } = getAccount(config);
-      return chain?.blockExplorers?.default.url;
+      const baseExplorerLink = chain?.blockExplorers?.default.url;
+      return url ? `${baseExplorerLink}/${url}` : baseExplorerLink;
     },
     getExplorerTxUrl: (tx) =>
       selectEvmTxExplorerLink({

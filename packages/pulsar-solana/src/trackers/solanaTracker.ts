@@ -7,6 +7,7 @@
 import {
   initializePollingTracker,
   ITxTrackingStore,
+  OnSuccessCallback,
   PollingTrackerConfig,
   Transaction,
   TransactionAdapter,
@@ -151,10 +152,11 @@ export async function solanaFetcher({
  */
 export async function solanaTrackerForStore<T extends Transaction>({
   tx,
+  onSuccessCallback,
   ...rest
-}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool'> & {
+}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> & {
   tx: T;
-}): Promise<void> {
+} & OnSuccessCallback<T>): Promise<void> {
   return initializePollingTracker<SolanaSignatureStatusResponse, T>({
     tx,
     fetcher: solanaFetcher,
@@ -176,9 +178,15 @@ export async function solanaTrackerForStore<T extends Transaction>({
         fee: response.fee,
         instructions: response.instructions,
         recentBlockhash: response.recentBlockhash,
-        confirmations: response.confirmations ?? 1,
+        confirmations: 'MAX',
         slot: response.slot,
       });
+
+      // Trigger global success callbacks, if applicable
+      const updatedTx = rest.transactionsPool[tx.txKey];
+      if (onSuccessCallback && updatedTx) {
+        onSuccessCallback(updatedTx);
+      }
     },
 
     /**

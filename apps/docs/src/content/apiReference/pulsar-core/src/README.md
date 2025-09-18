@@ -23,6 +23,7 @@
 - [InitialTransaction](type-aliases/InitialTransaction.md)
 - [InitialTransactionParams](type-aliases/InitialTransactionParams.md)
 - [ITxTrackingStore](type-aliases/ITxTrackingStore.md)
+- [OnSuccessCallback](type-aliases/OnSuccessCallback.md)
 - [PollingTrackerConfig](type-aliases/PollingTrackerConfig.md)
 - [SolanaTransaction](type-aliases/SolanaTransaction.md)
 - [StarknetTransaction](type-aliases/StarknetTransaction.md)

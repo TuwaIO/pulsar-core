@@ -6,6 +6,7 @@
 import {
   initializePollingTracker,
   ITxTrackingStore,
+  OnSuccessCallback,
   PollingTrackerConfig,
   Transaction,
   TransactionAdapter,
@@ -123,9 +124,11 @@ export function safeTrackerForStore<T extends Transaction>({
   tx,
   updateTxParams,
   removeTxFromPool,
-}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool'> & {
+  transactionsPool,
+  onSuccessCallback,
+}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> & {
   tx: T;
-}) {
+} & OnSuccessCallback<T>) {
   return initializePollingTracker<SafeTxStatusResponse, T>({
     tx,
     fetcher: safeFetcher,
@@ -138,6 +141,11 @@ export function safeTrackerForStore<T extends Transaction>({
         hash: response.transactionHash ?? undefined,
         finishedTimestamp: response.executionDate ? dayjs(response.executionDate).unix() : undefined,
       });
+
+      const updatedTx = transactionsPool[tx.txKey];
+      if (onSuccessCallback && updatedTx) {
+        onSuccessCallback(updatedTx);
+      }
     },
     onIntervalTick: (response) => {
       // Only update fields that might change while pending.

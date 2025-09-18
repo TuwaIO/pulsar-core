@@ -85,6 +85,11 @@ export type GelatoTxKey = {
  */
 export type ActionTxKey = `0x${string}` | GelatoTxKey | string;
 
+export type OnSuccessCallback<T> = {
+  /** Callback to execute when the transaction is successfully submitted. */
+  onSuccessCallback?: (tx: T) => Promise<void> | void;
+};
+
 /**
  * The fundamental structure for any transaction being tracked by Pulsar.
  * This serves as the base upon which chain-specific transaction types are built.
@@ -178,8 +183,8 @@ export type SolanaTransaction = BaseTransaction & {
   recentBlockhash?: string;
   /** The slot in which the transaction was processed. */
   slot?: number;
-  /** The number of confirmations received. `null` if the transaction is pending or unconfirmed. */
-  confirmations?: number | null;
+  /** The number of confirmations received. `string` when tx successed. `null` if the transaction is pending or unconfirmed. */
+  confirmations?: number | string | null;
   /** The RPC URL used to submit and track this transaction. */
   rpcUrl?: string;
 };
@@ -265,10 +270,11 @@ export type TxAdapter<T extends Transaction> = {
   ) => { txKey: string; tracker: TransactionTracker };
   /** Selects and initializes the correct background tracker for a given transaction. */
   checkAndInitializeTrackerInStore: (
-    params: { tx: T } & Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool'>,
+    params: { tx: T } & OnSuccessCallback<T> &
+      Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>,
   ) => Promise<void>;
   /** Returns the base URL for the blockchain explorer for the current network. */
-  getExplorerUrl: () => string | undefined;
+  getExplorerUrl: (url?: string) => string | undefined;
   /** Optional: Fetches a name from a chain-specific name service (e.g., ENS). */
   getName?: (address: string) => Promise<string | null>;
   /** Optional: Fetches an avatar URL from a chain-specific name service. */
@@ -302,16 +308,16 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
    * It manages UI state, executes the on-chain action, and initiates background tracking.
    * @param params The parameters for handling the transaction.
    */
-  handleTransaction: (params: {
-    /** The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined. */
-    actionFunction: () => Promise<ActionTxKey | undefined>;
-    /** The metadata for the transaction. */
-    params: Omit<InitialTransactionParams, 'actionFunction'>;
-    /** The default tracker to use if it cannot be determined automatically. */
-    defaultTracker?: TransactionTracker;
-    /** Callback to execute when the transaction is successfully submitted. */
-    onSucceedCallback?: (tx: T) => Promise<void> | void;
-  }) => Promise<void>;
+  handleTransaction: (
+    params: {
+      /** The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined. */
+      actionFunction: () => Promise<ActionTxKey | undefined>;
+      /** The metadata for the transaction. */
+      params: Omit<InitialTransactionParams, 'actionFunction'>;
+      /** The default tracker to use if it cannot be determined automatically. */
+      defaultTracker?: TransactionTracker;
+    } & OnSuccessCallback<T>,
+  ) => Promise<void>;
 
   /**
    * Initializes trackers for all pending transactions in the pool.

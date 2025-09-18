@@ -6,7 +6,7 @@
 
 > **EvmTransaction** = [`BaseTransaction`](BaseTransaction.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:148](https://github.com/TuwaIO/pulsar-core/blob/6a657679559c2bafbe8c9280c593db265ce3faeb/packages/pulsar-core/src/types.ts#L148)
+Defined in: [packages/pulsar-core/src/types.ts:153](https://github.com/TuwaIO/pulsar-core/blob/e3b3acb31f38fb0ca8440f76b033c6f46b9062cd/packages/pulsar-core/src/types.ts#L153)
 
 Represents an EVM-specific transaction, extending the base properties with EVM fields.
 

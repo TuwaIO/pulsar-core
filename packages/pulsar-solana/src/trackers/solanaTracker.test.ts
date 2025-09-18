@@ -95,7 +95,7 @@ describe('solanaTrackerForStore', () => {
       pending: false,
       isError: false,
       finishedTimestamp: expect.any(Number),
-      confirmations: 10,
+      confirmations: 'MAX',
       slot: 12345,
     });
   });

@@ -6,7 +6,7 @@
 
 > **SolanaTransaction** = [`BaseTransaction`](BaseTransaction.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:171](https://github.com/TuwaIO/pulsar-core/blob/6a657679559c2bafbe8c9280c593db265ce3faeb/packages/pulsar-core/src/types.ts#L171)
+Defined in: [packages/pulsar-core/src/types.ts:176](https://github.com/TuwaIO/pulsar-core/blob/e3b3acb31f38fb0ca8440f76b033c6f46b9062cd/packages/pulsar-core/src/types.ts#L176)
 
 Represents a Solana-specific transaction, extending the base properties.
 
@@ -18,9 +18,9 @@ Represents a Solana-specific transaction, extending the base properties.
 
 ### confirmations?
 
-> `optional` **confirmations**: `number` \| `null`
+> `optional` **confirmations**: `number` \| `string` \| `null`
 
-The number of confirmations received. `null` if the transaction is pending or unconfirmed.
+The number of confirmations received. `string` when tx successed. `null` if the transaction is pending or unconfirmed.
 
 ### fee?
 
