@@ -2,7 +2,7 @@
  * @file This file contains a utility function for selecting a specific transaction adapter from a list.
  */
 
-import { ITxTrackingStore, Transaction, TransactionAdapter, TxAdapter } from '../types';
+import { Adapter, Transaction, TransactionAdapter, TxAdapter } from '../types';
 
 /**
  * Selects a transaction adapter from a list based on a provided key.
@@ -25,7 +25,7 @@ export const selectAdapterByKey = <T extends Transaction>({
   adapter,
 }: {
   adapterKey: TransactionAdapter;
-} & Pick<ITxTrackingStore<T>, 'adapter'>): TxAdapter<T> | undefined => {
+} & Adapter<T>): TxAdapter<T> | undefined => {
   if (Array.isArray(adapter)) {
     if (adapter.length === 0) {
       console.error('Adapter selection failed: The provided adapters array is empty.');

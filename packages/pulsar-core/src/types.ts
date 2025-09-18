@@ -247,6 +247,10 @@ export type OnSuccessCallback<T extends Transaction> = {
   onSuccessCallback?: (tx: T) => Promise<void> | void;
 };
 
+export type Adapter<T extends Transaction> = {
+  adapter: TxAdapter<T> | TxAdapter<T>[];
+};
+
 /**
  * Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
  * @template T The specific transaction type, extending `Transaction`.
@@ -359,7 +363,7 @@ export interface IInitializeTxTrackingStore<T extends Transaction> {
  * @template T The transaction type.
  */
 export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore<T> & {
-  adapter: TxAdapter<T> | TxAdapter<T>[];
+  getAdapter: () => TxAdapter<T> | TxAdapter<T>[];
   /**
    * The primary method for initiating and tracking a new transaction from start to finish.
    * It manages UI state, executes the on-chain action, and initiates background tracking.

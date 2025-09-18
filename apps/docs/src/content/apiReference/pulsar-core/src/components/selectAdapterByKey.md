@@ -6,7 +6,7 @@
 
 > **selectAdapterByKey**\<`T`\>(`params`): `undefined` \| [`TxAdapter`](../type-aliases/TxAdapter.md)\<`T`\>
 
-Defined in: [packages/pulsar-core/src/utils/selectAdapterByKey.ts:23](https://github.com/TuwaIO/pulsar-core/blob/bf6927ad9548f321243c3ca0256852e2339389ae/packages/pulsar-core/src/utils/selectAdapterByKey.ts#L23)
+Defined in: [packages/pulsar-core/src/utils/selectAdapterByKey.ts:23](https://github.com/TuwaIO/pulsar-core/blob/37a7892af021715ac51cc1827e93ad7b2762ab6c/packages/pulsar-core/src/utils/selectAdapterByKey.ts#L23)
 
 Selects a transaction adapter from a list based on a provided key.
 
@@ -27,7 +27,7 @@ The transaction type, extending the base `Transaction`.
 
 ### params
 
-`object` & `Pick`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`T`\>, `"adapter"`\>
+`object` & [`Adapter`](../type-aliases/Adapter.md)\<`T`\>
 
 The parameters for the selection.
 
