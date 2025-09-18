@@ -3,8 +3,7 @@
  * Selectors help abstract the state's shape and provide efficient, memoized access to computed data.
  */
 
-import { Transaction } from '../types';
-import { TransactionPool } from './initializeTxTrackingStore';
+import { Transaction, TransactionPool } from '../types';
 
 /**
  * Selects all transactions from the pool and sorts them by their creation timestamp in ascending order.

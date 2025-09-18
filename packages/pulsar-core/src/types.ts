@@ -6,8 +6,6 @@
 
 import { StoreApi } from 'zustand';
 
-import { IInitializeTxTrackingStore } from './store/initializeTxTrackingStore';
-
 // =================================================================================================
 // 1. ZUSTAND UTILITY TYPES
 // =================================================================================================
@@ -39,7 +37,7 @@ export enum TransactionAdapter {
 }
 
 /**
- * Enum representing the different tracking strategies available for EVM transactions.
+ * Enum representing the different tracking strategies available for transactions.
  * Each tracker corresponds to a specific method of monitoring a transaction's lifecycle.
  */
 export enum TransactionTracker {
@@ -69,6 +67,7 @@ export enum TransactionStatus {
  * Defines the shape of the identifier for a Gelato transaction task.
  */
 export type GelatoTxKey = {
+  /** The unique identifier assigned by the Gelato relay service. */
   taskId: string;
 };
 
@@ -76,19 +75,15 @@ export type GelatoTxKey = {
  * A union type representing the unique identifier returned by an `actionFunction`
  * after a transaction is submitted to the network or a relay service.
  *
- * This key is crucial for the EVM adapter to determine which tracker should
+ * This key is crucial for the adapter to determine which tracker should
  * monitor the transaction.
  *
  * It can be one of the following:
  * - A standard `0x...` transaction hash (`Hex`).
  * - A structured object from a relay service like Gelato (`GelatoTxKey`).
+ * - A Solana transaction signature (string).
  */
 export type ActionTxKey = `0x${string}` | GelatoTxKey | string;
-
-export type OnSuccessCallback<T> = {
-  /** Callback to execute when the transaction is successfully submitted. */
-  onSuccessCallback?: (tx: T) => Promise<void> | void;
-};
 
 /**
  * The fundamental structure for any transaction being tracked by Pulsar.
@@ -135,7 +130,7 @@ export type BaseTransaction = {
   title?: string | [string, string, string, string];
   /** The specific tracker responsible for monitoring this transaction's status. */
   tracker: TransactionTracker;
-  /** The unique identifier for the transaction (e.g., EVM hash, Gelato task ID). */
+  /** The unique identifier for the transaction (e.g., EVM hash, Solana signature, or Gelato task ID). */
   txKey: string;
   /** The application-specific type or category of the transaction (e.g., 'SWAP', 'APPROVE'). */
   type: string;
@@ -151,6 +146,7 @@ export type BaseTransaction = {
  * Represents an EVM-specific transaction, extending the base properties with EVM fields.
  */
 export type EvmTransaction = BaseTransaction & {
+  /** The adapter type for EVM transactions. */
   adapter: TransactionAdapter.EVM;
   /** The on-chain transaction hash, available after submission. */
   hash?: `0x${string}`;
@@ -174,6 +170,7 @@ export type EvmTransaction = BaseTransaction & {
  * Represents a Solana-specific transaction, extending the base properties.
  */
 export type SolanaTransaction = BaseTransaction & {
+  /** The adapter type for Solana transactions. */
   adapter: TransactionAdapter.SOLANA;
   /** The transaction fee in lamports. */
   fee?: number;
@@ -183,7 +180,7 @@ export type SolanaTransaction = BaseTransaction & {
   recentBlockhash?: string;
   /** The slot in which the transaction was processed. */
   slot?: number;
-  /** The number of confirmations received. `string` when tx successed. `null` if the transaction is pending or unconfirmed. */
+  /** The number of confirmations received. A string value indicates a confirmed transaction, while `null` means it's pending. */
   confirmations?: number | string | null;
   /** The RPC URL used to submit and track this transaction. */
   rpcUrl?: string;
@@ -193,6 +190,7 @@ export type SolanaTransaction = BaseTransaction & {
  * Represents a Starknet-specific transaction, extending the base properties.
  */
 export type StarknetTransaction = BaseTransaction & {
+  /** The adapter type for Starknet transactions. */
   adapter: TransactionAdapter.Starknet;
   /** The actual fee paid for the transaction. */
   actualFee?: { amount: string; unit: string };
@@ -211,6 +209,7 @@ export type Transaction = EvmTransaction | SolanaTransaction | StarknetTransacti
  * Represents the parameters required to initiate a new transaction tracking flow.
  */
 export type InitialTransactionParams = {
+  /** The specific blockchain adapter for this transaction. */
   adapter: TransactionAdapter;
   /** The function that executes the on-chain action (e.g., sending a transaction) and returns a preliminary identifier like a hash. */
   actionFunction: (...args: any[]) => Promise<ActionTxKey | undefined>;
@@ -250,6 +249,24 @@ export type InitialTransaction = InitialTransactionParams & {
 // =================================================================================================
 
 /**
+ * Defines a callback function to be executed upon a successful transaction.
+ * @template T The specific transaction type, extending `Transaction`.
+ */
+export type OnSuccessCallback<T extends Transaction> = {
+  /** Callback to execute when the transaction is successfully submitted. */
+  onSuccessCallback?: (tx: T) => Promise<void> | void;
+};
+
+/**
+ * The configuration object containing one or more transaction adapters.
+ * @template T The specific transaction type.
+ */
+export type Adapter<T extends Transaction> = {
+  /** A single `TxAdapter` instance or an array of them. */
+  adapter: TxAdapter<T> | TxAdapter<T>[];
+};
+
+/**
  * Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
  * @template T The specific transaction type, extending `Transaction`.
  */
@@ -258,32 +275,70 @@ export type TxAdapter<T extends Transaction> = {
   key: TransactionAdapter;
   /** Returns information about the currently connected wallet. */
   getWalletInfo: () => {
+    /** The currently connected wallet address. */
     walletAddress: string;
+    /** The type of the wallet (e.g., 'metamask', 'phantom'). */
     walletType: string;
   };
-  /** Ensures the connected wallet is on the correct network for the transaction. Throws an error if the chain is mismatched. */
+  /**
+   * Ensures the connected wallet is on the correct network for the transaction.
+   *
+   * This method should throw an error if the chain is mismatched.
+   * @param chainId The desired chain ID for the transaction.
+   */
   checkChainForTx: (chainId: string | number) => Promise<void>;
-  /** Determines the appropriate tracker and final `txKey` from the result of an action. */
+  /**
+   * Determines the appropriate tracker and final `txKey` from the result of an action.
+   * @param actionTxKey The preliminary key returned after an action function is executed.
+   * @param walletType The type of wallet used for the transaction.
+   * @returns An object containing the final `txKey` and the `TransactionTracker` to be used.
+   */
   checkTransactionsTracker: (
     actionTxKey: ActionTxKey,
     walletType: string,
   ) => { txKey: string; tracker: TransactionTracker };
-  /** Selects and initializes the correct background tracker for a given transaction. */
+  /**
+   * Selects and initializes the correct background tracker for a given transaction.
+   * @param params The parameters for initializing the tracker, including the transaction and store callbacks.
+   */
   checkAndInitializeTrackerInStore: (
     params: { tx: T } & OnSuccessCallback<T> &
       Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>,
-  ) => Promise<void>;
-  /** Returns the base URL for the blockchain explorer for the current network. */
+  ) => Promise<void> | void;
+  /**
+   * Returns the base URL for the blockchain explorer for the current network.
+   * @param url Optional URL to override the default explorer URL.
+   */
   getExplorerUrl: (url?: string) => string | undefined;
-  /** Optional: Fetches a name from a chain-specific name service (e.g., ENS). */
+  /**
+   * Optional: Fetches a name from a chain-specific name service (e.g., ENS).
+   * @param address The address to resolve the name for.
+   */
   getName?: (address: string) => Promise<string | null>;
-  /** Optional: Fetches an avatar URL from a chain-specific name service. */
+  /**
+   * Optional: Fetches an avatar URL from a chain-specific name service.
+   * @param name The name to resolve the avatar for.
+   */
   getAvatar?: (name: string) => Promise<string | null>;
-  /** Optional: Logic to cancel a pending EVM transaction. */
+  /**
+   * Optional: Logic to cancel a pending EVM transaction.
+   * @param tx The transaction to cancel.
+   * @returns The new transaction hash for the cancellation.
+   */
   cancelTxAction?: (tx: T) => Promise<string>;
-  /** Optional: Logic to speed up a pending EVM transaction. */
+  /**
+   * Optional: Logic to speed up a pending EVM transaction.
+   * @param tx The transaction to speed up.
+   * @returns The new transaction hash for the sped-up transaction.
+   */
   speedUpTxAction?: (tx: T) => Promise<string>;
-  /** Optional: Logic to retry a failed transaction. */
+  /**
+   * Optional: Logic to retry a failed transaction.
+   * @param params The parameters for retrying the transaction.
+   * @param params.txKey The unique key of the transaction to retry.
+   * @param params.tx The initial parameters of the transaction.
+   * @param params.onClose Callback function to close the tracking modal.
+   */
   retryTxAction?: (
     params: {
       txKey: string;
@@ -294,34 +349,114 @@ export type TxAdapter<T extends Transaction> = {
   /**
    * Optional: Constructs a full explorer URL for a specific transaction.
    * May require the full transaction pool to resolve details for replaced transactions.
+   * @param tx The transaction object.
+   * @returns The full URL to the transaction on the explorer.
    */
   getExplorerTxUrl?: (tx: T) => string;
 };
+
+/**
+ * Defines the structure of the transaction pool, a key-value store of transactions indexed by their unique keys.
+ * @template T The type of the transaction object being tracked.
+ */
+export type TransactionPool<T extends Transaction> = Record<string, T>;
+
+/**
+ * A utility type that creates a union of all fields that can be safely updated
+ * on a transaction object via the `updateTxParams` action. This ensures type safety
+ * and prevents accidental modification of immutable properties.
+ */
+type UpdatableTransactionFields = Partial<
+  Pick<
+    EvmTransaction,
+    | 'to'
+    | 'nonce'
+    | 'txKey'
+    | 'pending'
+    | 'hash'
+    | 'status'
+    | 'replacedTxHash'
+    | 'errorMessage'
+    | 'finishedTimestamp'
+    | 'isTrackedModalOpen'
+    | 'isError'
+    | 'maxPriorityFeePerGas'
+    | 'maxFeePerGas'
+    | 'input'
+    | 'value'
+  >
+> &
+  Partial<Pick<SolanaTransaction, 'slot' | 'confirmations' | 'fee' | 'instructions' | 'recentBlockhash' | 'rpcUrl'>>;
+
+/**
+ * The interface for the base transaction tracking store slice.
+ * It includes the state and actions for managing the transaction lifecycle.
+ * @template T The specific transaction type.
+ */
+export interface IInitializeTxTrackingStore<T extends Transaction> {
+  /** A pool of all transactions currently being tracked, indexed by `txKey`. */
+  transactionsPool: TransactionPool<T>;
+  /** The `txKey` of the most recently added transaction. */
+  lastAddedTxKey?: string;
+  /** The state for a transaction being initiated, used for UI feedback before it's submitted to the chain. */
+  initialTx?: InitialTransaction;
+
+  /**
+   * Adds a new transaction to the tracking pool and marks it as pending.
+   * @param tx The transaction object to add.
+   */
+  addTxToPool: (tx: T) => void;
+  /**
+   * Updates one or more properties of an existing transaction in the pool.
+   * @param txKey The key of the transaction to update.
+   * @param fields The partial object containing the fields to update.
+   */
+  updateTxParams: (txKey: string, fields: UpdatableTransactionFields) => void;
+  /**
+   * Removes a transaction from the tracking pool by its key.
+   * @param txKey The key of the transaction to remove.
+   */
+  removeTxFromPool: (txKey: string) => void;
+  /**
+   * Closes the tracking modal for a transaction and clears any initial transaction state.
+   * @param txKey The optional key of the transaction modal to close.
+   */
+  closeTxTrackedModal: (txKey?: string) => void;
+  /**
+   * A selector function to retrieve the key of the last transaction added to the pool.
+   * @returns The key of the last added transaction, or undefined if none exists.
+   */
+  getLastTxKey: () => string | undefined;
+}
 
 /**
  * The complete interface for the Pulsar transaction tracking store.
  * @template T The transaction type.
  */
 export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore<T> & {
+  /** A getter function that returns the configured transaction adapter(s). */
+  getAdapter: () => TxAdapter<T> | TxAdapter<T>[];
   /**
    * The primary method for initiating and tracking a new transaction from start to finish.
    * It manages UI state, executes the on-chain action, and initiates background tracking.
+   *
    * @param params The parameters for handling the transaction.
+   * @param params.actionFunction The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined.
+   * @param params.params The metadata for the transaction.
+   * @param params.defaultTracker The default tracker to use if it cannot be determined automatically.
+   * @param params.onSuccessCallback Callback to execute when the transaction is successfully submitted.
    */
   handleTransaction: (
     params: {
-      /** The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined. */
       actionFunction: () => Promise<ActionTxKey | undefined>;
-      /** The metadata for the transaction. */
       params: Omit<InitialTransactionParams, 'actionFunction'>;
-      /** The default tracker to use if it cannot be determined automatically. */
       defaultTracker?: TransactionTracker;
     } & OnSuccessCallback<T>,
   ) => Promise<void>;
 
   /**
    * Initializes trackers for all pending transactions in the pool.
-   * This is essential for resuming tracking after a page reload.
+   * This is essential for resuming tracking after a page reload or application restart.
    */
   initializeTransactionsPool: () => Promise<void>;
 };

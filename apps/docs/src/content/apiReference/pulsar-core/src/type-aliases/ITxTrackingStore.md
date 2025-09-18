@@ -6,11 +6,21 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:305](https://github.com/TuwaIO/pulsar-core/blob/e3b3acb31f38fb0ca8440f76b033c6f46b9062cd/packages/pulsar-core/src/types.ts#L305)
+Defined in: [packages/pulsar-core/src/types.ts:436](https://github.com/TuwaIO/pulsar-core/blob/60bbca9feab340b4bac58012b93caa368d33efe5/packages/pulsar-core/src/types.ts#L436)
 
 The complete interface for the Pulsar transaction tracking store.
 
 ## Type Declaration
+
+### getAdapter()
+
+> **getAdapter**: () => [`TxAdapter`](TxAdapter.md)\<`T`\> \| [`TxAdapter`](TxAdapter.md)\<`T`\>[]
+
+A getter function that returns the configured transaction adapter(s).
+
+#### Returns
+
+[`TxAdapter`](TxAdapter.md)\<`T`\> \| [`TxAdapter`](TxAdapter.md)\<`T`\>[]
 
 ### handleTransaction()
 
@@ -36,7 +46,7 @@ The parameters for handling the transaction.
 > **initializeTransactionsPool**: () => `Promise`\<`void`\>
 
 Initializes trackers for all pending transactions in the pool.
-This is essential for resuming tracking after a page reload.
+This is essential for resuming tracking after a page reload or application restart.
 
 #### Returns
 

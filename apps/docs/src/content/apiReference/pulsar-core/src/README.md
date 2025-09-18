@@ -17,6 +17,7 @@
 ## Type Aliases
 
 - [ActionTxKey](type-aliases/ActionTxKey.md)
+- [Adapter](type-aliases/Adapter.md)
 - [BaseTransaction](type-aliases/BaseTransaction.md)
 - [EvmTransaction](type-aliases/EvmTransaction.md)
 - [GelatoTxKey](type-aliases/GelatoTxKey.md)
