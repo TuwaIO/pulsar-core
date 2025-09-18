@@ -6,8 +6,6 @@
 
 import { StoreApi } from 'zustand';
 
-import { IInitializeTxTrackingStore } from './store/initializeTxTrackingStore';
-
 // =================================================================================================
 // 1. ZUSTAND UTILITY TYPES
 // =================================================================================================
@@ -84,11 +82,6 @@ export type GelatoTxKey = {
  * - A structured object from a relay service like Gelato (`GelatoTxKey`).
  */
 export type ActionTxKey = `0x${string}` | GelatoTxKey | string;
-
-export type OnSuccessCallback<T> = {
-  /** Callback to execute when the transaction is successfully submitted. */
-  onSuccessCallback?: (tx: T) => Promise<void> | void;
-};
 
 /**
  * The fundamental structure for any transaction being tracked by Pulsar.
@@ -249,6 +242,11 @@ export type InitialTransaction = InitialTransactionParams & {
 // 5. ADAPTER AND STORE INTERFACES
 // =================================================================================================
 
+export type OnSuccessCallback<T extends Transaction> = {
+  /** Callback to execute when the transaction is successfully submitted. */
+  onSuccessCallback?: (tx: T) => Promise<void> | void;
+};
+
 /**
  * Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
  * @template T The specific transaction type, extending `Transaction`.
@@ -272,7 +270,7 @@ export type TxAdapter<T extends Transaction> = {
   checkAndInitializeTrackerInStore: (
     params: { tx: T } & OnSuccessCallback<T> &
       Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>,
-  ) => Promise<void>;
+  ) => Promise<void> | void;
   /** Returns the base URL for the blockchain explorer for the current network. */
   getExplorerUrl: (url?: string) => string | undefined;
   /** Optional: Fetches a name from a chain-specific name service (e.g., ENS). */
@@ -299,10 +297,69 @@ export type TxAdapter<T extends Transaction> = {
 };
 
 /**
+ * Defines the structure of the transaction pool, a key-value store of transactions indexed by their unique keys.
+ * @template T The type of the transaction object being tracked.
+ */
+export type TransactionPool<T extends Transaction> = Record<string, T>;
+
+/**
+ * A utility type that creates a union of all fields that can be safely updated
+ * on a transaction object via the `updateTxParams` action. This ensures type safety
+ * and prevents accidental modification of immutable properties.
+ */
+type UpdatableTransactionFields = Partial<
+  Pick<
+    EvmTransaction,
+    | 'to'
+    | 'nonce'
+    | 'txKey'
+    | 'pending'
+    | 'hash'
+    | 'status'
+    | 'replacedTxHash'
+    | 'errorMessage'
+    | 'finishedTimestamp'
+    | 'isTrackedModalOpen'
+    | 'isError'
+    | 'maxPriorityFeePerGas'
+    | 'maxFeePerGas'
+    | 'input'
+    | 'value'
+  >
+> &
+  Partial<Pick<SolanaTransaction, 'slot' | 'confirmations' | 'fee' | 'instructions' | 'recentBlockhash' | 'rpcUrl'>>;
+
+/**
+ * The interface for the base transaction tracking store slice.
+ * It includes the state and actions for managing the transaction lifecycle.
+ * @template T The specific transaction type.
+ */
+export interface IInitializeTxTrackingStore<T extends Transaction> {
+  /** A pool of all transactions currently being tracked, indexed by `txKey`. */
+  transactionsPool: TransactionPool<T>;
+  /** The `txKey` of the most recently added transaction. */
+  lastAddedTxKey?: string;
+  /** The state for a transaction being initiated, used for UI feedback before it's submitted to the chain. */
+  initialTx?: InitialTransaction;
+
+  /** Adds a new transaction to the tracking pool and marks it as pending. */
+  addTxToPool: (tx: T) => void;
+  /** Updates one or more properties of an existing transaction in the pool. */
+  updateTxParams: (txKey: string, fields: UpdatableTransactionFields) => void;
+  /** Removes a transaction from the tracking pool by its key. */
+  removeTxFromPool: (txKey: string) => void;
+  /** Closes the tracking modal for a transaction and clears any initial transaction state. */
+  closeTxTrackedModal: (txKey?: string) => void;
+  /** A selector function to retrieve the key of the last transaction added to the pool. */
+  getLastTxKey: () => string | undefined;
+}
+
+/**
  * The complete interface for the Pulsar transaction tracking store.
  * @template T The transaction type.
  */
 export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore<T> & {
+  adapter: TxAdapter<T> | TxAdapter<T>[];
   /**
    * The primary method for initiating and tracking a new transaction from start to finish.
    * It manages UI state, executes the on-chain action, and initiates background tracking.

@@ -9,7 +9,7 @@ import { produce } from 'immer';
 import { persist, PersistOptions } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
-import { ITxTrackingStore, Transaction, TxAdapter } from '../types';
+import { ITxTrackingStore, Transaction } from '../types';
 import { selectAdapterByKey } from '../utils/selectAdapterByKey';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 
@@ -30,14 +30,14 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 export function createPulsarStore<T extends Transaction>({
   adapter,
   ...options
-}: {
-  adapter: TxAdapter<T> | TxAdapter<T>[];
-} & PersistOptions<ITxTrackingStore<T>>) {
+}: Pick<ITxTrackingStore<T>, 'adapter'> & PersistOptions<ITxTrackingStore<T>>) {
   return createStore<ITxTrackingStore<T>>()(
     persist(
       (set, get) => ({
         // Initialize the base store slice with core state and actions
         ...initializeTxTrackingStore<T>()(set, get),
+
+        adapter,
 
         /**
          * Initializes trackers for all pending transactions upon store creation.

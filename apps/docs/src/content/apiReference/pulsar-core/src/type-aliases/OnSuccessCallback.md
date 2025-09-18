@@ -6,13 +6,13 @@
 
 > **OnSuccessCallback**\<`T`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:88](https://github.com/TuwaIO/pulsar-core/blob/e3b3acb31f38fb0ca8440f76b033c6f46b9062cd/packages/pulsar-core/src/types.ts#L88)
+Defined in: [packages/pulsar-core/src/types.ts:245](https://github.com/TuwaIO/pulsar-core/blob/bf6927ad9548f321243c3ca0256852e2339389ae/packages/pulsar-core/src/types.ts#L245)
 
 ## Type Parameters
 
 ### T
 
-`T`
+`T` *extends* [`Transaction`](Transaction.md)
 
 ## Properties
 
@@ -20,7 +20,7 @@ Defined in: [packages/pulsar-core/src/types.ts:88](https://github.com/TuwaIO/pul
 
 > `optional` **onSuccessCallback**: (`tx`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:90](https://github.com/TuwaIO/pulsar-core/blob/e3b3acb31f38fb0ca8440f76b033c6f46b9062cd/packages/pulsar-core/src/types.ts#L90)
+Defined in: [packages/pulsar-core/src/types.ts:247](https://github.com/TuwaIO/pulsar-core/blob/bf6927ad9548f321243c3ca0256852e2339389ae/packages/pulsar-core/src/types.ts#L247)
 
 Callback to execute when the transaction is successfully submitted.
 
