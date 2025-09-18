@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.1.6...pulsar-core-v0.1.7) (2025-09-18)
+
+
+### Bug Fixes
+
+* added getAdapter function to the store ([#35](https://github.com/TuwaIO/pulsar-core/issues/35)) ([7e69680](https://github.com/TuwaIO/pulsar-core/commit/7e69680ec209a74535aad43d1c33560b0caae3c3))
+
 ## [0.1.6](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.1.5...pulsar-core-v0.1.6) (2025-09-18)
 
 
