@@ -4,7 +4,7 @@
  */
 
 import type { Instruction, SolanaClient, TransactionSendingSigner } from 'gill';
-import { createTransaction, getBase58Decoder, signAndSendTransactionMessageWithSigners } from 'gill';
+import { createTransaction } from 'gill';
 
 /**
  * Creates, signs, and sends a Solana transaction with one or more instructions.
@@ -52,8 +52,5 @@ export async function signAndSendSolanaTx({
   });
 
   // 3. Sign the transaction message and send it to the network.
-  const signature = await signAndSendTransactionMessageWithSigners(transaction);
-
-  // 4. Decode the resulting signature into the final format.
-  return getBase58Decoder().decode(signature);
+  return await client.sendAndConfirmTransaction(transaction);
 }
