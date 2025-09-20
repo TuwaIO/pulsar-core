@@ -6,7 +6,7 @@
 
 > **isSolanaChain**(`chainId`): `boolean`
 
-Defined in: [packages/pulsar-core/src/utils/сhainHelpers.ts:8](https://github.com/TuwaIO/pulsar-core/blob/31123a566c475bf283a6fb73d21ae43fa38204d1/packages/pulsar-core/src/utils/сhainHelpers.ts#L8)
+Defined in: [packages/pulsar-core/src/utils/сhainHelpers.ts:8](https://github.com/TuwaIO/pulsar-core/blob/698c5eb23be9ded1ac04d2ceef0aaddf6f1229e1/packages/pulsar-core/src/utils/сhainHelpers.ts#L8)
 
 Checks whether the given chain ID belongs to a Solana network.
 Supports common Solana network names: 'devnet', 'testnet', 'mainnet-beta', 'mainnet'.

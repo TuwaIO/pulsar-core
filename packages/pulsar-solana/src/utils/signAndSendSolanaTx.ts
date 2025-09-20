@@ -56,6 +56,9 @@ export async function signAndSendSolanaTx({
     latestBlockhash,
     instructions: Array.isArray(instruction) ? instruction : [instruction],
   });
+
+  console.log('transaction:', transaction);
+
   // 3. Sign the transaction message.
   const signedTransaction = await signTransactionMessageWithSigners(transaction);
   console.log('signedTransaction:', signedTransaction);
