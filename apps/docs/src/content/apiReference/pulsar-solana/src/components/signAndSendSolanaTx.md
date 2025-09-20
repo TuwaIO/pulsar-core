@@ -4,9 +4,9 @@
 
 # signAndSendSolanaTx()
 
-> **signAndSendSolanaTx**(`params`): `Promise`\<`string`\>
+> **signAndSendSolanaTx**(`params`): `Promise`\<`Signature`\>
 
-Defined in: [packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts:34](https://github.com/TuwaIO/pulsar-core/blob/5b62bcb03f6eb32e89bac66553fb0e9e924d55a1/packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts#L34)
+Defined in: [packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts:34](https://github.com/TuwaIO/pulsar-core/blob/5415e11372c5ba1e590020a446666e4f0bb4d82d/packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts#L34)
 
 Creates, signs, and sends a Solana transaction with one or more instructions.
 
@@ -43,7 +43,7 @@ The signer (e.g., a wallet) responsible for signing the transaction.
 
 ## Returns
 
-`Promise`\<`string`\>
+`Promise`\<`Signature`\>
 
 A promise that resolves to the transaction signature.
 
