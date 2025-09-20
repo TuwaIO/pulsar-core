@@ -3,7 +3,7 @@
  * It simplifies the process of creating, signing, and broadcasting a transaction to the network.
  */
 
-import type { Instruction, SolanaClient, TransactionSendingSigner } from 'gill';
+import { Instruction, signTransactionMessageWithSigners, SolanaClient, TransactionSendingSigner } from 'gill';
 import { createTransaction } from 'gill';
 
 /**
@@ -50,7 +50,8 @@ export async function signAndSendSolanaTx({
     latestBlockhash,
     instructions: Array.isArray(instruction) ? instruction : [instruction],
   });
-
-  // 3. Sign the transaction message and send it to the network.
-  return await client.sendAndConfirmTransaction(transaction);
+  // 3. Sign the transaction message.
+  const signedTransaction = await signTransactionMessageWithSigners(transaction);
+  // 4. Send it to the network.
+  return await client.sendAndConfirmTransaction(signedTransaction);
 }
