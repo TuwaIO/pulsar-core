@@ -6,7 +6,7 @@
 
 > **cancelTxAction**\<`T`\>(`params`): `Promise`\<`` `0x${string}` ``\>
 
-Defined in: [packages/pulsar-evm/src/utils/cancelTxAction.ts:48](https://github.com/TuwaIO/pulsar-core/blob/60bbca9feab340b4bac58012b93caa368d33efe5/packages/pulsar-evm/src/utils/cancelTxAction.ts#L48)
+Defined in: [packages/pulsar-evm/src/utils/cancelTxAction.ts:48](https://github.com/TuwaIO/pulsar-core/blob/5b62bcb03f6eb32e89bac66553fb0e9e924d55a1/packages/pulsar-evm/src/utils/cancelTxAction.ts#L48)
 
 Cancels a pending EVM transaction by sending a new, zero-value transaction to oneself
 with the same nonce but higher gas fees. This effectively replaces the original transaction.

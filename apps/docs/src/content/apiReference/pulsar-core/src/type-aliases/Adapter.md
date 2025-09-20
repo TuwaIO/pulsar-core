@@ -6,7 +6,7 @@
 
 > **Adapter**\<`T`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:264](https://github.com/TuwaIO/pulsar-core/blob/60bbca9feab340b4bac58012b93caa368d33efe5/packages/pulsar-core/src/types.ts#L264)
+Defined in: [packages/pulsar-core/src/types.ts:264](https://github.com/TuwaIO/pulsar-core/blob/5b62bcb03f6eb32e89bac66553fb0e9e924d55a1/packages/pulsar-core/src/types.ts#L264)
 
 The configuration object containing one or more transaction adapters.
 
@@ -24,6 +24,6 @@ The specific transaction type.
 
 > **adapter**: [`TxAdapter`](TxAdapter.md)\<`T`\> \| [`TxAdapter`](TxAdapter.md)\<`T`\>[]
 
-Defined in: [packages/pulsar-core/src/types.ts:266](https://github.com/TuwaIO/pulsar-core/blob/60bbca9feab340b4bac58012b93caa368d33efe5/packages/pulsar-core/src/types.ts#L266)
+Defined in: [packages/pulsar-core/src/types.ts:266](https://github.com/TuwaIO/pulsar-core/blob/5b62bcb03f6eb32e89bac66553fb0e9e924d55a1/packages/pulsar-core/src/types.ts#L266)
 
 A single `TxAdapter` instance or an array of them.

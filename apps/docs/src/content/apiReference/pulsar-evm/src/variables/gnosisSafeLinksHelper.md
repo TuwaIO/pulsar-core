@@ -6,7 +6,7 @@
 
 > `const` **gnosisSafeLinksHelper**: `Record`\<`number`, `string`\>
 
-Defined in: [packages/pulsar-evm/src/utils/safeConstants.ts:41](https://github.com/TuwaIO/pulsar-core/blob/60bbca9feab340b4bac58012b93caa368d33efe5/packages/pulsar-evm/src/utils/safeConstants.ts#L41)
+Defined in: [packages/pulsar-evm/src/utils/safeConstants.ts:41](https://github.com/TuwaIO/pulsar-core/blob/5b62bcb03f6eb32e89bac66553fb0e9e924d55a1/packages/pulsar-evm/src/utils/safeConstants.ts#L41)
 
 A mapping of chain IDs to their corresponding Safe web application URL prefixes.
 Used by selectors like `selectTxExplorerLink` to build correct links for Safe transactions.

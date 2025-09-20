@@ -11,6 +11,7 @@ import { createStore } from 'zustand/vanilla';
 
 import { Adapter, ITxTrackingStore, Transaction } from '../types';
 import { selectAdapterByKey } from '../utils/selectAdapterByKey';
+import { setChainId } from '../utils/сhainHelpers';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 
 /**
@@ -132,7 +133,7 @@ export function createPulsarStore<T extends Transaction>({
               walletType,
               from: walletAddress,
               tracker: updatedTracker || defaultTracker,
-              chainId: desiredChainID,
+              chainId: setChainId(desiredChainID),
               localTimestamp,
               txKey: finalTxKey,
               // For EVM, the hash is often the preliminary key from the action.
