@@ -3,7 +3,13 @@
  * It simplifies the process of creating, signing, and broadcasting a transaction to the network.
  */
 
-import { Instruction, signTransactionMessageWithSigners, SolanaClient, TransactionSendingSigner } from 'gill';
+import {
+  getSignatureFromTransaction,
+  Instruction,
+  signTransactionMessageWithSigners,
+  SolanaClient,
+  TransactionSendingSigner,
+} from 'gill';
 import { createTransaction } from 'gill';
 
 /**
@@ -52,6 +58,14 @@ export async function signAndSendSolanaTx({
   });
   // 3. Sign the transaction message.
   const signedTransaction = await signTransactionMessageWithSigners(transaction);
+  console.log('signedTransaction:', signedTransaction);
+
+  /**
+   * Get the transaction signature after it has been signed by the `feePayer`
+   */
+  const signature = getSignatureFromTransaction(signedTransaction);
+  console.log('signature:', signature);
+
   // 4. Send it to the network.
   return await client.sendAndConfirmTransaction(signedTransaction);
 }
