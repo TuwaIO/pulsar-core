@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.1.7...pulsar-core-v0.1.8) (2025-09-20)
+
+
+### Bug Fixes
+
+* chain id for solana tx ([923452b](https://github.com/TuwaIO/pulsar-core/commit/923452b427d2daf66135fb57d9045723803297c2))
+
 ## [0.1.7](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.1.6...pulsar-core-v0.1.7) (2025-09-18)
 
 
