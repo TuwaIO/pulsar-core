@@ -26,7 +26,9 @@ const tabsItems = [
 ];
 
 export function PackageInstallationTabs({ packagesList }: { packagesList?: string }) {
-  const packages = packagesList ? packagesList : '@tuwaio/pulsar-core @tuwaio/pulsar-evm @tuwaio/pulsar-react';
+  const packages = packagesList
+    ? packagesList
+    : '@tuwaio/pulsar-core @tuwaio/pulsar-evm @tuwaio/pulsar-react @wagmi/core viem zustand immer dayjs';
 
   return (
     <div className="my-4">

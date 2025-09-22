@@ -18,17 +18,17 @@ Its primary role is to ensure that transaction tracking can resume reliably afte
 
 ## 💾 Installation
 
-To use this package, you need the complete Pulsar stack, including `wagmi` for EVM interactions.
+To use this package, you need the complete Pulsar stack, including `@wagmi/core` for EVM interactions.
 
 ```bash
 # Using pnpm
-pnpm add @tuwaio/pulsar-react @tuwaio/pulsar-core @tuwaio/pulsar-evm wagmi viem zustand immer
+pnpm add @tuwaio/pulsar-react @tuwaio/pulsar-core @tuwaio/pulsar-evm @wagmi/core viem zustand immer dayjs
 
 # Using npm
-npm install @tuwaio/pulsar-react @tuwaio/pulsar-core @tuwaio/pulsar-evm wagmi viem zustand immer
+npm install @tuwaio/pulsar-react @tuwaio/pulsar-core @tuwaio/pulsar-evm @wagmi/core viem zustand immer dayjs
 
 # Using yarn
-yarn add @tuwaio/pulsar-react @tuwaio/pulsar-core @tuwaio/pulsar-evm wagmi viem zustand immer
+yarn add @tuwaio/pulsar-react @tuwaio/pulsar-core @tuwaio/pulsar-evm @wagmi/core viem zustand immer dayjs
 ```
 
 ---
@@ -52,7 +52,7 @@ import { wagmiConfig, chains } from '../configs/wagmi'; // Your wagmi config
 // 1. Create the vanilla store instance
 const pulsarStore = createPulsarStore({
   name: 'my-app-pulsar-storage',
-  adapters: [evmAdapter(wagmiConfig, chains)],
+  adapter: [evmAdapter(wagmiConfig, chains)],
   // ... other configurations
 });
 

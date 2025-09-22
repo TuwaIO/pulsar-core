@@ -31,24 +31,24 @@ While its main export is the `evmAdapter`, it also includes a suite of standalon
 
 ## 💾 Installation
 
-This package is designed to be used as part of the Pulsar stack and requires `wagmi` and `viem`. Install all necessary packages together:
+This package is designed to be used as part of the Pulsar stack and requires `@wagmi/core` and `viem`. Install all necessary packages together:
 
 ```bash
 # Using pnpm
-pnpm add @tuwaio/pulsar-evm @tuwaio/pulsar-core wagmi viem zustand immer
+pnpm add @tuwaio/pulsar-evm @tuwaio/pulsar-core @wagmi/core viem zustand immer dayjs
 
 # Using npm
-npm install @tuwaio/pulsar-evm @tuwaio/pulsar-core wagmi viem zustand immer
+npm install @tuwaio/pulsar-evm @tuwaio/pulsar-core @wagmi/core viem zustand immer dayjs
 
 # Using yarn
-yarn add @tuwaio/pulsar-evm @tuwaio/pulsar-core wagmi viem zustand immer
+yarn add @tuwaio/pulsar-evm @tuwaio/pulsar-core @wagmi/core viem zustand immer dayjs
 ```
 
 ---
 
 ## 🚀 Usage
 
-### 1\. Primary Usage: The `evmAdapter`
+### 1. Primary Usage: The `evmAdapter`
 
 For most applications, you'll only need to import the `evmAdapter` and pass it to your `createPulsarStore` configuration.
 
@@ -67,7 +67,7 @@ export const pulsarStore = createPulsarStore({
 });
 ```
 
-### 2\. Using Standalone Actions
+### 2. Using Standalone Actions
 
 This package also exports utility actions that you can wire up to your UI for features like speeding up or canceling transactions.
 
@@ -106,7 +106,7 @@ function SpeedUpButton({ txKey }) {
 }
 ```
 
-### 3\. Using Standalone Utilities
+### 3. Using Standalone Utilities
 
 You can use exported utilities, like selectors, to get derived data for your UI.
 

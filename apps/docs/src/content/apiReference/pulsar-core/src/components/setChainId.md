@@ -6,7 +6,7 @@
 
 > **setChainId**(`chainId`): `string` \| `number`
 
-Defined in: [packages/pulsar-core/src/utils/сhainHelpers.ts:21](https://github.com/TuwaIO/pulsar-core/blob/581af0fd8f6d32e377a9308802bc37dd710e7877/packages/pulsar-core/src/utils/сhainHelpers.ts#L21)
+Defined in: [packages/pulsar-core/src/utils/сhainHelpers.ts:21](https://github.com/TuwaIO/pulsar-core/blob/a7be35a2b7622d9fa673537aeeda8b529d9c752a/packages/pulsar-core/src/utils/сhainHelpers.ts#L21)
 
 Sets the chain ID to a Solana-specific format if the chain is a Solana network.
 

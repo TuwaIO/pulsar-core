@@ -30,17 +30,17 @@ This package exports one primary factory function: `createPulsarStore`.
 
 ## 💾 Installation
 
-This package requires `zustand` and `immer` as peer dependencies. You must install them alongside `@tuwaio/pulsar-core`.
+This package requires `zustand`, `immer` and `dayjs` as peer dependencies. You must install them alongside `@tuwaio/pulsar-core`.
 
 ```bash
 # Using pnpm
-pnpm add @tuwaio/pulsar-core zustand immer
+pnpm add @tuwaio/pulsar-core zustand immer dayjs
 
 # Using npm
-npm install @tuwaio/pulsar-core zustand immer
+npm install @tuwaio/pulsar-core zustand immer dayjs
 
 # Using yarn
-yarn add @tuwaio/pulsar-core zustand immer
+yarn add @tuwaio/pulsar-core zustand immer dayjs
 ```
 
 ---

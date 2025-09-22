@@ -6,7 +6,7 @@
 
 > **createPulsarStore**\<`T`\>(`__namedParameters`): `WithPersist`\<`StoreApi`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`T`\>\>, [`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`T`\>\>
 
-Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:31](https://github.com/TuwaIO/pulsar-core/blob/581af0fd8f6d32e377a9308802bc37dd710e7877/packages/pulsar-core/src/store/txTrackingStore.ts#L31)
+Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:31](https://github.com/TuwaIO/pulsar-core/blob/a7be35a2b7622d9fa673537aeeda8b529d9c752a/packages/pulsar-core/src/store/txTrackingStore.ts#L31)
 
 Creates the main Pulsar store for transaction tracking.
 
