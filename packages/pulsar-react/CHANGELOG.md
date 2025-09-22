@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.0.5...pulsar-react-v0.0.6) (2025-09-22)
+
+
+### Bug Fixes
+
+* readme ([c1e8baa](https://github.com/TuwaIO/pulsar-core/commit/c1e8baae9bcaaa2894e253b2c2036ca70db60f85))
+
 ## [0.0.5](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.0.4...pulsar-react-v0.0.5) (2025-09-10)
 
 
