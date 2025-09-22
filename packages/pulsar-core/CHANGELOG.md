@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.1.9...pulsar-core-v0.1.10) (2025-09-22)
+
+
+### Bug Fixes
+
+* updates documentation and examples ([75de3ad](https://github.com/TuwaIO/pulsar-core/commit/75de3ad138a5aa9fa986a4589ba24513d05cd16c))
+
 ## [0.1.9](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.1.8...pulsar-core-v0.1.9) (2025-09-22)
 
 
