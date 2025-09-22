@@ -54,31 +54,56 @@ The key to using Pulsar with Solana is to leverage the `solanaAdapter`, which se
 Here's how to create and initialize the central Pulsar store using the `solanaAdapter`. The adapter subscribes to state changes from `@wallet-ui/react`, keeping the transaction pool in sync with your dApp's wallet.
 
 ```typescript
-// src/store/pulsarStore.ts
-import { createPulsarStore } from '@tuwaio/pulsar-core';
+// src/providers/PulsarProvider.ts
+import { createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
 import { solanaAdapter } from '@tuwaio/pulsar-solana';
 import { useWalletUi } from '@wallet-ui/react';
-import { useMemo } from 'react';
+import { PropsWithChildren, useMemo } from 'react';
 
-import { TransactionUnion } from '@/providers/PulsarProvider';
+type PulsarStore = ITxTrackingStore<TransactionUnion>;
+const PulsarStoreContext = createContext<StoreApi<PulsarStore> | null>(null);
 
-// This hook creates a Pulsar store instance that is memoized and updates
-// reactively when the wallet's state changes.
-export const useMyPulsarStore = () => {
-  const walletUi = useWalletUi();
+const storageName = 'transactions-tracking-storage';
 
-  // Create the Pulsar store using the solanaAdapter.
-  return useMemo(() => {
+// 2. Define a typed transaction for the 'example' action
+type ExampleTx = Transaction & {
+  type: 'example';
+  payload: {
+    value: number; // Example payload: the new value
+  };
+};
+
+// Create a union of all possible transaction types
+export type TransactionUnion = ExampleTx;
+
+export function PulsarProvider({ children }: PropsWithChildren) {
+  const wallet = useWalletUi();
+
+  const store = useMemo(() => {
     return createPulsarStore<TransactionUnion>({
-      name: 'my-solana-dapp-transactions',
-      adapter: [
-        solanaAdapter({
-          // Pass the entire wallet-ui hook's state to the adapter.
-          walletUi,
-        }),
-      ],
+      name: storageName,
+      adapter: solanaAdapter({
+        wallet: {
+          walletAddress: wallet?.account?.address.toString() ?? '',
+          walletType: wallet?.account?.label ?? 'solana',
+          walletActiveChain: wallet?.cluster.cluster ?? 'mainnet',
+        },
+        rpcUrls: {
+          devnet: 'https://api.devnet.solana.com',
+        },
+      }),
     });
-  }, [walletUi]);
+  }, [wallet]);
+
+  return <PulsarStoreContext.Provider value={store}>{children}</PulsarStoreContext.Provider>;
+}
+
+export const usePulsarStore = <T>(selector: (state: PulsarStore) => T): T => {
+  const store = useContext(PulsarStoreContext);
+  if (!store) {
+    throw new Error('usePulsarStore must be used within a PulsarProvider');
+  }
+  return useStore(store, selector);
 };
 ````
 
@@ -95,6 +120,8 @@ import { TransactionAdapter } from '@tuwaio/pulsar-core';
 // The action function receives the wallet and client from the adapter.
 import { signAndSendSolanaTx } from '@tuwaio/pulsar-solana';
 import { Address, SolanaClient, TransactionSendingSigner } from 'gill';
+
+import { usePulsarStore } from '@/providers/PulsarProvider';
 
 export function myAction({ client, signer }: {
   client: SolanaClient;
@@ -141,20 +168,20 @@ function MyTransactionButton() {
 
 ### 3. Using Standalone Utilities
 
-You can use the helper functions, such as `selectSolanaTxExplorerLink` and `checkSolanaChain`, independently of the Pulsar store. These utilities are particularly useful for enhancing UI components and performing pre-transaction checks.
+You can use the helper functions, such as `getSolanaExplorerLink` and `checkSolanaChain`, independently of the Pulsar store. These utilities are particularly useful for enhancing UI components and performing pre-transaction checks.
 
 **Example: Displaying a user's Solana explorer link**
 
 ```tsx
 // src/components/ExplorerLink.tsx
-import { selectSolanaTxExplorerLink } from '@tuwaio/pulsar-solana';
+import { getSolanaExplorerLink } from '@tuwaio/pulsar-solana';
 import { useWalletUi } from '@wallet-ui/react';
 
 function ExplorerLink({ txSignature }: { txSignature: string }) {
   const { cluster } = useWalletUi();
 
   // Use the cluster from the global state to generate the correct link.
-  const explorerUrl = selectSolanaTxExplorerLink(txSignature, cluster.cluster);
+  const explorerUrl = getSolanaExplorerLink(`/tx/${txSignature}`, cluster.cluster);
 
   return (
     <a href={explorerUrl} target="_blank" rel="noopener noreferrer">

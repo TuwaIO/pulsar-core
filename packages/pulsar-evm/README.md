@@ -53,18 +53,33 @@ yarn add @tuwaio/pulsar-evm @tuwaio/pulsar-core @wagmi/core viem zustand immer d
 For most applications, you'll only need to import the `evmAdapter` and pass it to your `createPulsarStore` configuration.
 
 ```ts
-// src/store/pulsarStore.ts
-import { createPulsarStore } from '@tuwaio/pulsar-core';
+// src/hooks/txTrackingHooks.ts
+import { createBoundedUseStore, createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
 import { evmAdapter } from '@tuwaio/pulsar-evm';
-import { wagmiConfig, chains } from '../configs/wagmi'; // Your wagmi config
 
-// Create the Pulsar store and plug in the EVM adapter
-export const pulsarStore = createPulsarStore({
-  // A unique name for localStorage persistence
-  name: 'my-dapp-transactions',
-  // Provide the evmAdapter with your wagmi config and supported chains
-  adapter: evmAdapter(wagmiConfig, chains),
-});
+import { appChains, config } from '@/configs/wagmiConfig';
+
+const storageName = 'transactions-tracking-storage';
+
+export enum TxType {
+  example = 'example',
+}
+
+type ExampleTx = Transaction & {
+  type: TxType.example;
+  payload: {
+    value: number;
+  };
+};
+
+export type TransactionUnion = ExampleTx;
+
+export const usePulsarStore = createBoundedUseStore(
+  createPulsarStore<TransactionUnion>({
+    name: storageName,
+    adapter: evmAdapter(config, appChains),
+  }),
+);
 ```
 
 ### 2. Using Standalone Actions
@@ -76,11 +91,11 @@ This package also exports utility actions that you can wire up to your UI for fe
 ```tsx
 // src/components/SpeedUpButton.tsx
 import { speedUpTxAction } from '@tuwaio/pulsar-evm';
-import { usePulsar } from '@tuwaio/pulsar-react'; // Or your custom hook
+import { usePulsarStore } from '../hooks/txTrackingHooks'; // Or your custom hook
 import { wagmiConfig } from '../configs/wagmi'; // Your wagmi config
 
 function SpeedUpButton({ txKey }) {
-  const { transactionsPool } = usePulsar();
+  const transactionsPool = usePulsarStore((state) => state.transactionsPool);
   const stuckTransaction = transactionsPool[txKey];
 
   // Only show the button if the transaction is pending and is a standard EVM tx
@@ -115,7 +130,6 @@ You can use exported utilities, like selectors, to get derived data for your UI.
 ```tsx
 // src/components/ExplorerLink.tsx
 import { selectEvmTxExplorerLink } from '@tuwaio/pulsar-evm';
-import { usePulsar } from '@tuwaio/pulsar-react';
 import { chains } from '../configs/wagmi'; // Your wagmi config
 
 function ExplorerLink({ tx }) {

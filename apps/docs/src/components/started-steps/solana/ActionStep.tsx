@@ -6,7 +6,6 @@ import { CodeHighlighter } from '@/components/CodeHighlighter';
 const codeBlock = `import { signAndSendSolanaTx } from '@tuwaio/pulsar-solana';
 import { Address, SolanaClient, TransactionSendingSigner } from 'gill';
 
-import { PROGRAM_ID } from '@/constants';
 import { getIncrementInstruction } from '@/programs';
 
 export function increment({ client, signer, solanatest }: {

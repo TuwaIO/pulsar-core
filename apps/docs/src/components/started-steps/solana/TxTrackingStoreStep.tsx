@@ -35,16 +35,16 @@ import { PulsarStoreContext } from '@/hooks/txTrackingHooks';
 
 const storageName = 'transactions-tracking-storage';
 
-// 2. Define a typed transaction for the 'increment' action
-type IncrementTx = Transaction & {
-  type: 'increment';
+// 2. Define a typed transaction for the 'example' action
+type ExampleTx = Transaction & {
+  type: 'example';
   payload: {
-    value: number; // Example payload: the new value of the counter
+    value: number; // Example payload: the new value
   };
 };
 
 // Create a union of all possible transaction types
-export type TransactionUnion = IncrementTx;
+export type TransactionUnion = ExampleTx;
 
 export function PulsarProvider({ children }: PropsWithChildren) {
   const wallet = useWalletUi();

@@ -54,23 +54,32 @@ This is the main factory function that creates your transaction store. It takes 
 #### **Configuration Example**
 
 ```ts
-import { createPulsarStore } from '@tuwaio/pulsar-core';
-// Example adapter for EVM chains
+import { createBoundedUseStore, createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
 import { evmAdapter } from '@tuwaio/pulsar-evm';
-import { wagmiConfig, chains } from './path/to/your/wagmi/config';
 
-const pulsarStore = createPulsarStore({
-  // A unique name for Zustand's persistence middleware. This will be the key in localStorage.
-  name: 'my-app-pulsar-storage',
-  // An array of adapters for different blockchain ecosystems.
-  // Each adapter provides chain-specific logic.
-  adapter: [
-    evmAdapter(wagmiConfig, chains),
-    // ... add other adapters like solanaAdapter here
-  ],
-});
+import { appChains, config } from '@/configs/wagmiConfig';
 
-export default pulsarStore;
+const storageName = 'transactions-tracking-storage';
+
+export enum TxType {
+  example = 'example',
+}
+
+type ExampleTx = Transaction & {
+  type: TxType.example;
+  payload: {
+    value: number;
+  };
+};
+
+export type TransactionUnion = ExampleTx;
+
+export const usePulsarStore = createBoundedUseStore(
+  createPulsarStore<TransactionUnion>({
+    name: storageName,
+    adapter: evmAdapter(config, appChains),
+  }),
+);
 ```
 
 ### The Returned Store API
@@ -98,8 +107,9 @@ The `createPulsarStore` function returns a vanilla Zustand store with the follow
 
 Pulsar is a modular ecosystem. Here’s how the pieces fit together:
 
-- **`@tuwaio/pulsar-core` (this package):** Provides the generic, headless state machine (`createPulsarStore`). It knows _how_ to manage state but doesn't know anything about specific blockchains.
+- **`@tuwaio/pulsar-core`:** Provides the generic, headless state machine (`createPulsarStore`). It knows _how_ to manage state but doesn't know anything about specific blockchains.
 - **`@tuwaio/pulsar-evm`**: An adapter that plugs into the `adapters` config. It teaches the core store how to interact with EVM chains (e.g., how to check transaction receipts, get wallet info from Wagmi, etc.).
+- **`@tuwaio/pulsar-solana`**: An adapter that plugs into the `adapters` config. It extends the core store to work with the Solana ecosystem, teaching it how to track transactions, get wallet info from `@wallet-ui/react`, and use Solana RPCs.
 - **`@tuwaio/pulsar-react`**: Provides React bindings and hooks (like `useInitializeTransactionsPool`) to easily connect the Pulsar store to your React application's lifecycle.
 
 ---

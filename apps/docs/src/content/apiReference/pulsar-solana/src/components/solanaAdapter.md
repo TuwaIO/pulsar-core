@@ -6,7 +6,7 @@
 
 > **solanaAdapter**\<`T`\>(`config`): `TxAdapter`\<`T`\>
 
-Defined in: [packages/pulsar-solana/src/adapters/solanaAdapter.ts:28](https://github.com/TuwaIO/pulsar-core/blob/a7be35a2b7622d9fa673537aeeda8b529d9c752a/packages/pulsar-solana/src/adapters/solanaAdapter.ts#L28)
+Defined in: [packages/pulsar-solana/src/adapters/solanaAdapter.ts:28](https://github.com/TuwaIO/pulsar-core/blob/c72496708aaee3876552289f9710c5c529bb4798/packages/pulsar-solana/src/adapters/solanaAdapter.ts#L28)
 
 Creates a Solana adapter for the Pulsar transaction tracking engine.
 This factory function produces a wallet-library-agnostic adapter that can be

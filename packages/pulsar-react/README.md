@@ -43,24 +43,34 @@ Here is a complete step-by-step example:
 
 First, create your vanilla Pulsar store and a reusable, bounded hook to access it. This pattern is recommended by Zustand for type safety and ease of use.
 
-```tsx
-// src/store/pulsar.ts
-import { createBoundedUseStore, createPulsarStore } from '@tuwaio/pulsar-core';
+```ts
+// src/hooks/txTrackingHooks.ts
+import { createBoundedUseStore, createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
 import { evmAdapter } from '@tuwaio/pulsar-evm';
-import { wagmiConfig, chains } from '../configs/wagmi'; // Your wagmi config
 
-// 1. Create the vanilla store instance
-const pulsarStore = createPulsarStore({
-  name: 'my-app-pulsar-storage',
-  adapter: [evmAdapter(wagmiConfig, chains)],
-  // ... other configurations
-});
+import { appChains, config } from '@/configs/wagmiConfig';
 
-// 2. Create and export the bounded hook for React components
-export const usePulsar = createBoundedUseStore(pulsarStore);
+const storageName = 'transactions-tracking-storage';
 
-// 3. Export the vanilla store for non-React usage if needed
-export default pulsarStore;
+export enum TxType {
+  example = 'example',
+}
+
+type ExampleTx = Transaction & {
+  type: TxType.example;
+  payload: {
+    value: number;
+  };
+};
+
+export type TransactionUnion = ExampleTx;
+
+export const usePulsarStore = createBoundedUseStore(
+  createPulsarStore<TransactionUnion>({
+    name: storageName,
+    adapter: evmAdapter(config, appChains),
+  }),
+);
 ```
 
 ### Step 2: Initialize the Store in Your App
@@ -72,7 +82,7 @@ Create a small, client-side component that uses the `useInitializeTransactionsPo
 'use client';
 
 import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
-import { usePulsar } from '../store/pulsar';
+import { usePulsarStore } from '../hooks/txTrackingHooks';
 
 export const PulsarInitializer = () => {
   // Get the initialization function from the store via our custom hook
