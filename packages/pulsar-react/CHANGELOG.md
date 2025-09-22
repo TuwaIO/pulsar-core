@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.7](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.0.6...pulsar-react-v0.0.7) (2025-09-22)
+
+
+### Bug Fixes
+
+* updates documentation and examples ([75de3ad](https://github.com/TuwaIO/pulsar-core/commit/75de3ad138a5aa9fa986a4589ba24513d05cd16c))
+
 ## [0.0.6](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.0.5...pulsar-react-v0.0.6) (2025-09-22)
 
 
