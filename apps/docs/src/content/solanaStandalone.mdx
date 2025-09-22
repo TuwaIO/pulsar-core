@@ -1,0 +1,138 @@
+# Using Solana Trackers Standalone
+
+While the Pulsar suite offers a full stack solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture remains modular and flexible. This means you can utilize the low-level **trackers** (`solanaTracker`) from `@tuwaio/pulsar-solana` directly, without installing or configuring the complete state management store.
+
+This flexibility is ideal if:
+
+- You already have your own state management solution (Redux, MobX, Valtio, etc.) and want to integrate only the transaction tracking logic.
+- You require tracking on the server-side, where a client-centric store isn't necessary.
+- You desire granular control over each stage of a transaction’s lifecycle for custom workflows.
+
+---
+
+## Why Use `solanaTracker`?
+
+Some might ask, "Why should I use `solanaTracker` when I can just manually track the transaction state using the Solana RPC?" While manual polling is possible, `solanaTracker` provides a more robust, comprehensive, and ready-to-use solution.
+
+| Feature                     | Solana RPC (manual polling) | `solanaTracker` (Pulsar) |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Handles RPC Lags** | ❌ No. If called immediately after submission, the RPC node might not have indexed the transaction yet, causing errors. | ✅ **Yes.** Built-in retry mechanism to wait for the transaction to appear in the mempool, mitigating RPC delays. |
+| **Full Lifecycle Support** | 🤷‍♂️ Limited. You must manually implement logic for different states (sent, confirmed, failed). | ✅ **Yes.** Provides callbacks for each stage: initialization, details fetched, mined, replaced, failed, etc. |
+| **Fetches Full Tx Details** | ❌ No. Requires additional RPC calls to get full transaction info after confirmation. | ✅ **Yes.** Calls for `getTransaction` internally, providing parsed transaction details to callbacks. |
+| **Abstraction Level** | Low. You must manage the tracking states and polling manually. | High. Encapsulates the entire process into a single, convenient async function, simplifying implementation. |
+
+In essence, `solanaTracker` is a reliable wrapper around Solana RPC functions, addressing common edge cases and significantly reducing manual effort.
+
+---
+
+## Trackers Overview
+
+### 1. Solana Tracker
+
+This is the primary tracker for monitoring standard transactions on Solana, identified via a transaction signature.
+
+#### How It Works
+
+`solanaTracker` initially attempts to fetch transaction details. If the transaction is not found (due to RPC indexing lag), it retries until it is found or a timeout occurs. Once the details are available, it actively waits for the transaction to be confirmed on-chain.
+
+#### Example Usage
+```tsx
+import { solanaTracker } from '@tuwaio/pulsar-solana';
+import { useWalletUi } from '@wallet-ui/react';
+
+async function trackMySolanaTransaction(txSignature: string) {
+  const wallet = useWalletUi();
+
+  await solanaTracker({
+    tx: {
+      txKey: txSignature,
+      from: wallet?.account?.address.toString() ?? '',
+      rpcUrl: wallet.cluster.urlOrMoniker,
+      chainId: 'devnet',
+    },
+    onIntervalTick: (response) => {
+      console.log('Transaction details received:', response);
+      // Update your UI/state with transaction details
+    },
+    onSuccess: (response) => {
+      console.log('Transaction confirmed!', response);
+      // Handle success status
+    },
+    onFailure: (response) => {
+      console.error('Tracking failed:', response.err);
+      // Handle errors
+    },
+  });
+}
+````
+
+-----
+
+## Helper Functions
+
+### `signAndSendSolanaTx`
+
+This utility function simplifies the process of creating, signing, and broadcasting a Solana transaction to the network. It fetches the latest blockhash, creates a versioned transaction, signs it with a provided signer (e.g., a wallet), and sends it to the network.
+
+#### Example Usage
+
+```tsx
+import type { Instruction, SolanaClient, TransactionSendingSigner } from 'gill';
+import { createTransaction, getBase58Decoder, signAndSendTransactionMessageWithSigners } from 'gill';
+import { signAndSendSolanaTx } from '@tuwaio/pulsar-solana';
+
+async function sendTransaction(client: SolanaClient, signer: TransactionSendingSigner, instruction: Instruction) {
+  try {
+    const signature = await signAndSendSolanaTx({
+      client,
+      signer,
+      instruction,
+    });
+    console.log('Transaction sent with signature:', signature);
+  } catch (error) {
+    console.error('Failed to send transaction:', error);
+  }
+}
+```
+
+### `checkSolanaChain`
+
+This function verifies if the user is connected to the correct Solana network and can prompt for a network switch if necessary. This is useful for ensuring transactions are sent to the intended cluster.
+
+#### Example Usage
+
+```tsx
+import { checkSolanaChain } from '@tuwaio/pulsar-solana';
+import { useWalletUi } from '@wallet-ui/react';
+
+async function ensureCorrectNetwork() {
+  const wallet = useWalletUi();
+  const requiredChainId = 'devnet';
+
+  try {
+    await checkSolanaChain(requiredChainId, wallet?.cluster.cluster);
+    console.log('Network is correct, proceeding...');
+  } catch (error) {
+    console.error('Network mismatch:', error.message);
+  }
+}
+```
+
+### `getSolanaExplorerLink`
+
+A utility to generate a link to a Solana block explorer for a given chain ID.
+
+#### Example Usage
+
+```tsx
+import { getSolanaExplorerLink } from '@tuwaio/pulsar-solana';
+
+const txSignature = '3E2Z2hYtF1zG2y...';
+const explorerLink = getSolanaExplorerLink(`/tx/${txSignature}`);
+console.log('Explorer link:', explorerLink);
+// Output: [https://solscan.io/tx/3E2Z2hYtF1zG2y...?cluster=mainnet](https://solscan.io/tx/3E2Z2hYtF1zG2y...?cluster=mainnet)
+```
+
+---
+
+Feel free to ask for further customization examples or clarifications on implementing specific trackers or utilities!

@@ -51,7 +51,7 @@ const ExampleCard: React.FC<ExampleCardProps> = ({
       } ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer hover:shadow-xl'}`}
     >
       {/* Status Badge */}
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-1 right-1">
         <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusConfig[status].badgeClass}`}>
           {statusConfig[status].badge}
         </span>
@@ -139,14 +139,33 @@ const ExampleCard: React.FC<ExampleCardProps> = ({
 export const ReadmeCards: React.FC = () => {
   const examples: ExampleCardProps[] = [
     {
+      title: 'Next.js + @wallet-ui/core (solana) + RainbowKit (evm)',
+      description:
+        'Next.js application using @wallet-ui/core and RainbowKit for a minimal and clean wallet connection experience.',
+      framework: 'Next.js 15',
+      technologies: ['React 19', 'TypeScript', '@wallet-ui/core', 'RainbowKit', 'Wagmi', 'TailwindCSS'],
+      status: 'ready',
+      githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/nextjs-all',
+      difficulty: 'advanced',
+      demoUrl: 'https://all-example.tuwa.io/',
+    },
+    {
+      title: 'Next.js + @wallet-ui/core (solana)',
+      description: 'Next.js application using @wallet-ui/core for a minimal and clean wallet connection experience.',
+      framework: 'Next.js 15',
+      technologies: ['React 19', 'TypeScript', '@wallet-ui/core', 'Wagmi', 'TailwindCSS'],
+      status: 'ready',
+      githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/nextjs-solana',
+      difficulty: 'intermediate',
+    },
+    {
       title: 'Next.js + Dynamic.xyz',
       description: 'Next.js application using Dynamic.xyz for a minimal and clean wallet connection experience.',
       framework: 'Next.js 15',
       technologies: ['React 19', 'TypeScript', 'Dynamic.xyz', 'Wagmi', 'TailwindCSS'],
       status: 'ready',
       githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/nextjs-dynamic',
-      difficulty: 'intermediate',
-      // demoUrl: 'https://dynamic.example.tuwa.io/',
+      difficulty: 'advanced',
     },
     {
       title: 'Next.js + ConnectKit',
@@ -156,7 +175,6 @@ export const ReadmeCards: React.FC = () => {
       status: 'ready',
       githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/nextjs-connectkit',
       difficulty: 'beginner',
-      // demoUrl: 'https://connectkit.example.tuwa.io/',
     },
     {
       title: 'Next.js + Reown AppKit',
@@ -165,7 +183,7 @@ export const ReadmeCards: React.FC = () => {
       technologies: ['React 19', 'TypeScript', 'Reown AppKit', 'Wagmi', 'TailwindCSS'],
       status: 'ready',
       githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/nextjs-reown',
-      difficulty: 'intermediate',
+      difficulty: 'advanced',
     },
     {
       title: 'Next.js + RainbowKit',
@@ -176,7 +194,6 @@ export const ReadmeCards: React.FC = () => {
       status: 'ready',
       githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/nextjs-rainbowkit',
       difficulty: 'beginner',
-      demoUrl: 'https://rainbowkit.example.tuwa.io/',
     },
     {
       title: 'Next.js + Web3Auth',
@@ -186,7 +203,6 @@ export const ReadmeCards: React.FC = () => {
       status: 'ready',
       githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/nextjs-web3auth',
       difficulty: 'advanced',
-      demoUrl: 'https://web3auth.example.tuwa.io/',
     },
     {
       title: 'Vite + RainbowKit',

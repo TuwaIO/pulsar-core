@@ -1,7 +1,7 @@
 import { PackageInstallationTabs } from '@/components/PackageInstallationTabs';
-import { ABIStep } from '@/components/started-steps/ABIStep';
-import { ActionStep } from '@/components/started-steps/ActionStep';
-import { TxTrackingStoreStep } from '@/components/started-steps/TxTrackingStoreStep';
+import { ABIStep } from '@/components/started-steps/evm/ABIStep';
+import { ActionStep } from '@/components/started-steps/evm/ActionStep';
+import { TxTrackingStoreStep } from '@/components/started-steps/evm/TxTrackingStoreStep';
 
 export function CombineSteps() {
   return (

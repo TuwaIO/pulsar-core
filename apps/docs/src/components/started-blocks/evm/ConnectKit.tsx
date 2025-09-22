@@ -1,6 +1,6 @@
 'use client';
 
-import { StartedBlockWrapper } from '@/components/started-blocks/StartedBlockWrapper';
+import { StartedBlockWrapper } from '@/components/started-blocks/evm/StartedBlockWrapper';
 
 export function ConnectKit() {
   return (

@@ -8,14 +8,6 @@ import { CodeHighlighter } from '@/components/CodeHighlighter';
 
 const tabsItems = [
   {
-    title: 'npm',
-    command: 'npm install',
-  },
-  {
-    title: 'yarn',
-    command: 'yarn add',
-  },
-  {
     title: 'pnpm',
     command: 'pnpm add',
   },
@@ -23,10 +15,18 @@ const tabsItems = [
     title: 'bun',
     command: 'bun add',
   },
+  {
+    title: 'npm',
+    command: 'npm install',
+  },
+  {
+    title: 'yarn',
+    command: 'yarn add',
+  },
 ];
 
-export function PackageInstallationTabs() {
-  const packages = '@tuwaio/pulsar-core @tuwaio/pulsar-evm @tuwaio/pulsar-react';
+export function PackageInstallationTabs({ packagesList }: { packagesList?: string }) {
+  const packages = packagesList ? packagesList : '@tuwaio/pulsar-core @tuwaio/pulsar-evm @tuwaio/pulsar-react';
 
   return (
     <div className="my-4">

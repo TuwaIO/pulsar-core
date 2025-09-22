@@ -13,7 +13,7 @@ const txBlockStepCodeGenerate = ({ importLine, buttonLine }: TxBlockStepCodeGene
 
 ${importLine}
 import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
-import { TransactionAdapter } from '@tuwaio/pulsar-evm';
+import { TransactionAdapter } from '@tuwaio/pulsar-core';
 import { sepolia } from 'viem/chains';
 
 // The wagmi config is needed by the action function itself

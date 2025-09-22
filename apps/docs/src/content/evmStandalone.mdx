@@ -152,24 +152,7 @@ async function ensureCorrectNetwork(chainId: number | string) {
     // Handle error, e.g., showing a message to the user about network mismatch
   }
 }
-``` 
-
----
-
-## Integration with Pulsar Store
-
-The `evmTrackerForStore` function simplifies tracking integration with your application's state store, automatically updating transaction statuses at each lifecycle stage.
-```tsx
-import { evmTrackerForStore } from '@tuwaio/pulsar-evm';
-
-evmTrackerForStore({
-  chains: yourChainsArray,
-  tx: yourTransactionObject,
-  updateTxParams: yourStateUpdateFunction // e.g., store.setTransaction
-});
-``` 
-
-This approach ensures your UI reflects real-time transaction states without manual polling or state management overhead.
+```
 
 ---
 
