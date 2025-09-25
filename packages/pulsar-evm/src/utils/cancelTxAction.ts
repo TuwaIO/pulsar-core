@@ -2,7 +2,8 @@
  * @file This file contains a utility function for canceling a pending EVM transaction.
  */
 
-import { Transaction, TransactionAdapter } from '@tuwaio/pulsar-core';
+import { OrbitAdapter } from '@tuwaio/orbit-core';
+import { Transaction } from '@tuwaio/pulsar-core';
 import { Config, getAccount, sendTransaction } from '@wagmi/core';
 import { Hex } from 'viem';
 
@@ -47,7 +48,7 @@ const GAS_INCREASE_PERCENTAGE = 1.15;
  */
 export async function cancelTxAction<T extends Transaction>({ config, tx }: { config: Config; tx: T }): Promise<Hex> {
   // 1. Validate the transaction type
-  if (tx.adapter !== TransactionAdapter.EVM) {
+  if (tx.adapter !== OrbitAdapter.EVM) {
     throw new Error(`Cancellation is only available for EVM transactions. Received adapter type: '${tx.adapter}'.`);
   }
 

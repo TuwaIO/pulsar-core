@@ -4,19 +4,18 @@
  * `getSignatureStatuses` RPC method for updates on transaction status.
  */
 
+import { OrbitAdapter } from '@tuwaio/orbit-core';
+import { createSolanaRPC } from '@tuwaio/orbit-solana';
 import {
   initializePollingTracker,
   ITxTrackingStore,
   OnSuccessCallback,
   PollingTrackerConfig,
   Transaction,
-  TransactionAdapter,
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
 import dayjs from 'dayjs';
 import { Signature, TransactionError } from 'gill';
-
-import { createSolanaRPC } from '../utils/createSolanaRPC';
 
 /**
  * @typedef SolanaSignatureStatusResponse
@@ -62,7 +61,7 @@ export async function solanaFetcher({
   onIntervalTick,
 }: SolanaFetcherParams): Promise<void> {
   // Validate that the transaction uses the Solana adapter
-  if (tx.adapter !== TransactionAdapter.SOLANA) {
+  if (tx.adapter !== OrbitAdapter.SOLANA) {
     throw new Error('Tx adapter is not Solana. Please set the adapter to "solana" in the transaction object.');
   }
 

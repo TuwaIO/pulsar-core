@@ -6,11 +6,11 @@
  * @vitest-environment jsdom
  */
 
+import { OrbitAdapter } from '@tuwaio/orbit-core';
 import {
   initializePollingTracker,
   PollingTrackerConfig,
   SolanaTransaction,
-  TransactionAdapter,
   TransactionStatus,
   TransactionTracker,
 } from '@tuwaio/pulsar-core';
@@ -40,7 +40,7 @@ describe('solanaTrackerForStore', () => {
   beforeEach(() => {
     // Define a mock Solana transaction with proper fields.
     mockTx = {
-      adapter: TransactionAdapter.SOLANA,
+      adapter: OrbitAdapter.SOLANA,
       txKey: 'mockedTxKey',
       rpcUrl: 'https://api.mainnet-beta.solana.com',
       localTimestamp: dayjs().unix(),

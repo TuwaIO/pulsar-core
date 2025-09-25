@@ -4,14 +4,13 @@
  * immutable updates, and a persistence middleware to maintain state across user sessions.
  */
 
+import { selectAdapterByKey, setChainId } from '@tuwaio/orbit-core';
 import dayjs from 'dayjs';
 import { produce } from 'immer';
 import { persist, PersistOptions } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
-import { Adapter, ITxTrackingStore, Transaction } from '../types';
-import { selectAdapterByKey } from '../utils/selectAdapterByKey';
-import { setChainId } from '../utils/сhainHelpers';
+import { ITxTrackingStore, PulsarAdapter, Transaction } from '../types';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 
 /**
@@ -31,7 +30,7 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 export function createPulsarStore<T extends Transaction>({
   adapter,
   ...options
-}: Adapter<T> & PersistOptions<ITxTrackingStore<T>>) {
+}: PulsarAdapter<T> & PersistOptions<ITxTrackingStore<T>>) {
   return createStore<ITxTrackingStore<T>>()(
     persist(
       (set, get) => ({

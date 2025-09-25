@@ -3,15 +3,15 @@
  * This adapter encapsulates all the logic required to interact with EVM-based chains using wagmi.
  */
 
-import { Transaction, TransactionAdapter, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
+import { getWalletTypeFromConnectorName, OrbitAdapter } from '@tuwaio/orbit-core';
+import { checkAndSwitchChain, getAvatar, getName } from '@tuwaio/orbit-evm';
+import { Transaction, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
 import { Config, getAccount } from '@wagmi/core';
 import { Chain, zeroAddress } from 'viem';
 
 import { cancelTxAction } from '../utils/cancelTxAction';
 import { checkAndInitializeTrackerInStore } from '../utils/checkAndInitializeTrackerInStore';
-import { checkChainForTx } from '../utils/checkChainForTx';
 import { checkTransactionsTracker } from '../utils/checkTransactionsTracker';
-import { getAvatar, getName } from '../utils/ensUtils';
 import { selectEvmTxExplorerLink } from '../utils/selectEvmTxExplorerLink';
 import { speedUpTxAction } from '../utils/speedUpTxAction';
 
@@ -30,23 +30,29 @@ import { speedUpTxAction } from '../utils/speedUpTxAction';
  *
  * @throws {Error} Throws an error if the wagmi `config` is not provided.
  */
-export function evmAdapter<T extends Transaction>(config: Config, appChains: Chain[]): TxAdapter<T> {
+export function pulsarEvmAdapter<T extends Transaction>(
+  config: Config,
+  appChains: readonly [Chain, ...Chain[]],
+): TxAdapter<T> {
   if (!config) {
     throw new Error('EVM adapter requires a wagmi config object.');
   }
 
   return {
-    key: TransactionAdapter.EVM,
+    key: OrbitAdapter.EVM,
 
     // --- Core Methods ---
     getWalletInfo: () => {
       const activeWallet = getAccount(config);
       return {
         walletAddress: activeWallet.address ?? zeroAddress,
-        walletType: activeWallet.connector?.name?.toLowerCase() ?? 'unknown',
+        walletType: getWalletTypeFromConnectorName(
+          OrbitAdapter.EVM,
+          activeWallet.connector?.name?.toLowerCase() ?? 'unknown',
+        ),
       };
     },
-    checkChainForTx: (chainId: string | number) => checkChainForTx(chainId as number, config),
+    checkChainForTx: (chainId: string | number) => checkAndSwitchChain(chainId as number, config),
     checkTransactionsTracker: (actionTxKey, walletType) => checkTransactionsTracker(actionTxKey, walletType),
     checkAndInitializeTrackerInStore: ({ tx, ...rest }) =>
       checkAndInitializeTrackerInStore({ tracker: tx.tracker, tx, chains: appChains, ...rest }),

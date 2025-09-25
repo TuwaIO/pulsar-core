@@ -3,13 +3,13 @@
  * It uses a polling mechanism to query the Safe Transaction Service API for the status of a `safeTxHash`.
  */
 
+import { OrbitAdapter } from '@tuwaio/orbit-core';
 import {
   initializePollingTracker,
   ITxTrackingStore,
   OnSuccessCallback,
   PollingTrackerConfig,
   Transaction,
-  TransactionAdapter,
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
 import dayjs from 'dayjs';
@@ -167,7 +167,7 @@ export function safeTrackerForStore<T extends Transaction>({
       updateTxParams(tx.txKey, {
         status: TransactionStatus.Replaced,
         pending: false,
-        hash: tx.adapter === TransactionAdapter.EVM ? tx.hash : zeroHash,
+        hash: tx.adapter === OrbitAdapter.EVM ? tx.hash : zeroHash,
         // The `replacedTxHash` is the `safeTxHash` of the transaction that was executed instead.
         replacedTxHash: response.safeTxHash ?? zeroHash,
         finishedTimestamp: response.executionDate ? dayjs(response.executionDate).unix() : undefined,

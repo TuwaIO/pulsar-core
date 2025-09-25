@@ -18,7 +18,7 @@ type InitializeTrackerParams<T extends Transaction> = Pick<
   ITxTrackingStore<T>,
   'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
 > & {
-  chains: Chain[];
+  chains: readonly [Chain, ...Chain[]];
   tx: T;
   tracker: TransactionTracker;
 } & OnSuccessCallback<T>;

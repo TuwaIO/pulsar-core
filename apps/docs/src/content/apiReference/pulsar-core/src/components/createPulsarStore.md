@@ -6,7 +6,7 @@
 
 > **createPulsarStore**\<`T`\>(`__namedParameters`): `WithPersist`\<`StoreApi`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`T`\>\>, [`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`T`\>\>
 
-Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:31](https://github.com/TuwaIO/pulsar-core/blob/c72496708aaee3876552289f9710c5c529bb4798/packages/pulsar-core/src/store/txTrackingStore.ts#L31)
+Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:30](https://github.com/TuwaIO/pulsar-core/blob/4b67ec90377e30bc90519177a553a449e097fe32/packages/pulsar-core/src/store/txTrackingStore.ts#L30)
 
 Creates the main Pulsar store for transaction tracking.
 
@@ -26,7 +26,7 @@ The specific transaction type, extending the base `Transaction`.
 
 ### \_\_namedParameters
 
-[`Adapter`](../type-aliases/Adapter.md)\<`T`\> & `PersistOptions`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`T`\>, [`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`T`\>, `unknown`\>
+[`PulsarAdapter`](../type-aliases/PulsarAdapter.md)\<`T`\> & `PersistOptions`\<[`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`T`\>, [`ITxTrackingStore`](../type-aliases/ITxTrackingStore.md)\<`T`\>, `unknown`\>
 
 ## Returns
 

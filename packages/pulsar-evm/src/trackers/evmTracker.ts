@@ -4,6 +4,7 @@
  * a transaction's lifecycle from submission to finality.
  */
 
+import { createViemClient } from '@tuwaio/orbit-evm';
 import { ITxTrackingStore, OnSuccessCallback, Transaction, TransactionStatus } from '@tuwaio/pulsar-core';
 import {
   Chain,
@@ -17,8 +18,6 @@ import {
 } from 'viem';
 import { getBlock, getTransaction, waitForTransactionReceipt } from 'viem/actions';
 
-import { createViemClient } from '../utils/createViemClient';
-
 const DEFAULT_RETRY_COUNT = 10;
 const DEFAULT_RETRY_TIMEOUT_MS = 3000;
 
@@ -27,7 +26,7 @@ const DEFAULT_RETRY_TIMEOUT_MS = 3000;
  */
 export type EVMTrackerParams = {
   tx: Pick<Transaction, 'chainId' | 'txKey'>;
-  chains: Chain[];
+  chains: readonly [Chain, ...Chain[]];
   onTxDetailsFetched: (txDetails: GetTransactionReturnType) => void;
   onSuccess: (txDetails: GetTransactionReturnType, receipt: TransactionReceipt, client: Client) => Promise<void>;
   onReplaced: (replacement: ReplacementReturnType) => void;

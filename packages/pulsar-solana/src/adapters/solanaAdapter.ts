@@ -2,16 +2,17 @@
  * @file This file contains the factory function for creating the Solana adapter for Pulsar.
  */
 
-import { Transaction, TransactionAdapter, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
+import { connectedWalletChainHelpers, getWalletTypeFromConnectorName, OrbitAdapter } from '@tuwaio/orbit-core';
+import { createSolanaRPC, getCluster, getRpcUrlForCluster, getSolanaExplorerLink } from '@tuwaio/orbit-solana';
+import { Transaction, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
+import { getWallets } from '@wallet-standard/app';
+import { getOrCreateUiWalletForStandardWallet_DO_NOT_USE_OR_YOU_WILL_BE_FIRED as getOrCreateUiWalletForStandardWallet } from '@wallet-standard/ui-registry';
 import { SolanaClusterMoniker } from 'gill';
 
 import { SolanaChainMismatchError } from '../errors';
 import { SolanaAdapterConfig } from '../types';
 import { checkAndInitializeTrackerInStore } from '../utils/checkAndInitializeTrackerInStore';
 import { checkSolanaChain } from '../utils/checkSolanaChain';
-import { createSolanaRPC } from '../utils/createSolanaRPC';
-import { getSolanaExplorerLink } from '../utils/getSolanaExplorerLink';
-import { getSolanaAvatar, getSolanaName } from '../utils/snsUtils';
 
 /**
  * Creates a Solana adapter for the Pulsar transaction tracking engine.
@@ -25,48 +26,34 @@ import { getSolanaAvatar, getSolanaName } from '../utils/snsUtils';
  *
  * @throws {Error} Throws an error if the wagmi `config` is not provided.
  */
-export function solanaAdapter<T extends Transaction>(config: SolanaAdapterConfig): TxAdapter<T> {
-  const { wallet, rpcUrls } = config;
+export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapterConfig): TxAdapter<T> {
+  const { rpcUrls } = config;
 
   /**
-   * Safely extracts the cluster moniker from a chain identifier.
-   * Handles both full chain IDs ('solana:mainnet-beta') and simple monikers ('mainnet-beta').
-   * @param chain The chain identifier or moniker.
-   * @returns The extracted cluster moniker.
+   * Helper to get all available wallets
    */
-  const getCluster = (chain?: string): SolanaClusterMoniker => {
-    const defaultCluster: SolanaClusterMoniker = 'mainnet';
-    if (!chain) {
-      return wallet?.walletActiveChain ?? defaultCluster;
-    }
-    return (chain.includes(':') ? chain.split(':')[1] : chain) as SolanaClusterMoniker;
-  };
-
-  /**
-   * Retrieves the configured RPC URL for a given cluster moniker.
-   * @param cluster The target cluster. Defaults to the wallet's active chain.
-   * @returns The RPC URL or undefined if not found.
-   */
-  const getRpcUrlForCluster = (cluster?: SolanaClusterMoniker): string | undefined => {
-    const targetCluster = cluster ?? wallet?.walletActiveChain;
-    if (!targetCluster) return undefined;
-    return rpcUrls[targetCluster];
-  };
+  const getAvailableWallets = () => getWallets().get().map(getOrCreateUiWalletForStandardWallet);
 
   return {
-    key: TransactionAdapter.SOLANA,
+    key: OrbitAdapter.SOLANA,
 
-    getWalletInfo: () => ({
-      walletAddress: wallet?.walletAddress ?? '0x0',
-      walletType: wallet?.walletType ?? 'unknown',
-    }),
+    getWalletInfo: () => {
+      const wallets = getAvailableWallets();
+      const connectedWallet = wallets.filter((wallet) => wallet.accounts.length > 0)[0];
+      return {
+        walletAddress: connectedWallet.accounts[0].address ?? '0x0',
+        walletType: getWalletTypeFromConnectorName(OrbitAdapter.SOLANA, connectedWallet.name),
+      };
+    },
 
     checkChainForTx: async (txChain) => {
-      if (!wallet) {
+      const wallets = getAvailableWallets();
+      const connectedWallet = wallets.filter((wallet) => wallet.accounts.length > 0)[0];
+      if (!connectedWallet) {
         throw new Error('Wallet not provided. Cannot perform chain check.');
       }
       try {
-        checkSolanaChain(txChain as string, wallet.walletActiveChain);
+        checkSolanaChain(txChain as string, connectedWalletChainHelpers.getConnectedWalletChain() ?? '');
       } catch (e) {
         if (e instanceof SolanaChainMismatchError) throw e;
         throw new Error(`Chain check failed: ${e instanceof Error ? e.message : String(e)}`);
@@ -86,46 +73,48 @@ export function solanaAdapter<T extends Transaction>(config: SolanaAdapterConfig
       });
     },
 
-    getExplorerUrl: (url) => {
-      const cluster = wallet?.walletActiveChain ?? 'mainnet';
-      return getSolanaExplorerLink(url, cluster);
+    getExplorerUrl: (url, chainId) => {
+      const cluster = getCluster({ cluster: chainId as string }) ?? 'mainnet';
+      return getSolanaExplorerLink(url, cluster as SolanaClusterMoniker);
     },
 
     getExplorerTxUrl: (tx) => {
-      const cluster = getCluster(tx?.chainId as string);
+      const cluster = getCluster({ cluster: tx?.chainId as string }) as SolanaClusterMoniker;
       return getSolanaExplorerLink(`/tx/${tx.txKey}`, cluster);
     },
-
+    // TODO: remove after styling wallet connect flow
     getName: async (address) => {
-      const rpcUrl = getRpcUrlForCluster(wallet?.walletActiveChain);
-      if (!rpcUrl) {
-        console.warn('Cannot get name: RPC URL for the current chain is not configured.');
-        return null;
-      }
-      return getSolanaName(rpcUrl, address);
+      const wallets = getAvailableWallets();
+      const connectedWallet = wallets.filter((wallet) =>
+        wallet.accounts.some((account) => account.address.toLowerCase() === address.toLowerCase()),
+      )[0];
+      return connectedWallet?.accounts[0]?.label ?? address;
     },
-
+    // TODO: remove after styling wallet connect flow
     getAvatar: async (name) => {
-      const rpcUrl = getRpcUrlForCluster(wallet?.walletActiveChain);
-      if (!rpcUrl) {
-        console.warn('Cannot get avatar: RPC URL for the current chain is not configured.');
-        return null;
-      }
-      return getSolanaAvatar(rpcUrl, name);
+      const wallets = getAvailableWallets();
+      const connectedWallet = wallets.filter((wallet) =>
+        wallet.accounts.some((account) => account.label?.toLowerCase() === name.toLowerCase()),
+      )[0];
+      return connectedWallet?.accounts[0]?.icon ?? name;
     },
 
     retryTxAction: async ({ onClose, txKey, handleTransaction, tx }) => {
       onClose(txKey);
 
-      if (!wallet || !wallet.walletAddress || wallet.walletAddress === '0x0') {
+      const wallets = getAvailableWallets();
+      const connectedWallet = wallets.filter((wallet) => wallet.accounts.length > 0)[0];
+
+      if (!connectedWallet || !connectedWallet.accounts[0].address || connectedWallet.accounts[0].address === '0x0') {
         throw new Error('Retry failed: A wallet must be connected.');
       }
       if (!handleTransaction) {
         throw new Error('Retry failed: handleTransaction function is not provided.');
       }
 
-      const clusterForRetry = getCluster(tx.desiredChainID as string);
-      const rpcUrlForRetry = tx.rpcUrl ?? getRpcUrlForCluster(clusterForRetry);
+      const clusterForRetry = getCluster({ cluster: tx?.desiredChainID as string }) as SolanaClusterMoniker;
+      const rpcUrlForRetry = tx.rpcUrl ?? getRpcUrlForCluster({ cluster: clusterForRetry, rpcUrls });
+
       if (!rpcUrlForRetry) {
         throw new Error('Retry failed: Could not determine RPC endpoint for the transaction chain.');
       }
@@ -135,7 +124,10 @@ export function solanaAdapter<T extends Transaction>(config: SolanaAdapterConfig
       await handleTransaction({
         actionFunction: () =>
           tx.actionFunction({
-            wallet: config.wallet,
+            wallet: {
+              walletAddress: connectedWallet.accounts[0].address ?? '0x0',
+              walletType: getWalletTypeFromConnectorName(OrbitAdapter.SOLANA, connectedWallet.name),
+            },
             rpc: rpcForRetry,
             ...tx.payload,
           }),

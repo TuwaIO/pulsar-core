@@ -43,18 +43,22 @@
     }
   ],
   "peerDependencies": {
-    "@bonfida/spl-name-service": ">=3",
+    "@tuwaio/orbit-core": ">=0",
+    "@tuwaio/orbit-solana": ">=0",
     "@tuwaio/pulsar-core": ">=0",
-    "@solana/web3.js": ">=1.98.4",
+    "@wallet-standard/app": ">=1.1",
+    "@wallet-standard/ui-registry": ">=1",
     "gill": ">=0.11",
     "dayjs": ">=1",
     "immer": ">=10",
     "zustand": ">=5"
   },
   "devDependencies": {
-    "@bonfida/spl-name-service": "^3.0.16",
     "@tuwaio/pulsar-core": "workspace:^",
-    "@solana/web3.js": "^1.98.4",
+    "@tuwaio/orbit-core": "1.0.0-fix-test-alpha.4.d5f27c9",
+    "@tuwaio/orbit-solana": "1.0.0-fix-test-alpha.4.d5f27c9",
+    "@wallet-standard/app": "^1.1.0",
+    "@wallet-standard/ui-registry": "^1.0.1",
     "dayjs": "^1.11.18",
     "gill": "^0.11.0",
     "immer": "^10.1.3",

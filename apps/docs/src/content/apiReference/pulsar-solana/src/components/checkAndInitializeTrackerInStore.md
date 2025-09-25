@@ -6,7 +6,7 @@
 
 > **checkAndInitializeTrackerInStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-solana/src/utils/checkAndInitializeTrackerInStore.ts:26](https://github.com/TuwaIO/pulsar-core/blob/c72496708aaee3876552289f9710c5c529bb4798/packages/pulsar-solana/src/utils/checkAndInitializeTrackerInStore.ts#L26)
+Defined in: [packages/pulsar-solana/src/utils/checkAndInitializeTrackerInStore.ts:26](https://github.com/TuwaIO/pulsar-core/blob/4b67ec90377e30bc90519177a553a449e097fe32/packages/pulsar-solana/src/utils/checkAndInitializeTrackerInStore.ts#L26)
 
 Initializes the correct background tracker for a given Solana transaction.
 This function acts as a router, selecting the appropriate tracker based on the `tx.tracker` property.

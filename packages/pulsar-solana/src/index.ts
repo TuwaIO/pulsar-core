@@ -4,7 +4,4 @@ export * from './trackers/solanaTracker';
 export * from './types';
 export * from './utils/checkAndInitializeTrackerInStore';
 export * from './utils/checkSolanaChain';
-export * from './utils/createSolanaRPC';
-export * from './utils/getSolanaExplorerLink';
 export * from './utils/signAndSendSolanaTx';
-export * from './utils/snsUtils';

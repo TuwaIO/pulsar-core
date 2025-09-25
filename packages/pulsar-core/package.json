@@ -44,11 +44,13 @@
     }
   ],
   "peerDependencies": {
+    "@tuwaio/orbit-core": ">=0",
     "dayjs": ">=1",
     "immer": ">=10",
     "zustand": ">=5"
   },
   "devDependencies": {
+    "@tuwaio/orbit-core": "1.0.0-fix-test-alpha.4.d5f27c9",
     "dayjs": "^1.11.18",
     "immer": "^10.1.3",
     "tsup": "^8.5.0",
