@@ -1,4 +1,4 @@
-import { TransactionAdapter } from '@tuwaio/pulsar-core';
+import { OrbitAdapter } from '@tuwaio/orbit-core';
 import { Tabs } from 'nextra/components';
 
 import { StartedWrapperEvm } from '@/components/started-blocks/evm/StartedWrapper';
@@ -6,11 +6,11 @@ import { StartedWrapperSolana } from '@/components/started-blocks/solana/Started
 
 const adapterTypes = [
   {
-    name: TransactionAdapter.EVM,
+    name: OrbitAdapter.EVM,
     component: <StartedWrapperEvm />,
   },
   {
-    name: TransactionAdapter.SOLANA,
+    name: OrbitAdapter.SOLANA,
     component: <StartedWrapperSolana />,
   },
 ];

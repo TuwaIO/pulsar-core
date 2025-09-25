@@ -15,6 +15,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@tuwaio/pulsar-core": "workspace:^",
+    "@tuwaio/orbit-core": "1.0.0-fix-test-alpha.4.d5f27c9",
     "@tuwaio/nova-core": "0.0.7",
     "clsx": "^2.1.1",
     "next": "15.5.2",
@@ -29,7 +30,8 @@
     "react-dom": "^19.1.1",
     "react-syntax-highlighter": "^15.6.6",
     "superjson": "^2.2.2",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.13",
