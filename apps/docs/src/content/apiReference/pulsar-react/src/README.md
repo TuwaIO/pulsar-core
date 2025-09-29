@@ -6,16 +6,15 @@
 
 ## Interfaces
 
-- [BoundedUseStore](interfaces/BoundedUseStore.md)
+- [UsePulsarStoreFn](interfaces/UsePulsarStoreFn.md)
 
 ## Type Aliases
 
 - [PulsarStore](type-aliases/PulsarStore.md)
-- [PulsarStoreState](type-aliases/PulsarStoreState.md)
-- [StoreContext](type-aliases/StoreContext.md)
 
 ## Variables
 
+- [PulsarStoreBindings](variables/PulsarStoreBindings.md)
 - [PulsarStoreContext](variables/PulsarStoreContext.md)
 
 ## Functions

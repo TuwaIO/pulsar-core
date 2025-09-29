@@ -2,14 +2,14 @@
 
 ***
 
-# PulsarStore\<T\>
+# PulsarStore\<TTransaction\>
 
-> **PulsarStore**\<`T`\> = `ITxTrackingStore`\<`T`\>
+> **PulsarStore**\<`TTransaction`\> = `ITxTrackingStore`\<`TTransaction`\>
 
-Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:5](https://github.com/TuwaIO/pulsar-core/blob/568e8f7aad5858def25ecc02e62f9c9bb25c693a/packages/pulsar-react/src/hooks/pulsarHook.ts#L5)
+Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:6](https://github.com/TuwaIO/pulsar-core/blob/86c8fdb539eb00427d06ed808054f92cd1a1cac1/packages/pulsar-react/src/hooks/pulsarHook.ts#L6)
 
 ## Type Parameters
 
-### T
+### TTransaction
 
-`T` *extends* `Transaction`
+`TTransaction` *extends* `Transaction`

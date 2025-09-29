@@ -6,7 +6,10 @@
 
 > **usePulsarStore**\<`T`, `TSelected`\>(`selector`): `TSelected`
 
-Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:14](https://github.com/TuwaIO/pulsar-core/blob/568e8f7aad5858def25ecc02e62f9c9bb25c693a/packages/pulsar-react/src/hooks/pulsarHook.ts#L14)
+Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:62](https://github.com/TuwaIO/pulsar-core/blob/86c8fdb539eb00427d06ed808054f92cd1a1cac1/packages/pulsar-react/src/hooks/pulsarHook.ts#L62)
+
+Public hook to access the Pulsar Store.
+NOTE: T and TSelected are now inferred based on the Overloads in UsePulsarStoreFn.
 
 ## Type Parameters
 

@@ -4,6 +4,6 @@
 
 # PulsarStoreContext
 
-> `const` **PulsarStoreContext**: `Context`\<`null` \| `StoreApi`\<[`PulsarStore`](../type-aliases/PulsarStore.md)\<`Transaction`\>\>\>
+> `const` **PulsarStoreContext**: `Context`\<`null` \| `StoreApi`\<[`PulsarStore`](../type-aliases/PulsarStore.md)\<`any`\>\>\>
 
-Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:9](https://github.com/TuwaIO/pulsar-core/blob/568e8f7aad5858def25ecc02e62f9c9bb25c693a/packages/pulsar-react/src/hooks/pulsarHook.ts#L9)
+Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:71](https://github.com/TuwaIO/pulsar-core/blob/86c8fdb539eb00427d06ed808054f92cd1a1cac1/packages/pulsar-react/src/hooks/pulsarHook.ts#L71)

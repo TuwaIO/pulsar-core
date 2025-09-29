@@ -1,17 +1,10 @@
-// PulsarCoreProvider.tsx
-
-'use client';
-
 import { createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
 import { ITxTrackingStore, PulsarAdapter } from '@tuwaio/pulsar-core/src';
 import once from 'lodash.once';
 import { PropsWithChildren } from 'react';
 import { PersistOptions } from 'zustand/middleware';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { usePulsarStore as globalUsePulsarStore } from '../hooks/pulsarHook';
-import type { BoundedUseStore } from '../hooks/pulsarStoreFactory';
-import { createPulsarStoreContextAndHook } from '../hooks/pulsarStoreFactory';
+import { createPulsarStoreContextAndHook, PulsarStoreBindings } from '../hooks/pulsarHook';
 import { useInitializeTransactionsPool } from '../hooks/useInitializeTransactionsPool';
 
 interface PulsarCoreProviderProps<T extends Transaction>
@@ -38,7 +31,7 @@ export function PulsarCoreProvider<T extends Transaction>({ children, ...params 
     onError: (error) => console.error('Failed to initialize transactions pool:', error),
   });
 
-  (globalUsePulsarStore as BoundedUseStore<T>) = useBoundedPulsarStore;
+  PulsarStoreBindings.usePulsarStore = useBoundedPulsarStore;
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
 }

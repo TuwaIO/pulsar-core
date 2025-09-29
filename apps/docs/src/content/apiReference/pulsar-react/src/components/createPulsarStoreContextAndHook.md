@@ -6,10 +6,9 @@
 
 > **createPulsarStoreContextAndHook**\<`T`\>(): `object`
 
-Defined in: [packages/pulsar-react/src/hooks/pulsarStoreFactory.ts:31](https://github.com/TuwaIO/pulsar-core/blob/568e8f7aad5858def25ecc02e62f9c9bb25c693a/packages/pulsar-react/src/hooks/pulsarStoreFactory.ts#L31)
+Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:35](https://github.com/TuwaIO/pulsar-core/blob/86c8fdb539eb00427d06ed808054f92cd1a1cac1/packages/pulsar-react/src/hooks/pulsarHook.ts#L35)
 
-Factory function to create a unique React Context and a strongly typed hook
-for a specific Transaction type T.
+Factory function to create a unique React Context and a strictly typed Bounded Hook for a specific T.
 
 ## Type Parameters
 
@@ -23,8 +22,8 @@ for a specific Transaction type T.
 
 ### StoreContext
 
-> **StoreContext**: `Context`\<`null` \| `StoreApi`\<[`PulsarStoreState`](../type-aliases/PulsarStoreState.md)\<`T`\>\>\>
+> **StoreContext**: `Context`\<`null` \| `PulsarStoreBound`\<`T`\>\>
 
 ### usePulsarStore
 
-> **usePulsarStore**: [`BoundedUseStore`](../interfaces/BoundedUseStore.md)\<`T`\>
+> **usePulsarStore**: [`UsePulsarStoreFn`](../interfaces/UsePulsarStoreFn.md) = `useBoundedPulsarStore`
