@@ -41,6 +41,10 @@
       "url": "https://github.com/Argeare5"
     }
   ],
+  "dependencies": {
+    "@types/lodash.once": "4.1.9",
+    "lodash.once": "4.1.1"
+  },
   "peerDependencies": {
     "@tuwaio/orbit-core": ">=0",
     "@tuwaio/pulsar-core": ">=0",

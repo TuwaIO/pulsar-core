@@ -6,7 +6,7 @@
 
 > **PulsarCoreProvider**\<`T`\>(`__namedParameters`): `Element`
 
-Defined in: [packages/pulsar-react/src/providers/PulsarCoreProvider.tsx:14](https://github.com/TuwaIO/pulsar-core/blob/e926d5f5ee625996a23d6a30b8f5364a3dbf86df/packages/pulsar-react/src/providers/PulsarCoreProvider.tsx#L14)
+Defined in: [packages/pulsar-react/src/providers/PulsarCoreProvider.tsx:33](https://github.com/TuwaIO/pulsar-core/blob/568e8f7aad5858def25ecc02e62f9c9bb25c693a/packages/pulsar-react/src/providers/PulsarCoreProvider.tsx#L33)
 
 ## Type Parameters
 

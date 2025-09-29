@@ -1,17 +1,16 @@
 import { ITxTrackingStore, Transaction } from '@tuwaio/pulsar-core';
-import { createContext, useContext } from 'react';
-import { StoreApi, useStore } from 'zustand';
+import { StoreApi } from 'zustand';
 
-export type PulsarStore<TTransaction extends Transaction> = ITxTrackingStore<TTransaction>;
+// 1. Define base types
+export type PulsarStore<T extends Transaction> = ITxTrackingStore<T>;
 
-export const PulsarStoreContext = createContext<StoreApi<PulsarStore<Transaction>> | null>(null);
+// 2. Context Placeholder
+// We use the most general Transaction type here for the global placeholder context.
+export const PulsarStoreContext = {} as React.Context<StoreApi<PulsarStore<Transaction>> | null>;
 
-export function usePulsarStore<TTransaction extends Transaction, TSelected = unknown>(
-  selector: (state: PulsarStore<TTransaction>) => TSelected,
-): TSelected {
-  const store = useContext(PulsarStoreContext);
-  if (!store) {
-    throw new Error('usePulsarStore must be used within a PulsarProvider');
-  }
-  return useStore(store as unknown as StoreApi<PulsarStore<TTransaction>>, selector);
-}
+// 3. Export the placeholder hook type.
+// This must be compatible with the BoundedUseStore interface from the factory.
+// We use the Overload pattern here to allow the consumer to skip T in the common case.
+export declare function usePulsarStore<T extends Transaction = Transaction, TSelected = unknown>(
+  selector: (state: PulsarStore<T>) => TSelected,
+): TSelected;
