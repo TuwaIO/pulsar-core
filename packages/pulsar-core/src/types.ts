@@ -1,4 +1,4 @@
-import { OrbitAdapter, OrbitGenericAdapter } from '@tuwaio/orbit-core';
+import { BaseAdapter, OrbitAdapter, OrbitGenericAdapter } from '@tuwaio/orbit-core';
 
 /**
  * Enum representing the different tracking strategies available for transactions.
@@ -231,7 +231,7 @@ export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter
  * Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
  * @template T The specific transaction type, extending `Transaction`.
  */
-export type TxAdapter<T extends Transaction> = {
+export type TxAdapter<T extends Transaction> = BaseAdapter & {
   /** The unique key identifying this adapter. */
   key: OrbitAdapter;
   /** Returns information about the currently connected wallet. */
@@ -268,21 +268,6 @@ export type TxAdapter<T extends Transaction> = {
       Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>,
   ) => Promise<void> | void;
   /**
-   * Returns the base URL for the blockchain explorer for the current network.
-   * @param url Optional URL to override the default explorer URL.
-   */
-  getExplorerUrl: (url?: string, chain?: string | number) => string | undefined;
-  /**
-   * Optional: Fetches a name from a chain-specific name service (e.g., ENS).
-   * @param address The address to resolve the name for.
-   */
-  getName?: (address: string) => Promise<string | null>;
-  /**
-   * Optional: Fetches an avatar URL from a chain-specific name service.
-   * @param name The name to resolve the avatar for.
-   */
-  getAvatar?: (name: string) => Promise<string | null>;
-  /**
    * Optional: Logic to cancel a pending EVM transaction.
    * @param tx The transaction to cancel.
    * @returns The new transaction hash for the cancellation.
@@ -306,7 +291,7 @@ export type TxAdapter<T extends Transaction> = {
       txKey: string;
       tx: InitialTransactionParams;
       onClose: (txKey?: string) => void;
-    } & Partial<Pick<ITxTrackingStore<T>, 'handleTransaction'>>,
+    } & Partial<Pick<ITxTrackingStore<T>, 'executeTxAction'>>,
   ) => Promise<void>;
   /**
    * Optional: Constructs a full explorer URL for a specific transaction.
@@ -408,7 +393,7 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
    * @param params.defaultTracker The default tracker to use if it cannot be determined automatically.
    * @param params.onSuccessCallback Callback to execute when the transaction is successfully submitted.
    */
-  handleTransaction: (
+  executeTxAction: (
     params: {
       actionFunction: () => Promise<ActionTxKey | undefined>;
       params: Omit<InitialTransactionParams, 'actionFunction'>;

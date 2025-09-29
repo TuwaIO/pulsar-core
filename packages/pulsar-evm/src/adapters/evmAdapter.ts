@@ -74,15 +74,15 @@ export function pulsarEvmAdapter<T extends Transaction>(
     // --- Optional Actions ---
     cancelTxAction: (tx) => cancelTxAction({ config, tx: tx as T }),
     speedUpTxAction: (tx) => speedUpTxAction({ config, tx: tx as T }),
-    retryTxAction: async ({ onClose, txKey, handleTransaction, tx }) => {
+    retryTxAction: async ({ onClose, txKey, executeTxAction, tx }) => {
       onClose(txKey);
 
-      if (!handleTransaction) {
-        console.error('Retry failed: handleTransaction function is not provided.');
+      if (!executeTxAction) {
+        console.error('Retry failed: executeTxAction function is not provided.');
         return;
       }
 
-      await handleTransaction({
+      await executeTxAction({
         actionFunction: () => tx.actionFunction({ config, ...tx.payload }),
         params: tx,
         defaultTracker: TransactionTracker.Ethereum,

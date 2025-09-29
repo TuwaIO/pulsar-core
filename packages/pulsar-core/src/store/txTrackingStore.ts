@@ -67,7 +67,7 @@ export function createPulsarStore<T extends Transaction>({
          * It manages the entire lifecycle, from UI state updates and chain switching to
          * signing, submission, and background tracker initialization.
          */
-        handleTransaction: async ({ defaultTracker, actionFunction, onSuccessCallback, params }) => {
+        executeTxAction: async ({ defaultTracker, actionFunction, onSuccessCallback, params }) => {
           const { desiredChainID, ...restParams } = params;
           const localTimestamp = dayjs().unix();
 

@@ -3,10 +3,16 @@
  */
 
 import { connectedWalletChainHelpers, getWalletTypeFromConnectorName, OrbitAdapter } from '@tuwaio/orbit-core';
-import { createSolanaRPC, getCluster, getRpcUrlForCluster, getSolanaExplorerLink } from '@tuwaio/orbit-solana';
+import {
+  createSolanaRPC,
+  getAvailableWallets,
+  getCluster,
+  getRpcUrlForCluster,
+  getSolanaAddressAvatar,
+  getSolanaAddressName,
+  getSolanaExplorerLink,
+} from '@tuwaio/orbit-solana';
 import { Transaction, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
-import { getWallets } from '@wallet-standard/app';
-import { getOrCreateUiWalletForStandardWallet_DO_NOT_USE_OR_YOU_WILL_BE_FIRED as getOrCreateUiWalletForStandardWallet } from '@wallet-standard/ui-registry';
 import { SolanaClusterMoniker } from 'gill';
 
 import { SolanaChainMismatchError } from '../errors';
@@ -28,11 +34,6 @@ import { checkSolanaChain } from '../utils/checkSolanaChain';
  */
 export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapterConfig): TxAdapter<T> {
   const { rpcUrls } = config;
-
-  /**
-   * Helper to get all available wallets
-   */
-  const getAvailableWallets = () => getWallets().get().map(getOrCreateUiWalletForStandardWallet);
 
   return {
     key: OrbitAdapter.SOLANA,
@@ -74,32 +75,19 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
     },
 
     getExplorerUrl: (url, chainId) => {
-      const cluster = getCluster({ cluster: chainId as string }) ?? 'mainnet';
-      return getSolanaExplorerLink(url, cluster as SolanaClusterMoniker);
+      return getSolanaExplorerLink(url, chainId);
     },
-
     getExplorerTxUrl: (tx) => {
-      const cluster = getCluster({ cluster: tx?.chainId as string }) as SolanaClusterMoniker;
-      return getSolanaExplorerLink(`/tx/${tx.txKey}`, cluster);
+      return getSolanaExplorerLink(`/tx/${tx.txKey}`, tx.chainId);
     },
-    // TODO: remove after styling wallet connect flow
     getName: async (address) => {
-      const wallets = getAvailableWallets();
-      const connectedWallet = wallets.filter((wallet) =>
-        wallet.accounts.some((account) => account.address.toLowerCase() === address.toLowerCase()),
-      )[0];
-      return connectedWallet?.accounts[0]?.label ?? address;
+      return getSolanaAddressName(address);
     },
-    // TODO: remove after styling wallet connect flow
     getAvatar: async (name) => {
-      const wallets = getAvailableWallets();
-      const connectedWallet = wallets.filter((wallet) =>
-        wallet.accounts.some((account) => account.label?.toLowerCase() === name.toLowerCase()),
-      )[0];
-      return connectedWallet?.accounts[0]?.icon ?? name;
+      return getSolanaAddressAvatar(name);
     },
 
-    retryTxAction: async ({ onClose, txKey, handleTransaction, tx }) => {
+    retryTxAction: async ({ onClose, txKey, executeTxAction, tx }) => {
       onClose(txKey);
 
       const wallets = getAvailableWallets();
@@ -108,7 +96,7 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
       if (!connectedWallet || !connectedWallet.accounts[0].address || connectedWallet.accounts[0].address === '0x0') {
         throw new Error('Retry failed: A wallet must be connected.');
       }
-      if (!handleTransaction) {
+      if (!executeTxAction) {
         throw new Error('Retry failed: handleTransaction function is not provided.');
       }
 
@@ -121,7 +109,7 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
 
       const rpcForRetry = createSolanaRPC(rpcUrlForRetry);
 
-      await handleTransaction({
+      await executeTxAction({
         actionFunction: () =>
           tx.actionFunction({
             wallet: {
