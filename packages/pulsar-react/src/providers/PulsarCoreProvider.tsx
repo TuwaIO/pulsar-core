@@ -17,7 +17,7 @@ const getBoundedStoreInstance = once(<T extends Transaction>(params: PulsarCoreP
 
   const store = createPulsarStore<T>({
     ...params,
-    name: params.name ?? 'tuwa:pulsar-store',
+    name: params.name ?? 'tuwaio:pulsar-store',
   });
 
   return { StoreContext, usePulsarStore: useBoundedPulsarStore, store };

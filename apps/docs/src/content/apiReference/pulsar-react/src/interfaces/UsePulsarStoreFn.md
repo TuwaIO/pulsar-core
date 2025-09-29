@@ -4,13 +4,13 @@
 
 # UsePulsarStoreFn()
 
-Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:15](https://github.com/TuwaIO/pulsar-core/blob/86c8fdb539eb00427d06ed808054f92cd1a1cac1/packages/pulsar-react/src/hooks/pulsarHook.ts#L15)
+Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:15](https://github.com/TuwaIO/pulsar-core/blob/4eac4e83b9ab20a969d3d6ed318d5cf54201efe3/packages/pulsar-react/src/hooks/pulsarHook.ts#L15)
 
 ## Call Signature
 
 > **UsePulsarStoreFn**\<`TSelected`\>(`selector`): `TSelected`
 
-Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:17](https://github.com/TuwaIO/pulsar-core/blob/86c8fdb539eb00427d06ed808054f92cd1a1cac1/packages/pulsar-react/src/hooks/pulsarHook.ts#L17)
+Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:17](https://github.com/TuwaIO/pulsar-core/blob/4eac4e83b9ab20a969d3d6ed318d5cf54201efe3/packages/pulsar-react/src/hooks/pulsarHook.ts#L17)
 
 ### Type Parameters
 
@@ -32,7 +32,7 @@ Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:17](https://github.co
 
 > **UsePulsarStoreFn**\<`TTransaction`, `TSelected`\>(`selector`): `TSelected`
 
-Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:19](https://github.com/TuwaIO/pulsar-core/blob/86c8fdb539eb00427d06ed808054f92cd1a1cac1/packages/pulsar-react/src/hooks/pulsarHook.ts#L19)
+Defined in: [packages/pulsar-react/src/hooks/pulsarHook.ts:19](https://github.com/TuwaIO/pulsar-core/blob/4eac4e83b9ab20a969d3d6ed318d5cf54201efe3/packages/pulsar-react/src/hooks/pulsarHook.ts#L19)
 
 ### Type Parameters
 
