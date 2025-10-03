@@ -4,7 +4,7 @@
 
 import { connectedWalletChainHelpers, getWalletTypeFromConnectorName, OrbitAdapter } from '@tuwaio/orbit-core';
 import {
-  createSolanaRPC,
+  createSolanaClientWithCache,
   getAvailableWallets,
   getCluster,
   getRpcUrlForCluster,
@@ -107,16 +107,12 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
         throw new Error('Retry failed: Could not determine RPC endpoint for the transaction chain.');
       }
 
-      const rpcForRetry = createSolanaRPC(rpcUrlForRetry);
+      const client = createSolanaClientWithCache(rpcUrlForRetry);
 
       await executeTxAction({
         actionFunction: () =>
           tx.actionFunction({
-            wallet: {
-              walletAddress: connectedWallet.accounts[0].address ?? '0x0',
-              walletType: getWalletTypeFromConnectorName(OrbitAdapter.SOLANA, connectedWallet.name),
-            },
-            rpc: rpcForRetry,
+            client,
             ...tx.payload,
           }),
         params: tx,
