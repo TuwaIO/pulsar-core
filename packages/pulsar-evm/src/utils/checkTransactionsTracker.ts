@@ -52,7 +52,8 @@ export function checkTransactionsTracker(
   const splittingWalletType = walletType.split(':');
   if (
     splittingWalletType.length > 1
-      ? splittingWalletType[splittingWalletType.length - 1] === 'safe'
+      ? splittingWalletType[splittingWalletType.length - 1] === 'safe' ||
+        splittingWalletType[splittingWalletType.length - 1] === 'safewallet'
       : walletType?.toLowerCase() === 'safe'
   ) {
     return {
