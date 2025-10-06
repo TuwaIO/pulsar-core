@@ -49,7 +49,12 @@ export function checkTransactionsTracker(
 
   // 2. Second priority: Check if the transaction came from a Safe wallet.
   // The check is case-insensitive for robustness.
-  if (walletType?.toLowerCase() === 'safe') {
+  const splittingWalletType = walletType.split(':');
+  if (
+    splittingWalletType.length > 1
+      ? splittingWalletType[splittingWalletType.length - 1] === 'safe'
+      : walletType?.toLowerCase() === 'safe'
+  ) {
     return {
       tracker: TransactionTracker.Safe,
       txKey: actionTxKey,
