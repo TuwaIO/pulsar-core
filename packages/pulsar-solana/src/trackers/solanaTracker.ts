@@ -67,7 +67,7 @@ export async function solanaFetcher({
 
   try {
     // Initialize the Solana RPC client
-    const rpc = createSolanaRPC(tx.rpcUrl ?? getCluster({ cluster: tx.chainId as string }));
+    const rpc = createSolanaRPC({ rpcUrlOrMoniker: tx.rpcUrl ?? getCluster({ cluster: tx.chainId as string }) });
 
     // Fetch transaction signature status
     const statuses = await rpc.getSignatureStatuses([tx.txKey as Signature]).send();

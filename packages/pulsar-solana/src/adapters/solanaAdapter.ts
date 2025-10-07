@@ -107,7 +107,7 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
         throw new Error('Retry failed: Could not determine RPC endpoint for the transaction chain.');
       }
 
-      const client = createSolanaClientWithCache(rpcUrlForRetry);
+      const client = createSolanaClientWithCache({ rpcUrlOrMoniker: rpcUrlForRetry, rpcUrls });
 
       await executeTxAction({
         actionFunction: () =>
