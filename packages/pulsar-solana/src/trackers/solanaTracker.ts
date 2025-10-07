@@ -125,8 +125,8 @@ export async function solanaFetcher({
       return;
     }
 
-    // Stop polling if the transaction is unconfirmed for more than 1 day
-    const elapsedDays = dayjs().diff(dayjs.unix(tx.localTimestamp), 'day');
+    // Stop polling if the transaction is unconfirmed for more than 1 hour
+    const elapsedDays = dayjs().diff(dayjs.unix(tx.localTimestamp), 'hour');
     if (elapsedDays >= 1) {
       onFailure(typedStatus);
       stopPolling();

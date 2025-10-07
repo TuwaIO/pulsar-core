@@ -6,7 +6,7 @@
 
 > **speedUpTxAction**\<`T`\>(`params`): `Promise`\<`` `0x${string}` ``\>
 
-Defined in: [packages/pulsar-evm/src/utils/speedUpTxAction.ts:49](https://github.com/TuwaIO/pulsar-core/blob/a14a0910e81ded47cebdc68cb85e5e000bc20e3a/packages/pulsar-evm/src/utils/speedUpTxAction.ts#L49)
+Defined in: [packages/pulsar-evm/src/utils/speedUpTxAction.ts:49](https://github.com/TuwaIO/pulsar-core/blob/c1b1dacd2d4d1b2165b53ca6eab34c35feffc29d/packages/pulsar-evm/src/utils/speedUpTxAction.ts#L49)
 
 Speeds up a pending EVM transaction by resubmitting it with the same nonce but higher gas fees.
 This function is designed to work with wagmi's configuration and actions.

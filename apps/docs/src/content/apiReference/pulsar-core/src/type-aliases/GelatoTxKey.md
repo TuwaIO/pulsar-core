@@ -6,7 +6,7 @@
 
 > **GelatoTxKey** = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:33](https://github.com/TuwaIO/pulsar-core/blob/a14a0910e81ded47cebdc68cb85e5e000bc20e3a/packages/pulsar-core/src/types.ts#L33)
+Defined in: [packages/pulsar-core/src/types.ts:33](https://github.com/TuwaIO/pulsar-core/blob/c1b1dacd2d4d1b2165b53ca6eab34c35feffc29d/packages/pulsar-core/src/types.ts#L33)
 
 Defines the shape of the identifier for a Gelato transaction task.
 
@@ -16,6 +16,6 @@ Defines the shape of the identifier for a Gelato transaction task.
 
 > **taskId**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:35](https://github.com/TuwaIO/pulsar-core/blob/a14a0910e81ded47cebdc68cb85e5e000bc20e3a/packages/pulsar-core/src/types.ts#L35)
+Defined in: [packages/pulsar-core/src/types.ts:35](https://github.com/TuwaIO/pulsar-core/blob/c1b1dacd2d4d1b2165b53ca6eab34c35feffc29d/packages/pulsar-core/src/types.ts#L35)
 
 The unique identifier assigned by the Gelato relay service.

@@ -107,8 +107,8 @@ export const gelatoFetcher: PollingTrackerConfig<GelatoTaskStatusResponse, Trans
 
   onIntervalTick?.(data);
 
-  // Safeguard: Stop polling for tasks that have been pending for over a day.
-  if (creationDate && dayjs().diff(dayjs(creationDate), 'day') >= 1 && isGelatoTxPending(taskState)) {
+  // Safeguard: Stop polling for tasks that have been pending for over a hour.
+  if (creationDate && dayjs().diff(dayjs(creationDate), 'hour') >= 1 && isGelatoTxPending(taskState)) {
     stopPolling();
     return;
   }

@@ -6,7 +6,7 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:383](https://github.com/TuwaIO/pulsar-core/blob/a14a0910e81ded47cebdc68cb85e5e000bc20e3a/packages/pulsar-core/src/types.ts#L383)
+Defined in: [packages/pulsar-core/src/types.ts:383](https://github.com/TuwaIO/pulsar-core/blob/c1b1dacd2d4d1b2165b53ca6eab34c35feffc29d/packages/pulsar-core/src/types.ts#L383)
 
 The complete interface for the Pulsar transaction tracking store.
 
