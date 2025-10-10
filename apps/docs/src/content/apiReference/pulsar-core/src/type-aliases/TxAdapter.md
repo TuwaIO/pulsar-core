@@ -4,9 +4,9 @@
 
 # TxAdapter\<T\>
 
-> **TxAdapter**\<`T`\> = `BaseAdapter` & `object`
+> **TxAdapter**\<`T`\> = `Pick`\<`BaseAdapter`, `"getExplorerUrl"`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:234](https://github.com/TuwaIO/pulsar-core/blob/caf1ba2505ed5457b6e964538da515a51e0d6bdf/packages/pulsar-core/src/types.ts#L234)
+Defined in: [packages/pulsar-core/src/types.ts:234](https://github.com/TuwaIO/pulsar-core/blob/218599a38fbb7ca6ddbf6d3718f1f87883cde391/packages/pulsar-core/src/types.ts#L234)
 
 Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
 
@@ -124,26 +124,6 @@ The transaction object.
 `string`
 
 The full URL to the transaction on the explorer.
-
-### getWalletInfo()
-
-> **getWalletInfo**: () => `object`
-
-Returns information about the currently connected wallet.
-
-#### Returns
-
-##### walletAddress
-
-> **walletAddress**: `string`
-
-The currently connected wallet address.
-
-##### walletType
-
-> **walletType**: `string`
-
-The type of the wallet (e.g., 'metamask', 'phantom').
 
 ### key
 

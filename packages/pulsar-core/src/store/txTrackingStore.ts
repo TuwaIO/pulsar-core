@@ -4,7 +4,7 @@
  * immutable updates, and a persistence middleware to maintain state across user sessions.
  */
 
-import { selectAdapterByKey, setChainId } from '@tuwaio/orbit-core';
+import { lastConnectedWalletHelpers, OrbitAdapter, selectAdapterByKey, setChainId } from '@tuwaio/orbit-core';
 import dayjs from 'dayjs';
 import { produce } from 'immer';
 import { persist, PersistOptions } from 'zustand/middleware';
@@ -106,7 +106,7 @@ export function createPulsarStore<T extends Transaction>({
           }
 
           try {
-            const { walletType, walletAddress } = foundAdapter.getWalletInfo();
+            const { walletType, address: walletAddress } = lastConnectedWalletHelpers.getLastConnectedWallet() ?? {};
 
             // Step 2: Ensure the wallet is connected to the correct chain.
             await foundAdapter.checkChainForTx(desiredChainID);
@@ -123,7 +123,7 @@ export function createPulsarStore<T extends Transaction>({
             // Step 4: Determine the final tracker and txKey from the action's result.
             const { tracker: updatedTracker, txKey: finalTxKey } = foundAdapter.checkTransactionsTracker(
               txKeyFromAction,
-              walletType,
+              walletType ?? `${OrbitAdapter.EVM}:not-connected`,
             );
 
             // Step 5: Construct the full transaction object for the pool.

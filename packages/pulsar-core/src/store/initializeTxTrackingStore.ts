@@ -3,7 +3,7 @@
  * actions, and types necessary for initializing the store and performing CRUD operations on the transaction pool.
  */
 
-import { StoreSlice } from '@tuwaio/orbit-core';
+import { StoreSlice } from '@tuwaio/orbit-core/zustand';
 import { Draft, produce } from 'immer';
 
 import { IInitializeTxTrackingStore, Transaction } from '../types';

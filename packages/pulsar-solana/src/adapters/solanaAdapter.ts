@@ -2,14 +2,13 @@
  * @file This file contains the factory function for creating the Solana adapter for Pulsar.
  */
 
-import { connectedWalletChainHelpers, getWalletTypeFromConnectorName, OrbitAdapter } from '@tuwaio/orbit-core';
+import { lastConnectedWalletHelpers, OrbitAdapter } from '@tuwaio/orbit-core';
 import {
   createSolanaClientWithCache,
   getAvailableWallets,
   getCluster,
+  getConnectedSolanaWallet,
   getRpcUrlForCluster,
-  getSolanaAddressAvatar,
-  getSolanaAddressName,
   getSolanaExplorerLink,
 } from '@tuwaio/orbit-solana';
 import { Transaction, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
@@ -38,23 +37,20 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
   return {
     key: OrbitAdapter.SOLANA,
 
-    getWalletInfo: () => {
-      const wallets = getAvailableWallets();
-      const connectedWallet = wallets.filter((wallet) => wallet.accounts.length > 0)[0];
-      return {
-        walletAddress: connectedWallet.accounts[0].address ?? '0x0',
-        walletType: getWalletTypeFromConnectorName(OrbitAdapter.SOLANA, connectedWallet.name),
-      };
-    },
-
     checkChainForTx: async (txChain) => {
-      const wallets = getAvailableWallets();
-      const connectedWallet = wallets.filter((wallet) => wallet.accounts.length > 0)[0];
+      const connectedWallet = getConnectedSolanaWallet();
       if (!connectedWallet) {
         throw new Error('Wallet not provided. Cannot perform chain check.');
       }
       try {
-        checkSolanaChain(txChain as string, connectedWalletChainHelpers.getConnectedWalletChain() ?? '');
+        const lastConnectedWallet = lastConnectedWalletHelpers.getLastConnectedWallet();
+        if (lastConnectedWallet) {
+          lastConnectedWalletHelpers.setLastConnectedWallet({ ...lastConnectedWallet, chainId: txChain as string });
+        }
+        checkSolanaChain(
+          txChain as string,
+          (lastConnectedWalletHelpers.getLastConnectedWallet()?.chainId as string) ?? '',
+        );
       } catch (e) {
         if (e instanceof SolanaChainMismatchError) throw e;
         throw new Error(`Chain check failed: ${e instanceof Error ? e.message : String(e)}`);
@@ -79,12 +75,6 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
     },
     getExplorerTxUrl: (tx) => {
       return getSolanaExplorerLink(`/tx/${tx.txKey}`, tx.chainId);
-    },
-    getName: async (address) => {
-      return getSolanaAddressName(address);
-    },
-    getAvatar: async (name) => {
-      return getSolanaAddressAvatar(name);
     },
 
     retryTxAction: async ({ onClose, txKey, executeTxAction, tx }) => {

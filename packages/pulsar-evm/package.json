@@ -47,16 +47,16 @@
     "@tuwaio/pulsar-core": ">=0",
     "@tuwaio/orbit-core": ">=0",
     "@tuwaio/orbit-evm": ">=0",
-    "@wagmi/core": ">=2",
-    "dayjs": ">=1",
-    "immer": ">=10",
-    "viem": ">=2",
-    "zustand": ">=5"
+    "@wagmi/core": "2.x.x",
+    "dayjs": "1.x.x",
+    "immer": "10.x.x",
+    "viem": "2.x.x",
+    "zustand": "5.x.x"
   },
   "devDependencies": {
     "@tuwaio/pulsar-core": "workspace:^",
-    "@tuwaio/orbit-core": "1.0.0-fix-test-alpha.29.63c74d8",
-    "@tuwaio/orbit-evm": "1.0.0-fix-test-alpha.29.63c74d8",
+    "@tuwaio/orbit-core": "1.0.0-fix-test-alpha.37.702ae35",
+    "@tuwaio/orbit-evm": "1.0.0-fix-test-alpha.37.702ae35",
     "@wagmi/core": "^2.20.3",
     "dayjs": "^1.11.18",
     "immer": "^10.1.3",

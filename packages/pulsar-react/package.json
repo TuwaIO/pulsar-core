@@ -42,7 +42,7 @@
     }
   ],
   "peerDependencies": {
-    "react": ">=19"
+    "react": "19.x.x"
   },
   "devDependencies": {
     "@types/react": "^19.1.12",

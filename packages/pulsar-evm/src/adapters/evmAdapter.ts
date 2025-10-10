@@ -3,11 +3,11 @@
  * This adapter encapsulates all the logic required to interact with EVM-based chains using wagmi.
  */
 
-import { getWalletTypeFromConnectorName, OrbitAdapter } from '@tuwaio/orbit-core';
-import { checkAndSwitchChain, getAvatar, getName } from '@tuwaio/orbit-evm';
+import { OrbitAdapter } from '@tuwaio/orbit-core';
+import { checkAndSwitchChain } from '@tuwaio/orbit-evm';
 import { Transaction, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
 import { Config, getAccount } from '@wagmi/core';
-import { Chain, zeroAddress } from 'viem';
+import { Chain } from 'viem';
 
 import { cancelTxAction } from '../utils/cancelTxAction';
 import { checkAndInitializeTrackerInStore } from '../utils/checkAndInitializeTrackerInStore';
@@ -42,16 +42,6 @@ export function pulsarEvmAdapter<T extends Transaction>(
     key: OrbitAdapter.EVM,
 
     // --- Core Methods ---
-    getWalletInfo: () => {
-      const activeWallet = getAccount(config);
-      return {
-        walletAddress: activeWallet.address ?? zeroAddress,
-        walletType: getWalletTypeFromConnectorName(
-          OrbitAdapter.EVM,
-          activeWallet.connector?.name?.toLowerCase() ?? 'unknown',
-        ),
-      };
-    },
     checkChainForTx: (chainId: string | number) => checkAndSwitchChain(chainId as number, config),
     checkTransactionsTracker: (actionTxKey, walletType) => checkTransactionsTracker(actionTxKey, walletType),
     checkAndInitializeTrackerInStore: ({ tx, ...rest }) =>
@@ -68,8 +58,6 @@ export function pulsarEvmAdapter<T extends Transaction>(
         chains: appChains,
         tx,
       }),
-    getName: (address: string) => getName(address as `0x${string}`),
-    getAvatar: (name: string) => getAvatar(name),
 
     // --- Optional Actions ---
     cancelTxAction: (tx) => cancelTxAction({ config, tx: tx as T }),

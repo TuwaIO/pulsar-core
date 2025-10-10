@@ -231,16 +231,9 @@ export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter
  * Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
  * @template T The specific transaction type, extending `Transaction`.
  */
-export type TxAdapter<T extends Transaction> = BaseAdapter & {
+export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl'> & {
   /** The unique key identifying this adapter. */
   key: OrbitAdapter;
-  /** Returns information about the currently connected wallet. */
-  getWalletInfo: () => {
-    /** The currently connected wallet address. */
-    walletAddress: string;
-    /** The type of the wallet (e.g., 'metamask', 'phantom'). */
-    walletType: string;
-  };
   /**
    * Ensures the connected wallet is on the correct network for the transaction.
    *
