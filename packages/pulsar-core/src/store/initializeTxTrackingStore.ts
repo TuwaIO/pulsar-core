@@ -3,10 +3,9 @@
  * actions, and types necessary for initializing the store and performing CRUD operations on the transaction pool.
  */
 
-import { StoreSlice } from '@tuwaio/orbit-core/zustand';
 import { Draft, produce } from 'immer';
 
-import { IInitializeTxTrackingStore, Transaction } from '../types';
+import { IInitializeTxTrackingStore, StoreSlice, Transaction } from '../types';
 
 /**
  * Creates a Zustand store slice with the core logic for transaction state management.

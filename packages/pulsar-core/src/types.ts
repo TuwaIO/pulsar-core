@@ -1,4 +1,15 @@
 import { BaseAdapter, OrbitAdapter, OrbitGenericAdapter } from '@tuwaio/orbit-core';
+import { StoreApi } from 'zustand';
+
+/**
+ * A utility type for creating modular Zustand store slices, enabling composable state management.
+ * @template T The state slice being defined.
+ * @template S The full store state that includes the slice `T`.
+ */
+export type StoreSlice<T extends object, S extends object = T> = (
+  set: StoreApi<S extends T ? S : S & T>['setState'],
+  get: StoreApi<S extends T ? S : S & T>['getState'],
+) => T;
 
 /**
  * Enum representing the different tracking strategies available for transactions.
@@ -234,6 +245,13 @@ export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter
 export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl'> & {
   /** The unique key identifying this adapter. */
   key: OrbitAdapter;
+  /** Returns information about the currently connected wallet. */
+  getWalletInfo: () => {
+    /** The currently connected wallet address. */
+    walletAddress: string;
+    /** The type of the wallet (e.g., 'metamask', 'phantom'). */
+    walletType: string;
+  };
   /**
    * Ensures the connected wallet is on the correct network for the transaction.
    *

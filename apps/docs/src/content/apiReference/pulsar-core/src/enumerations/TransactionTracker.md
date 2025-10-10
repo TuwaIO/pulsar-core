@@ -4,7 +4,7 @@
 
 # TransactionTracker
 
-Defined in: [packages/pulsar-core/src/types.ts:7](https://github.com/TuwaIO/pulsar-core/blob/218599a38fbb7ca6ddbf6d3718f1f87883cde391/packages/pulsar-core/src/types.ts#L7)
+Defined in: [packages/pulsar-core/src/types.ts:18](https://github.com/TuwaIO/pulsar-core/blob/fb805c8a985eeff730f01b9c69cab18b0026a187/packages/pulsar-core/src/types.ts#L18)
 
 Enum representing the different tracking strategies available for transactions.
 Each tracker corresponds to a specific method of monitoring a transaction's lifecycle.
@@ -15,7 +15,7 @@ Each tracker corresponds to a specific method of monitoring a transaction's life
 
 > **Ethereum**: `"ethereum"`
 
-Defined in: [packages/pulsar-core/src/types.ts:9](https://github.com/TuwaIO/pulsar-core/blob/218599a38fbb7ca6ddbf6d3718f1f87883cde391/packages/pulsar-core/src/types.ts#L9)
+Defined in: [packages/pulsar-core/src/types.ts:20](https://github.com/TuwaIO/pulsar-core/blob/fb805c8a985eeff730f01b9c69cab18b0026a187/packages/pulsar-core/src/types.ts#L20)
 
 For standard on-chain EVM transactions tracked by their hash.
 
@@ -25,7 +25,7 @@ For standard on-chain EVM transactions tracked by their hash.
 
 > **Gelato**: `"gelato"`
 
-Defined in: [packages/pulsar-core/src/types.ts:13](https://github.com/TuwaIO/pulsar-core/blob/218599a38fbb7ca6ddbf6d3718f1f87883cde391/packages/pulsar-core/src/types.ts#L13)
+Defined in: [packages/pulsar-core/src/types.ts:24](https://github.com/TuwaIO/pulsar-core/blob/fb805c8a985eeff730f01b9c69cab18b0026a187/packages/pulsar-core/src/types.ts#L24)
 
 For meta-transactions relayed and executed by the Gelato Network.
 
@@ -35,7 +35,7 @@ For meta-transactions relayed and executed by the Gelato Network.
 
 > **Safe**: `"safe"`
 
-Defined in: [packages/pulsar-core/src/types.ts:11](https://github.com/TuwaIO/pulsar-core/blob/218599a38fbb7ca6ddbf6d3718f1f87883cde391/packages/pulsar-core/src/types.ts#L11)
+Defined in: [packages/pulsar-core/src/types.ts:22](https://github.com/TuwaIO/pulsar-core/blob/fb805c8a985eeff730f01b9c69cab18b0026a187/packages/pulsar-core/src/types.ts#L22)
 
 For multi-signature transactions managed and executed via a Safe contract.
 
@@ -45,6 +45,6 @@ For multi-signature transactions managed and executed via a Safe contract.
 
 > **Solana**: `"solana"`
 
-Defined in: [packages/pulsar-core/src/types.ts:15](https://github.com/TuwaIO/pulsar-core/blob/218599a38fbb7ca6ddbf6d3718f1f87883cde391/packages/pulsar-core/src/types.ts#L15)
+Defined in: [packages/pulsar-core/src/types.ts:26](https://github.com/TuwaIO/pulsar-core/blob/fb805c8a985eeff730f01b9c69cab18b0026a187/packages/pulsar-core/src/types.ts#L26)
 
 The tracker for monitoring standard Solana transaction signatures.

@@ -27,9 +27,14 @@
 - [PulsarAdapter](type-aliases/PulsarAdapter.md)
 - [SolanaTransaction](type-aliases/SolanaTransaction.md)
 - [StarknetTransaction](type-aliases/StarknetTransaction.md)
+- [StoreSlice](type-aliases/StoreSlice.md)
 - [Transaction](type-aliases/Transaction.md)
 - [TransactionPool](type-aliases/TransactionPool.md)
 - [TxAdapter](type-aliases/TxAdapter.md)
+
+## Variables
+
+- [createBoundedUseStore](variables/createBoundedUseStore.md)
 
 ## Functions
 

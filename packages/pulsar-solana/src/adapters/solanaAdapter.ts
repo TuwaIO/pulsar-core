@@ -2,7 +2,7 @@
  * @file This file contains the factory function for creating the Solana adapter for Pulsar.
  */
 
-import { lastConnectedWalletHelpers, OrbitAdapter } from '@tuwaio/orbit-core';
+import { getWalletTypeFromConnectorName, lastConnectedWalletHelpers, OrbitAdapter } from '@tuwaio/orbit-core';
 import {
   createSolanaClientWithCache,
   getAvailableWallets,
@@ -36,6 +36,15 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
 
   return {
     key: OrbitAdapter.SOLANA,
+
+    getWalletInfo: () => {
+      const connectedWallet = getConnectedSolanaWallet();
+      const localConnectedWallet = lastConnectedWalletHelpers.getLastConnectedWallet();
+      return {
+        walletAddress: localConnectedWallet?.address ?? connectedWallet.accounts[0].address ?? '0x0',
+        walletType: getWalletTypeFromConnectorName(OrbitAdapter.SOLANA, connectedWallet.name),
+      };
+    },
 
     checkChainForTx: async (txChain) => {
       const connectedWallet = getConnectedSolanaWallet();
