@@ -52,10 +52,6 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
         throw new Error('Wallet not provided. Cannot perform chain check.');
       }
       try {
-        const lastConnectedWallet = lastConnectedWalletHelpers.getLastConnectedWallet();
-        if (lastConnectedWallet) {
-          lastConnectedWalletHelpers.setLastConnectedWallet({ ...lastConnectedWallet, chainId: txChain as string });
-        }
         checkSolanaChain(
           txChain as string,
           (lastConnectedWalletHelpers.getLastConnectedWallet()?.chainId as string) ?? '',
