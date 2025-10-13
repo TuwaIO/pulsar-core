@@ -4,8 +4,9 @@
  * without interacting with a live network. This ensures tests are fast, reliable, and deterministic.
  */
 
-import { Hex, TransactionReceipt, zeroAddress, zeroHash } from 'viem';
-import { sepolia } from 'viem/chains';
+import { createConfig } from '@wagmi/core';
+import { createClient, Hex, http, TransactionReceipt, zeroAddress, zeroHash } from 'viem';
+import { mainnet, sepolia } from 'viem/chains';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { evmTracker, EVMTrackerParams } from './evmTracker';
@@ -46,6 +47,12 @@ describe('evmTracker Unit Tests', () => {
   } as const;
 
   beforeEach(() => {
+    const config = createConfig({
+      chains: [sepolia, mainnet],
+      client({ chain }) {
+        return createClient({ chain, transport: http() });
+      },
+    });
     // Reset params before each test to ensure isolation.
     baseTrackerParams = {
       onTxDetailsFetched: vi.fn(),
@@ -57,7 +64,7 @@ describe('evmTracker Unit Tests', () => {
         txKey: '0x0908f7a70a9f8acd9ced904f4e288bc46ae42923ce82bde706b26fdb8452abec',
         chainId: sepolia.id,
       },
-      chains: [sepolia],
+      config,
     };
 
     // Mock successful transaction fetching by default.

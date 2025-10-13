@@ -57,7 +57,7 @@ export function pulsarEvmAdapter<T extends Transaction>(
     checkChainForTx: (chainId: string | number) => checkAndSwitchChain(chainId as number, config),
     checkTransactionsTracker: (actionTxKey, walletType) => checkTransactionsTracker(actionTxKey, walletType),
     checkAndInitializeTrackerInStore: ({ tx, ...rest }) =>
-      checkAndInitializeTrackerInStore({ tracker: tx.tracker, tx, chains: appChains, ...rest }),
+      checkAndInitializeTrackerInStore({ tracker: tx.tracker, tx, config, ...rest }),
 
     // --- UI & Explorer Methods ---
     getExplorerUrl: (url) => {

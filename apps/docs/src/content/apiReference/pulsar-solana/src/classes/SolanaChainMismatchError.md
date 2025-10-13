@@ -4,7 +4,7 @@
 
 # SolanaChainMismatchError
 
-Defined in: [packages/pulsar-solana/src/errors.ts:11](https://github.com/TuwaIO/pulsar-core/blob/e265bfd0fe7b6df6af7f5f22f2db23a0f14dd130/packages/pulsar-solana/src/errors.ts#L11)
+Defined in: [packages/pulsar-solana/src/errors.ts:11](https://github.com/TuwaIO/pulsar-core/blob/0e38c45af47a22f2964c34317a312727e4eff883/packages/pulsar-solana/src/errors.ts#L11)
 
 Thrown when the connected Solana chain does not match the required chain for a transaction.
 
@@ -21,7 +21,7 @@ implement custom logic, such as prompting the user to switch networks.
 
 > **new SolanaChainMismatchError**(`requiredChain`, `currentChain`): `SolanaChainMismatchError`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:19](https://github.com/TuwaIO/pulsar-core/blob/e265bfd0fe7b6df6af7f5f22f2db23a0f14dd130/packages/pulsar-solana/src/errors.ts#L19)
+Defined in: [packages/pulsar-solana/src/errors.ts:19](https://github.com/TuwaIO/pulsar-core/blob/0e38c45af47a22f2964c34317a312727e4eff883/packages/pulsar-solana/src/errors.ts#L19)
 
 #### Parameters
 
@@ -47,7 +47,7 @@ Defined in: [packages/pulsar-solana/src/errors.ts:19](https://github.com/TuwaIO/
 
 > `optional` **cause**: `unknown`
 
-Defined in: node\_modules/.pnpm/typescript@5.9.2/node\_modules/typescript/lib/lib.es2022.error.d.ts:26
+Defined in: node\_modules/.pnpm/typescript@5.9.3/node\_modules/typescript/lib/lib.es2022.error.d.ts:26
 
 #### Inherited from
 
@@ -59,7 +59,7 @@ Defined in: node\_modules/.pnpm/typescript@5.9.2/node\_modules/typescript/lib/li
 
 > **currentChain**: `string`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:17](https://github.com/TuwaIO/pulsar-core/blob/e265bfd0fe7b6df6af7f5f22f2db23a0f14dd130/packages/pulsar-solana/src/errors.ts#L17)
+Defined in: [packages/pulsar-solana/src/errors.ts:17](https://github.com/TuwaIO/pulsar-core/blob/0e38c45af47a22f2964c34317a312727e4eff883/packages/pulsar-solana/src/errors.ts#L17)
 
 The chain the wallet is currently connected to.
 
@@ -69,7 +69,7 @@ The chain the wallet is currently connected to.
 
 > **message**: `string`
 
-Defined in: node\_modules/.pnpm/typescript@5.9.2/node\_modules/typescript/lib/lib.es5.d.ts:1077
+Defined in: node\_modules/.pnpm/typescript@5.9.3/node\_modules/typescript/lib/lib.es5.d.ts:1077
 
 #### Inherited from
 
@@ -81,7 +81,7 @@ Defined in: node\_modules/.pnpm/typescript@5.9.2/node\_modules/typescript/lib/li
 
 > **name**: `string` = `'SolanaChainMismatchError'`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:13](https://github.com/TuwaIO/pulsar-core/blob/e265bfd0fe7b6df6af7f5f22f2db23a0f14dd130/packages/pulsar-solana/src/errors.ts#L13)
+Defined in: [packages/pulsar-solana/src/errors.ts:13](https://github.com/TuwaIO/pulsar-core/blob/0e38c45af47a22f2964c34317a312727e4eff883/packages/pulsar-solana/src/errors.ts#L13)
 
 The name of the error, for easy identification.
 
@@ -95,7 +95,7 @@ The name of the error, for easy identification.
 
 > **requiredChain**: `string`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:15](https://github.com/TuwaIO/pulsar-core/blob/e265bfd0fe7b6df6af7f5f22f2db23a0f14dd130/packages/pulsar-solana/src/errors.ts#L15)
+Defined in: [packages/pulsar-solana/src/errors.ts:15](https://github.com/TuwaIO/pulsar-core/blob/0e38c45af47a22f2964c34317a312727e4eff883/packages/pulsar-solana/src/errors.ts#L15)
 
 The chain that the transaction requires (e.g., 'solana:mainnet').
 
@@ -105,7 +105,7 @@ The chain that the transaction requires (e.g., 'solana:mainnet').
 
 > `optional` **stack**: `string`
 
-Defined in: node\_modules/.pnpm/typescript@5.9.2/node\_modules/typescript/lib/lib.es5.d.ts:1078
+Defined in: node\_modules/.pnpm/typescript@5.9.3/node\_modules/typescript/lib/lib.es5.d.ts:1078
 
 #### Inherited from
 
@@ -209,7 +209,7 @@ a();
 
 > `static` **isError**(`error`): `error is Error`
 
-Defined in: node\_modules/.pnpm/typescript@5.9.2/node\_modules/typescript/lib/lib.esnext.error.d.ts:23
+Defined in: node\_modules/.pnpm/typescript@5.9.3/node\_modules/typescript/lib/lib.esnext.error.d.ts:23
 
 Indicates whether the argument provided is a built-in Error instance or not.
 
