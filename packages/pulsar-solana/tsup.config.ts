@@ -9,5 +9,17 @@ export default defineConfig([
     minify: true,
     clean: true,
     dts: true,
+    external: [
+      '@tuwaio/orbit-core',
+      '@tuwaio/pulsar-core',
+      '@tuwaio/orbit-solana',
+      '@wallet-standard/app',
+      '@wallet-standard/ui-core',
+      '@wallet-standard/ui-registry',
+      'gill',
+      'dayjs',
+      'immer',
+      'zustand',
+    ],
   },
 ]);

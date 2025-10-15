@@ -6,7 +6,7 @@
 
 > **StarknetTransaction** = [`BaseTransaction`](BaseTransaction.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:167](https://github.com/TuwaIO/pulsar-core/blob/0e38c45af47a22f2964c34317a312727e4eff883/packages/pulsar-core/src/types.ts#L167)
+Defined in: [packages/pulsar-core/src/types.ts:167](https://github.com/TuwaIO/pulsar-core/blob/0756e252e3a82162ff35197ca9c787a6a62b8731/packages/pulsar-core/src/types.ts#L167)
 
 Represents a Starknet-specific transaction, extending the base properties.
 

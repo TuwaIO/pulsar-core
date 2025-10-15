@@ -6,7 +6,7 @@
 
 > **GelatoTaskStatusResponse** = `object`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:49](https://github.com/TuwaIO/pulsar-core/blob/0e38c45af47a22f2964c34317a312727e4eff883/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L49)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:49](https://github.com/TuwaIO/pulsar-core/blob/0756e252e3a82162ff35197ca9c787a6a62b8731/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L49)
 
 Defines the shape of the response from the Gelato `getTaskStatus` API endpoint.
 
@@ -16,7 +16,7 @@ Defines the shape of the response from the Gelato `getTaskStatus` API endpoint.
 
 > **task**: `object`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:50](https://github.com/TuwaIO/pulsar-core/blob/0e38c45af47a22f2964c34317a312727e4eff883/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L50)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:50](https://github.com/TuwaIO/pulsar-core/blob/0756e252e3a82162ff35197ca9c787a6a62b8731/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L50)
 
 #### blockNumber?
 
