@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.16...pulsar-solana-v0.2.0) (2025-10-21)
+
+
+### Features
+
+* orbit integrated ([#41](https://github.com/TuwaIO/pulsar-core/issues/41)) ([25fb278](https://github.com/TuwaIO/pulsar-core/commit/25fb278002e0f631005bfc7102e1b4b7692fac3d))
+
 ## [0.1.16](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.1.15...pulsar-solana-v0.1.16) (2025-09-22)
 
 
