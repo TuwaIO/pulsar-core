@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.0.7...pulsar-react-v0.1.0) (2025-10-21)
+
+
+### Features
+
+* orbit integrated ([#41](https://github.com/TuwaIO/pulsar-core/issues/41)) ([25fb278](https://github.com/TuwaIO/pulsar-core/commit/25fb278002e0f631005bfc7102e1b4b7692fac3d))
+
 ## [0.0.7](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.0.6...pulsar-react-v0.0.7) (2025-09-22)
 
 
