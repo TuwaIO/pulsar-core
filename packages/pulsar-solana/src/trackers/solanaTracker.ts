@@ -4,19 +4,18 @@
  * `getSignatureStatuses` RPC method for updates on transaction status.
  */
 
+import { OrbitAdapter } from '@tuwaio/orbit-core';
+import { createSolanaRPC, getCluster } from '@tuwaio/orbit-solana';
 import {
   initializePollingTracker,
   ITxTrackingStore,
   OnSuccessCallback,
   PollingTrackerConfig,
   Transaction,
-  TransactionAdapter,
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
 import dayjs from 'dayjs';
 import { Signature, TransactionError } from 'gill';
-
-import { createSolanaRPC } from '../utils/createSolanaRPC';
 
 /**
  * @typedef SolanaSignatureStatusResponse
@@ -62,13 +61,13 @@ export async function solanaFetcher({
   onIntervalTick,
 }: SolanaFetcherParams): Promise<void> {
   // Validate that the transaction uses the Solana adapter
-  if (tx.adapter !== TransactionAdapter.SOLANA) {
+  if (tx.adapter !== OrbitAdapter.SOLANA) {
     throw new Error('Tx adapter is not Solana. Please set the adapter to "solana" in the transaction object.');
   }
 
   try {
     // Initialize the Solana RPC client
-    const rpc = createSolanaRPC(tx.rpcUrl ?? (tx.chainId as string));
+    const rpc = createSolanaRPC({ rpcUrlOrMoniker: tx.rpcUrl ?? getCluster({ cluster: tx.chainId as string }) });
 
     // Fetch transaction signature status
     const statuses = await rpc.getSignatureStatuses([tx.txKey as Signature]).send();
@@ -126,8 +125,8 @@ export async function solanaFetcher({
       return;
     }
 
-    // Stop polling if the transaction is unconfirmed for more than 1 day
-    const elapsedDays = dayjs().diff(dayjs.unix(tx.localTimestamp), 'day');
+    // Stop polling if the transaction is unconfirmed for more than 1 hour
+    const elapsedDays = dayjs().diff(dayjs.unix(tx.localTimestamp), 'hour');
     if (elapsedDays >= 1) {
       onFailure(typedStatus);
       stopPolling();

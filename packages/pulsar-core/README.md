@@ -34,13 +34,13 @@ This package requires `zustand`, `immer` and `dayjs` as peer dependencies. You m
 
 ```bash
 # Using pnpm
-pnpm add @tuwaio/pulsar-core zustand immer dayjs
+pnpm add @tuwaio/pulsar-core @tuwaio/orbit-core zustand immer dayjs
 
 # Using npm
-npm install @tuwaio/pulsar-core zustand immer dayjs
+npm install @tuwaio/pulsar-core @tuwaio/orbit-core zustand immer dayjs
 
 # Using yarn
-yarn add @tuwaio/pulsar-core zustand immer dayjs
+yarn add @tuwaio/pulsar-core @tuwaio/orbit-core zustand immer dayjs
 ```
 
 ---

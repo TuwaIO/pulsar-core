@@ -35,13 +35,13 @@ This package is designed to be used as part of the Pulsar stack and requires `@w
 
 ```bash
 # Using pnpm
-pnpm add @tuwaio/pulsar-evm @tuwaio/pulsar-core @wagmi/core viem zustand immer dayjs
+pnpm add @tuwaio/pulsar-evm @tuwaio/pulsar-core @tuwaio/orbit-core @tuwaio/orbit-evm @wagmi/core viem zustand immer dayjs
 
 # Using npm
-npm install @tuwaio/pulsar-evm @tuwaio/pulsar-core @wagmi/core viem zustand immer dayjs
+npm install @tuwaio/pulsar-evm @tuwaio/pulsar-core @tuwaio/orbit-core @tuwaio/orbit-evm @wagmi/core viem zustand immer dayjs
 
 # Using yarn
-yarn add @tuwaio/pulsar-evm @tuwaio/pulsar-core @wagmi/core viem zustand immer dayjs
+yarn add @tuwaio/pulsar-evm @tuwaio/pulsar-core @tuwaio/orbit-core @tuwaio/orbit-evm @wagmi/core viem zustand immer dayjs
 ```
 
 ---

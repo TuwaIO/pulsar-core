@@ -2,11 +2,11 @@
 
 ***
 
-# evmAdapter()
+# pulsarEvmAdapter()
 
-> **evmAdapter**\<`T`\>(`config`, `appChains`): `TxAdapter`\<`T`\>
+> **pulsarEvmAdapter**\<`T`\>(`config`, `appChains`): `TxAdapter`\<`T`\>
 
-Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:33](https://github.com/TuwaIO/pulsar-core/blob/c72496708aaee3876552289f9710c5c529bb4798/packages/pulsar-evm/src/adapters/evmAdapter.ts#L33)
+Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:33](https://github.com/TuwaIO/pulsar-core/blob/e3594e7fa8bdb6fe89020533e414a546965dfc16/packages/pulsar-evm/src/adapters/evmAdapter.ts#L33)
 
 Creates an EVM-specific transaction adapter.
 
@@ -32,7 +32,7 @@ The wagmi configuration object.
 
 ### appChains
 
-`Chain`[]
+readonly \[`Chain`, `Chain`\]
 
 An array of viem `Chain` objects supported by the application.
 

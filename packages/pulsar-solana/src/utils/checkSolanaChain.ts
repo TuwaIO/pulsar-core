@@ -6,7 +6,6 @@ import { SolanaChainMismatchError } from '../errors';
 
 /**
  * Checks if the wallet's current chain matches the required chain for a transaction.
- *
  * This function compares the `chain` property from the Wallet Standard account object
  * with the required chain identifier (e.g., 'solana:mainnet').
  *

@@ -1,14 +1,5 @@
-/**
- * @file This file defines the core data structures and TypeScript types for the Pulsar transaction tracking engine.
- * It specifies the framework-agnostic models for transactions, their lifecycle statuses, and the interfaces for
- * the Zustand-based store and chain-specific adapters.
- */
-
+import { BaseAdapter, OrbitAdapter, OrbitGenericAdapter } from '@tuwaio/orbit-core';
 import { StoreApi } from 'zustand';
-
-// =================================================================================================
-// 1. ZUSTAND UTILITY TYPES
-// =================================================================================================
 
 /**
  * A utility type for creating modular Zustand store slices, enabling composable state management.
@@ -19,22 +10,6 @@ export type StoreSlice<T extends object, S extends object = T> = (
   set: StoreApi<S extends T ? S : S & T>['setState'],
   get: StoreApi<S extends T ? S : S & T>['getState'],
 ) => T;
-
-// =================================================================================================
-// 2. ENUMS AND CORE TRANSACTION TYPES
-// =================================================================================================
-
-/**
- * Defines the supported blockchain adapters. Each adapter corresponds to a specific chain architecture.
- */
-export enum TransactionAdapter {
-  /** For Ethereum Virtual Machine (EVM) compatible chains like Ethereum, Polygon, etc. */
-  EVM = 'evm',
-  /** For the Solana blockchain. */
-  SOLANA = 'solana',
-  /** For the Starknet L2 network. */
-  Starknet = 'starknet',
-}
 
 /**
  * Enum representing the different tracking strategies available for transactions.
@@ -147,7 +122,7 @@ export type BaseTransaction = {
  */
 export type EvmTransaction = BaseTransaction & {
   /** The adapter type for EVM transactions. */
-  adapter: TransactionAdapter.EVM;
+  adapter: OrbitAdapter.EVM;
   /** The on-chain transaction hash, available after submission. */
   hash?: `0x${string}`;
   /** The data payload for the transaction, typically for smart contract interactions. */
@@ -171,7 +146,7 @@ export type EvmTransaction = BaseTransaction & {
  */
 export type SolanaTransaction = BaseTransaction & {
   /** The adapter type for Solana transactions. */
-  adapter: TransactionAdapter.SOLANA;
+  adapter: OrbitAdapter.SOLANA;
   /** The transaction fee in lamports. */
   fee?: number;
   /** The instructions included in the transaction. */
@@ -191,7 +166,7 @@ export type SolanaTransaction = BaseTransaction & {
  */
 export type StarknetTransaction = BaseTransaction & {
   /** The adapter type for Starknet transactions. */
-  adapter: TransactionAdapter.Starknet;
+  adapter: OrbitAdapter.Starknet;
   /** The actual fee paid for the transaction. */
   actualFee?: { amount: string; unit: string };
   /** The address of the contract being interacted with. */
@@ -210,7 +185,7 @@ export type Transaction = EvmTransaction | SolanaTransaction | StarknetTransacti
  */
 export type InitialTransactionParams = {
   /** The specific blockchain adapter for this transaction. */
-  adapter: TransactionAdapter;
+  adapter: OrbitAdapter;
   /** The function that executes the on-chain action (e.g., sending a transaction) and returns a preliminary identifier like a hash. */
   actionFunction: (...args: any[]) => Promise<ActionTxKey | undefined>;
   /** A user-facing description for the transaction. Supports state-specific descriptions. */
@@ -261,18 +236,15 @@ export type OnSuccessCallback<T extends Transaction> = {
  * The configuration object containing one or more transaction adapters.
  * @template T The specific transaction type.
  */
-export type Adapter<T extends Transaction> = {
-  /** A single `TxAdapter` instance or an array of them. */
-  adapter: TxAdapter<T> | TxAdapter<T>[];
-};
+export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter<T>>;
 
 /**
  * Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
  * @template T The specific transaction type, extending `Transaction`.
  */
-export type TxAdapter<T extends Transaction> = {
+export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl'> & {
   /** The unique key identifying this adapter. */
-  key: TransactionAdapter;
+  key: OrbitAdapter;
   /** Returns information about the currently connected wallet. */
   getWalletInfo: () => {
     /** The currently connected wallet address. */
@@ -285,6 +257,7 @@ export type TxAdapter<T extends Transaction> = {
    *
    * This method should throw an error if the chain is mismatched.
    * @param chainId The desired chain ID for the transaction.
+   * @param walletChainId The connected wallet chain ID.
    */
   checkChainForTx: (chainId: string | number) => Promise<void>;
   /**
@@ -305,21 +278,6 @@ export type TxAdapter<T extends Transaction> = {
     params: { tx: T } & OnSuccessCallback<T> &
       Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>,
   ) => Promise<void> | void;
-  /**
-   * Returns the base URL for the blockchain explorer for the current network.
-   * @param url Optional URL to override the default explorer URL.
-   */
-  getExplorerUrl: (url?: string) => string | undefined;
-  /**
-   * Optional: Fetches a name from a chain-specific name service (e.g., ENS).
-   * @param address The address to resolve the name for.
-   */
-  getName?: (address: string) => Promise<string | null>;
-  /**
-   * Optional: Fetches an avatar URL from a chain-specific name service.
-   * @param name The name to resolve the avatar for.
-   */
-  getAvatar?: (name: string) => Promise<string | null>;
   /**
    * Optional: Logic to cancel a pending EVM transaction.
    * @param tx The transaction to cancel.
@@ -344,7 +302,7 @@ export type TxAdapter<T extends Transaction> = {
       txKey: string;
       tx: InitialTransactionParams;
       onClose: (txKey?: string) => void;
-    } & Partial<Pick<ITxTrackingStore<T>, 'handleTransaction'>>,
+    } & Partial<Pick<ITxTrackingStore<T>, 'executeTxAction'>>,
   ) => Promise<void>;
   /**
    * Optional: Constructs a full explorer URL for a specific transaction.
@@ -446,7 +404,7 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
    * @param params.defaultTracker The default tracker to use if it cannot be determined automatically.
    * @param params.onSuccessCallback Callback to execute when the transaction is successfully submitted.
    */
-  handleTransaction: (
+  executeTxAction: (
     params: {
       actionFunction: () => Promise<ActionTxKey | undefined>;
       params: Omit<InitialTransactionParams, 'actionFunction'>;

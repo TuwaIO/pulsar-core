@@ -33,13 +33,13 @@ The package has minimal dependencies, requiring only `gill-sdk` for core functio
 
 ```bash
 # Using pnpm
-pnpm add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @bonfida/spl-name-service @solana/web3.js zustand immer dayjs
+pnpm add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry
 
 # Using npm
-npm install @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @bonfida/spl-name-service @solana/web3.js zustand immer dayjs
+npm install @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry
 
 # Using yarn
-yarn add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @bonfida/spl-name-service @solana/web3.js zustand immer dayjs
+yarn add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry
 ```
 
 -----

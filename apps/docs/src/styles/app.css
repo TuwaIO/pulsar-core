@@ -1,6 +1,6 @@
-@import 'nextra-theme-docs/style.css';
 @import '@tuwaio/nova-core/dist/index.css';
 @import 'tailwindcss';
+@import 'nextra-theme-docs/style.css';
 
 :root {
   --tuwa-primary: #6366f1;

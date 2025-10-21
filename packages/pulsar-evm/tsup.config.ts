@@ -9,6 +9,15 @@ export default defineConfig([
     minify: true,
     clean: true,
     dts: true,
-    external: ['react', 'react-dom'],
+    external: [
+      '@tuwaio/orbit-core',
+      '@tuwaio/pulsar-core',
+      '@tuwaio/orbit-evm',
+      '@wagmi/core',
+      'viem',
+      'dayjs',
+      'immer',
+      'zustand',
+    ],
   },
 ]);

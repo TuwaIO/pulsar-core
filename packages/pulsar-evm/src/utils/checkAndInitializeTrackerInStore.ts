@@ -4,7 +4,7 @@
  */
 
 import { ITxTrackingStore, OnSuccessCallback, Transaction, TransactionTracker } from '@tuwaio/pulsar-core';
-import { Chain } from 'viem';
+import { Config } from '@wagmi/core';
 
 import { evmTrackerForStore } from '../trackers/evmTracker';
 import { gelatoTrackerForStore } from '../trackers/gelatoTracker';
@@ -18,7 +18,7 @@ type InitializeTrackerParams<T extends Transaction> = Pick<
   ITxTrackingStore<T>,
   'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
 > & {
-  chains: Chain[];
+  config: Config;
   tx: T;
   tracker: TransactionTracker;
 } & OnSuccessCallback<T>;
@@ -35,14 +35,14 @@ type InitializeTrackerParams<T extends Transaction> = Pick<
 export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   tracker,
   tx,
-  chains,
+  config,
   transactionsPool,
   onSuccessCallback,
   ...rest
 }: InitializeTrackerParams<T>): Promise<void> {
   switch (tracker) {
     case TransactionTracker.Ethereum:
-      return evmTrackerForStore({ tx, chains, transactionsPool, onSuccessCallback, ...rest });
+      return evmTrackerForStore({ tx, config, transactionsPool, onSuccessCallback, ...rest });
 
     case TransactionTracker.Gelato:
       // The Gelato tracker does not need the `chains` param as it uses its own API endpoints.
@@ -56,6 +56,6 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
     // It logs a warning and treats them as standard EVM transactions.
     default:
       console.warn(`Unknown tracker type: '${tracker}'. Falling back to default EVM tracker.`);
-      return evmTrackerForStore({ tx, chains, transactionsPool, onSuccessCallback, ...rest });
+      return evmTrackerForStore({ tx, config, transactionsPool, onSuccessCallback, ...rest });
   }
 }

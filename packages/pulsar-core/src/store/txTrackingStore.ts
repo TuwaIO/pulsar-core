@@ -4,14 +4,13 @@
  * immutable updates, and a persistence middleware to maintain state across user sessions.
  */
 
+import { selectAdapterByKey, setChainId } from '@tuwaio/orbit-core';
 import dayjs from 'dayjs';
 import { produce } from 'immer';
 import { persist, PersistOptions } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
-import { Adapter, ITxTrackingStore, Transaction } from '../types';
-import { selectAdapterByKey } from '../utils/selectAdapterByKey';
-import { setChainId } from '../utils/сhainHelpers';
+import { ITxTrackingStore, PulsarAdapter, Transaction } from '../types';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 
 /**
@@ -31,7 +30,7 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 export function createPulsarStore<T extends Transaction>({
   adapter,
   ...options
-}: Adapter<T> & PersistOptions<ITxTrackingStore<T>>) {
+}: PulsarAdapter<T> & PersistOptions<ITxTrackingStore<T>>) {
   return createStore<ITxTrackingStore<T>>()(
     persist(
       (set, get) => ({
@@ -68,7 +67,7 @@ export function createPulsarStore<T extends Transaction>({
          * It manages the entire lifecycle, from UI state updates and chain switching to
          * signing, submission, and background tracker initialization.
          */
-        handleTransaction: async ({ defaultTracker, actionFunction, onSuccessCallback, params }) => {
+        executeTxAction: async ({ defaultTracker, actionFunction, onSuccessCallback, params }) => {
           const { desiredChainID, ...restParams } = params;
           const localTimestamp = dayjs().unix();
 

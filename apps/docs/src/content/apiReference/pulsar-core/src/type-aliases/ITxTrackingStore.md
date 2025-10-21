@@ -6,25 +6,15 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:436](https://github.com/TuwaIO/pulsar-core/blob/c72496708aaee3876552289f9710c5c529bb4798/packages/pulsar-core/src/types.ts#L436)
+Defined in: [packages/pulsar-core/src/types.ts:394](https://github.com/TuwaIO/pulsar-core/blob/e3594e7fa8bdb6fe89020533e414a546965dfc16/packages/pulsar-core/src/types.ts#L394)
 
 The complete interface for the Pulsar transaction tracking store.
 
 ## Type Declaration
 
-### getAdapter()
+### executeTxAction()
 
-> **getAdapter**: () => [`TxAdapter`](TxAdapter.md)\<`T`\> \| [`TxAdapter`](TxAdapter.md)\<`T`\>[]
-
-A getter function that returns the configured transaction adapter(s).
-
-#### Returns
-
-[`TxAdapter`](TxAdapter.md)\<`T`\> \| [`TxAdapter`](TxAdapter.md)\<`T`\>[]
-
-### handleTransaction()
-
-> **handleTransaction**: (`params`) => `Promise`\<`void`\>
+> **executeTxAction**: (`params`) => `Promise`\<`void`\>
 
 The primary method for initiating and tracking a new transaction from start to finish.
 It manages UI state, executes the on-chain action, and initiates background tracking.
@@ -40,6 +30,16 @@ The parameters for handling the transaction.
 #### Returns
 
 `Promise`\<`void`\>
+
+### getAdapter()
+
+> **getAdapter**: () => [`TxAdapter`](TxAdapter.md)\<`T`\> \| [`TxAdapter`](TxAdapter.md)\<`T`\>[]
+
+A getter function that returns the configured transaction adapter(s).
+
+#### Returns
+
+[`TxAdapter`](TxAdapter.md)\<`T`\> \| [`TxAdapter`](TxAdapter.md)\<`T`\>[]
 
 ### initializeTransactionsPool()
 

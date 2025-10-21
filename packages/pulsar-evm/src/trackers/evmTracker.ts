@@ -5,8 +5,8 @@
  */
 
 import { ITxTrackingStore, OnSuccessCallback, Transaction, TransactionStatus } from '@tuwaio/pulsar-core';
+import { Config, getClient } from '@wagmi/core';
 import {
-  Chain,
   Client,
   GetTransactionReturnType,
   Hex,
@@ -17,8 +17,6 @@ import {
 } from 'viem';
 import { getBlock, getTransaction, waitForTransactionReceipt } from 'viem/actions';
 
-import { createViemClient } from '../utils/createViemClient';
-
 const DEFAULT_RETRY_COUNT = 10;
 const DEFAULT_RETRY_TIMEOUT_MS = 3000;
 
@@ -27,7 +25,7 @@ const DEFAULT_RETRY_TIMEOUT_MS = 3000;
  */
 export type EVMTrackerParams = {
   tx: Pick<Transaction, 'chainId' | 'txKey'>;
-  chains: Chain[];
+  config: Config;
   onTxDetailsFetched: (txDetails: GetTransactionReturnType) => void;
   onSuccess: (txDetails: GetTransactionReturnType, receipt: TransactionReceipt, client: Client) => Promise<void>;
   onReplaced: (replacement: ReplacementReturnType) => void;
@@ -47,7 +45,7 @@ export type EVMTrackerParams = {
 export async function evmTracker(params: EVMTrackerParams): Promise<void> {
   const {
     tx,
-    chains,
+    config,
     onInitialize,
     onTxDetailsFetched,
     onSuccess,
@@ -64,7 +62,7 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
     return onFailure(new Error('Transaction hash cannot be the zero hash.'));
   }
 
-  const client = createViemClient(tx.chainId as number, chains);
+  const client = getClient(config, { chainId: tx.chainId as number });
   if (!client) {
     return onFailure(new Error(`Could not create a viem client for chainId: ${tx.chainId}`));
   }
@@ -124,16 +122,16 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
  * @template T - The application-specific transaction type.
  */
 export async function evmTrackerForStore<T extends Transaction>(
-  params: Pick<EVMTrackerParams, 'chains'> &
+  params: Pick<EVMTrackerParams, 'config'> &
     Pick<ITxTrackingStore<T>, 'updateTxParams' | 'transactionsPool'> & {
       tx: T;
     } & OnSuccessCallback<T>,
 ) {
-  const { tx, chains, updateTxParams, transactionsPool, onSuccessCallback } = params;
+  const { tx, config, updateTxParams, transactionsPool, onSuccessCallback } = params;
 
   return evmTracker({
     tx,
-    chains,
+    config,
     onInitialize: () => {
       // Set the initial hash, which is the same as the txKey for this tracker.
       updateTxParams(tx.txKey, { hash: tx.txKey as Hex });
