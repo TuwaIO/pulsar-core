@@ -4,6 +4,8 @@
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-core.svg)](./LICENSE)
 [![Contributors](https://img.shields.io/github/contributors/TuwaIO/pulsar-core)](https://github.com/TuwaIO/pulsar-core/graphs/contributors)
 
+<img src="https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/repos/pulsar_core.png" alt="Pulsar Core" width="400" style="border-radius: 10px; text-align: center; margin-bottom: 20px; margin-top: 20px; margin-left: auto; margin-right: auto; display: block;" />
+
 Welcome to the official monorepo for the **Pulsar Engine**, a headless state management system for tracking Web3 transactions.
 
 ---
