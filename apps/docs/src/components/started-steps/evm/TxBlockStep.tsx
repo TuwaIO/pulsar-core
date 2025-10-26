@@ -13,7 +13,7 @@ const txBlockStepCodeGenerate = ({ importLine, buttonLine }: TxBlockStepCodeGene
 
 ${importLine}
 import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
-import { TransactionAdapter } from '@tuwaio/pulsar-core';
+import { OrbitAdapter } from '@tuwaio/orbit-core';
 import { sepolia } from 'viem/chains';
 
 // The wagmi config is needed by the action function itself
@@ -23,19 +23,22 @@ import { increment } from '@/transactions/actions/increment';
 
 export const Increment = () => {
   const initializeTransactionsPool = usePulsarStore(state => state.initializeTransactionsPool);
-  const handleTransaction = usePulsarStore(state => state.handleTransaction);
+  const executeTxAction = usePulsarStore(state => state.executeTxAction);
 
   // This hook ensures that transaction tracking continues even after a page reload.
   useInitializeTransactionsPool(initializeTransactionsPool);
 
   const handleIncrement = async () => {
-    await handleTransaction({
+    await executeTxAction({
       // The actionFunction needs the config to interact with the wallet/contract.
       actionFunction: () => increment({ wagmiConfig: config }),
+      onSuccessCallback: (tx) => {
+        console.log('Incremented', tx);
+      },
       // Params describe the transaction for the Pulsar store.
       params: {
         type: 'increment',
-        adapter: TransactionAdapter.EVM,
+        adapter: OrbitAdapter.EVM,
         desiredChainID: sepolia.id,
         payload: {
           value: 0, // This would typically be dynamic data

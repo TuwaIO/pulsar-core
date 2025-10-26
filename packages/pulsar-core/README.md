@@ -1,8 +1,9 @@
-# Pulsar Core
+# Pulsar
 
-[![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-core.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-core)
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-core.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
+
+<img src="https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/repos/pulsar_core.png" alt="Pulsar Core" width="400" style="border-radius: 10px; text-align: center; margin-bottom: 20px; margin-top: 20px; margin-left: auto; margin-right: auto; display: block;" />
 
 The core, framework-agnostic engine for real-time tracking of Web3 transaction lifecycles (pending, success, failed, replaced).
 
@@ -94,7 +95,7 @@ The `createPulsarStore` function returns a vanilla Zustand store with the follow
 
 #### **Actions**
 
-- `handleTransaction(params)`: The primary, all-in-one function for initiating, sending, and tracking a new transaction. This is the main action you will use.
+- `executeTxAction(params)`: The primary, all-in-one function for initiating, sending, and tracking a new transaction. This is the main action you will use.
 - `initializeTransactionsPool()`: An async function to re-initialize trackers for any pending transactions found in storage. **This is crucial for resuming tracking after a page reload.**
 - `addTxToPool(tx)`: Adds a new transaction directly to the tracking pool.
 - `updateTxParams(txKey, fields)`: Updates one or more properties of an existing transaction in the pool.

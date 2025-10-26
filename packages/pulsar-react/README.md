@@ -22,13 +22,13 @@ To use this package, you need the complete Pulsar stack, including `@wagmi/core`
 
 ```bash
 # Using pnpm
-pnpm add @tuwaio/pulsar-react @tuwaio/pulsar-core @tuwaio/pulsar-evm @wagmi/core viem zustand immer dayjs
+pnpm add @tuwaio/pulsar-react react
 
 # Using npm
-npm install @tuwaio/pulsar-react @tuwaio/pulsar-core @tuwaio/pulsar-evm @wagmi/core viem zustand immer dayjs
+npm install @tuwaio/pulsar-react react
 
 # Using yarn
-yarn add @tuwaio/pulsar-react @tuwaio/pulsar-core @tuwaio/pulsar-evm @wagmi/core viem zustand immer dayjs
+yarn add @tuwaio/pulsar-react react
 ```
 
 ---

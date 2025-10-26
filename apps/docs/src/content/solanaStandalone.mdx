@@ -38,16 +38,16 @@ This is the primary tracker for monitoring standard transactions on Solana, iden
 #### Example Usage
 ```tsx
 import { solanaTracker } from '@tuwaio/pulsar-solana';
-import { useWalletUi } from '@wallet-ui/react';
+import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 
 async function trackMySolanaTransaction(txSignature: string) {
-  const wallet = useWalletUi();
+  const activeWallet = useSatelliteConnectStore((store) => store.activeWallet);
 
   await solanaTracker({
     tx: {
       txKey: txSignature,
-      from: wallet?.account?.address.toString() ?? '',
-      rpcUrl: wallet.cluster.urlOrMoniker,
+      from: activeWallet?.address ?? '',
+      rpcUrl: activeWallet?.rpcURL ?? '',
       chainId: 'devnet',
     },
     onIntervalTick: (response) => {
@@ -78,7 +78,6 @@ This utility function simplifies the process of creating, signing, and broadcast
 
 ```tsx
 import type { Instruction, SolanaClient, TransactionSendingSigner } from 'gill';
-import { createTransaction, getBase58Decoder, signAndSendTransactionMessageWithSigners } from 'gill';
 import { signAndSendSolanaTx } from '@tuwaio/pulsar-solana';
 
 async function sendTransaction(client: SolanaClient, signer: TransactionSendingSigner, instruction: Instruction) {
@@ -103,14 +102,14 @@ This function verifies if the user is connected to the correct Solana network an
 
 ```tsx
 import { checkSolanaChain } from '@tuwaio/pulsar-solana';
-import { useWalletUi } from '@wallet-ui/react';
+import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 
 async function ensureCorrectNetwork() {
-  const wallet = useWalletUi();
+  const activeWallet = useSatelliteConnectStore((store) => store.activeWallet);
   const requiredChainId = 'devnet';
 
   try {
-    await checkSolanaChain(requiredChainId, wallet?.cluster.cluster);
+    await checkSolanaChain(requiredChainId, activeWallet?.chainId);
     console.log('Network is correct, proceeding...');
   } catch (error) {
     console.error('Network mismatch:', error.message);

@@ -9,7 +9,7 @@ export function CombineSteps() {
       <p className="my-2 text-[var(--tuwa-text-secondary)]">
         First, install the necessary <b>Pulsar</b> packages for transaction tracking and state management.
       </p>
-      <PackageInstallationTabs packagesList="@tuwaio/pulsar-core @tuwaio/pulsar-solana @tuwaio/pulsar-react gill @bonfida/spl-name-service @solana/web3.js zustand immer dayjs" />
+      <PackageInstallationTabs packagesList="@tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry" />
       <IDLStep />
       <ActionStep />
       <TxTrackingStoreStep />
