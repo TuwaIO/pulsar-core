@@ -92,7 +92,7 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
         throw new Error('Retry failed: A wallet must be connected.');
       }
       if (!executeTxAction) {
-        throw new Error('Retry failed: handleTransaction function is not provided.');
+        throw new Error('Retry failed: executeTxAction function is not provided.');
       }
 
       const clusterForRetry = getCluster({ cluster: tx?.desiredChainID as string }) as SolanaClusterMoniker;

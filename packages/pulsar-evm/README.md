@@ -25,7 +25,6 @@ While its main export is the `evmAdapter`, it also includes a suite of standalon
   - **Gelato Relay** Meta-Transactions (via the Gelato API).
 - **🤖 Automatic Routing:** The adapter automatically detects the correct tracker to use (Safe, Gelato, or standard EVM) based on the transaction context and wallet type.
 - **⚡ Built-in Actions:** Includes ready-to-use functions for common user needs like `speedUpTxAction` and `cancelTxAction`.
-- **🛠️ Utility Suite:** Exports a rich set of helpers, including **ENS resolvers** (`getName`, `getAvatar`) and an explorer link generator (`selectEvmTxExplorerLink`).
 
 ---
 
@@ -110,7 +109,7 @@ function SpeedUpButton({ txKey }) {
         tx: stuckTransaction,
       });
       console.log('Transaction sped up with new hash:', newTxHash);
-      // Pulsar's `handleTransaction` will automatically add and track this new transaction
+      // Pulsar's `executeTxAction` will automatically add and track this new transaction
       // if you integrate it with the action that calls this.
     } catch (error) {
       console.error('Failed to speed up transaction:', error);

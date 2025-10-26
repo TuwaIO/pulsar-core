@@ -6,13 +6,13 @@ import { CodeHighlighter } from '@/components/CodeHighlighter';
 const idlContent = `{
   "address": "...your contract address...",
   "version": "0.1.0",
-  "name": "solanatest",
+  "name": "...your contract name...",
   "instructions": [
     {
       "name": "increment",
       "accounts": [
         {
-          "name": "solanatest",
+          "name": "...your contract name...",
           "isMut": true,
           "isSigner": false
         }
@@ -26,8 +26,8 @@ const idlContent = `{
 const configContent = `import { createCodamaConfig } from 'gill';
 
 export default createCodamaConfig({
-  clientJs: 'src/programs/solanatest/generated',
-  idl: 'src/targets/solanatest/idl/solanatest.json',
+  clientJs: 'src/programs/...your contract name.../generated',
+  idl: 'src/targets/...your contract name.../idl/...your contract name....json',
 });
 `;
 

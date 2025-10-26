@@ -22,7 +22,6 @@ The architecture is designed for multi-chain robustness. You can provide RPC end
 - **🔗 Multi-Chain RPC:** Configure with a map of RPC URLs for different clusters; the adapter intelligently selects the correct one.
 - **🛰️ Robust Polling Tracker:** A durable transaction tracker that polls for signature statuses until finality.
 - **🌐 Network Verification:** Includes a utility (`checkSolanaChain`) to robustly verify that the connected wallet's cluster matches the one required by the transaction.
-- **👤 Name Service Support:** Built-in support for **Solana Name Service (SNS)** on the currently active network.
 - **💡 Optional Wallet:** The adapter can be initialized without a wallet for read-only operations, such as displaying transaction history.
 
 -----
@@ -46,24 +45,21 @@ yarn add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwa
 
 ## 🚀 Usage
 
-### 1. Primary Usage: Integrating with `@wallet-ui/react`
+### 1. Primary Usage: Integrating with `@tuwaio/nova-connect`
 
-The key to using Pulsar with Solana is to leverage the `solanaAdapter`, which seamlessly integrates with the `@wallet-ui/react` state. This removes the need for manual wallet state management, as the adapter automatically reacts to changes in the active wallet, cluster, and connection status.
+The key to using Pulsar with Solana is to leverage the `solanaAdapter`, which seamlessly integrates with the `@tuwaio/nova-connect` state for example. This removes the need for manual wallet state management, as the adapter automatically reacts to changes in the active wallet, cluster, and connection status.
 
 **Example: Creating a Pulsar Store**
-Here's how to create and initialize the central Pulsar store using the `solanaAdapter`. The adapter subscribes to state changes from `@wallet-ui/react`, keeping the transaction pool in sync with your dApp's wallet.
+Here's how to create and initialize the central Pulsar store using the `solanaAdapter`.
 
 ```typescript
-// src/providers/PulsarProvider.ts
-import { createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
-import { solanaAdapter } from '@tuwaio/pulsar-solana';
-import { useWalletUi } from '@wallet-ui/react';
-import { PropsWithChildren, useMemo } from 'react';
+// src/hooks/pulsarStoreHook.ts
 
-type PulsarStore = ITxTrackingStore<TransactionUnion>;
-const PulsarStoreContext = createContext<StoreApi<PulsarStore> | null>(null);
+import { createBoundedUseStore, createPulsarStore } from '@tuwaio/pulsar-core';
+import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
+import { pulsarSolanaAdapter } from '@tuwaio/pulsar-solana';
 
-const storageName = 'transactions-tracking-storage';
+import { appEVMChains, solanaRPCUrls, wagmiConfig } from '@/configs/appConfig';
 
 // 2. Define a typed transaction for the 'example' action
 type ExampleTx = Transaction & {
@@ -76,52 +72,45 @@ type ExampleTx = Transaction & {
 // Create a union of all possible transaction types
 export type TransactionUnion = ExampleTx;
 
-export function PulsarProvider({ children }: PropsWithChildren) {
-  const wallet = useWalletUi();
+const storageName = 'transactions-tracking-storage';
 
-  const store = useMemo(() => {
-    return createPulsarStore<TransactionUnion>({
-      name: storageName,
-      adapter: solanaAdapter({
-        wallet: {
-          walletAddress: wallet?.account?.address.toString() ?? '',
-          walletType: wallet?.account?.label ?? 'solana',
-          walletActiveChain: wallet?.cluster.cluster ?? 'mainnet',
-        },
-        rpcUrls: {
-          devnet: 'https://api.devnet.solana.com',
-        },
-      }),
-    });
-  }, [wallet]);
-
-  return <PulsarStoreContext.Provider value={store}>{children}</PulsarStoreContext.Provider>;
-}
-
-export const usePulsarStore = <T>(selector: (state: PulsarStore) => T): T => {
-  const store = useContext(PulsarStoreContext);
-  if (!store) {
-    throw new Error('usePulsarStore must be used within a PulsarProvider');
-  }
-  return useStore(store, selector);
+export const solanaRPCUrls = {
+  devnet: 'https://api.devnet.solana.com',
 };
-````
+
+export const usePulsarStore = createBoundedUseStore(
+  createPulsarStore<TransactionUnion>({
+    name: storageName,
+    adapter: [
+      pulsarSolanaAdapter({
+        rpcUrls: solanaRPCUrls,
+      }),
+    ],
+  }),
+);
+```
 
 -----
 
 ### 2. Initiating a Transaction
 
-When calling `handleTransaction`, Pulsar automatically fetches the necessary `wallet` and `client` instances from the store based on the active wallet in `@wallet-ui/react`. Your action function then receives these objects as parameters, allowing you to focus purely on building and sending the transaction.
+When calling `executeTxAction`, Pulsar automatically fetches the necessary `wallet` and `client` instances based on the connected wallet. Your action function then receives these objects as parameters, allowing you to focus purely on building and sending the transaction.
 
 ```tsx
 // src/components/MyTransactionButton.tsx
-import { useWalletUi, useWalletAccountTransactionSendingSigner, UiWalletAccount } from '@wallet-ui/react';
+import { UiWalletAccount } from '@wallet-standard/react';
 import { TransactionAdapter } from '@tuwaio/pulsar-core';
+import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 // The action function receives the wallet and client from the adapter.
 import { signAndSendSolanaTx } from '@tuwaio/pulsar-solana';
 import { Address, SolanaClient, TransactionSendingSigner } from 'gill';
+import { useWalletAccountTransactionSendingSigner } from '@solana/react';
+import { Wallet } from '@tuwaio/nova-connect/satellite';
+import { OrbitAdapter } from '@tuwaio/orbit-core';
+import { createSolanaClientWithCache } from '@tuwaio/orbit-solana';
+import { SolanaWallet } from '@tuwaio/satellite-solana';
 
-import { usePulsarStore } from '@/providers/PulsarProvider';
+import { usePulsarStore } from '@/hooks/pulsarStoreHook';
 
 export function myAction({ client, signer }: {
   client: SolanaClient;
@@ -135,27 +124,36 @@ export function myAction({ client, signer }: {
 }
 
 function MyTransactionButton() {
-  const handleTransaction = usePulsarStore((state) => state.handleTransaction);
-  const walletUi = useWalletUi();
+  const executeTxAction = usePulsarStore((state) => state.executeTxAction);
+  const transactionsPool = usePulsarStore((state) => state.transactionsPool);
+  const getLastTxKey = usePulsarStore((state) => state.getLastTxKey);
+  const activeWallet = useSatelliteConnectStore((state) => state.activeWallet);
 
-  const signer = useWalletAccountTransactionSendingSigner(walletUi.account as UiWalletAccount, walletUi.cluster.id);
+  const activeWalletSolana = activeWallet as SolanaWallet;
+
+  const signer = useWalletAccountTransactionSendingSigner(
+    activeWalletSolana.connectedAccount as UiWalletAccount,
+    `${OrbitAdapter.SOLANA}:${activeWallet?.chainId ?? 'devnet'}`,
+  );
 
   const handleClick = async () => {
-    if (!walletUi.connected) {
-        // Handle wallet not connected
-        return;
-    }
-    await handleTransaction({
-      actionFunction: () => myAction({ client: walletUi.client, signer }),
+    await executeTxAction({
+      actionFunction: () =>
+        myAction({
+          client: createSolanaClientWithCache({ rpcUrlOrMoniker: 'devnet' }),
+          signer,
+        }),
       onSuccessCallback: async () => {
-        console.log('Executed')
+        console.log('action executed')
       },
       params: {
-        type: 'myAction',
-        adapter: TransactionAdapter.SOLANA,
+        type: 'example',
+        adapter: OrbitAdapter.SOLANA,
         // The RPC URL must be provided for the tracker to work after a page reload
-        rpcUrl: walletUi.cluster.urlOrMoniker,
+        rpcUrl: activeWallet?.rpcURL,
         desiredChainID: 'devnet', // The cluster name for the pre-flight check
+        title: 'Example',
+        description: 'Example tx',
       },
     });
   };
@@ -175,13 +173,9 @@ You can use the helper functions, such as `getSolanaExplorerLink` and `checkSola
 ```tsx
 // src/components/ExplorerLink.tsx
 import { getSolanaExplorerLink } from '@tuwaio/pulsar-solana';
-import { useWalletUi } from '@wallet-ui/react';
 
-function ExplorerLink({ txSignature }: { txSignature: string }) {
-  const { cluster } = useWalletUi();
-
-  // Use the cluster from the global state to generate the correct link.
-  const explorerUrl = getSolanaExplorerLink(`/tx/${txSignature}`, cluster.cluster);
+function ExplorerLink({ txSignature, txCluster }: { txSignature: string, txCluster: string }) {
+  const explorerUrl = getSolanaExplorerLink(`/tx/${txSignature}`, txCluster);
 
   return (
     <a href={explorerUrl} target="_blank" rel="noopener noreferrer">

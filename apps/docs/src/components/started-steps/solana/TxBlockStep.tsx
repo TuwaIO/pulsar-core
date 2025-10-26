@@ -12,39 +12,49 @@ const txBlockStepCodeGenerate = ({ importLine, buttonLine }: TxBlockStepCodeGene
   return `'use client';
 
 ${importLine}
-import { TransactionAdapter } from '@tuwaio/pulsar-core';
-import {
-  UiWalletAccount,
-  useWalletAccountTransactionSendingSigner,
-  useWalletUi,
-} from '@wallet-ui/react';
-import { address } from 'gill';
+import { useWalletAccountTransactionSendingSigner } from '@solana/react';
+import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
+import { OrbitAdapter } from '@tuwaio/orbit-core';
+import { createSolanaClientWithCache } from '@tuwaio/orbit-solana';
+import { SolanaWallet } from '@tuwaio/satellite-solana';
+import { UiWalletAccount } from '@wallet-standard/react';
 
-import { TxType } from '@/providers/PulsarProvider';
-import { usePulsarStore } from '@/hooks/txTrackingHooks';
+import { TxType, usePulsarStore } from '@/hooks/txTrackingHooks';
 import { increment } from '@/transactions/actions/increment';
 
 export const TxActionButtonIncrement = () => {
-  const walletUi = useWalletUi();
-  const handleTransaction = usePulsarStore((state) => state.handleTransaction);
+  const executeTxAction = usePulsarStore((state) => state.executeTxAction);
+  const activeWallet = useSatelliteConnectStore((store) => store.activeWallet);
 
-  const signer = useWalletAccountTransactionSendingSigner(walletUi.account as UiWalletAccount, walletUi.cluster.id);
+  const activeWalletSolana = activeWallet as SolanaWallet;
+  const activeWalletCluster = \`\${OrbitAdapter.SOLANA}:\${activeWallet?.chainId ?? 'devnet'}\`;
+
+  const signer = useWalletAccountTransactionSendingSigner(
+    activeWalletSolana.connectedAccount as UiWalletAccount,
+    activeWalletCluster
+  );
 
   const handleIncrement = async () => {
-    await handleTransaction({
-      actionFunction: () => increment({ client: walletUi.client, signer, solanatest: address('__YOUR_SOLANATEST_ADDRESS_HERE__') }),
+    await executeTxAction({
+      actionFunction: () =>
+        increment({
+          client: createSolanaClientWithCache({ rpcUrlOrMoniker: 'devnet' }),
+          signer
+        }),
       onSuccessCallback: async () => {
         console.log('Incremented');
       },
       params: {
         type: TxType.increment,
-        adapter: TransactionAdapter.SOLANA,
+        adapter: OrbitAdapter.SOLANA,
         // The RPC URL must be provided for the tracker to work after a page reload
-        rpcUrl: walletUi.cluster.urlOrMoniker,
+        rpcUrl: activeWallet?.rpcURL,
         desiredChainID: 'devnet', // The cluster name for the pre-flight check
+        title: 'Increment',
+        description: 'Incremented the counter by 1.',
         payload: {
-          value: 0,
-        },
+          value: 0, // This would typically be dynamic data
+        }
       },
     });
   };

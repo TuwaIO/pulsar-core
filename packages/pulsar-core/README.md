@@ -94,7 +94,7 @@ The `createPulsarStore` function returns a vanilla Zustand store with the follow
 
 #### **Actions**
 
-- `handleTransaction(params)`: The primary, all-in-one function for initiating, sending, and tracking a new transaction. This is the main action you will use.
+- `executeTxAction(params)`: The primary, all-in-one function for initiating, sending, and tracking a new transaction. This is the main action you will use.
 - `initializeTransactionsPool()`: An async function to re-initialize trackers for any pending transactions found in storage. **This is crucial for resuming tracking after a page reload.**
 - `addTxToPool(tx)`: Adds a new transaction directly to the tracking pool.
 - `updateTxParams(txKey, fields)`: Updates one or more properties of an existing transaction in the pool.

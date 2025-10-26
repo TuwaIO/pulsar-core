@@ -2,12 +2,12 @@
 
 import { Tabs } from 'nextra/components';
 
-import { WalletUi } from '@/components/started-blocks/solana/WalletUi';
+import { NovaConnect } from '@/components/started-blocks/solana/NovaConnect';
 
 const walletConnectorsSolana = [
   {
-    name: '@wallet-ui',
-    component: <WalletUi />,
+    name: 'Nova Connect',
+    component: <NovaConnect />,
   },
 ];
 

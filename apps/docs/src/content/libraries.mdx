@@ -11,6 +11,7 @@ The core package for Pulsar is built on a foundation of efficient state manageme
 * [**Zustand**](https://zustand-demo.pmnd.rs/): A small, fast, and scalable state management solution that serves as the headless logic core for Pulsar's transaction pool.
 * [**Immer**](https://immerjs.github.io/immer/): Used to work with immutable state in a more convenient way, making state updates straightforward and predictable.
 * [**Day.js**](https://day.js.org/): A minimalist JavaScript library for parsing, validating, manipulating, and displaying dates and times, used for handling transaction timestamps.
+* [**@tuwaio/orbit-core**](https://orbit.docs.tuwa.io/apiReference/orbit-core/src/README): A minimalist TypeScript library with utils for TUWA ecosystem.
 
 ---
 
@@ -20,6 +21,7 @@ This package is dedicated to EVM-compatible blockchains and integrates with the 
 
 * [**Viem**](https://viem.sh/): A low-level TypeScript interface for Ethereum that handles RPC calls and transaction requests. Pulsar's EVM tracker uses it for interacting with nodes.
 * [**wagmi/core**](https://wagmi.sh/): Provides wallet connection and hooks. Pulsar integrates with `wagmi` to listen for wallet and chain changes, automatically updating its state.
+* [**@tuwaio/orbit-evm**](https://orbit.docs.tuwa.io/apiReference/orbit-evm/src/README): A minimalist TypeScript library with Viem/wagmi utils for TUWA ecosystem.
 
 ---
 
@@ -28,7 +30,7 @@ This package is dedicated to EVM-compatible blockchains and integrates with the 
 The Solana adapter package is built to work seamlessly with the Solana blockchain's unique architecture.
 
 * [**Gill**](https://www.gillsdk.com/): A modern Solana SDK that provides a set of tools for building on-chain programs and interacting with the Solana RPC. It's the primary utility for building and sending transactions.
-* [**`@bonfida/spl-name-service`**](https://www.npmjs.com/package/@bonfida/spl-name-service): A utility for interacting with the Solana Name Service (SNS), used for name resolution.
-* [**`@solana/web3.js`**](https://www.npmjs.com/package/@solana/web3.js): The official Solana SDK, used for specific functionalities within the SPL token handling.
+* [**@tuwaio/orbit-solana**](https://orbit.docs.tuwa.io/apiReference/orbit-solana/src/README): A minimalist TypeScript library with Gill utils for TUWA ecosystem.
+* [**@wallet-standard**](https://github.com/wallet-standard/wallet-standard): The Wallet Standard is a set of interfaces and conventions designed to improve the user experience and developer experience of wallets and applications for any blockchain.
 
 This modular structure allows developers to include only the necessary packages, keeping their application bundle size small and focused.

@@ -42,7 +42,7 @@ For a full list of available CSS variables, you can refer to the `variables.css`
 
 ---
 
-## 2\. Customizing Text (Internationalization)
+## 2. Customizing Text (Internationalization)
 
 All text labels within the Nova components can be customized or translated. The `NovaProvider` component accepts a `labels` prop. You can pass a partial object of your custom strings, which will be deeply merged with the default English labels.
 
@@ -67,24 +67,19 @@ const customLabels = deepMerge(defaultLabels, {
 });
 
 export function AppProviders({ children }) {
-  // This is a standard setup with wagmi.
-  // Note that PulsarProvider is not required for a basic setup.
   return (
-    <WagmiProvider config={config}>
+    <>
       {/* Your other application providers */}
-
-      {children}
-
-      {/* 2. Pass the custom labels directly to NovaProvider */}
       <NovaProvider labels={customLabels} />
-    </WagmiProvider>
+      {children}
+    </>
   );
 }
 ```
 
 ---
 
-## 3\. Advanced Customization (Headless)
+## 3. Advanced Customization (Headless)
 
 For maximum control, you can use the `@tuwaio/pulsar-core` and `@tuwaio/pulsar-evm` packages in a headless fashion. This allows you to build a completely custom UI from scratch while still leveraging Pulsar's powerful state management and transaction tracking logic.
 
