@@ -5,7 +5,7 @@ import { StartedBlockWrapper } from '@/components/started-blocks/evm/StartedBloc
 export function NovaConnect() {
   return (
     <StartedBlockWrapper
-      link="https://satellite.docs.tuwa.io/"
+      link="https://stories.tuwa.io/?path=/docs/introduction--docs"
       title="Nova Connect"
       importLine="import { ConnectButton } from '@tuwaio/nova-connect/components';"
       buttonLine="<ConnectButton />"

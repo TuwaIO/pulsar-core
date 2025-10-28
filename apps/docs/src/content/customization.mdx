@@ -51,12 +51,11 @@ All text labels within the Nova components can be customized or translated. The 
 ```tsx
 // In your main providers file (e.g., src/providers/index.tsx)
 
-import { NovaProvider, defaultLabels } from '@tuwaio/nova-transactions';
-import { deepMerge } from '@tuwaio/nova-core';
+import { NovaProvider } from '@tuwaio/nova-transactions';
 
 // 1. Create your custom labels object by merging with the default.
 // You only need to define the keys you want to change.
-const customLabels = deepMerge(defaultLabels, {
+const customLabels = {
   transactionModal: {
     title: 'Transaction Details',
     close: 'Close',
@@ -64,7 +63,7 @@ const customLabels = deepMerge(defaultLabels, {
   common: {
     retry: 'Try Again',
   },
-});
+};
 
 export function AppProviders({ children }) {
   return (
