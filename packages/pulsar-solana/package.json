@@ -43,9 +43,9 @@
     }
   ],
   "peerDependencies": {
-    "@tuwaio/orbit-core": ">=0.1",
-    "@tuwaio/orbit-solana": ">=0.1",
-    "@tuwaio/pulsar-core": ">=0",
+    "@tuwaio/orbit-core": ">=0.2",
+    "@tuwaio/orbit-solana": ">=0.2",
+    "@tuwaio/pulsar-core": ">=0.2",
     "@wallet-standard/app": "1.x.x",
     "@wallet-standard/ui-core": "1.x.x",
     "@wallet-standard/ui-registry": "1.x.x",
@@ -56,8 +56,8 @@
   },
   "devDependencies": {
     "@tuwaio/pulsar-core": "workspace:^",
-    "@tuwaio/orbit-core": "1.0.0-fix-packages-alpha.2.a02ae73",
-    "@tuwaio/orbit-solana": "1.0.0-fix-packages-alpha.2.a02ae73",
+    "@tuwaio/orbit-core": "1.0.0-fix-packages-alpha.3.dc7f910",
+    "@tuwaio/orbit-solana": "1.0.0-fix-packages-alpha.3.dc7f910",
     "@wallet-standard/app": "^1.1.0",
     "@wallet-standard/ui-core": "^1.0.0",
     "@wallet-standard/ui-registry": "^1.0.1",

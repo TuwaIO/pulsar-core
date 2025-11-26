@@ -109,8 +109,8 @@ export type BaseTransaction = {
   txKey: string;
   /** The application-specific type or category of the transaction (e.g., 'SWAP', 'APPROVE'). */
   type: string;
-  /** The type of wallet used to sign the transaction (e.g., 'injected', 'walletConnect'). */
-  walletType: string;
+  /** The type of connector used to sign the transaction (e.g., 'injected', 'walletConnect'). */
+  connectorType: string;
 };
 
 // =================================================================================================
@@ -245,12 +245,12 @@ export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter
 export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl'> & {
   /** The unique key identifying this adapter. */
   key: OrbitAdapter;
-  /** Returns information about the currently connected wallet. */
-  getWalletInfo: () => {
+  /** Returns information about the currently connected connector. */
+  getConnectorInfo: () => {
     /** The currently connected wallet address. */
     walletAddress: string;
-    /** The type of the wallet (e.g., 'metamask', 'phantom'). */
-    walletType: string;
+    /** The type of the connector (e.g., 'metamask', 'phantom'). */
+    connectorType: string;
   };
   /**
    * Ensures the connected wallet is on the correct network for the transaction.
@@ -263,12 +263,12 @@ export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl
   /**
    * Determines the appropriate tracker and final `txKey` from the result of an action.
    * @param actionTxKey The preliminary key returned after an action function is executed.
-   * @param walletType The type of wallet used for the transaction.
+   * @param connectorType The type of connector used for the transaction.
    * @returns An object containing the final `txKey` and the `TransactionTracker` to be used.
    */
   checkTransactionsTracker: (
     actionTxKey: ActionTxKey,
-    walletType: string,
+    connectorType: string,
   ) => { txKey: string; tracker: TransactionTracker };
   /**
    * Selects and initializes the correct background tracker for a given transaction.

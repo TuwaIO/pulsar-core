@@ -6,7 +6,7 @@
 
 > **TxAdapter**\<`T`\> = `Pick`\<`BaseAdapter`, `"getExplorerUrl"`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:245](https://github.com/TuwaIO/pulsar-core/blob/9d83f46f867bbea3f81e6947ce61a590010ce7a2/packages/pulsar-core/src/types.ts#L245)
+Defined in: [packages/pulsar-core/src/types.ts:245](https://github.com/TuwaIO/pulsar-core/blob/151441c712d4a6c33418d0a4cfc861ba6f254bbd/packages/pulsar-core/src/types.ts#L245)
 
 Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
 
@@ -72,7 +72,7 @@ The desired chain ID for the transaction.
 
 ### checkTransactionsTracker()
 
-> **checkTransactionsTracker**: (`actionTxKey`, `walletType`) => `object`
+> **checkTransactionsTracker**: (`actionTxKey`, `connectorType`) => `object`
 
 Determines the appropriate tracker and final `txKey` from the result of an action.
 
@@ -84,11 +84,11 @@ Determines the appropriate tracker and final `txKey` from the result of an actio
 
 The preliminary key returned after an action function is executed.
 
-##### walletType
+##### connectorType
 
 `string`
 
-The type of wallet used for the transaction.
+The type of connector used for the transaction.
 
 #### Returns
 
@@ -103,6 +103,26 @@ An object containing the final `txKey` and the `TransactionTracker` to be used.
 ##### txKey
 
 > **txKey**: `string`
+
+### getConnectorInfo()
+
+> **getConnectorInfo**: () => `object`
+
+Returns information about the currently connected connector.
+
+#### Returns
+
+##### connectorType
+
+> **connectorType**: `string`
+
+The type of the connector (e.g., 'metamask', 'phantom').
+
+##### walletAddress
+
+> **walletAddress**: `string`
+
+The currently connected wallet address.
 
 ### getExplorerTxUrl()?
 
@@ -124,26 +144,6 @@ The transaction object.
 `string`
 
 The full URL to the transaction on the explorer.
-
-### getWalletInfo()
-
-> **getWalletInfo**: () => `object`
-
-Returns information about the currently connected wallet.
-
-#### Returns
-
-##### walletAddress
-
-> **walletAddress**: `string`
-
-The currently connected wallet address.
-
-##### walletType
-
-> **walletType**: `string`
-
-The type of the wallet (e.g., 'metamask', 'phantom').
 
 ### key
 
