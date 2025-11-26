@@ -6,7 +6,7 @@
 import { getWalletTypeFromConnectorName, lastConnectedWalletHelpers, OrbitAdapter } from '@tuwaio/orbit-core';
 import { checkAndSwitchChain } from '@tuwaio/orbit-evm';
 import { Transaction, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
-import { Config, getAccount } from '@wagmi/core';
+import { Config, getConnection } from '@wagmi/core';
 import { Chain, zeroAddress } from 'viem';
 
 import { cancelTxAction } from '../utils/cancelTxAction';
@@ -42,7 +42,7 @@ export function pulsarEvmAdapter<T extends Transaction>(
     key: OrbitAdapter.EVM,
 
     getWalletInfo: () => {
-      const activeWallet = getAccount(config);
+      const activeWallet = getConnection(config);
       const localConnectedWallet = lastConnectedWalletHelpers.getLastConnectedWallet();
       return {
         walletAddress: activeWallet.address ?? localConnectedWallet?.address ?? zeroAddress,
@@ -61,7 +61,7 @@ export function pulsarEvmAdapter<T extends Transaction>(
 
     // --- UI & Explorer Methods ---
     getExplorerUrl: (url) => {
-      const { chain } = getAccount(config);
+      const { chain } = getConnection(config);
       const baseExplorerLink = chain?.blockExplorers?.default.url;
       return url ? `${baseExplorerLink}/${url}` : baseExplorerLink;
     },
