@@ -44,7 +44,7 @@
     }
   ],
   "peerDependencies": {
-    "@tuwaio/pulsar-core": ">=0.2",
+    "@tuwaio/pulsar-core": ">=0.3",
     "@tuwaio/orbit-core": ">=0.2",
     "@tuwaio/orbit-evm": ">=0.2",
     "@wagmi/core": "3.x.x",
@@ -55,8 +55,8 @@
   },
   "devDependencies": {
     "@tuwaio/pulsar-core": "workspace:^",
-    "@tuwaio/orbit-core": "1.0.0-fix-packages-alpha.3.dc7f910",
-    "@tuwaio/orbit-evm": "1.0.0-fix-packages-alpha.3.dc7f910",
+    "@tuwaio/orbit-core": "1.0.0-fix-packages-alpha.5.efc1769",
+    "@tuwaio/orbit-evm": "1.0.0-fix-packages-alpha.5.efc1769",
     "@wagmi/core": "^3.0.0",
     "dayjs": "^1.11.19",
     "immer": "^11.0.0",

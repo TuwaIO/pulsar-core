@@ -50,7 +50,7 @@
     "zustand": "5.x.x"
   },
   "devDependencies": {
-    "@tuwaio/orbit-core": "1.0.0-fix-packages-alpha.3.dc7f910",
+    "@tuwaio/orbit-core": "1.0.0-fix-packages-alpha.5.efc1769",
     "dayjs": "^1.11.19",
     "immer": "^11.0.0",
     "tsup": "^8.5.1",
