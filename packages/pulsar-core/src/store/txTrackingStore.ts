@@ -106,7 +106,7 @@ export function createPulsarStore<T extends Transaction>({
           }
 
           try {
-            const { walletType, walletAddress } = foundAdapter.getWalletInfo();
+            const { connectorType, walletAddress } = foundAdapter.getConnectorInfo();
 
             // Step 2: Ensure the wallet is connected to the correct chain.
             await foundAdapter.checkChainForTx(desiredChainID);
@@ -123,13 +123,13 @@ export function createPulsarStore<T extends Transaction>({
             // Step 4: Determine the final tracker and txKey from the action's result.
             const { tracker: updatedTracker, txKey: finalTxKey } = foundAdapter.checkTransactionsTracker(
               txKeyFromAction,
-              walletType,
+              connectorType,
             );
 
             // Step 5: Construct the full transaction object for the pool.
             const newTx = {
               ...restParams,
-              walletType,
+              connectorType,
               from: walletAddress,
               tracker: updatedTracker || defaultTracker,
               chainId: setChainId(desiredChainID),

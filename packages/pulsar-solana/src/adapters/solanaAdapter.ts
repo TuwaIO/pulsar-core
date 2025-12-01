@@ -2,12 +2,12 @@
  * @file This file contains the factory function for creating the Solana adapter for Pulsar.
  */
 
-import { getWalletTypeFromConnectorName, lastConnectedWalletHelpers, OrbitAdapter } from '@tuwaio/orbit-core';
+import { getConnectorTypeFromName, lastConnectedConnectorHelpers, OrbitAdapter } from '@tuwaio/orbit-core';
 import {
   createSolanaClientWithCache,
-  getAvailableWallets,
+  getAvailableSolanaConnectors,
   getCluster,
-  getConnectedSolanaWallet,
+  getConnectedSolanaConnector,
   getRpcUrlForCluster,
   getSolanaExplorerLink,
 } from '@tuwaio/orbit-solana';
@@ -37,24 +37,24 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
   return {
     key: OrbitAdapter.SOLANA,
 
-    getWalletInfo: () => {
-      const connectedWallet = getConnectedSolanaWallet();
-      const localConnectedWallet = lastConnectedWalletHelpers.getLastConnectedWallet();
+    getConnectorInfo: () => {
+      const connectedConnector = getConnectedSolanaConnector();
+      const localConnectedConnector = lastConnectedConnectorHelpers.getLastConnectedConnector();
       return {
-        walletAddress: localConnectedWallet?.address ?? connectedWallet.accounts[0].address ?? '0x0',
-        walletType: getWalletTypeFromConnectorName(OrbitAdapter.SOLANA, connectedWallet.name),
+        walletAddress: localConnectedConnector?.address ?? connectedConnector.accounts[0].address ?? '0x0',
+        connectorType: getConnectorTypeFromName(OrbitAdapter.SOLANA, connectedConnector.name),
       };
     },
 
     checkChainForTx: async (txChain) => {
-      const connectedWallet = getConnectedSolanaWallet();
-      if (!connectedWallet) {
+      const connectedConnector = getConnectedSolanaConnector();
+      if (!connectedConnector) {
         throw new Error('Wallet not provided. Cannot perform chain check.');
       }
       try {
         checkSolanaChain(
           txChain as string,
-          (lastConnectedWalletHelpers.getLastConnectedWallet()?.chainId as string) ?? '',
+          (lastConnectedConnectorHelpers.getLastConnectedConnector()?.chainId as string) ?? '',
         );
       } catch (e) {
         if (e instanceof SolanaChainMismatchError) throw e;
@@ -85,10 +85,10 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
     retryTxAction: async ({ onClose, txKey, executeTxAction, tx }) => {
       onClose(txKey);
 
-      const wallets = getAvailableWallets();
-      const connectedWallet = wallets.filter((wallet) => wallet.accounts.length > 0)[0];
+      const connectors = getAvailableSolanaConnectors();
+      const connectedConnector = connectors.filter((connector) => connector.accounts.length > 0)[0];
 
-      if (!connectedWallet || !connectedWallet.accounts[0].address || connectedWallet.accounts[0].address === '0x0') {
+      if (!connectedConnector || !connectedConnector.accounts[0].address || connectedConnector.accounts[0].address === '0x0') {
         throw new Error('Retry failed: A wallet must be connected.');
       }
       if (!executeTxAction) {

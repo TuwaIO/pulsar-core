@@ -3,10 +3,10 @@
  * This adapter encapsulates all the logic required to interact with EVM-based chains using wagmi.
  */
 
-import { getWalletTypeFromConnectorName, lastConnectedWalletHelpers, OrbitAdapter } from '@tuwaio/orbit-core';
+import { getConnectorTypeFromName, lastConnectedConnectorHelpers, OrbitAdapter } from '@tuwaio/orbit-core';
 import { checkAndSwitchChain } from '@tuwaio/orbit-evm';
 import { Transaction, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
-import { Config, getAccount } from '@wagmi/core';
+import { Config, getConnection } from '@wagmi/core';
 import { Chain, zeroAddress } from 'viem';
 
 import { cancelTxAction } from '../utils/cancelTxAction';
@@ -41,27 +41,27 @@ export function pulsarEvmAdapter<T extends Transaction>(
   return {
     key: OrbitAdapter.EVM,
 
-    getWalletInfo: () => {
-      const activeWallet = getAccount(config);
-      const localConnectedWallet = lastConnectedWalletHelpers.getLastConnectedWallet();
+    getConnectorInfo: () => {
+      const activeConnection = getConnection(config);
+      const localConnectedConnector = lastConnectedConnectorHelpers.getLastConnectedConnector();
       return {
-        walletAddress: activeWallet.address ?? localConnectedWallet?.address ?? zeroAddress,
-        walletType: getWalletTypeFromConnectorName(
+        walletAddress: activeConnection.address ?? localConnectedConnector?.address ?? zeroAddress,
+        connectorType: getConnectorTypeFromName(
           OrbitAdapter.EVM,
-          activeWallet.connector?.name?.toLowerCase() ?? 'unknown',
+          activeConnection.connector?.name?.toLowerCase() ?? 'unknown',
         ),
       };
     },
 
     // --- Core Methods ---
     checkChainForTx: (chainId: string | number) => checkAndSwitchChain(chainId as number, config),
-    checkTransactionsTracker: (actionTxKey, walletType) => checkTransactionsTracker(actionTxKey, walletType),
+    checkTransactionsTracker: (actionTxKey, connectorType) => checkTransactionsTracker(actionTxKey, connectorType),
     checkAndInitializeTrackerInStore: ({ tx, ...rest }) =>
       checkAndInitializeTrackerInStore({ tracker: tx.tracker, tx, config, ...rest }),
 
     // --- UI & Explorer Methods ---
     getExplorerUrl: (url) => {
-      const { chain } = getAccount(config);
+      const { chain } = getConnection(config);
       const baseExplorerLink = chain?.blockExplorers?.default.url;
       return url ? `${baseExplorerLink}/${url}` : baseExplorerLink;
     },

@@ -43,31 +43,31 @@
     }
   ],
   "peerDependencies": {
-    "@tuwaio/orbit-core": ">=0.1",
-    "@tuwaio/orbit-solana": ">=0.1",
-    "@tuwaio/pulsar-core": ">=0",
+    "@tuwaio/orbit-core": ">=0.2",
+    "@tuwaio/orbit-solana": ">=0.2",
+    "@tuwaio/pulsar-core": ">=0.3",
     "@wallet-standard/app": "1.x.x",
     "@wallet-standard/ui-core": "1.x.x",
     "@wallet-standard/ui-registry": "1.x.x",
-    "gill": ">=0.12",
+    "gill": ">=0.14",
     "dayjs": "1.x.x",
-    "immer": "10.x.x",
+    "immer": "11.x.x",
     "zustand": "5.x.x"
   },
   "devDependencies": {
     "@tuwaio/pulsar-core": "workspace:^",
-    "@tuwaio/orbit-core": "^0.1.1",
-    "@tuwaio/orbit-solana": "^0.1.1",
+    "@tuwaio/orbit-core": "^0.2.0",
+    "@tuwaio/orbit-solana": "^0.2.0",
     "@wallet-standard/app": "^1.1.0",
     "@wallet-standard/ui-core": "^1.0.0",
     "@wallet-standard/ui-registry": "^1.0.1",
-    "dayjs": "^1.11.18",
-    "gill": "^0.12.0",
-    "immer": "^10.2.0",
-    "jsdom": "^27.0.1",
-    "tsup": "^8.5.0",
+    "dayjs": "^1.11.19",
+    "gill": "^0.14.0",
+    "immer": "^11.0.1",
+    "jsdom": "^27.2.0",
+    "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.3",
-    "zustand": "^5.0.8"
+    "vitest": "^4.0.14",
+    "zustand": "^5.0.9"
   }
 }

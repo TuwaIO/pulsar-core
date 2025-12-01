@@ -4,17 +4,17 @@
 
 # checkTransactionsTracker()
 
-> **checkTransactionsTracker**(`actionTxKey`, `walletType`): `object`
+> **checkTransactionsTracker**(`actionTxKey`, `connectorType`): `object`
 
-Defined in: [packages/pulsar-evm/src/utils/checkTransactionsTracker.ts:28](https://github.com/TuwaIO/pulsar-core/blob/570ecd15d3501ce5a08500583bf9119b3896f841/packages/pulsar-evm/src/utils/checkTransactionsTracker.ts#L28)
+Defined in: [packages/pulsar-evm/src/utils/checkTransactionsTracker.ts:28](https://github.com/TuwaIO/pulsar-core/blob/5071a4e38c10f636b2d462d620493b1ff3537733/packages/pulsar-evm/src/utils/checkTransactionsTracker.ts#L28)
 
-Determines which transaction tracker to use based on the format of the transaction key and the wallet type.
+Determines which transaction tracker to use based on the format of the transaction key and the connector type.
 
 This function is a critical routing step after a transaction is submitted. It inspects
-the key returned by the `actionFunction` and the wallet type to decide the tracking strategy.
+the key returned by the `actionFunction` and the connector type to decide the tracking strategy.
 The logic follows a specific priority:
 1. Checks for a Gelato Task ID structure.
-2. Checks if the wallet type indicates a Safe transaction.
+2. Checks if the connector type indicates a Safe transaction.
 3. Defaults to the standard on-chain EVM hash tracker.
 
 ## Parameters
@@ -25,11 +25,11 @@ The logic follows a specific priority:
 
 The key returned from the transaction submission function (e.g., a hash or a Gelato task object).
 
-### walletType
+### connectorType
 
 `string`
 
-The type of the wallet that initiated the action (e.g., 'safe', 'injected').
+The type of the connector that initiated the action (e.g., 'safe', 'injected').
 
 ## Returns
 

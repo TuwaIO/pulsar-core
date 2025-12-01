@@ -49,7 +49,7 @@ describe('solanaTrackerForStore', () => {
       chainId: 'mainnet',
       tracker: TransactionTracker.Solana,
       type: 'mockType',
-      walletType: 'mockWalletType',
+      connectorType: 'mockConnectorType',
     };
 
     // Define mock store methods for testing.
