@@ -6,7 +6,7 @@
 
 > **solanaTrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-solana/src/trackers/solanaTracker.ts:152](https://github.com/TuwaIO/pulsar-core/blob/60c0779bdb5f397a3581ac6699d8168f97eb6b11/packages/pulsar-solana/src/trackers/solanaTracker.ts#L152)
+Defined in: [packages/pulsar-solana/src/trackers/solanaTracker.ts:152](https://github.com/TuwaIO/pulsar-core/blob/f5616ba252d697b2c43f276476e16334b931915b/packages/pulsar-solana/src/trackers/solanaTracker.ts#L152)
 
 A higher-level tracker that integrates the Solana polling logic with the Pulsar store.
 
