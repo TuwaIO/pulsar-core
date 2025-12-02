@@ -16,7 +16,7 @@ import { useWalletAccountTransactionSendingSigner } from '@solana/react';
 import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 import { OrbitAdapter } from '@tuwaio/orbit-core';
 import { createSolanaClientWithCache } from '@tuwaio/orbit-solana';
-import { SolanaWallet } from '@tuwaio/satellite-solana';
+import { SolanaConnection } from '@tuwaio/satellite-solana';
 import { UiWalletAccount } from '@wallet-standard/react';
 
 import { TxType, usePulsarStore } from '@/hooks/txTrackingHooks';
@@ -24,10 +24,10 @@ import { increment } from '@/transactions/actions/increment';
 
 export const TxActionButtonIncrement = () => {
   const executeTxAction = usePulsarStore((state) => state.executeTxAction);
-  const activeWallet = useSatelliteConnectStore((store) => store.activeWallet);
+  const activeConnection = useSatelliteConnectStore((store) => store.activeConnection);
 
-  const activeWalletSolana = activeWallet as SolanaWallet;
-  const activeWalletCluster = \`\${OrbitAdapter.SOLANA}:\${activeWallet?.chainId ?? 'devnet'}\`;
+  const activeWalletSolana = activeConnection as SolanaConnection;
+  const activeWalletCluster = \`\${OrbitAdapter.SOLANA}:\${activeConnection?.chainId ?? 'devnet'}\`;
 
   const signer = useWalletAccountTransactionSendingSigner(
     activeWalletSolana.connectedAccount as UiWalletAccount,
@@ -48,7 +48,7 @@ export const TxActionButtonIncrement = () => {
         type: TxType.increment,
         adapter: OrbitAdapter.SOLANA,
         // The RPC URL must be provided for the tracker to work after a page reload
-        rpcUrl: activeWallet?.rpcURL,
+        rpcUrl: activeConnection?.rpcURL,
         desiredChainID: 'devnet', // The cluster name for the pre-flight check
         title: 'Increment',
         description: 'Incremented the counter by 1.',

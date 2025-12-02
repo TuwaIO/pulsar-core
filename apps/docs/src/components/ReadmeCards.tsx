@@ -150,26 +150,6 @@ export const ReadmeCards: React.FC = () => {
       demoUrl: 'https://demo.tuwa.io/',
     },
     {
-      title: 'Next.js + ConnectKit',
-      description:
-        "Production-ready dApp template showcasing ConnectKit's elegant wallet modal and multi-chain support capabilities.",
-      framework: 'Next.js 16',
-      technologies: ['React 19', 'TypeScript', 'ConnectKit', 'Wagmi', 'TailwindCSS'],
-      status: 'ready',
-      githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/nextjs-connectkit',
-      difficulty: 'beginner',
-    },
-    {
-      title: 'Next.js + RainbowKit',
-      description:
-        'Full-featured Next.js App Directory example with beautiful wallet connection UI and comprehensive transaction tracking.',
-      framework: 'Next.js 16',
-      technologies: ['React 19', 'TypeScript', 'RainbowKit', 'Wagmi', 'TailwindCSS'],
-      status: 'ready',
-      githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/nextjs-rainbowkit',
-      difficulty: 'beginner',
-    },
-    {
       title: 'Next.js + Nova Connect (EVM only)',
       description: 'Specialized EVM-focused implementation.',
       framework: 'Next.js 16',

@@ -75,8 +75,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.0)
       '@tuwaio/nova-core':
-        specifier: 0.1.4
-        version: 0.1.4(@radix-ui/react-dialog@1.1.15(@types/react-dom@19.1.7(@types/react@19.1.10))(@types/react@19.1.10)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(clsx@2.1.1)(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(tailwind-merge@3.4.0)
+        specifier: ^0.2.0
+        version: 0.2.0(@radix-ui/react-dialog@1.1.15(@types/react-dom@19.1.7(@types/react@19.1.10))(@types/react@19.1.10)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(clsx@2.1.1)(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(tailwind-merge@3.4.0)
       '@tuwaio/orbit-core':
         specifier: ^0.2.0
         version: 0.2.0
@@ -2053,8 +2053,8 @@ packages:
   '@ts-morph/common@0.28.1':
     resolution: {integrity: sha512-W74iWf7ILp1ZKNYXY5qbddNaml7e9Sedv5lvU1V8lftlitkc9Pq1A+jlH23ltDgWYeZFFEqGCD1Ies9hqu3O+g==}
 
-  '@tuwaio/nova-core@0.1.4':
-    resolution: {integrity: sha512-rkRgStN23FgeArJwtjXTAmMCzEQ79YonUl1tcD5SpCpUPFMHg12Qf3D3Dr6ALdJwPWsR2VeUVpzzkkXaweCVoA==}
+  '@tuwaio/nova-core@0.2.0':
+    resolution: {integrity: sha512-8YFnyJzphWhs7WJTez/LFHkRxey78M62PnN7qBKqPCENdPP5mYOwWCUDgcCgj4XHEJHMljTINR/a7repUVz+sw==}
     peerDependencies:
       '@radix-ui/react-dialog': 1.x.x
       clsx: 2.x.x
@@ -7750,7 +7750,7 @@ snapshots:
       path-browserify: 1.0.1
       tinyglobby: 0.2.14
 
-  '@tuwaio/nova-core@0.1.4(@radix-ui/react-dialog@1.1.15(@types/react-dom@19.1.7(@types/react@19.1.10))(@types/react@19.1.10)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(clsx@2.1.1)(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(tailwind-merge@3.4.0)':
+  '@tuwaio/nova-core@0.2.0(@radix-ui/react-dialog@1.1.15(@types/react-dom@19.1.7(@types/react@19.1.10))(@types/react@19.1.10)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(clsx@2.1.1)(framer-motion@12.23.24(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(tailwind-merge@3.4.0)':
     dependencies:
       '@radix-ui/react-dialog': 1.1.15(@types/react-dom@19.1.7(@types/react@19.1.10))(@types/react@19.1.10)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       clsx: 2.1.1

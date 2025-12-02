@@ -2,22 +2,12 @@
 
 import { Tabs } from 'nextra/components';
 
-import { ConnectKit } from '@/components/started-blocks/evm/ConnectKit';
 import { NovaConnect } from '@/components/started-blocks/evm/NovaConnect';
-import { RainbowKit } from '@/components/started-blocks/evm/RainbowKit';
 
 const walletConnectorsEvm = [
   {
     name: 'Nova Connect',
     component: <NovaConnect />,
-  },
-  {
-    name: 'RainbowKit',
-    component: <RainbowKit />,
-  },
-  {
-    name: 'ConnectKit',
-    component: <ConnectKit />,
   },
 ];
 

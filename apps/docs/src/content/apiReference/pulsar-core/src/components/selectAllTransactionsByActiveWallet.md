@@ -6,7 +6,7 @@
 
 > **selectAllTransactionsByActiveWallet**\<`T`\>(`transactionsPool`, `from`): `T`[]
 
-Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:49](https://github.com/TuwaIO/pulsar-core/blob/5071a4e38c10f636b2d462d620493b1ff3537733/packages/pulsar-core/src/store/transactionsSelectors.ts#L49)
+Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:49](https://github.com/TuwaIO/pulsar-core/blob/8853502c4e172085505927c66c46446d6b9bfe3f/packages/pulsar-core/src/store/transactionsSelectors.ts#L49)
 
 Selects all transactions initiated by a specific wallet address, sorted chronologically.
 

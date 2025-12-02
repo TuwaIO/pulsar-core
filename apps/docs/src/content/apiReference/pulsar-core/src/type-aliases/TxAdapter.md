@@ -6,7 +6,7 @@
 
 > **TxAdapter**\<`T`\> = `Pick`\<`BaseAdapter`, `"getExplorerUrl"`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:245](https://github.com/TuwaIO/pulsar-core/blob/5071a4e38c10f636b2d462d620493b1ff3537733/packages/pulsar-core/src/types.ts#L245)
+Defined in: [packages/pulsar-core/src/types.ts:245](https://github.com/TuwaIO/pulsar-core/blob/8853502c4e172085505927c66c46446d6b9bfe3f/packages/pulsar-core/src/types.ts#L245)
 
 Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
 
