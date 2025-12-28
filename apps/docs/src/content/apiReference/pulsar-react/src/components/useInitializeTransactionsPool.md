@@ -6,7 +6,7 @@
 
 > **useInitializeTransactionsPool**(`params`): `void`
 
-Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:36](https://github.com/TuwaIO/pulsar-core/blob/390277bbf609352dd648b8af1de972edde5d1ea5/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L36)
+Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:36](https://github.com/TuwaIO/pulsar-core/blob/7cdb31cafd7b0529c61bfcff5d12e1982653bf85/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L36)
 
 A React hook that triggers the initialization of the transaction pool when the component mounts.
 
