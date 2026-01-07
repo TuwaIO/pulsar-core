@@ -3,7 +3,7 @@
  * actions, and types necessary for initializing the store and performing CRUD operations on the transaction pool.
  */
 
-import { Draft, produce } from 'immer';
+import { produce } from 'immer';
 
 import { IInitializeTxTrackingStore, StoreSlice, Transaction } from '../types';
 
@@ -26,10 +26,11 @@ export function initializeTxTrackingStore<T extends Transaction>(): StoreSlice<I
         produce(state, (draft) => {
           draft.lastAddedTxKey = tx.txKey;
           if (tx.txKey) {
-            draft.transactionsPool[tx.txKey] = {
+            const newTx = {
               ...tx,
               pending: true, // Ensure all new transactions start as pending.
-            } as Draft<T>;
+            };
+            draft.transactionsPool[tx.txKey] = newTx as (typeof draft.transactionsPool)[string];
           }
         }),
       );
@@ -59,7 +60,11 @@ export function initializeTxTrackingStore<T extends Transaction>(): StoreSlice<I
       set((state) =>
         produce(state, (draft) => {
           if (txKey && draft.transactionsPool[txKey]) {
-            draft.transactionsPool[txKey].isTrackedModalOpen = false;
+            const tx = draft.transactionsPool[txKey];
+            draft.transactionsPool[txKey] = {
+              ...tx,
+              isTrackedModalOpen: false,
+            } as (typeof draft.transactionsPool)[string];
           }
           // Always clear the initial transaction state when a modal is closed
           draft.initialTx = undefined;
