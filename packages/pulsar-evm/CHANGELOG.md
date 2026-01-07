@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.2.3...pulsar-evm-v0.2.4) (2026-01-07)
+
+
+### Bug Fixes
+
+* optimization ([77740bb](https://github.com/TuwaIO/pulsar-core/commit/77740bbd7a3ede4bac26e3e3809eb2449ec983a9))
+
 ## [0.2.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.2.2...pulsar-evm-v0.2.3) (2025-12-28)
 
 
