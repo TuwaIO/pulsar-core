@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.2.3...pulsar-react-v0.2.4) (2026-01-14)
+
+
+### Bug Fixes
+
+* update packages ([1e8c257](https://github.com/TuwaIO/pulsar-core/commit/1e8c257a4c223db2b96c85430f854ac839061003))
+
 ## [0.2.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.2.2...pulsar-react-v0.2.3) (2026-01-07)
 
 

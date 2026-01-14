@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.5](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.3.4...pulsar-solana-v0.3.5) (2026-01-14)
+
+
+### Bug Fixes
+
+* update packages ([1e8c257](https://github.com/TuwaIO/pulsar-core/commit/1e8c257a4c223db2b96c85430f854ac839061003))
+
 ## [0.3.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.3.3...pulsar-solana-v0.3.4) (2026-01-07)
 
 
