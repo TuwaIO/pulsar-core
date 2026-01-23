@@ -6,7 +6,14 @@
  * @vitest-environment jsdom
  */
 
-import { initializePollingTracker, PollingTrackerConfig } from '@tuwaio/pulsar-core';
+import {
+  initializePollingTracker,
+  ITxTrackingStore,
+  PollingTrackerConfig,
+  TrackerCallbacks,
+  Transaction,
+  TransactionStatus,
+} from '@tuwaio/pulsar-core';
 import dayjs from 'dayjs';
 import { zeroHash } from 'viem';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -35,36 +42,45 @@ const createMockResponse = (taskState: GelatoTaskState, creationDate?: string): 
   },
 });
 
+type MockParams = Pick<ITxTrackingStore<Transaction>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> &
+  TrackerCallbacks<Transaction> & { tx: Transaction };
+
 describe('gelatoTrackerForStore', () => {
-  let mockStoreParams: any;
-  let fetcher: PollingTrackerConfig<any, any>['fetcher'];
+  let mockTx: Transaction;
+  let mockParams: MockParams;
+
+  let fetcher: PollingTrackerConfig<GelatoTaskStatusResponse, Transaction>['fetcher'];
 
   beforeEach(() => {
-    // Basic store parameters that will be passed to the tracker.
-    mockStoreParams = {
-      tx: { txKey: '0x123abc-test-task', pending: true },
-      transactionsPool: {},
-      updateTxParams: vi.fn(),
-      onSucceedCallbacks: vi.fn(),
-      removeTxFromPool: vi.fn(),
+    mockTx = { txKey: '0x123abc-test-task', pending: true } as Transaction;
+
+    mockParams = {
+      tx: mockTx,
+      transactionsPool: { [mockTx.txKey]: mockTx },
+      updateTxParams: vi.fn() as unknown as ITxTrackingStore<Transaction>['updateTxParams'],
+      onSuccess: vi.fn() as unknown as TrackerCallbacks<Transaction>['onSuccess'],
+      onError: vi.fn() as unknown as TrackerCallbacks<Transaction>['onError'],
+      removeTxFromPool: vi.fn() as unknown as ITxTrackingStore<Transaction>['removeTxFromPool'],
     };
 
     // Mock the global fetch API.
     global.fetch = vi.fn();
 
     // Call the tracker to set up the mock for initializePollingTracker.
-    gelatoTrackerForStore(mockStoreParams);
+    gelatoTrackerForStore(mockParams);
 
     // Extract the generated fetcher function from the mock call.
-    // This allows us to test the fetcher's logic in isolation.
-    fetcher = vi.mocked(initializePollingTracker).mock.calls[0][0].fetcher;
+    fetcher = vi.mocked(initializePollingTracker).mock.calls[0][0].fetcher as PollingTrackerConfig<
+      GelatoTaskStatusResponse,
+      Transaction
+    >['fetcher'];
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  test('should call onSucceed when task state is ExecSuccess', async () => {
+  test('should call onSuccess when task state is ExecSuccess', async () => {
     const mockResponse = createMockResponse(GelatoTaskState.ExecSuccess);
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
@@ -77,10 +93,47 @@ describe('gelatoTrackerForStore', () => {
       stopPolling: vi.fn(),
     };
 
-    await fetcher({ tx: mockStoreParams.tx, ...pollingCallbacks });
+    await fetcher({ tx: mockTx, ...pollingCallbacks });
 
     expect(pollingCallbacks.onSuccess).toHaveBeenCalledWith(mockResponse);
     expect(pollingCallbacks.onFailure).not.toHaveBeenCalled();
+  });
+
+  test('should call user onSuccess callback when transaction succeeds', () => {
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    const mockResponse = createMockResponse(GelatoTaskState.ExecSuccess);
+    config.onSuccess(mockResponse);
+
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(
+      mockTx.txKey,
+      expect.objectContaining({
+        status: TransactionStatus.Success,
+        pending: false,
+        isError: false,
+      }),
+    );
+    expect(mockParams.onSuccess).toHaveBeenCalledWith(expect.objectContaining({ txKey: mockTx.txKey }));
+  });
+
+  test('should call user onError callback when transaction fails', () => {
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    const mockResponse = createMockResponse(GelatoTaskState.ExecReverted);
+    config.onFailure(mockResponse);
+
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(
+      mockTx.txKey,
+      expect.objectContaining({
+        status: TransactionStatus.Failed,
+        pending: false,
+        isError: true,
+      }),
+    );
+    expect(mockParams.onError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ txKey: mockTx.txKey }),
+    );
   });
 
   test.each([
@@ -105,7 +158,7 @@ describe('gelatoTrackerForStore', () => {
       stopPolling: vi.fn(),
     };
 
-    await fetcher({ tx: mockStoreParams.tx, ...pollingCallbacks });
+    await fetcher({ tx: mockTx, ...pollingCallbacks });
 
     expect(pollingCallbacks.onFailure).toHaveBeenCalled();
     expect(pollingCallbacks.onSuccess).not.toHaveBeenCalled();
@@ -127,7 +180,7 @@ describe('gelatoTrackerForStore', () => {
         stopPolling: vi.fn(),
       };
 
-      await fetcher({ tx: mockStoreParams.tx, ...pollingCallbacks });
+      await fetcher({ tx: mockTx, ...pollingCallbacks });
 
       expect(pollingCallbacks.onIntervalTick).toHaveBeenCalledWith(mockResponse);
       expect(pollingCallbacks.onSuccess).not.toHaveBeenCalled();
@@ -150,7 +203,7 @@ describe('gelatoTrackerForStore', () => {
       stopPolling: vi.fn(),
     };
 
-    await fetcher({ tx: mockStoreParams.tx, ...pollingCallbacks });
+    await fetcher({ tx: mockTx, ...pollingCallbacks });
 
     expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith();
   });
@@ -165,6 +218,6 @@ describe('gelatoTrackerForStore', () => {
     };
 
     // We expect the fetcher to throw so that the polling tracker can handle the retry.
-    await expect(fetcher({ tx: mockStoreParams.tx, ...pollingCallbacks })).rejects.toThrow();
+    await expect(fetcher({ tx: mockTx, ...pollingCallbacks })).rejects.toThrow();
   });
 });

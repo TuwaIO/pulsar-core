@@ -6,7 +6,7 @@
 
 > **evmTrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:124](https://github.com/TuwaIO/pulsar-core/blob/b90238926d902fe8ff6f2fc7ccda63c1dd3ac942/packages/pulsar-evm/src/trackers/evmTracker.ts#L124)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:122](https://github.com/TuwaIO/pulsar-core/blob/e56d20196785cbd4bdaac53127d472f3ae8dfd10/packages/pulsar-evm/src/trackers/evmTracker.ts#L122)
 
 A higher-level wrapper for `evmTracker` that integrates directly with the Pulsar store.
 It provides the necessary callbacks to update a transaction's state throughout its lifecycle.
@@ -23,7 +23,7 @@ The application-specific transaction type.
 
 ### params
 
-`Pick`\<[`EVMTrackerParams`](../type-aliases/EVMTrackerParams.md), `"config"`\> & `Pick`\<`ITxTrackingStore`\<`T`\>, `"updateTxParams"` \| `"transactionsPool"`\> & `object` & `OnSuccessCallback`\<`T`\>
+`Pick`\<[`EVMTrackerParams`](../type-aliases/EVMTrackerParams.md), `"config"`\> & `Pick`\<`ITxTrackingStore`\<`T`\>, `"updateTxParams"` \| `"transactionsPool"`\> & `object` & `TrackerCallbacks`\<`T`\>
 
 ## Returns
 

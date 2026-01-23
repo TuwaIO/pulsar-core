@@ -5,7 +5,14 @@
  * @vitest-environment jsdom
  */
 
-import { initializePollingTracker } from '@tuwaio/pulsar-core';
+import {
+  initializePollingTracker,
+  ITxTrackingStore,
+  PollingFetcherParams,
+  TrackerCallbacks,
+  Transaction,
+  TransactionStatus,
+} from '@tuwaio/pulsar-core';
 import dayjs from 'dayjs';
 import { Hex, zeroAddress, zeroHash } from 'viem';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
@@ -23,15 +30,17 @@ vi.mock('@tuwaio/pulsar-core', async (importActual) => {
 
 // --- Test Data and Helpers ---
 
+const mockTxKey = '0x91d23240ffbf66a85d3e6057ca9d7826b47de1095a0e85f3d65a113ddfe48ee9' as Hex;
+
 const mockTx = {
-  txKey: '0x91d23240ffbf66a85d3e6057ca9d7826b47de1095a0e85f3d65a113ddfe48ee9' as Hex,
+  txKey: mockTxKey,
   from: zeroAddress,
   chainId: 1,
-};
+} as unknown as Transaction;
 
 const createMockSafeResponse = (overrides: Partial<SafeTxStatusResponse> = {}): SafeTxStatusResponse => ({
   transactionHash: zeroHash,
-  safeTxHash: mockTx.txKey,
+  safeTxHash: mockTxKey,
   isExecuted: false,
   isSuccessful: null,
   submissionDate: dayjs().toISOString(),
@@ -41,32 +50,107 @@ const createMockSafeResponse = (overrides: Partial<SafeTxStatusResponse> = {}): 
   ...overrides,
 });
 
-describe('safeTrackerForStore', () => {
-  test('should call initializePollingTracker with the correct fetcher', async () => {
-    const mockStoreParams = {
-      tx: mockTx,
-      updateTxParams: vi.fn(),
-      onSucceedCallbacks: vi.fn(),
-    };
+type MockParams = Pick<ITxTrackingStore<Transaction>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> &
+  TrackerCallbacks<Transaction> & { tx: Transaction };
 
-    safeTrackerForStore(mockStoreParams as any);
+describe('safeTrackerForStore', () => {
+  let mockParams: MockParams;
+
+  beforeEach(() => {
+    mockParams = {
+      tx: mockTx,
+      transactionsPool: { [mockTx.txKey]: mockTx },
+      updateTxParams: vi.fn() as unknown as ITxTrackingStore<Transaction>['updateTxParams'],
+      onSuccess: vi.fn() as unknown as TrackerCallbacks<Transaction>['onSuccess'],
+      onError: vi.fn() as unknown as TrackerCallbacks<Transaction>['onError'],
+      onReplaced: vi.fn() as unknown as TrackerCallbacks<Transaction>['onReplaced'],
+      removeTxFromPool: vi.fn() as unknown as ITxTrackingStore<Transaction>['removeTxFromPool'],
+    };
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('should call initializePollingTracker with the correct fetcher', async () => {
+    safeTrackerForStore(mockParams);
 
     expect(initializePollingTracker).toHaveBeenCalledTimes(1);
     expect(vi.mocked(initializePollingTracker).mock.calls[0][0].fetcher).toBe(safeFetcher);
   });
+
+  test('should call user onSuccess callback when transaction succeeds', () => {
+    safeTrackerForStore(mockParams);
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    const mockResponse = createMockSafeResponse({ isExecuted: true, isSuccessful: true });
+    config.onSuccess(mockResponse);
+
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(
+      mockTx.txKey,
+      expect.objectContaining({
+        status: TransactionStatus.Success,
+        pending: false,
+        isError: false,
+      }),
+    );
+    expect(mockParams.onSuccess).toHaveBeenCalledWith(expect.objectContaining({ txKey: mockTx.txKey }));
+  });
+
+  test('should call user onError callback when transaction fails', () => {
+    safeTrackerForStore(mockParams);
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    const mockResponse = createMockSafeResponse({ isExecuted: true, isSuccessful: false });
+    config.onFailure(mockResponse);
+
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(
+      mockTx.txKey,
+      expect.objectContaining({
+        status: TransactionStatus.Failed,
+        pending: false,
+        isError: true,
+      }),
+    );
+    expect(mockParams.onError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ txKey: mockTx.txKey }),
+    );
+  });
+
+  test('should call user onReplaced callback when transaction is replaced', () => {
+    safeTrackerForStore(mockParams);
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    const mockResponse = createMockSafeResponse({
+      isExecuted: true,
+      isSuccessful: true,
+      safeTxHash: '0xREPLACED_SAFE_TX_HASH' as Hex,
+    });
+    config.onReplaced?.(mockResponse);
+
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(
+      mockTx.txKey,
+      expect.objectContaining({
+        status: TransactionStatus.Replaced,
+        pending: false,
+      }),
+    );
+    expect(mockParams.onReplaced).toHaveBeenCalledWith(expect.objectContaining({ txKey: mockTx.txKey }), mockTx);
+  });
 });
 
 describe('safeFetcher', () => {
-  let pollingCallbacks: any;
+  let pollingCallbacks: Omit<PollingFetcherParams<SafeTxStatusResponse, Transaction>, 'tx'>;
 
   beforeEach(() => {
     global.fetch = vi.fn();
     pollingCallbacks = {
-      onSuccess: vi.fn(),
-      onFailure: vi.fn(),
-      onReplaced: vi.fn(),
-      onIntervalTick: vi.fn(),
-      stopPolling: vi.fn(),
+      onSuccess: vi.fn() as PollingFetcherParams<SafeTxStatusResponse, Transaction>['onSuccess'],
+      onFailure: vi.fn() as PollingFetcherParams<SafeTxStatusResponse, Transaction>['onFailure'],
+      onReplaced: vi.fn() as PollingFetcherParams<SafeTxStatusResponse, Transaction>['onReplaced'],
+      onIntervalTick: vi.fn() as PollingFetcherParams<SafeTxStatusResponse, Transaction>['onIntervalTick'],
+      stopPolling: vi.fn() as PollingFetcherParams<SafeTxStatusResponse, Transaction>['stopPolling'],
     };
   });
 

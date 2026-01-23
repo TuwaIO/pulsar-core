@@ -6,7 +6,7 @@
 
 > **TxAdapter**\<`T`\> = `Pick`\<`BaseAdapter`, `"getExplorerUrl"`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:245](https://github.com/TuwaIO/pulsar-core/blob/b90238926d902fe8ff6f2fc7ccda63c1dd3ac942/packages/pulsar-core/src/types.ts#L245)
+Defined in: [packages/pulsar-core/src/types.ts:256](https://github.com/TuwaIO/pulsar-core/blob/e56d20196785cbd4bdaac53127d472f3ae8dfd10/packages/pulsar-core/src/types.ts#L256)
 
 Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
 
@@ -42,7 +42,7 @@ Selects and initializes the correct background tracker for a given transaction.
 
 ##### params
 
-`object` & [`OnSuccessCallback`](OnSuccessCallback.md)\<`T`\> & `Pick`\<[`ITxTrackingStore`](ITxTrackingStore.md)\<`T`\>, `"updateTxParams"` \| `"removeTxFromPool"` \| `"transactionsPool"`\>
+`object` & [`TrackerCallbacks`](../interfaces/TrackerCallbacks.md)\<`T`\> & `Pick`\<[`ITxTrackingStore`](ITxTrackingStore.md)\<`T`\>, `"updateTxParams"` \| `"removeTxFromPool"` \| `"transactionsPool"`\>
 
 The parameters for initializing the tracker, including the transaction and store callbacks.
 

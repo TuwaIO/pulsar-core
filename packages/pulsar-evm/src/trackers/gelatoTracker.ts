@@ -8,8 +8,8 @@ import {
   GelatoTxKey,
   initializePollingTracker,
   ITxTrackingStore,
-  OnSuccessCallback,
   PollingTrackerConfig,
+  TrackerCallbacks,
   Transaction,
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
@@ -138,10 +138,11 @@ export function gelatoTrackerForStore<T extends Transaction>({
   updateTxParams,
   removeTxFromPool,
   transactionsPool,
-  onSuccessCallback,
+  onSuccess,
+  onError,
 }: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> & {
   tx: T;
-} & OnSuccessCallback<T>) {
+} & TrackerCallbacks<T>) {
   return initializePollingTracker<GelatoTaskStatusResponse, T>({
     tx,
     fetcher: gelatoFetcher, // Use the exported, reusable fetcher
@@ -156,8 +157,8 @@ export function gelatoTrackerForStore<T extends Transaction>({
       });
 
       const updatedTx = transactionsPool[tx.txKey];
-      if (onSuccessCallback && updatedTx) {
-        onSuccessCallback(updatedTx);
+      if (onSuccess && updatedTx) {
+        onSuccess(updatedTx);
       }
     },
     onIntervalTick: (response) => {
@@ -166,14 +167,20 @@ export function gelatoTrackerForStore<T extends Transaction>({
       });
     },
     onFailure: (response) => {
+      const errorMessage = response?.task.lastCheckMessage ?? 'Transaction failed or was not found.';
       updateTxParams(tx.txKey, {
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
         hash: response?.task.transactionHash,
-        errorMessage: response?.task.lastCheckMessage ?? 'Transaction failed or was not found.',
+        errorMessage,
         finishedTimestamp: response?.task.executionDate ? dayjs(response.task.executionDate).unix() : undefined,
       });
+
+      const updatedTx = transactionsPool[tx.txKey];
+      if (onError && updatedTx) {
+        onError(new Error(errorMessage), updatedTx);
+      }
     },
   });
 }

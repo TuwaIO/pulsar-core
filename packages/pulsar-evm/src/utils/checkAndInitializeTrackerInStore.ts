@@ -3,7 +3,7 @@
  * Based on a transaction's `tracker` property, it delegates the tracking task to the appropriate implementation.
  */
 
-import { ITxTrackingStore, OnSuccessCallback, Transaction, TransactionTracker } from '@tuwaio/pulsar-core';
+import { ITxTrackingStore, TrackerCallbacks, Transaction, TransactionTracker } from '@tuwaio/pulsar-core';
 import { Config } from '@wagmi/core';
 
 import { evmTrackerForStore } from '../trackers/evmTracker';
@@ -21,7 +21,7 @@ type InitializeTrackerParams<T extends Transaction> = Pick<
   config: Config;
   tx: T;
   tracker: TransactionTracker;
-} & OnSuccessCallback<T>;
+} & TrackerCallbacks<T>;
 
 /**
  * Initializes the appropriate tracker for a given transaction based on its `tracker` type.
@@ -37,25 +37,27 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   tx,
   config,
   transactionsPool,
-  onSuccessCallback,
+  onSuccess,
+  onError,
+  onReplaced,
   ...rest
 }: InitializeTrackerParams<T>): Promise<void> {
   switch (tracker) {
     case TransactionTracker.Ethereum:
-      return evmTrackerForStore({ tx, config, transactionsPool, onSuccessCallback, ...rest });
+      return evmTrackerForStore({ tx, config, transactionsPool, onSuccess, onError, onReplaced, ...rest });
 
     case TransactionTracker.Gelato:
       // The Gelato tracker does not need the `chains` param as it uses its own API endpoints.
-      return gelatoTrackerForStore({ tx, transactionsPool, onSuccessCallback, ...rest });
+      return gelatoTrackerForStore({ tx, transactionsPool, onSuccess, onError, ...rest });
 
     case TransactionTracker.Safe:
       // The Safe tracker also uses its own API endpoints.
-      return safeTrackerForStore({ tx, transactionsPool, onSuccessCallback, ...rest });
+      return safeTrackerForStore({ tx, transactionsPool, onSuccess, onError, onReplaced, ...rest });
 
     // The default case handles any unknown or unspecified tracker types.
     // It logs a warning and treats them as standard EVM transactions.
     default:
       console.warn(`Unknown tracker type: '${tracker}'. Falling back to default EVM tracker.`);
-      return evmTrackerForStore({ tx, config, transactionsPool, onSuccessCallback, ...rest });
+      return evmTrackerForStore({ tx, config, transactionsPool, onSuccess, onError, onReplaced, ...rest });
   }
 }

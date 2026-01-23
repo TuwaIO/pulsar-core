@@ -67,8 +67,9 @@ export function createPulsarStore<T extends Transaction>({
          * It manages the entire lifecycle, from UI state updates and chain switching to
          * signing, submission, and background tracker initialization.
          */
-        executeTxAction: async ({ defaultTracker, actionFunction, onSuccessCallback, params }) => {
+        executeTxAction: async ({ defaultTracker, actionFunction, params, ...callbacks }) => {
           const { desiredChainID, ...restParams } = params;
+          const { onSuccess, onError, onReplaced } = callbacks;
           const localTimestamp = dayjs().unix();
 
           // Step 1: Set initial state for immediate UI feedback (e.g., loading spinner).
@@ -156,7 +157,13 @@ export function createPulsarStore<T extends Transaction>({
 
             // Step 8: Initialize the background tracker for the transaction.
             const tx = get().transactionsPool[finalTxKey];
-            await foundAdapter.checkAndInitializeTrackerInStore({ tx, onSuccessCallback, ...get() });
+            await foundAdapter.checkAndInitializeTrackerInStore({
+              tx,
+              onSuccess,
+              onError,
+              onReplaced,
+              ...get(),
+            });
           } catch (e) {
             handleTxError(e);
             throw e; // Re-throw for external handling if needed.

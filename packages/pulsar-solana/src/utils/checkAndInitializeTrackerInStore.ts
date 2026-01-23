@@ -4,7 +4,7 @@
 
 import {
   ITxTrackingStore,
-  OnSuccessCallback,
+  TrackerCallbacks,
   Transaction,
   TransactionStatus,
   TransactionTracker,
@@ -26,16 +26,20 @@ import { solanaTrackerForStore } from '../trackers/solanaTracker';
 export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   tx,
   tracker,
+  onSuccess,
+  onError,
   ...rest
 }: {
   tx: T;
   tracker: TransactionTracker;
-} & OnSuccessCallback<T> &
+} & TrackerCallbacks<T> &
   Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>): Promise<void> {
   switch (tracker) {
     case TransactionTracker.Solana:
       await solanaTrackerForStore({
         tx,
+        onSuccess,
+        onError,
         ...rest,
       });
       break;

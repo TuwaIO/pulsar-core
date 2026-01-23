@@ -2,12 +2,15 @@
 
 ***
 
-# OnSuccessCallback\<T\>
+# ~~OnSuccessCallback\<T\>~~
 
 > **OnSuccessCallback**\<`T`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:230](https://github.com/TuwaIO/pulsar-core/blob/b90238926d902fe8ff6f2fc7ccda63c1dd3ac942/packages/pulsar-core/src/types.ts#L230)
+Defined in: [packages/pulsar-core/src/types.ts:241](https://github.com/TuwaIO/pulsar-core/blob/e56d20196785cbd4bdaac53127d472f3ae8dfd10/packages/pulsar-core/src/types.ts#L241)
 
+## Deprecated
+
+Use `TrackerCallbacks<T>` instead.
 Defines a callback function to be executed upon a successful transaction.
 
 ## Type Parameters
@@ -20,11 +23,11 @@ The specific transaction type, extending `Transaction`.
 
 ## Properties
 
-### onSuccessCallback()?
+### ~~onSuccessCallback()?~~
 
 > `optional` **onSuccessCallback**: (`tx`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:232](https://github.com/TuwaIO/pulsar-core/blob/b90238926d902fe8ff6f2fc7ccda63c1dd3ac942/packages/pulsar-core/src/types.ts#L232)
+Defined in: [packages/pulsar-core/src/types.ts:243](https://github.com/TuwaIO/pulsar-core/blob/e56d20196785cbd4bdaac53127d472f3ae8dfd10/packages/pulsar-core/src/types.ts#L243)
 
 Callback to execute when the transaction is successfully submitted.
 

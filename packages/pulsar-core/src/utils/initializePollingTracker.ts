@@ -11,7 +11,7 @@ import { Transaction } from '../types';
  * @template R The expected type of the successful API response.
  * @template T The type of the transaction object being tracked.
  */
-type PollingFetcherParams<R, T> = {
+export type PollingFetcherParams<R, T> = {
   /** The transaction object being tracked. */
   tx: T;
   /** A callback to stop the polling mechanism, typically called on success or terminal failure. */

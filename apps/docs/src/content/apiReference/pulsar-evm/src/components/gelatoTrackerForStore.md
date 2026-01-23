@@ -6,7 +6,7 @@
 
 > **gelatoTrackerForStore**\<`T`\>(`__namedParameters`): `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:136](https://github.com/TuwaIO/pulsar-core/blob/b90238926d902fe8ff6f2fc7ccda63c1dd3ac942/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L136)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:136](https://github.com/TuwaIO/pulsar-core/blob/e56d20196785cbd4bdaac53127d472f3ae8dfd10/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L136)
 
 A higher-level wrapper that integrates the Gelato polling logic with the Pulsar store.
 It uses the generic `gelatoFetcher` and provides store-specific callbacks.
@@ -23,7 +23,7 @@ The application-specific transaction type.
 
 ### \_\_namedParameters
 
-`Pick`\<`ITxTrackingStore`\<`T`\>, `"updateTxParams"` \| `"removeTxFromPool"` \| `"transactionsPool"`\> & `object` & `OnSuccessCallback`\<`T`\>
+`Pick`\<`ITxTrackingStore`\<`T`\>, `"updateTxParams"` \| `"removeTxFromPool"` \| `"transactionsPool"`\> & `object` & `TrackerCallbacks`\<`T`\>
 
 ## Returns
 
