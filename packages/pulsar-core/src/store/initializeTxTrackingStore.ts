@@ -15,7 +15,11 @@ import { IInitializeTxTrackingStore, StoreSlice, Transaction } from '../types';
  * @param options Configuration for the store slice.
  * @returns A Zustand store slice implementing `IInitializeTxTrackingStore`.
  */
-export function initializeTxTrackingStore<T extends Transaction>(): StoreSlice<IInitializeTxTrackingStore<T>> {
+export function initializeTxTrackingStore<T extends Transaction>({
+  maxTransactions,
+}: {
+  maxTransactions: number;
+}): StoreSlice<IInitializeTxTrackingStore<T>> {
   return (set, get) => ({
     transactionsPool: {},
     lastAddedTxKey: undefined,
@@ -26,6 +30,20 @@ export function initializeTxTrackingStore<T extends Transaction>(): StoreSlice<I
         produce(state, (draft) => {
           draft.lastAddedTxKey = tx.txKey;
           if (tx.txKey) {
+            const currentCount = Object.keys(draft.transactionsPool).length;
+
+            // FIFO Eviction Policy
+            if (currentCount >= maxTransactions) {
+              const sortedTxs = Object.values(draft.transactionsPool).sort((a, b) => {
+                return (a as T).localTimestamp - (b as T).localTimestamp;
+              });
+
+              if (sortedTxs.length > 0) {
+                const oldestTx = sortedTxs[0] as T;
+                delete draft.transactionsPool[oldestTx.txKey];
+              }
+            }
+
             const newTx = {
               ...tx,
               pending: true, // Ensure all new transactions start as pending.

@@ -247,7 +247,7 @@ export type OnSuccessCallback<T extends Transaction> = {
  * The configuration object containing one or more transaction adapters.
  * @template T The specific transaction type.
  */
-export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter<T>>;
+export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter<T>> & { maxTransactions?: number };
 
 /**
  * Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
@@ -367,9 +367,8 @@ export interface IInitializeTxTrackingStore<T extends Transaction> {
   transactionsPool: TransactionPool<T>;
   /** The `txKey` of the most recently added transaction. */
   lastAddedTxKey?: string;
-  /** The state for a transaction being initiated, used for UI feedback before it's submitted to the chain. */
+  /** The state for a transaction being initiated, used for verify feedback before it's submitted to the chain. */
   initialTx?: InitialTransaction;
-
   /**
    * Adds a new transaction to the tracking pool and marks it as pending.
    * @param tx The transaction object to add.

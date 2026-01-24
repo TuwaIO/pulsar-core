@@ -6,7 +6,7 @@
 
 > **safeTrackerForStore**\<`T`\>(`__namedParameters`): `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/safeTracker.ts:123](https://github.com/TuwaIO/pulsar-core/blob/e56d20196785cbd4bdaac53127d472f3ae8dfd10/packages/pulsar-evm/src/trackers/safeTracker.ts#L123)
+Defined in: [packages/pulsar-evm/src/trackers/safeTracker.ts:123](https://github.com/TuwaIO/pulsar-core/blob/2945b2501ed48311a673ca82e77467e5176a417d/packages/pulsar-evm/src/trackers/safeTracker.ts#L123)
 
 A higher-level wrapper that integrates the Safe polling logic with the Pulsar store.
 It uses the generic `safeFetcher` and provides store-specific callbacks.

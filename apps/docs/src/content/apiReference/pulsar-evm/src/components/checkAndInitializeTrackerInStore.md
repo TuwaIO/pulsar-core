@@ -6,7 +6,7 @@
 
 > **checkAndInitializeTrackerInStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts:35](https://github.com/TuwaIO/pulsar-core/blob/e56d20196785cbd4bdaac53127d472f3ae8dfd10/packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts#L35)
+Defined in: [packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts:35](https://github.com/TuwaIO/pulsar-core/blob/2945b2501ed48311a673ca82e77467e5176a417d/packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts#L35)
 
 Initializes the appropriate tracker for a given transaction based on its `tracker` type.
 This function acts as a central router, delegating to the specific tracker implementation

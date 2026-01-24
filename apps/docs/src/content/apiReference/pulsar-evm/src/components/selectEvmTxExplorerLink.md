@@ -6,7 +6,7 @@
 
 > **selectEvmTxExplorerLink**\<`T`\>(`params`): `string`
 
-Defined in: [packages/pulsar-evm/src/utils/selectEvmTxExplorerLink.ts:26](https://github.com/TuwaIO/pulsar-core/blob/e56d20196785cbd4bdaac53127d472f3ae8dfd10/packages/pulsar-evm/src/utils/selectEvmTxExplorerLink.ts#L26)
+Defined in: [packages/pulsar-evm/src/utils/selectEvmTxExplorerLink.ts:26](https://github.com/TuwaIO/pulsar-core/blob/2945b2501ed48311a673ca82e77467e5176a417d/packages/pulsar-evm/src/utils/selectEvmTxExplorerLink.ts#L26)
 
 Generates a URL to a block explorer or Safe UI for a given transaction.
 It handles different URL structures for standard EVM transactions and Safe multi-sig transactions.
