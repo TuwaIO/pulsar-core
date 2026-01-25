@@ -4,7 +4,7 @@
  * a transaction's lifecycle from submission to finality.
  */
 
-import { ITxTrackingStore, OnSuccessCallback, Transaction, TransactionStatus } from '@tuwaio/pulsar-core';
+import { ITxTrackingStore, TrackerCallbacks, Transaction, TransactionStatus } from '@tuwaio/pulsar-core';
 import { Config, getClient } from '@wagmi/core';
 import {
   Client,
@@ -70,12 +70,11 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
   let txDetails: GetTransactionReturnType | null = null;
 
   // 1. Retry loop to fetch the transaction details.
-  // This handles cases where the transaction is not immediately available on the RPC node.
   for (let i = 0; i < retryCount; i++) {
     try {
       txDetails = await getTransaction(client, { hash: tx.txKey as Hex });
       onTxDetailsFetched(txDetails);
-      break; // Exit loop on success
+      break;
     } catch (error) {
       if (i === retryCount - 1) {
         console.error(`EVM tracker failed to fetch tx ${tx.txKey} after ${retryCount} retries:`, error);
@@ -86,7 +85,6 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
   }
 
   if (!txDetails) {
-    // This should theoretically not be reached if the loop completes, but it's a good safeguard.
     return onFailure(new Error('Transaction details could not be fetched.'));
   }
 
@@ -102,12 +100,12 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
       ...waitForTransactionReceiptParams,
     });
 
-    // If onReplaced was called, the promise resolves but we should not proceed to onSuccess.
     if (wasReplaced) {
       return;
     }
 
     // 3. Transaction is mined, call the onSuccess callback.
+    // The callback handles both success and reverted states.
     await onSuccess(txDetails, receipt, client);
   } catch (error) {
     console.error(`Error waiting for receipt for tx ${tx.txKey}:`, error);
@@ -125,19 +123,17 @@ export async function evmTrackerForStore<T extends Transaction>(
   params: Pick<EVMTrackerParams, 'config'> &
     Pick<ITxTrackingStore<T>, 'updateTxParams' | 'transactionsPool'> & {
       tx: T;
-    } & OnSuccessCallback<T>,
+    } & TrackerCallbacks<T>,
 ) {
-  const { tx, config, updateTxParams, transactionsPool, onSuccessCallback } = params;
+  const { tx, config, updateTxParams, transactionsPool, onSuccess, onError, onReplaced } = params;
 
   return evmTracker({
     tx,
     config,
     onInitialize: () => {
-      // Set the initial hash, which is the same as the txKey for this tracker.
       updateTxParams(tx.txKey, { hash: tx.txKey as Hex });
     },
     onTxDetailsFetched: (txDetails) => {
-      // Once we fetch details from the node, update the transaction with more info.
       updateTxParams(tx.txKey, {
         to: txDetails.to ?? undefined,
         input: txDetails.input,
@@ -162,8 +158,12 @@ export async function evmTrackerForStore<T extends Transaction>(
       // After the final state update, retrieve the latest version of the transaction
       // and trigger the global success callback if applicable.
       const updatedTx = transactionsPool[tx.txKey];
-      if (isSuccess && onSuccessCallback && updatedTx) {
-        onSuccessCallback(updatedTx);
+      if (isSuccess && onSuccess && updatedTx) {
+        onSuccess(updatedTx);
+      }
+      // Call onError for reverted transactions
+      if (!isSuccess && onError && updatedTx) {
+        onError(new Error('Transaction reverted'), updatedTx);
       }
     },
     onReplaced: (replacement) => {
@@ -172,6 +172,11 @@ export async function evmTrackerForStore<T extends Transaction>(
         replacedTxHash: replacement.transaction.hash,
         pending: false,
       });
+
+      const updatedTx = transactionsPool[tx.txKey];
+      if (onReplaced && updatedTx) {
+        onReplaced(updatedTx, tx);
+      }
     },
     onFailure: (error) => {
       updateTxParams(tx.txKey, {
@@ -180,6 +185,11 @@ export async function evmTrackerForStore<T extends Transaction>(
         isError: true,
         errorMessage: error instanceof Error ? error.message : 'Transaction failed or could not be tracked.',
       });
+
+      const updatedTx = transactionsPool[tx.txKey];
+      if (onError && updatedTx) {
+        onError(error, updatedTx);
+      }
     },
   });
 }

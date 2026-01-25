@@ -6,6 +6,7 @@
     "packages/pulsar-react/src/index.ts",
     "packages/pulsar-solana/src/index.ts"
   ],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts"],
   "entryPointStrategy": "expand",
   "tsconfig": "tsconfig.json",
   "plugin": ["typedoc-plugin-markdown", "typedoc-plugin-react"],

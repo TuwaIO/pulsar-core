@@ -9,8 +9,9 @@
 import { OrbitAdapter } from '@tuwaio/orbit-core';
 import {
   initializePollingTracker,
-  PollingTrackerConfig,
+  ITxTrackingStore,
   SolanaTransaction,
+  TrackerCallbacks,
   TransactionStatus,
   TransactionTracker,
 } from '@tuwaio/pulsar-core';
@@ -33,9 +34,15 @@ vi.mock('@tuwaio/pulsar-core', async (importActual) => {
 
 // --- Test Suite ---
 
+type MockParams = Pick<
+  ITxTrackingStore<SolanaTransaction>,
+  'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
+> &
+  TrackerCallbacks<SolanaTransaction> & { tx: SolanaTransaction };
+
 describe('solanaTrackerForStore', () => {
   let mockTx: SolanaTransaction;
-  let mockStoreParams: any;
+  let mockParams: MockParams;
 
   beforeEach(() => {
     // Define a mock Solana transaction with proper fields.
@@ -53,11 +60,13 @@ describe('solanaTrackerForStore', () => {
     };
 
     // Define mock store methods for testing.
-    mockStoreParams = {
+    mockParams = {
+      tx: mockTx,
       transactionsPool: { [mockTx.txKey]: mockTx },
-      updateTxParams: vi.fn(),
-      onSucceedCallbacks: vi.fn(),
-      removeTxFromPool: vi.fn(),
+      updateTxParams: vi.fn() as unknown as ITxTrackingStore<SolanaTransaction>['updateTxParams'],
+      onSuccess: vi.fn() as unknown as TrackerCallbacks<SolanaTransaction>['onSuccess'],
+      onError: vi.fn() as unknown as TrackerCallbacks<SolanaTransaction>['onError'],
+      removeTxFromPool: vi.fn() as unknown as ITxTrackingStore<SolanaTransaction>['removeTxFromPool'],
     };
   });
 
@@ -66,7 +75,7 @@ describe('solanaTrackerForStore', () => {
   });
 
   test('should call initializePollingTracker with the correct parameters', async () => {
-    await solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
+    await solanaTrackerForStore(mockParams);
 
     // Validate that the polling tracker is initialized with the correct configuration.
     expect(initializePollingTracker).toHaveBeenCalled();
@@ -77,7 +86,7 @@ describe('solanaTrackerForStore', () => {
   });
 
   test('should call updateTxParams with SUCCESS on onSuccess callback', () => {
-    solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
+    solanaTrackerForStore(mockParams);
     const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
     // Simulate a successful transaction update via the `onSuccess` callback.
@@ -90,7 +99,7 @@ describe('solanaTrackerForStore', () => {
     config.onSuccess(mockSuccessResponse);
 
     // Ensure the store's `updateTxParams` function is called with the correct parameters.
-    expect(mockStoreParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
       status: TransactionStatus.Success,
       pending: false,
       isError: false,
@@ -100,8 +109,23 @@ describe('solanaTrackerForStore', () => {
     });
   });
 
+  test('should call user onSuccess callback when transaction succeeds', () => {
+    solanaTrackerForStore(mockParams);
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    const mockSuccessResponse = {
+      slot: 12345,
+      confirmations: 10,
+      err: null,
+      confirmationStatus: 'finalized' as const,
+    };
+    config.onSuccess(mockSuccessResponse);
+
+    expect(mockParams.onSuccess).toHaveBeenCalledWith(expect.objectContaining({ txKey: mockTx.txKey }));
+  });
+
   test('should call updateTxParams with FAILED on onFailure callback (on-chain error)', () => {
-    solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
+    solanaTrackerForStore(mockParams);
     const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
     // Define a simulated on-chain error response.
@@ -115,7 +139,7 @@ describe('solanaTrackerForStore', () => {
     config.onFailure(mockFailureResponse);
 
     // Ensure the store's state is updated to reflect the failure.
-    expect(mockStoreParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
       status: TransactionStatus.Failed,
       pending: false,
       isError: true,
@@ -124,15 +148,34 @@ describe('solanaTrackerForStore', () => {
     });
   });
 
+  test('should call user onError callback when transaction fails', () => {
+    solanaTrackerForStore(mockParams);
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    const txError: TransactionError = { InstructionError: [0, { Custom: 123 }] };
+    const mockFailureResponse = {
+      slot: 12345,
+      confirmations: 0,
+      err: txError,
+      confirmationStatus: 'finalized' as const,
+    };
+    config.onFailure(mockFailureResponse);
+
+    expect(mockParams.onError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ txKey: mockTx.txKey }),
+    );
+  });
+
   test('should call updateTxParams with FAILED on onFailure callback (timeout)', () => {
-    solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
+    solanaTrackerForStore(mockParams);
     const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
     // Simulate a timeout by invoking `onFailure` with `undefined`.
     config.onFailure(undefined);
 
     // Confirm the store's state is updated to reflect a timeout failure.
-    expect(mockStoreParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
       status: TransactionStatus.Failed,
       pending: false,
       isError: true,
@@ -141,9 +184,21 @@ describe('solanaTrackerForStore', () => {
     });
   });
 
+  test('should call user onError callback on timeout', () => {
+    solanaTrackerForStore(mockParams);
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    config.onFailure(undefined);
+
+    expect(mockParams.onError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ txKey: mockTx.txKey }),
+    );
+  });
+
   test('should call updateTxParams with confirmations on onIntervalTick callback', () => {
-    solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
-    const config: PollingTrackerConfig<any, any> = vi.mocked(initializePollingTracker).mock.calls[0][0];
+    solanaTrackerForStore(mockParams);
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
     // Mock the intermediate response.
     const mockIntervalResponse = {
@@ -157,25 +212,25 @@ describe('solanaTrackerForStore', () => {
     config.onIntervalTick?.(mockIntervalResponse);
 
     // Check that only `confirmations` and `slot` are updated for ongoing tracking, without terminal updates.
-    expect(mockStoreParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
       confirmations: 5,
       slot: 12344,
     });
   });
 
   test('should remove transaction from pool on stopPolling when configured to do so', () => {
-    solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
+    solanaTrackerForStore(mockParams);
     const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
     // Simulate calling `stopPolling`.
     config.removeTxFromPool?.(mockTx.txKey);
 
     // Verify that the transaction is removed from the pool.
-    expect(mockStoreParams.removeTxFromPool).toHaveBeenCalledWith(mockTx.txKey);
+    expect(mockParams.removeTxFromPool).toHaveBeenCalledWith(mockTx.txKey);
   });
 
   test('should handle non-finalized transaction states (e.g., pending)', () => {
-    solanaTrackerForStore({ tx: mockTx, ...mockStoreParams });
+    solanaTrackerForStore(mockParams);
     const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
     // Define a pending mock response.
@@ -190,7 +245,7 @@ describe('solanaTrackerForStore', () => {
     config.onIntervalTick?.(mockPendingResponse);
 
     // Validate that the store is updated correctly for non-finalized states.
-    expect(mockStoreParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
       confirmations: 3,
       slot: 12344,
     });

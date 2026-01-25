@@ -6,7 +6,7 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:394](https://github.com/TuwaIO/pulsar-core/blob/7ba9073c633c237c6ce87120b79f90b297fe70ab/packages/pulsar-core/src/types.ts#L394)
+Defined in: [packages/pulsar-core/src/types.ts:404](https://github.com/TuwaIO/pulsar-core/blob/2945b2501ed48311a673ca82e77467e5176a417d/packages/pulsar-core/src/types.ts#L404)
 
 The complete interface for the Pulsar transaction tracking store.
 
@@ -23,7 +23,7 @@ It manages UI state, executes the on-chain action, and initiates background trac
 
 ##### params
 
-`object` & [`OnSuccessCallback`](OnSuccessCallback.md)\<`T`\>
+`object` & [`TrackerCallbacks`](../interfaces/TrackerCallbacks.md)\<`T`\>
 
 The parameters for handling the transaction.
 

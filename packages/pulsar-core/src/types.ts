@@ -224,6 +224,17 @@ export type InitialTransaction = InitialTransactionParams & {
 // =================================================================================================
 
 /**
+ * Defines the standard callback structure for transaction events.
+ * @template T The specific transaction type, extending `Transaction`.
+ */
+export interface TrackerCallbacks<T extends Transaction> {
+  onSuccess?: (tx: T) => Promise<void> | void;
+  onError?: (error: unknown, tx?: T) => Promise<void> | void;
+  onReplaced?: (newTx: T, oldTx: T) => Promise<void> | void;
+}
+
+/**
+ * @deprecated Use `TrackerCallbacks<T>` instead.
  * Defines a callback function to be executed upon a successful transaction.
  * @template T The specific transaction type, extending `Transaction`.
  */
@@ -236,7 +247,7 @@ export type OnSuccessCallback<T extends Transaction> = {
  * The configuration object containing one or more transaction adapters.
  * @template T The specific transaction type.
  */
-export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter<T>>;
+export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter<T>> & { maxTransactions?: number };
 
 /**
  * Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
@@ -275,7 +286,7 @@ export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl
    * @param params The parameters for initializing the tracker, including the transaction and store callbacks.
    */
   checkAndInitializeTrackerInStore: (
-    params: { tx: T } & OnSuccessCallback<T> &
+    params: { tx: T } & TrackerCallbacks<T> &
       Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>,
   ) => Promise<void> | void;
   /**
@@ -356,9 +367,8 @@ export interface IInitializeTxTrackingStore<T extends Transaction> {
   transactionsPool: TransactionPool<T>;
   /** The `txKey` of the most recently added transaction. */
   lastAddedTxKey?: string;
-  /** The state for a transaction being initiated, used for UI feedback before it's submitted to the chain. */
+  /** The state for a transaction being initiated, used for verify feedback before it's submitted to the chain. */
   initialTx?: InitialTransaction;
-
   /**
    * Adds a new transaction to the tracking pool and marks it as pending.
    * @param tx The transaction object to add.
@@ -402,14 +412,16 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
    * @param params.actionFunction The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined.
    * @param params.params The metadata for the transaction.
    * @param params.defaultTracker The default tracker to use if it cannot be determined automatically.
-   * @param params.onSuccessCallback Callback to execute when the transaction is successfully submitted.
+   * @param params.onSuccess Callback to execute when the transaction is successfully submitted.
+   * @param params.onError Callback to execute when the transaction fails.
+   * @param params.onReplaced Callback to execute when the transaction is replaced.
    */
   executeTxAction: (
     params: {
       actionFunction: () => Promise<ActionTxKey | undefined>;
       params: Omit<InitialTransactionParams, 'actionFunction'>;
       defaultTracker?: TransactionTracker;
-    } & OnSuccessCallback<T>,
+    } & TrackerCallbacks<T>,
   ) => Promise<void>;
 
   /**

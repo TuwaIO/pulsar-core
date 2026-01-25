@@ -9,8 +9,8 @@ import { createSolanaRPC, getCluster } from '@tuwaio/orbit-solana';
 import {
   initializePollingTracker,
   ITxTrackingStore,
-  OnSuccessCallback,
   PollingTrackerConfig,
+  TrackerCallbacks,
   Transaction,
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
@@ -151,11 +151,12 @@ export async function solanaFetcher({
  */
 export async function solanaTrackerForStore<T extends Transaction>({
   tx,
-  onSuccessCallback,
+  onSuccess,
+  onError,
   ...rest
 }: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> & {
   tx: T;
-} & OnSuccessCallback<T>): Promise<void> {
+} & TrackerCallbacks<T>): Promise<void> {
   return initializePollingTracker<SolanaSignatureStatusResponse, T>({
     tx,
     fetcher: solanaFetcher,
@@ -183,8 +184,8 @@ export async function solanaTrackerForStore<T extends Transaction>({
 
       // Trigger global success callbacks, if applicable
       const updatedTx = rest.transactionsPool[tx.txKey];
-      if (onSuccessCallback && updatedTx) {
-        onSuccessCallback(updatedTx);
+      if (onSuccess && updatedTx) {
+        onSuccess(updatedTx);
       }
     },
 
@@ -219,6 +220,12 @@ export async function solanaTrackerForStore<T extends Transaction>({
         errorMessage,
         finishedTimestamp: dayjs().unix(),
       });
+
+      // Call user onError callback
+      const updatedTx = rest.transactionsPool[tx.txKey];
+      if (onError && updatedTx) {
+        onError(new Error(errorMessage), updatedTx);
+      }
     },
   });
 }

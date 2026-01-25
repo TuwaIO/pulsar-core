@@ -7,8 +7,8 @@ import { OrbitAdapter } from '@tuwaio/orbit-core';
 import {
   initializePollingTracker,
   ITxTrackingStore,
-  OnSuccessCallback,
   PollingTrackerConfig,
+  TrackerCallbacks,
   Transaction,
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
@@ -125,10 +125,12 @@ export function safeTrackerForStore<T extends Transaction>({
   updateTxParams,
   removeTxFromPool,
   transactionsPool,
-  onSuccessCallback,
+  onSuccess,
+  onError,
+  onReplaced,
 }: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> & {
   tx: T;
-} & OnSuccessCallback<T>) {
+} & TrackerCallbacks<T>) {
   return initializePollingTracker<SafeTxStatusResponse, T>({
     tx,
     fetcher: safeFetcher,
@@ -143,8 +145,8 @@ export function safeTrackerForStore<T extends Transaction>({
       });
 
       const updatedTx = transactionsPool[tx.txKey];
-      if (onSuccessCallback && updatedTx) {
-        onSuccessCallback(updatedTx);
+      if (onSuccess && updatedTx) {
+        onSuccess(updatedTx);
       }
     },
     onIntervalTick: (response) => {
@@ -154,14 +156,19 @@ export function safeTrackerForStore<T extends Transaction>({
       });
     },
     onFailure: (response) => {
+      const errorMessage = response ? 'Safe transaction failed or was rejected.' : 'Transaction not found.';
       updateTxParams(tx.txKey, {
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
         hash: response?.transactionHash ?? undefined,
-        errorMessage: response ? 'Safe transaction failed or was rejected.' : 'Transaction not found.',
+        errorMessage,
         finishedTimestamp: response?.executionDate ? dayjs(response.executionDate).unix() : undefined,
       });
+      const updatedTx = transactionsPool[tx.txKey];
+      if (onError && updatedTx) {
+        onError(new Error(errorMessage), updatedTx);
+      }
     },
     onReplaced: (response) => {
       updateTxParams(tx.txKey, {
@@ -172,6 +179,13 @@ export function safeTrackerForStore<T extends Transaction>({
         replacedTxHash: response.safeTxHash ?? zeroHash,
         finishedTimestamp: response.executionDate ? dayjs(response.executionDate).unix() : undefined,
       });
+
+      const updatedTx = transactionsPool[tx.txKey];
+      if (onReplaced && updatedTx) {
+        // We pass updatedTx as both new and old because we don't have the distinct previous object easily accessible here
+        // without fetching it before updateTxParams. The updatedTx has the new status.
+        onReplaced(updatedTx, tx);
+      }
     },
   });
 }

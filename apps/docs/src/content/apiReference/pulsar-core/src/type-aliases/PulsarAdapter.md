@@ -4,11 +4,17 @@
 
 # PulsarAdapter\<T\>
 
-> **PulsarAdapter**\<`T`\> = `OrbitGenericAdapter`\<[`TxAdapter`](TxAdapter.md)\<`T`\>\>
+> **PulsarAdapter**\<`T`\> = `OrbitGenericAdapter`\<[`TxAdapter`](TxAdapter.md)\<`T`\>\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:239](https://github.com/TuwaIO/pulsar-core/blob/7ba9073c633c237c6ce87120b79f90b297fe70ab/packages/pulsar-core/src/types.ts#L239)
+Defined in: [packages/pulsar-core/src/types.ts:250](https://github.com/TuwaIO/pulsar-core/blob/2945b2501ed48311a673ca82e77467e5176a417d/packages/pulsar-core/src/types.ts#L250)
 
 The configuration object containing one or more transaction adapters.
+
+## Type Declaration
+
+### maxTransactions?
+
+> `optional` **maxTransactions**: `number`
 
 ## Type Parameters
 

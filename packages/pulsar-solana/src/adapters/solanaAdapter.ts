@@ -88,7 +88,11 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
       const connectors = getAvailableSolanaConnectors();
       const connectedConnector = connectors.filter((connector) => connector.accounts.length > 0)[0];
 
-      if (!connectedConnector || !connectedConnector.accounts[0].address || connectedConnector.accounts[0].address === '0x0') {
+      if (
+        !connectedConnector ||
+        !connectedConnector.accounts[0].address ||
+        connectedConnector.accounts[0].address === '0x0'
+      ) {
         throw new Error('Retry failed: A wallet must be connected.');
       }
       if (!executeTxAction) {
