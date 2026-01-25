@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.3.3...pulsar-core-v0.4.0) (2026-01-25)
+
+
+### Features
+
+* changed trackers callbacks logic (added onError, and onReplaced) | added FIFO logic to transactions pool ([#54](https://github.com/TuwaIO/pulsar-core/issues/54)) ([520b8b5](https://github.com/TuwaIO/pulsar-core/commit/520b8b501469bb803a69f8b31ce30a95ae80d9d2))
+
 ## [0.3.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.3.2...pulsar-core-v0.3.3) (2026-01-14)
 
 

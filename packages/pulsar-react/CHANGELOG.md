@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.2.4...pulsar-react-v0.3.0) (2026-01-25)
+
+
+### Features
+
+* changed trackers callbacks logic (added onError, and onReplaced) | added FIFO logic to transactions pool ([#54](https://github.com/TuwaIO/pulsar-core/issues/54)) ([520b8b5](https://github.com/TuwaIO/pulsar-core/commit/520b8b501469bb803a69f8b31ce30a95ae80d9d2))
+
 ## [0.2.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.2.3...pulsar-react-v0.2.4) (2026-01-14)
 
 
