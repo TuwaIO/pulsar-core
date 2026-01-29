@@ -30,8 +30,8 @@ The architecture is modular and layered:
 - **Multi-Chain by Design:** The adapter pattern allows for extending support to any blockchain.
 - **Persistent State:** Automatically resumes tracking pending transactions after a page reload.
 - **Rich Ecosystem Support:**
-  - **EVM Adapter:** Supports standard transactions, Safe multisigs, and Gelato meta-transactions.
-  - **Solana Adapter:** Supports Solana cluster management, RPC integration, and transaction tracking.
+  - **EVM Adapter:** Supports standard transactions, Safe multisigs, and Gelato relay.
+  - **Solana Adapter:** Supports Wallet Standard, cluster management, and transaction tracking.
 - **Type-Safe:** Written entirely in TypeScript to ensure a robust developer experience.
 
 ---
@@ -70,24 +70,7 @@ This project uses `pnpm` as its package manager.
 After installation, build all packages to ensure the monorepo is correctly linked.
 ```bash
  pnpm build
-``` 
-
----
-
-## 💻 Development Workflow
-
-### Running Tests
-
-Testing is the primary development workflow. To run the test suite for all packages, use the following command from the root directory:
-```bash
- pnpm test
-``` 
-
-You can also run tests in **watch mode** for a specific package:
-```bash
-# Example for the Solana package
-pnpm --filter @tuwaio/pulsar-solana test --watch
-``` 
+```
 
 ---
 

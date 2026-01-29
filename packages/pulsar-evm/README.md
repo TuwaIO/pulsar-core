@@ -12,17 +12,17 @@ An advanced toolkit for the Pulsar Engine that adds comprehensive support for tr
 
 This package is a powerful, official adapter for `@tuwaio/pulsar-core`. It contains all the necessary logic to interact with EVM-compatible blockchains, acting as the primary logic provider for most dApps.
 
-While its main export is the `evmAdapter`, it also includes a suite of standalone trackers, actions, and utilities that can be used for advanced or custom implementations.
+While its main export is the `pulsarEvmAdapter`, it also includes a suite of standalone trackers, actions, and utilities that can be used for advanced or custom implementations.
 
 ---
 
 ## ✨ Core Features
 
-- **🔌 Simple Integration:** A single `evmAdapter` factory function to easily plug full EVM support into `@tuwaio/pulsar-core`.
+- **🔌 Simple Integration:** A single `pulsarEvmAdapter` factory function to easily plug full EVM support into `@tuwaio/pulsar-core`.
 - **🎯 Multi-Tracker Support:** Provides distinct, optimized trackers for:
-  - **Standard EVM Transactions** (via transaction hash polling `viem`).
-  - **Safe (formerly Gnosis Safe)** Multisig Transactions (via the Safe Transaction Service API).
-  - **Gelato Relay** Meta-Transactions (via the Gelato API).
+  - **Standard EVM Transactions** (via `evmTracker` and `viem`).
+  - **Safe (formerly Gnosis Safe)** Multisig Transactions (via `safeFetcher` and the Safe Transaction Service API).
+  - **Gelato Relay** Meta-Transactions (via `gelatoFetcher` and the Gelato API).
 - **🤖 Automatic Routing:** The adapter automatically detects the correct tracker to use (Safe, Gelato, or standard EVM) based on the transaction context and wallet type.
 - **⚡ Built-in Actions:** Includes ready-to-use functions for common user needs like `speedUpTxAction` and `cancelTxAction`.
 
@@ -33,28 +33,22 @@ While its main export is the `evmAdapter`, it also includes a suite of standalon
 This package is designed to be used as part of the Pulsar stack and requires `@wagmi/core` and `viem`. Install all necessary packages together:
 
 ```bash
-# Using pnpm
+# Using pnpm (recommended), but you can use npm, yarn or bun as well
 pnpm add @tuwaio/pulsar-evm @tuwaio/pulsar-core @tuwaio/orbit-core @tuwaio/orbit-evm @wagmi/core viem zustand immer dayjs
-
-# Using npm
-npm install @tuwaio/pulsar-evm @tuwaio/pulsar-core @tuwaio/orbit-core @tuwaio/orbit-evm @wagmi/core viem zustand immer dayjs
-
-# Using yarn
-yarn add @tuwaio/pulsar-evm @tuwaio/pulsar-core @tuwaio/orbit-core @tuwaio/orbit-evm @wagmi/core viem zustand immer dayjs
 ```
 
 ---
 
 ## 🚀 Usage
 
-### 1. Primary Usage: The `evmAdapter`
+### 1. Primary Usage: The `pulsarEvmAdapter`
 
-For most applications, you'll only need to import the `evmAdapter` and pass it to your `createPulsarStore` configuration.
+For most applications, you'll only need to import the `pulsarEvmAdapter` and pass it to your `createPulsarStore` configuration.
 
 ```ts
 // src/hooks/txTrackingHooks.ts
 import { createBoundedUseStore, createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
-import { evmAdapter } from '@tuwaio/pulsar-evm';
+import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
 
 import { appChains, config } from '@/configs/wagmiConfig';
 
@@ -76,12 +70,42 @@ export type TransactionUnion = ExampleTx;
 export const usePulsarStore = createBoundedUseStore(
   createPulsarStore<TransactionUnion>({
     name: storageName,
-    adapter: evmAdapter(config, appChains),
+    adapter: pulsarEvmAdapter(config, appChains),
   }),
 );
 ```
 
-### 2. Using Standalone Actions
+### 2. Using Standalone Trackers
+
+You can use `evmTracker` for standard transactions or `initializePollingTracker` with `gelatoFetcher`/`safeFetcher` for polling-based tracking.
+
+#### Standard EVM Tracker
+
+```tsx
+import { evmTracker } from '@tuwaio/pulsar-evm';
+import { config } from './wagmi'; // Your wagmi config
+
+async function trackMyTransaction(txHash: string, chainId: number) {
+  await evmTracker({
+    config,
+    tx: { txKey: txHash, chainId },
+    onTxDetailsFetched: (txDetails) => {
+      console.log('Transaction details:', txDetails);
+    },
+    onSuccess: async (txDetails, receipt, client) => {
+      console.log('Transaction mined!', receipt);
+    },
+    onReplaced: (replacement) => {
+      console.log('Transaction replaced:', replacement);
+    },
+    onFailure: (error) => {
+      console.error('Tracking failed:', error);
+    },
+  });
+}
+```
+
+### 3. Using Standalone Actions
 
 This package also exports utility actions that you can wire up to your UI for features like speeding up or canceling transactions.
 
@@ -120,20 +144,31 @@ function SpeedUpButton({ txKey }) {
 }
 ```
 
-### 3. Using Standalone Utilities
+### 4. Using Standalone Utilities
 
-You can use exported utilities, like selectors, to get derived data for your UI.
+You can use exported utilities, like selectors or routing functions, to get derived data for your UI.
+
+**Example: Determining the correct tracker**
+
+```tsx
+import { checkTransactionsTracker } from '@tuwaio/pulsar-evm';
+import { TransactionTracker } from '@tuwaio/pulsar-core';
+
+// Automatically routes to 'gelato', 'safe', or 'ethereum'
+const { tracker, txKey } = checkTransactionsTracker('0xabc...', 'injected');
+// tracker -> TransactionTracker.Ethereum
+```
 
 **Example: Getting a block explorer link for a transaction**
 
 ```tsx
 // src/components/ExplorerLink.tsx
 import { selectEvmTxExplorerLink } from '@tuwaio/pulsar-evm';
-import { chains } from '../configs/wagmi'; // Your wagmi config
+import { appChains } from '../configs/wagmi'; // Your wagmi chains
 
 function ExplorerLink({ tx }) {
   // The selector needs your app's chains, and the transaction.
-  const explorerLink = selectEvmTxExplorerLink({ chains, tx });
+  const explorerLink = selectEvmTxExplorerLink({ chains: appChains, tx });
 
   if (!explorerLink) return null;
 

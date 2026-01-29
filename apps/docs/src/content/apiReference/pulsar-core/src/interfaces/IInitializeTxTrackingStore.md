@@ -4,7 +4,7 @@
 
 # IInitializeTxTrackingStore\<T\>
 
-Defined in: [packages/pulsar-core/src/types.ts:365](https://github.com/TuwaIO/pulsar-core/blob/f0f5d6f91c3be58651d790d4784e75c2d93f0376/packages/pulsar-core/src/types.ts#L365)
+Defined in: [packages/pulsar-core/src/types.ts:365](https://github.com/TuwaIO/pulsar-core/blob/8895bf71b1b1e58aede9d79e7157d8533152d936/packages/pulsar-core/src/types.ts#L365)
 
 The interface for the base transaction tracking store slice.
 It includes the state and actions for managing the transaction lifecycle.
@@ -23,7 +23,7 @@ The specific transaction type.
 
 > **addTxToPool**: (`tx`) => `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:376](https://github.com/TuwaIO/pulsar-core/blob/f0f5d6f91c3be58651d790d4784e75c2d93f0376/packages/pulsar-core/src/types.ts#L376)
+Defined in: [packages/pulsar-core/src/types.ts:376](https://github.com/TuwaIO/pulsar-core/blob/8895bf71b1b1e58aede9d79e7157d8533152d936/packages/pulsar-core/src/types.ts#L376)
 
 Adds a new transaction to the tracking pool and marks it as pending.
 
@@ -45,7 +45,7 @@ The transaction object to add.
 
 > **closeTxTrackedModal**: (`txKey?`) => `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:392](https://github.com/TuwaIO/pulsar-core/blob/f0f5d6f91c3be58651d790d4784e75c2d93f0376/packages/pulsar-core/src/types.ts#L392)
+Defined in: [packages/pulsar-core/src/types.ts:392](https://github.com/TuwaIO/pulsar-core/blob/8895bf71b1b1e58aede9d79e7157d8533152d936/packages/pulsar-core/src/types.ts#L392)
 
 Closes the tracking modal for a transaction and clears any initial transaction state.
 
@@ -67,7 +67,7 @@ The optional key of the transaction modal to close.
 
 > **getLastTxKey**: () => `string` \| `undefined`
 
-Defined in: [packages/pulsar-core/src/types.ts:397](https://github.com/TuwaIO/pulsar-core/blob/f0f5d6f91c3be58651d790d4784e75c2d93f0376/packages/pulsar-core/src/types.ts#L397)
+Defined in: [packages/pulsar-core/src/types.ts:397](https://github.com/TuwaIO/pulsar-core/blob/8895bf71b1b1e58aede9d79e7157d8533152d936/packages/pulsar-core/src/types.ts#L397)
 
 A selector function to retrieve the key of the last transaction added to the pool.
 
@@ -83,7 +83,7 @@ The key of the last added transaction, or undefined if none exists.
 
 > `optional` **initialTx**: [`InitialTransaction`](../type-aliases/InitialTransaction.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:371](https://github.com/TuwaIO/pulsar-core/blob/f0f5d6f91c3be58651d790d4784e75c2d93f0376/packages/pulsar-core/src/types.ts#L371)
+Defined in: [packages/pulsar-core/src/types.ts:371](https://github.com/TuwaIO/pulsar-core/blob/8895bf71b1b1e58aede9d79e7157d8533152d936/packages/pulsar-core/src/types.ts#L371)
 
 The state for a transaction being initiated, used for verify feedback before it's submitted to the chain.
 
@@ -93,7 +93,7 @@ The state for a transaction being initiated, used for verify feedback before it'
 
 > `optional` **lastAddedTxKey**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:369](https://github.com/TuwaIO/pulsar-core/blob/f0f5d6f91c3be58651d790d4784e75c2d93f0376/packages/pulsar-core/src/types.ts#L369)
+Defined in: [packages/pulsar-core/src/types.ts:369](https://github.com/TuwaIO/pulsar-core/blob/8895bf71b1b1e58aede9d79e7157d8533152d936/packages/pulsar-core/src/types.ts#L369)
 
 The `txKey` of the most recently added transaction.
 
@@ -103,7 +103,7 @@ The `txKey` of the most recently added transaction.
 
 > **removeTxFromPool**: (`txKey`) => `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:387](https://github.com/TuwaIO/pulsar-core/blob/f0f5d6f91c3be58651d790d4784e75c2d93f0376/packages/pulsar-core/src/types.ts#L387)
+Defined in: [packages/pulsar-core/src/types.ts:387](https://github.com/TuwaIO/pulsar-core/blob/8895bf71b1b1e58aede9d79e7157d8533152d936/packages/pulsar-core/src/types.ts#L387)
 
 Removes a transaction from the tracking pool by its key.
 
@@ -125,7 +125,7 @@ The key of the transaction to remove.
 
 > **transactionsPool**: [`TransactionPool`](../type-aliases/TransactionPool.md)\<`T`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:367](https://github.com/TuwaIO/pulsar-core/blob/f0f5d6f91c3be58651d790d4784e75c2d93f0376/packages/pulsar-core/src/types.ts#L367)
+Defined in: [packages/pulsar-core/src/types.ts:367](https://github.com/TuwaIO/pulsar-core/blob/8895bf71b1b1e58aede9d79e7157d8533152d936/packages/pulsar-core/src/types.ts#L367)
 
 A pool of all transactions currently being tracked, indexed by `txKey`.
 
@@ -135,7 +135,7 @@ A pool of all transactions currently being tracked, indexed by `txKey`.
 
 > **updateTxParams**: (`txKey`, `fields`) => `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:382](https://github.com/TuwaIO/pulsar-core/blob/f0f5d6f91c3be58651d790d4784e75c2d93f0376/packages/pulsar-core/src/types.ts#L382)
+Defined in: [packages/pulsar-core/src/types.ts:382](https://github.com/TuwaIO/pulsar-core/blob/8895bf71b1b1e58aede9d79e7157d8533152d936/packages/pulsar-core/src/types.ts#L382)
 
 Updates one or more properties of an existing transaction in the pool.
 

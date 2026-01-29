@@ -33,14 +33,8 @@ This package exports one primary factory function: `createPulsarStore`.
 This package requires `zustand`, `immer` and `dayjs` as peer dependencies. You must install them alongside `@tuwaio/pulsar-core`.
 
 ```bash
-# Using pnpm
+# Using pnpm (recommended), but you can use npm, yarn or bun as well
 pnpm add @tuwaio/pulsar-core @tuwaio/orbit-core zustand immer dayjs
-
-# Using npm
-npm install @tuwaio/pulsar-core @tuwaio/orbit-core zustand immer dayjs
-
-# Using yarn
-yarn add @tuwaio/pulsar-core @tuwaio/orbit-core zustand immer dayjs
 ```
 
 ---
@@ -55,7 +49,7 @@ This is the main factory function that creates your transaction store. It takes 
 
 ```ts
 import { createBoundedUseStore, createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
-import { evmAdapter } from '@tuwaio/pulsar-evm';
+import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
 
 import { appChains, config } from '@/configs/wagmiConfig';
 
@@ -77,10 +71,18 @@ export type TransactionUnion = ExampleTx;
 export const usePulsarStore = createBoundedUseStore(
   createPulsarStore<TransactionUnion>({
     name: storageName,
-    adapter: evmAdapter(config, appChains),
+    adapter: pulsarEvmAdapter(config, appChains),
+    maxTransactions: 100, // Optional: defaults to 50
   }),
 );
 ```
+
+### Transaction Pool Management (FIFO)
+
+To prevent the `localStorage` from growing indefinitely, Pulsar Core implements a **FIFO (First-In, First-Out) Eviction Policy**.
+
+- **Maximum Transactions:** By default, the store keeps the last **50** transactions. You can customize this via the `maxTransactions` property in the `createPulsarStore` config.
+- **Eviction Process:** When the pool exceeds the `maxTransactions` limit, the oldest transaction (based on `localTimestamp`) is automatically removed from the state and storage when a new one is added.
 
 ### The Returned Store API
 
@@ -100,6 +102,38 @@ The `createPulsarStore` function returns a vanilla Zustand store with the follow
 - `updateTxParams(txKey, fields)`: Updates one or more properties of an existing transaction in the pool.
 - `removeTxFromPool(txKey)`: Removes a transaction from the pool by its key.
 - `closeTxTrackedModal(txKey?)`: A helper to manage UI state, which sets `isTrackedModalOpen` to `false` and clears the `initialTx` state.
+- `getLastTxKey()`: Returns the `txKey` of the most recently added transaction.
+
+#### **Selectors**
+
+The package also provides a set of selector functions to help you efficiently query the transaction pool:
+
+- `selectAllTransactions(pool)`: Returns all transactions sorted chronologically.
+- `selectPendingTransactions(pool)`: Returns only transactions that are currently pending.
+- `selectTxByKey(pool, txKey)`: Retrieves a specific transaction by its key.
+- `selectAllTransactionsByActiveWallet(pool, address)`: Returns all transactions for a specific wallet.
+- `selectPendingTransactionsByActiveWallet(pool, address)`: Returns pending transactions for a specific wallet.
+
+---
+
+## 🛠️ Advanced Usage: `initializePollingTracker`
+
+For custom tracking requirements (like server-side tracking or non-standard APIs), you can use the low-level `initializePollingTracker` utility. This is the same engine used internally by Pulsar adapters for Gelato, Safe, and Solana.
+
+```ts
+import { initializePollingTracker } from '@tuwaio/pulsar-core';
+
+await initializePollingTracker({
+  tx: myTransaction,
+  fetcher: async ({ stopPolling, onSuccess, onFailure }) => {
+    const status = await checkMyCustomApi(myTransaction.txKey);
+    if (status === 'done') onSuccess(status);
+    if (status === 'error') onFailure(status);
+  },
+  onSuccess: (status) => console.log('Success!', status),
+  onFailure: (status) => console.error('Failed!', status),
+});
+```
 
 ---
 

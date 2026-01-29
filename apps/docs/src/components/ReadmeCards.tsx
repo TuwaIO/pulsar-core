@@ -139,6 +139,17 @@ const ExampleCard: React.FC<ExampleCardProps> = ({
 export const ReadmeCards: React.FC = () => {
   const examples: ExampleCardProps[] = [
     {
+      title: 'Vite + Nova Connect (custom styles)',
+      description:
+        'Lightweight and fast Vite React application with Nova Connect custom styles integration. Perfect for rapid development and testing.',
+      framework: 'Vite + React',
+      technologies: ['React 19', 'TypeScript', 'Vite', '@tuwaio/nova-connect', 'TailwindCSS', 'Custom styles'],
+      status: 'ready',
+      githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/accountable-style',
+      difficulty: 'intermediate',
+      demoUrl: 'https://accountable-style.tuwa.io/',
+    },
+    {
       title: 'Next.js + Nova Connect',
       description:
         'Complete Web3 starter template with Nova Connect integration, featuring modern wallet connectivity and seamless user experience.',

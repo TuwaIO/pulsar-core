@@ -1,6 +1,6 @@
 # Using Solana Trackers Standalone
 
-While the Pulsar suite offers a full stack solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture remains modular and flexible. This means you can utilize the low-level **trackers** (`solanaTracker`) from `@tuwaio/pulsar-solana` directly, without installing or configuring the complete state management store.
+While the Pulsar suite offers a full stack solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture remains modular and flexible. This means you can utilize the low-level **trackers** (`solanaFetcher`) from `@tuwaio/pulsar-solana` directly, without installing or configuring the complete state management store.
 
 This flexibility is ideal if:
 
@@ -10,18 +10,18 @@ This flexibility is ideal if:
 
 ---
 
-## Why Use `solanaTracker`?
+## Why Use `solanaFetcher`?
 
-Some might ask, "Why should I use `solanaTracker` when I can just manually track the transaction state using the Solana RPC?" While manual polling is possible, `solanaTracker` provides a more robust, comprehensive, and ready-to-use solution.
+Some might ask, "Why should I use `solanaFetcher` when I can just manually track the transaction state using the Solana RPC?" While manual polling is possible, `solanaFetcher` provides a more robust, comprehensive, and ready-to-use solution.
 
-| Feature                     | Solana RPC (manual polling) | `solanaTracker` (Pulsar) |
+| Feature                     | Solana RPC (manual polling) | `solanaFetcher` (Pulsar) |
 |----------------------------|--------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Handles RPC Lags** | ❌ No. If called immediately after submission, the RPC node might not have indexed the transaction yet, causing errors. | ✅ **Yes.** Built-in retry mechanism to wait for the transaction to appear in the mempool, mitigating RPC delays. |
+| **Handles RPC Lags** | ❌ No. If called immediately after submission, the RPC node might not have indexed the transaction yet, causing errors. | ✅ **Yes.** Built-in retry mechanism to wait for the transaction to appear on-chain, mitigating RPC delays. |
 | **Full Lifecycle Support** | 🤷‍♂️ Limited. You must manually implement logic for different states (sent, confirmed, failed). | ✅ **Yes.** Provides callbacks for each stage: initialization, details fetched, mined, replaced, failed, etc. |
 | **Fetches Full Tx Details** | ❌ No. Requires additional RPC calls to get full transaction info after confirmation. | ✅ **Yes.** Calls for `getTransaction` internally, providing parsed transaction details to callbacks. |
 | **Abstraction Level** | Low. You must manage the tracking states and polling manually. | High. Encapsulates the entire process into a single, convenient async function, simplifying implementation. |
 
-In essence, `solanaTracker` is a reliable wrapper around Solana RPC functions, addressing common edge cases and significantly reducing manual effort.
+In essence, `solanaFetcher` is a reliable wrapper around Solana RPC functions, addressing common edge cases and significantly reducing manual effort.
 
 ---
 
@@ -29,38 +29,37 @@ In essence, `solanaTracker` is a reliable wrapper around Solana RPC functions, a
 
 ### 1. Solana Tracker
 
-This is the primary tracker for monitoring standard transactions on Solana, identified via a transaction signature.
+This is the primary tracker for monitoring standard transactions on Solana, identified via a transaction signature. It is designed to be used with the `initializePollingTracker` from `@tuwaio/pulsar-core`.
 
 #### How It Works
 
-`solanaTracker` initially attempts to fetch transaction details. If the transaction is not found (due to RPC indexing lag), it retries until it is found or a timeout occurs. Once the details are available, it actively waits for the transaction to be confirmed on-chain.
+`solanaFetcher` initially attempts to fetch transaction signature status. If the transaction is not found (due to RPC indexing lag), it retries until it is found or a timeout occurs. Once found, it continues to poll until the transaction is finalized. It also fetches full transaction details once they become available.
 
 #### Example Usage
 ```tsx
-import { solanaTracker } from '@tuwaio/pulsar-solana';
-import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
+import { initializePollingTracker } from '@tuwaio/pulsar-core';
+import { solanaFetcher } from '@tuwaio/pulsar-solana';
+import { OrbitAdapter } from '@tuwaio/orbit-core';
 
-async function trackMySolanaTransaction(txSignature: string) {
-  const activeWallet = useSatelliteConnectStore((store) => store.activeWallet);
-
-  await solanaTracker({
+async function trackMySolanaTransaction(txSignature: string, rpcUrl: string, chainId: string) {
+  await initializePollingTracker({
     tx: {
       txKey: txSignature,
-      from: activeWallet?.address ?? '',
-      rpcUrl: activeWallet?.rpcURL ?? '',
-      chainId: 'devnet',
+      rpcUrl: rpcUrl,
+      chainId: chainId, // e.g., 'solana:mainnet' or 'solana:devnet'
+      adapter: OrbitAdapter.SOLANA,
+      localTimestamp: Math.floor(Date.now() / 1000),
     },
+    fetcher: solanaFetcher,
     onIntervalTick: (response) => {
-      console.log('Transaction details received:', response);
-      // Update your UI/state with transaction details
+      console.log('Transaction status update:', response);
+      // response includes slot, confirmations, confirmationStatus, etc.
     },
     onSuccess: (response) => {
-      console.log('Transaction confirmed!', response);
-      // Handle success status
+      console.log('Transaction finalized!', response);
     },
     onFailure: (response) => {
-      console.error('Tracking failed:', response.err);
-      // Handle errors
+      console.error('Tracking failed or transaction error:', response?.err);
     },
   });
 }
@@ -72,7 +71,7 @@ async function trackMySolanaTransaction(txSignature: string) {
 
 ### `signAndSendSolanaTx`
 
-This utility function simplifies the process of creating, signing, and broadcasting a Solana transaction to the network. It fetches the latest blockhash, creates a versioned transaction, signs it with a provided signer (e.g., a wallet), and sends it to the network.
+This utility function simplifies the process of creating, signing, and broadcasting a Solana transaction to the network. It fetches the latest blockhash, creates a versioned transaction (v0), signs it with the provided signer, and sends it.
 
 #### Example Usage
 
@@ -80,7 +79,7 @@ This utility function simplifies the process of creating, signing, and broadcast
 import type { Instruction, SolanaClient, TransactionSendingSigner } from 'gill';
 import { signAndSendSolanaTx } from '@tuwaio/pulsar-solana';
 
-async function sendTransaction(client: SolanaClient, signer: TransactionSendingSigner, instruction: Instruction) {
+async function sendTransaction(client: SolanaClient, signer: TransactionSendingSigner, instruction: Instruction | Instruction[]) {
   try {
     const signature = await signAndSendSolanaTx({
       client,
@@ -88,49 +87,31 @@ async function sendTransaction(client: SolanaClient, signer: TransactionSendingS
       instruction,
     });
     console.log('Transaction sent with signature:', signature);
+    return signature;
   } catch (error) {
     console.error('Failed to send transaction:', error);
   }
 }
-```
+````
 
 ### `checkSolanaChain`
 
-This function verifies if the user is connected to the correct Solana network and can prompt for a network switch if necessary. This is useful for ensuring transactions are sent to the intended cluster.
+This function verifies if the user is connected to the correct Solana network. It compares the required chain identifier with the current one and throws a `SolanaChainMismatchError` if they don't match.
 
 #### Example Usage
 
 ```tsx
 import { checkSolanaChain } from '@tuwaio/pulsar-solana';
-import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 
-async function ensureCorrectNetwork() {
-  const activeWallet = useSatelliteConnectStore((store) => store.activeWallet);
-  const requiredChainId = 'devnet';
-
+async function ensureCorrectNetwork(requiredChain: string, currentChain: string) {
   try {
-    await checkSolanaChain(requiredChainId, activeWallet?.chainId);
+    checkSolanaChain(requiredChain, currentChain);
     console.log('Network is correct, proceeding...');
   } catch (error) {
     console.error('Network mismatch:', error.message);
   }
 }
-```
-
-### `getSolanaExplorerLink`
-
-A utility to generate a link to a Solana block explorer for a given chain ID.
-
-#### Example Usage
-
-```tsx
-import { getSolanaExplorerLink } from '@tuwaio/pulsar-solana';
-
-const txSignature = '3E2Z2hYtF1zG2y...';
-const explorerLink = getSolanaExplorerLink(`/tx/${txSignature}`);
-console.log('Explorer link:', explorerLink);
-// Output: [https://solscan.io/tx/3E2Z2hYtF1zG2y...?cluster=mainnet](https://solscan.io/tx/3E2Z2hYtF1zG2y...?cluster=mainnet)
-```
+````
 
 ---
 

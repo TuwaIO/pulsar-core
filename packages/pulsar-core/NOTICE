@@ -19,7 +19,7 @@ This product contains software components from the following third-party project
 
 Project: bgd-labs/frontend-web3-utils
 Source: https://github.com/bgd-labs/frontend-web3-utils
-File used: /src/web3/store/transactionsSelectors.ts
+File used: /src/store/transactionsSelectors.ts
 
 This component is licensed under the MIT License. The original copyright notice and license text are provided below.
 

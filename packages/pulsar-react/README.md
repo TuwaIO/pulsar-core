@@ -21,14 +21,8 @@ Its primary role is to ensure that transaction tracking can resume reliably afte
 To use this package, you need the complete Pulsar stack, including `@wagmi/core` for EVM interactions.
 
 ```bash
-# Using pnpm
+# Using pnpm (recommended), but you can use npm, yarn or bun as well
 pnpm add @tuwaio/pulsar-react react
-
-# Using npm
-npm install @tuwaio/pulsar-react react
-
-# Using yarn
-yarn add @tuwaio/pulsar-react react
 ```
 
 ---
@@ -46,7 +40,7 @@ First, create your vanilla Pulsar store and a reusable, bounded hook to access i
 ```ts
 // src/hooks/txTrackingHooks.ts
 import { createBoundedUseStore, createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
-import { evmAdapter } from '@tuwaio/pulsar-evm';
+import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
 
 import { appChains, config } from '@/configs/wagmiConfig';
 
@@ -68,7 +62,7 @@ export type TransactionUnion = ExampleTx;
 export const usePulsarStore = createBoundedUseStore(
   createPulsarStore<TransactionUnion>({
     name: storageName,
-    adapter: evmAdapter(config, appChains),
+    adapter: pulsarEvmAdapter(config, appChains),
   }),
 );
 ```
@@ -86,7 +80,7 @@ import { usePulsarStore } from '../hooks/txTrackingHooks';
 
 export const PulsarInitializer = () => {
   // Get the initialization function from the store via our custom hook
-  const initializeTransactionsPool = usePulsar((state) => state.initializeTransactionsPool);
+  const initializeTransactionsPool = usePulsarStore((state) => state.initializeTransactionsPool);
 
   // Pass the function to the hook from this package
   useInitializeTransactionsPool({ initializeTransactionsPool });

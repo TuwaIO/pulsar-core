@@ -11,6 +11,7 @@ const txBlockStepCodeGenerate = ({ importLine, buttonLine }: TxBlockStepCodeGene
   return `'use client';
 
 ${importLine}
+import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
 import { useWalletAccountTransactionSendingSigner } from '@solana/react';
 import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 import { OrbitAdapter } from '@tuwaio/orbit-core';
@@ -22,8 +23,12 @@ import { TxType, usePulsarStore } from '@/hooks/txTrackingHooks';
 import { increment } from '@/transactions/actions/increment';
 
 export const TxActionButtonIncrement = () => {
+  const initializeTransactionsPool = usePulsarStore((state) => state.initializeTransactionsPool);
   const executeTxAction = usePulsarStore((state) => state.executeTxAction);
   const activeConnection = useSatelliteConnectStore((store) => store.activeConnection);
+
+  // This hook ensures that transaction tracking continues even after a page reload.
+  useInitializeTransactionsPool({ initializeTransactionsPool });
 
   const activeWalletSolana = activeConnection as SolanaConnection;
   const activeWalletCluster = \`\${OrbitAdapter.SOLANA}:\${activeConnection?.chainId ?? 'devnet'}\`;
@@ -40,7 +45,7 @@ export const TxActionButtonIncrement = () => {
           client: createSolanaClientWithCache({ rpcUrlOrMoniker: 'devnet' }),
           signer
         }),
-      onSuccessCallback: async () => {
+      onSuccess: async () => {
         console.log('Incremented');
       },
       params: {

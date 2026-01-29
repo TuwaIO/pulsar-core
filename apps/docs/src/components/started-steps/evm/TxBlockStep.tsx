@@ -25,13 +25,13 @@ export const Increment = () => {
   const executeTxAction = usePulsarStore(state => state.executeTxAction);
 
   // This hook ensures that transaction tracking continues even after a page reload.
-  useInitializeTransactionsPool(initializeTransactionsPool);
+  useInitializeTransactionsPool({ initializeTransactionsPool });
 
   const handleIncrement = async () => {
     await executeTxAction({
       // The actionFunction needs the config to interact with the wallet/contract.
       actionFunction: () => increment({ wagmiConfig: config }),
-      onSuccessCallback: (tx) => {
+      onSuccess: (tx) => {
         console.log('Incremented', tx);
       },
       // Params describe the transaction for the Pulsar store.
