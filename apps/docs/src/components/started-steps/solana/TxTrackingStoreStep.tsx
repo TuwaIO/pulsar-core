@@ -1,7 +1,6 @@
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
-
-import { CodeBlock } from '@/components/CodeBlock';
-import { CodeHighlighter } from '@/components/CodeHighlighter';
+import { CodeBlock, CodeHighlighter } from '@tuwaio/docs-ui';
+import { useTheme } from 'next-themes';
 
 const codeBlockCreateHook = `
 import { createBoundedUseStore, createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
@@ -35,6 +34,7 @@ export const usePulsarStore = createBoundedUseStore(
 `;
 
 export function TxTrackingStoreStep() {
+  const { resolvedTheme } = useTheme();
   return (
     <div className="mt-4">
       <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 4: Create the Transaction Store</h3>
@@ -45,7 +45,7 @@ export function TxTrackingStoreStep() {
         config.
       </p>
       <CodeBlock title="txTrackingHooks.ts" titleIcons={<DocumentTextIcon />} textToCopy={codeBlockCreateHook}>
-        <CodeHighlighter children={codeBlockCreateHook} language="ts" />
+        <CodeHighlighter children={codeBlockCreateHook} language="ts" resolvedTheme={resolvedTheme ?? 'light'} />
       </CodeBlock>
     </div>
   );

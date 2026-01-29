@@ -4,13 +4,13 @@
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-solana.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-An advanced toolkit for the Pulsar Engine that adds comprehensive support for tracking transactions on the Solana blockchain. It is built to be **wallet-library agnostic**, integrating with any setup via a simple configuration object, and uses **`gill-sdk`** for modern blockchain interaction.
+An advanced toolkit for the Pulsar Engine that adds comprehensive support for tracking transactions on the Solana blockchain. It is built to leverage **Wallet Standard**, integrating seamlessly with modern Solana wallet ecosystems, and uses **`gill`** for modern blockchain interaction.
 
 -----
 
 ## 🏛️ What is `@tuwaio/pulsar-solana`?
 
-This package is a powerful, official adapter for `@tuwaio/pulsar-core`. It's designed to be universally compatible with any wallet connection library. By providing a simple wallet state object, you can leverage Pulsar's powerful transaction tracking engine without being locked into a specific ecosystem like the Wallet Standard.
+This package is a powerful, official adapter for `@tuwaio/pulsar-core`. It's designed to be compatible with wallets that follow the **Wallet Standard**. By leveraging standard wallet interfaces, you can utilize Pulsar's powerful transaction tracking engine across a wide range of Solana wallets.
 
 The architecture is designed for multi-chain robustness. You can provide RPC endpoints for different Solana clusters (e.g., Mainnet Beta, Devnet), and the adapter will automatically use the correct one based on the user's connected wallet state.
 
@@ -18,27 +18,19 @@ The architecture is designed for multi-chain robustness. You can provide RPC end
 
 ## ✨ Core Features
 
-- **🔌 Universal Integration:** A single `solanaAdapter` factory that works with **any wallet library**.
+- **🔌 Wallet Standard Integration:** A single `pulsarSolanaAdapter` factory that works with any wallet supporting the **Wallet Standard**.
 - **🔗 Multi-Chain RPC:** Configure with a map of RPC URLs for different clusters; the adapter intelligently selects the correct one.
 - **🛰️ Robust Polling Tracker:** A durable transaction tracker that polls for signature statuses until finality.
-- **🌐 Network Verification:** Includes a utility (`checkSolanaChain`) to robustly verify that the connected wallet's cluster matches the one required by the transaction.
+- **🌐 Network Verification:** Includes a utility (`checkSolanaChain`) to verify that the connected wallet's cluster matches the one required by the transaction.
 - **💡 Optional Wallet:** The adapter can be initialized without a wallet for read-only operations, such as displaying transaction history.
 
 -----
 
 ## 💾 Installation
 
-The package has minimal dependencies, requiring only `gill-sdk` for core functionality.
-
 ```bash
-# Using pnpm
-pnpm add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry
-
-# Using npm
-npm install @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry
-
-# Using yarn
-yarn add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry
+# Using pnpm (recommended), but you can use npm, yarn or bun as well
+pnpm add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry @wallet-standard/ui-core
 ```
 
 -----
@@ -47,10 +39,10 @@ yarn add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwa
 
 ### 1. Primary Usage: Integrating with `@tuwaio/nova-connect`
 
-The key to using Pulsar with Solana is to leverage the `solanaAdapter`, which seamlessly integrates with the `@tuwaio/nova-connect` state for example. This removes the need for manual wallet state management, as the adapter automatically reacts to changes in the active wallet, cluster, and connection status.
+The key to using Pulsar with Solana is to leverage the `pulsarSolanaAdapter`, which seamlessly integrates with the `@tuwaio/nova-connect` state. This removes the need for manual wallet state management, as the adapter automatically reacts to changes in the active wallet, cluster, and connection status via **Wallet Standard** interfaces.
 
 **Example: Creating a Pulsar Store**
-Here's how to create and initialize the central Pulsar store using the `solanaAdapter`.
+Here's how to create and initialize the central Pulsar store using the `pulsarSolanaAdapter`.
 
 ```typescript
 // src/hooks/pulsarStoreHook.ts
@@ -127,13 +119,13 @@ function MyTransactionButton() {
   const executeTxAction = usePulsarStore((state) => state.executeTxAction);
   const transactionsPool = usePulsarStore((state) => state.transactionsPool);
   const getLastTxKey = usePulsarStore((state) => state.getLastTxKey);
-  const activeWallet = useSatelliteConnectStore((state) => state.activeWallet);
+  const activeConnection = useSatelliteConnectStore((state) => state.activeConnection);
 
-  const activeWalletSolana = activeWallet as SolanaWallet;
+  const activeWalletSolana = activeConnection as SolanaWallet;
 
   const signer = useWalletAccountTransactionSendingSigner(
     activeWalletSolana.connectedAccount as UiWalletAccount,
-    `${OrbitAdapter.SOLANA}:${activeWallet?.chainId ?? 'devnet'}`,
+    `${OrbitAdapter.SOLANA}:${activeConnection?.chainId ?? 'devnet'}`,
   );
 
   const handleClick = async () => {
@@ -143,14 +135,14 @@ function MyTransactionButton() {
           client: createSolanaClientWithCache({ rpcUrlOrMoniker: 'devnet' }),
           signer,
         }),
-      onSuccessCallback: async () => {
+      onSuccess: async () => {
         console.log('action executed')
       },
       params: {
         type: 'example',
         adapter: OrbitAdapter.SOLANA,
         // The RPC URL must be provided for the tracker to work after a page reload
-        rpcUrl: activeWallet?.rpcURL,
+        rpcUrl: activeConnection?.rpcURL,
         desiredChainID: 'devnet', // The cluster name for the pre-flight check
         title: 'Example',
         description: 'Example tx',
@@ -159,29 +151,6 @@ function MyTransactionButton() {
   };
 
   return <button onClick={handleClick}>Execute Action</button>;
-}
-```
-
------
-
-### 3. Using Standalone Utilities
-
-You can use the helper functions, such as `getSolanaExplorerLink` and `checkSolanaChain`, independently of the Pulsar store. These utilities are particularly useful for enhancing UI components and performing pre-transaction checks.
-
-**Example: Displaying a user's Solana explorer link**
-
-```tsx
-// src/components/ExplorerLink.tsx
-import { getSolanaExplorerLink } from '@tuwaio/pulsar-solana';
-
-function ExplorerLink({ txSignature, txCluster }: { txSignature: string, txCluster: string }) {
-  const explorerUrl = getSolanaExplorerLink(`/tx/${txSignature}`, txCluster);
-
-  return (
-    <a href={explorerUrl} target="_blank" rel="noopener noreferrer">
-      View on Explorer
-    </a>
-  );
 }
 ```
 

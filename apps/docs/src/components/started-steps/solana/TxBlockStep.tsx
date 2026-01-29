@@ -1,7 +1,6 @@
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
-
-import { CodeBlock } from '@/components/CodeBlock';
-import { CodeHighlighter } from '@/components/CodeHighlighter';
+import { CodeBlock, CodeHighlighter } from '@tuwaio/docs-ui';
+import { useTheme } from 'next-themes';
 
 export interface TxBlockStepCodeGenerateParams {
   importLine: string;
@@ -12,6 +11,7 @@ const txBlockStepCodeGenerate = ({ importLine, buttonLine }: TxBlockStepCodeGene
   return `'use client';
 
 ${importLine}
+import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
 import { useWalletAccountTransactionSendingSigner } from '@solana/react';
 import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 import { OrbitAdapter } from '@tuwaio/orbit-core';
@@ -23,8 +23,12 @@ import { TxType, usePulsarStore } from '@/hooks/txTrackingHooks';
 import { increment } from '@/transactions/actions/increment';
 
 export const TxActionButtonIncrement = () => {
+  const initializeTransactionsPool = usePulsarStore((state) => state.initializeTransactionsPool);
   const executeTxAction = usePulsarStore((state) => state.executeTxAction);
   const activeConnection = useSatelliteConnectStore((store) => store.activeConnection);
+
+  // This hook ensures that transaction tracking continues even after a page reload.
+  useInitializeTransactionsPool({ initializeTransactionsPool });
 
   const activeWalletSolana = activeConnection as SolanaConnection;
   const activeWalletCluster = \`\${OrbitAdapter.SOLANA}:\${activeConnection?.chainId ?? 'devnet'}\`;
@@ -41,7 +45,7 @@ export const TxActionButtonIncrement = () => {
           client: createSolanaClientWithCache({ rpcUrlOrMoniker: 'devnet' }),
           signer
         }),
-      onSuccessCallback: async () => {
+      onSuccess: async () => {
         console.log('Incremented');
       },
       params: {
@@ -78,6 +82,7 @@ export const TxActionButtonIncrement = () => {
 };
 
 export function TxBlockStep({ importLine, buttonLine }: TxBlockStepCodeGenerateParams) {
+  const { resolvedTheme } = useTheme();
   const codeBlock = txBlockStepCodeGenerate({ importLine, buttonLine });
 
   return (
@@ -89,7 +94,7 @@ export function TxBlockStep({ importLine, buttonLine }: TxBlockStepCodeGenerateP
         point on, the <b>Pulsar</b> engine automatically handles all status updates.
       </p>
       <CodeBlock title="Increment.tsx" titleIcons={<DocumentTextIcon />} textToCopy={codeBlock}>
-        <CodeHighlighter children={codeBlock} language="tsx" />
+        <CodeHighlighter children={codeBlock} language="tsx" resolvedTheme={resolvedTheme ?? 'light'} />
       </CodeBlock>
     </div>
   );

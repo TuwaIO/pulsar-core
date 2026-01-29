@@ -1,8 +1,9 @@
 'use client';
 
+import { StyledLink } from '@tuwaio/docs-ui';
+
 import { CombineSteps } from '@/components/started-steps/evm/CombineSteps';
 import { TxBlockStep, TxBlockStepCodeGenerateParams } from '@/components/started-steps/evm/TxBlockStep';
-import { StyledLink } from '@/components/StyledLink';
 
 export function StartedBlockWrapper({
   link,

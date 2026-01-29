@@ -38,22 +38,22 @@ This is the primary tracker for monitoring standard transactions on EVM-compatib
 #### Example Usage
 ```tsx
 import { evmTracker } from '@tuwaio/pulsar-evm';
-import { mainnet } from 'viem/chains';
+import { config } from './wagmi'; // Your wagmi config
 
-async function trackMyTransaction(txHash) {
+async function trackMyTransaction(txHash: string, chainId: number) {
   console.log(`Starting to track transaction: ${txHash}`);
+
   await evmTracker({
-    chains: [mainnet], // Chains array for internal client creation
+    config, // Wagmi config for internal client creation
     tx: {
       txKey: txHash, // Transaction hash
-      chainId: 1, // Chain ID (e.g., 1 for Ethereum Mainnet)
+      chainId, // Chain ID (e.g., 1 for Ethereum Mainnet)
     },
     onTxDetailsFetched: (txDetails) => {
       console.log('Transaction details received:', txDetails);
       // Update your UI/state with nonce, gas, etc.
     },
-
-    onSuccess: (txDetails, receipt) => {
+    onSuccess: async (txDetails, receipt, client) => {
       console.log('Transaction mined!', receipt);
       if (receipt.status === 'success') {
         // Update status as successful
@@ -61,19 +61,17 @@ async function trackMyTransaction(txHash) {
         // Update status as failed
       }
     },
-
     onReplaced: (replacement) => {
       console.log('Transaction was replaced:', replacement);
       // Handle replacement logic
     },
-
     onFailure: (error) => {
       console.error('Tracking failed:', error);
       // Handle errors
     },
   });
 }
-``` 
+```
 
 ---
 
@@ -133,25 +131,6 @@ import { checkTransactionsTracker } from '@tuwaio/pulsar-evm';
 const { tracker, txKey } = checkTransactionsTracker('0xabc...', 'injected');
 // tracker -> 'ethereum' or relevant tracker type
 // txKey -> same as input or derived key
-``` 
-
-### `checkChainForTx`
-
-Verifies if the user is connected to the correct network and prompts for a switch if necessary.
-```tsx
-import { checkChainForTx } from '@tuwaio/pulsar-evm';
-import { wagmiConfig } from './config';
-
-async function ensureCorrectNetwork(chainId: number | string) {
-  try {
-    await checkChainForTx(chainId, wagmiConfig);
-    console.log('Network is correct, proceeding...');
-    // Proceed with your transaction or other logic here
-  } catch (error) {
-    console.error(error.message);
-    // Handle error, e.g., showing a message to the user about network mismatch
-  }
-}
 ```
 
 ---

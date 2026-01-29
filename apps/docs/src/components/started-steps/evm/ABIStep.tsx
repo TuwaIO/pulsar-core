@@ -1,7 +1,6 @@
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
-
-import { CodeBlock } from '@/components/CodeBlock';
-import { CodeHighlighter } from '@/components/CodeHighlighter';
+import { CodeBlock, CodeHighlighter } from '@tuwaio/docs-ui';
+import { useTheme } from 'next-themes';
 
 const codeBlock = `export const CounterAbi = [
   {
@@ -35,6 +34,7 @@ const codeBlock = `export const CounterAbi = [
 `;
 
 export function ABIStep() {
+  const { resolvedTheme } = useTheme();
   return (
     <div>
       <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 2: Contract ABI</h3>
@@ -44,7 +44,7 @@ export function ABIStep() {
         Counter contract.
       </p>
       <CodeBlock title="CounterAbi.ts" titleIcons={<DocumentTextIcon />} textToCopy={codeBlock}>
-        <CodeHighlighter children={codeBlock} language="ts" />
+        <CodeHighlighter children={codeBlock} language="ts" resolvedTheme={resolvedTheme ?? 'light'} />
       </CodeBlock>
     </div>
   );
