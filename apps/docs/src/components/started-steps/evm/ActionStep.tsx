@@ -1,7 +1,6 @@
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
-
-import { CodeBlock } from '@/components/CodeBlock';
-import { CodeHighlighter } from '@/components/CodeHighlighter';
+import { CodeBlock, CodeHighlighter } from '@tuwaio/docs-ui';
+import { useTheme } from 'next-themes';
 
 const codeBlock = `import { Config, writeContract } from '@wagmi/core';
 import { sepolia } from 'viem/chains';
@@ -22,6 +21,7 @@ export async function increment({ wagmiConfig }: { wagmiConfig?: Config }) {
 `;
 
 export function ActionStep() {
+  const { resolvedTheme } = useTheme();
   return (
     <div className="mt-4">
       <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 3: Create a Contract Action</h3>
@@ -32,7 +32,7 @@ export function ActionStep() {
         demonstrates creating an action for the `increment` function:
       </p>
       <CodeBlock title="increment.ts" titleIcons={<DocumentTextIcon />} textToCopy={codeBlock}>
-        <CodeHighlighter children={codeBlock} language="ts" />
+        <CodeHighlighter children={codeBlock} language="ts" resolvedTheme={resolvedTheme ?? 'light'} />
       </CodeBlock>
     </div>
   );

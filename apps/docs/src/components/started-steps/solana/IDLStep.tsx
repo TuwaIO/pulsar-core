@@ -1,7 +1,6 @@
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
-
-import { CodeBlock } from '@/components/CodeBlock';
-import { CodeHighlighter } from '@/components/CodeHighlighter';
+import { CodeBlock, CodeHighlighter } from '@tuwaio/docs-ui';
+import { useTheme } from 'next-themes';
 
 const idlContent = `{
   "address": "...your contract address...",
@@ -32,6 +31,7 @@ export default createCodamaConfig({
 `;
 
 export function IDLStep() {
+  const { resolvedTheme } = useTheme();
   return (
     <div>
       <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 2: Program IDL</h3>
@@ -41,7 +41,7 @@ export function IDLStep() {
         purpose to an EVM ABI.
       </p>
       <CodeBlock title="solanatest.json" titleIcons={<DocumentTextIcon />} textToCopy={idlContent}>
-        <CodeHighlighter children={idlContent} language="json" />
+        <CodeHighlighter children={idlContent} language="json" resolvedTheme={resolvedTheme ?? 'light'} />
       </CodeBlock>
       <h4 className="mb-2 mt-4 text-base font-semibold text-[var(--tuwa-text-primary)]">
         Generating Type-Safe Instructions
@@ -51,21 +51,25 @@ export function IDLStep() {
         for this. First, make sure you have it installed:
       </p>
       <CodeBlock title="bash" textToCopy="pnpm add -g codama" titleIcons={<DocumentTextIcon />}>
-        <CodeHighlighter children="pnpm add -g codama" language="bash" />
+        <CodeHighlighter children="pnpm add -g codama" language="bash" resolvedTheme={resolvedTheme ?? 'light'} />
       </CodeBlock>
       <p className="mb-2 text-[var(--tuwa-text-secondary)]">
         Next, configure it to point to your IDL file. Create a `codama.js` file in your project root with the following
         configuration:
       </p>
       <CodeBlock title="codama.js" textToCopy={configContent} titleIcons={<DocumentTextIcon />}>
-        <CodeHighlighter children={configContent} language="ts" />
+        <CodeHighlighter children={configContent} language="ts" resolvedTheme={resolvedTheme ?? 'light'} />
       </CodeBlock>
       <p className="mb-2 mt-4 text-[var(--tuwa-text-secondary)]">
         Now you can run the generation script. It will create a `src/programs/solanatest/generated` directory with all
         the necessary files.
       </p>
       <CodeBlock title="bash" textToCopy="pnpm run codama run js -c ./codama.js" titleIcons={<DocumentTextIcon />}>
-        <CodeHighlighter children="pnpm run codama run js -c ./codama.js" language="bash" />
+        <CodeHighlighter
+          children="pnpm run codama run js -c ./codama.js"
+          language="bash"
+          resolvedTheme={resolvedTheme ?? 'light'}
+        />
       </CodeBlock>
       <p className="mt-4 text-[var(--tuwa-text-secondary)]">
         Once these files are generated, you can use the typed instructions to build your transactions, which we'll cover

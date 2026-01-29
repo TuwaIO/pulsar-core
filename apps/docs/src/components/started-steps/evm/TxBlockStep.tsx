@@ -1,7 +1,6 @@
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
-
-import { CodeBlock } from '@/components/CodeBlock';
-import { CodeHighlighter } from '@/components/CodeHighlighter';
+import { CodeBlock, CodeHighlighter } from '@tuwaio/docs-ui';
+import { useTheme } from 'next-themes';
 
 export interface TxBlockStepCodeGenerateParams {
   importLine: string;
@@ -66,6 +65,7 @@ export const Increment = () => {
 };
 
 export function TxBlockStep({ importLine, buttonLine }: TxBlockStepCodeGenerateParams) {
+  const { resolvedTheme } = useTheme();
   const codeBlock = txBlockStepCodeGenerate({ importLine, buttonLine });
 
   return (
@@ -77,7 +77,7 @@ export function TxBlockStep({ importLine, buttonLine }: TxBlockStepCodeGenerateP
         point on, the <b>Pulsar</b> engine automatically handles all status updates.
       </p>
       <CodeBlock title="Increment.tsx" titleIcons={<DocumentTextIcon />} textToCopy={codeBlock}>
-        <CodeHighlighter children={codeBlock} language="tsx" />
+        <CodeHighlighter children={codeBlock} language="tsx" resolvedTheme={resolvedTheme ?? 'light'} />
       </CodeBlock>
     </div>
   );
