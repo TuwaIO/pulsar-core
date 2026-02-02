@@ -2,6 +2,7 @@
  * @file This file contains the primary router for initializing transaction trackers.
  */
 
+import { normalizeError } from '@tuwaio/orbit-core';
 import {
   ITxTrackingStore,
   TrackerCallbacks,
@@ -50,7 +51,7 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
-        errorMessage: `Unsupported tracker type: "${tracker}"`,
+        error: normalizeError(new Error(`Unsupported tracker type: "${tracker}"`)),
       });
       break;
   }

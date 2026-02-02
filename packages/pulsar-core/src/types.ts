@@ -1,4 +1,4 @@
-import { BaseAdapter, OrbitAdapter, OrbitGenericAdapter } from '@tuwaio/orbit-core';
+import { BaseAdapter, OrbitAdapter, OrbitGenericAdapter, TuwaErrorState } from '@tuwaio/orbit-core';
 import { StoreApi } from 'zustand';
 
 /**
@@ -76,8 +76,8 @@ export type BaseTransaction = {
    * description: ['Swapping...', 'Swapped Successfully', 'Swap Failed', 'Swap Replaced']
    */
   description?: string | [string, string, string, string];
-  /** The error message if the transaction failed. */
-  errorMessage?: string;
+  /** The error state if the transaction failed, containing message and raw error details. */
+  error?: TuwaErrorState;
   /** The on-chain timestamp (in seconds) when the transaction was finalized. */
   finishedTimestamp?: number;
   /** The sender's wallet address. */
@@ -209,8 +209,8 @@ export type InitialTransactionParams = {
  * This is used for UI feedback while the transaction is being signed and sent.
  */
 export type InitialTransaction = InitialTransactionParams & {
-  /** An error message if the initialization fails (e.g., user rejects signature). */
-  errorMessage?: string;
+  /** Normalized error if the initialization fails (e.g., user rejects signature). */
+  error?: TuwaErrorState;
   /** A flag indicating if the transaction is being processed (e.g., waiting for signature). */
   isInitializing: boolean;
   /** The `txKey` of the on-chain transaction that this action produced, used for linking the states. */
@@ -345,7 +345,7 @@ type UpdatableTransactionFields = Partial<
     | 'hash'
     | 'status'
     | 'replacedTxHash'
-    | 'errorMessage'
+    | 'error'
     | 'finishedTimestamp'
     | 'isTrackedModalOpen'
     | 'isError'

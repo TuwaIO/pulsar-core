@@ -4,7 +4,7 @@
  * immutable updates, and a persistence middleware to maintain state across user sessions.
  */
 
-import { selectAdapterByKey, setChainId } from '@tuwaio/orbit-core';
+import { normalizeError, selectAdapterByKey, setChainId } from '@tuwaio/orbit-core';
 import dayjs from 'dayjs';
 import { produce } from 'immer';
 import { persist, PersistOptions } from 'zustand/middleware';
@@ -90,12 +90,11 @@ export function createPulsarStore<T extends Transaction>({
 
           // Centralized error handler for this transaction flow
           const handleTxError = (e: unknown) => {
-            const errorMessage = e instanceof Error ? e.message : String(e);
             set((state) =>
               produce(state, (draft) => {
                 if (draft.initialTx) {
                   draft.initialTx.isInitializing = false;
-                  draft.initialTx.errorMessage = errorMessage;
+                  draft.initialTx.error = normalizeError(e);
                 }
               }),
             );
