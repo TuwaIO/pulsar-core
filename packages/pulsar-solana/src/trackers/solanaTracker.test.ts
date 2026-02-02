@@ -32,6 +32,18 @@ vi.mock('@tuwaio/pulsar-core', async (importActual) => {
   };
 });
 
+// Mock normalizeError to return a predictable structure.
+vi.mock('@tuwaio/orbit-core', async (importActual) => {
+  const original = await importActual<typeof import('@tuwaio/orbit-core')>();
+  return {
+    ...original,
+    normalizeError: (err: unknown) => ({
+      message: err instanceof Error ? err.message : 'Unknown error',
+      raw: { originalError: err },
+    }),
+  };
+});
+
 // --- Test Suite ---
 
 type MockParams = Pick<
@@ -143,7 +155,10 @@ describe('solanaTrackerForStore', () => {
       status: TransactionStatus.Failed,
       pending: false,
       isError: true,
-      errorMessage: `Transaction failed: ${JSON.stringify(txError)}`,
+      error: expect.objectContaining({
+        message: 'Unknown error', // TransactionError is not an Error instance
+        raw: expect.objectContaining({ originalError: txError }),
+      }),
       finishedTimestamp: expect.any(Number),
     });
   });
@@ -161,8 +176,9 @@ describe('solanaTrackerForStore', () => {
     };
     config.onFailure(mockFailureResponse);
 
+    // The error passed to onError should be the raw TransactionError
     expect(mockParams.onError).toHaveBeenCalledWith(
-      expect.any(Error),
+      txError,
       expect.objectContaining({ txKey: mockTx.txKey }),
     );
   });
@@ -179,7 +195,10 @@ describe('solanaTrackerForStore', () => {
       status: TransactionStatus.Failed,
       pending: false,
       isError: true,
-      errorMessage: 'Transaction tracking timed out or the transaction was not found.',
+      error: expect.objectContaining({
+        message: 'Transaction tracking timed out or the transaction was not found.',
+        raw: expect.anything(),
+      }),
       finishedTimestamp: expect.any(Number),
     });
   });

@@ -3,7 +3,7 @@
  * It uses a polling mechanism to query the Safe Transaction Service API for the status of a `safeTxHash`.
  */
 
-import { OrbitAdapter } from '@tuwaio/orbit-core';
+import { normalizeError, OrbitAdapter } from '@tuwaio/orbit-core';
 import {
   initializePollingTracker,
   ITxTrackingStore,
@@ -156,18 +156,20 @@ export function safeTrackerForStore<T extends Transaction>({
       });
     },
     onFailure: (response) => {
-      const errorMessage = response ? 'Safe transaction failed or was rejected.' : 'Transaction not found.';
+      const err = response
+        ? new Error('Safe transaction failed or was rejected.')
+        : new Error('Transaction not found.');
       updateTxParams(tx.txKey, {
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
         hash: response?.transactionHash ?? undefined,
-        errorMessage,
+        error: normalizeError(err),
         finishedTimestamp: response?.executionDate ? dayjs(response.executionDate).unix() : undefined,
       });
       const updatedTx = transactionsPool[tx.txKey];
       if (onError && updatedTx) {
-        onError(new Error(errorMessage), updatedTx);
+        onError(err, updatedTx);
       }
     },
     onReplaced: (response) => {

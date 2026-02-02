@@ -3,6 +3,7 @@
  * It uses a polling mechanism to check the status of a Gelato Task ID from the Gelato API.
  */
 
+import { normalizeError } from '@tuwaio/orbit-core';
 import {
   ActionTxKey,
   GelatoTxKey,
@@ -167,19 +168,21 @@ export function gelatoTrackerForStore<T extends Transaction>({
       });
     },
     onFailure: (response) => {
-      const errorMessage = response?.task.lastCheckMessage ?? 'Transaction failed or was not found.';
+      const err = response?.task.lastCheckMessage
+        ? new Error(response.task.lastCheckMessage)
+        : new Error('Transaction failed or was not found.');
       updateTxParams(tx.txKey, {
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
         hash: response?.task.transactionHash,
-        errorMessage,
+        error: normalizeError(err),
         finishedTimestamp: response?.task.executionDate ? dayjs(response.task.executionDate).unix() : undefined,
       });
 
       const updatedTx = transactionsPool[tx.txKey];
       if (onError && updatedTx) {
-        onError(new Error(errorMessage), updatedTx);
+        onError(err, updatedTx);
       }
     },
   });

@@ -4,7 +4,7 @@
  * `getSignatureStatuses` RPC method for updates on transaction status.
  */
 
-import { OrbitAdapter } from '@tuwaio/orbit-core';
+import { normalizeError, OrbitAdapter } from '@tuwaio/orbit-core';
 import { createSolanaRPC, getCluster } from '@tuwaio/orbit-solana';
 import {
   initializePollingTracker,
@@ -210,21 +210,23 @@ export async function solanaTrackerForStore<T extends Transaction>({
      * @param {SolanaSignatureStatusResponse} response - The failure response details.
      */
     onFailure: (response) => {
-      const errorMessage = response?.err
-        ? `Transaction failed: ${JSON.stringify(response.err)}`
-        : 'Transaction tracking timed out or the transaction was not found.';
       rest.updateTxParams(tx.txKey, {
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
-        errorMessage,
+        error: normalizeError(
+          response?.err ?? new Error('Transaction tracking timed out or the transaction was not found.'),
+        ),
         finishedTimestamp: dayjs().unix(),
       });
 
       // Call user onError callback
       const updatedTx = rest.transactionsPool[tx.txKey];
       if (onError && updatedTx) {
-        onError(new Error(errorMessage), updatedTx);
+        onError(
+          response?.err ?? new Error('Transaction tracking timed out or the transaction was not found.'),
+          updatedTx,
+        );
       }
     },
   });

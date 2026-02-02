@@ -4,6 +4,7 @@
  * a transaction's lifecycle from submission to finality.
  */
 
+import { normalizeError } from '@tuwaio/orbit-core';
 import { ITxTrackingStore, TrackerCallbacks, Transaction, TransactionStatus } from '@tuwaio/pulsar-core';
 import { Config, getClient } from '@wagmi/core';
 import {
@@ -183,7 +184,7 @@ export async function evmTrackerForStore<T extends Transaction>(
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
-        errorMessage: error instanceof Error ? error.message : 'Transaction failed or could not be tracked.',
+        error: normalizeError(error),
       });
 
       const updatedTx = transactionsPool[tx.txKey];

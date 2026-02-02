@@ -6,18 +6,18 @@
 
 > **InitialTransaction** = [`InitialTransactionParams`](InitialTransactionParams.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:211](https://github.com/TuwaIO/pulsar-core/blob/bc1c6d37605e7ee8f8408c4101eedb0acc877efc/packages/pulsar-core/src/types.ts#L211)
+Defined in: [packages/pulsar-core/src/types.ts:211](https://github.com/TuwaIO/pulsar-core/blob/8fe0ac7851e87d430c70b4225cc964456d5fdcd8/packages/pulsar-core/src/types.ts#L211)
 
 Represents a transaction in its temporary, pre-submission state.
 This is used for UI feedback while the transaction is being signed and sent.
 
 ## Type Declaration
 
-### errorMessage?
+### error?
 
-> `optional` **errorMessage**: `string`
+> `optional` **error**: `TuwaErrorState`
 
-An error message if the initialization fails (e.g., user rejects signature).
+Normalized error if the initialization fails (e.g., user rejects signature).
 
 ### isInitializing
 
