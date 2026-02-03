@@ -70,7 +70,7 @@ export const TxActionButtonIncrement = () => {
         <button
           type="button"
           onClick={handleIncrement}
-          className="rounded-md bg-[var(--tuwa-bg-accent)] px-4 py-2 font-semibold text-white hover:bg-[var(--tuwa-bg-accent-hover)]"
+          className="rounded-[var(--tuwa-rounded-corners)] bg-[var(--tuwa-bg-accent)] px-4 py-2 font-semibold text-white hover:bg-[var(--tuwa-bg-accent-hover)]"
         >
           Increment
         </button>

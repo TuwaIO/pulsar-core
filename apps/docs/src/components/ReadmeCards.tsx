@@ -46,7 +46,7 @@ const ExampleCard: React.FC<ExampleCardProps> = ({
 
   return (
     <div
-      className={`relative p-6 rounded-xl border-2 transition-all duration-200 hover:shadow-lg bg-[var(--tuwa-bg-primary)] ${
+      className={`relative p-6 rounded-[var(--tuwa-rounded-corners)] border-2 transition-all duration-200 hover:shadow-lg bg-[var(--tuwa-bg-primary)] ${
         statusConfig[status].cardClass
       } ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer hover:shadow-xl'}`}
     >
@@ -75,7 +75,7 @@ const ExampleCard: React.FC<ExampleCardProps> = ({
           {technologies.map((tech, index) => (
             <span
               key={index}
-              className="px-2 py-1 text-xs bg-[var(--tuwa-bg-muted)] text-[var(--tuwa-text-secondary)] rounded-md border border-[var(--tuwa-border-secondary)]"
+              className="px-2 py-1 text-xs bg-[var(--tuwa-bg-muted)] text-[var(--tuwa-text-secondary)] rounded-[var(--tuwa-rounded-corners)] border border-[var(--tuwa-border-secondary)]"
             >
               {tech}
             </span>
@@ -89,7 +89,7 @@ const ExampleCard: React.FC<ExampleCardProps> = ({
           href={githubUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className={`flex items-center justify-center flex-1 px-4 py-2 text-sm font-medium text-center rounded-lg transition-all duration-200 ${
+          className={`flex items-center justify-center flex-1 px-4 py-2 text-sm font-medium text-center rounded-[var(--tuwa-rounded-corners)] transition-all duration-200 ${
             isDisabled
               ? 'bg-[var(--tuwa-bg-muted)] text-[var(--tuwa-text-tertiary)] cursor-not-allowed'
               : 'text-[var(--tuwa-text-on-accent)]'
@@ -126,7 +126,7 @@ const ExampleCard: React.FC<ExampleCardProps> = ({
             href={demoUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 text-sm font-medium border-2 border-[var(--tuwa-border-primary)] text-[var(--tuwa-text-secondary)] rounded-lg hover:border-[var(--tuwa-text-accent)] hover:text-[var(--tuwa-text-accent)] transition-all duration-200"
+            className="px-4 py-2 text-sm font-medium border-2 border-[var(--tuwa-border-primary)] text-[var(--tuwa-text-secondary)] rounded-[var(--tuwa-rounded-corners)] hover:border-[var(--tuwa-text-accent)] hover:text-[var(--tuwa-text-accent)] transition-all duration-200"
           >
             Live Demo
           </a>
@@ -145,9 +145,9 @@ export const ReadmeCards: React.FC = () => {
       framework: 'Vite + React',
       technologies: ['React 19', 'TypeScript', 'Vite', '@tuwaio/nova-connect', 'TailwindCSS', 'Custom styles'],
       status: 'ready',
-      githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/accountable-style',
+      githubUrl: 'https://github.com/TuwaIO/cosmos-playground/tree/main/examples/custom-style',
       difficulty: 'intermediate',
-      demoUrl: 'https://accountable-style.tuwa.io/',
+      demoUrl: 'https://custom-style.tuwa.io/',
     },
     {
       title: 'Next.js + Nova Connect',

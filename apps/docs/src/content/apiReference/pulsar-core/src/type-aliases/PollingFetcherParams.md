@@ -6,7 +6,7 @@
 
 > **PollingFetcherParams**\<`R`, `T`\> = `object`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:14](https://github.com/TuwaIO/pulsar-core/blob/8fe0ac7851e87d430c70b4225cc964456d5fdcd8/packages/pulsar-core/src/utils/initializePollingTracker.ts#L14)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:14](https://github.com/TuwaIO/pulsar-core/blob/7d4bdc3c91c53bb25d41d74c9edaaffd57d4789d/packages/pulsar-core/src/utils/initializePollingTracker.ts#L14)
 
 Defines the parameters for the fetcher function used within the polling tracker.
 The fetcher is the core logic that performs the actual API call.
@@ -31,7 +31,7 @@ The type of the transaction object being tracked.
 
 > **onFailure**: (`response?`) => `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:22](https://github.com/TuwaIO/pulsar-core/blob/8fe0ac7851e87d430c70b4225cc964456d5fdcd8/packages/pulsar-core/src/utils/initializePollingTracker.ts#L22)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:22](https://github.com/TuwaIO/pulsar-core/blob/7d4bdc3c91c53bb25d41d74c9edaaffd57d4789d/packages/pulsar-core/src/utils/initializePollingTracker.ts#L22)
 
 Callback to be invoked when the fetcher determines the transaction has failed.
 
@@ -51,7 +51,7 @@ Callback to be invoked when the fetcher determines the transaction has failed.
 
 > `optional` **onIntervalTick**: (`response`) => `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:24](https://github.com/TuwaIO/pulsar-core/blob/8fe0ac7851e87d430c70b4225cc964456d5fdcd8/packages/pulsar-core/src/utils/initializePollingTracker.ts#L24)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:24](https://github.com/TuwaIO/pulsar-core/blob/7d4bdc3c91c53bb25d41d74c9edaaffd57d4789d/packages/pulsar-core/src/utils/initializePollingTracker.ts#L24)
 
 Optional callback for each successful poll, useful for updating UI with intermediate states.
 
@@ -71,7 +71,7 @@ Optional callback for each successful poll, useful for updating UI with intermed
 
 > `optional` **onReplaced**: (`response`) => `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:26](https://github.com/TuwaIO/pulsar-core/blob/8fe0ac7851e87d430c70b4225cc964456d5fdcd8/packages/pulsar-core/src/utils/initializePollingTracker.ts#L26)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:26](https://github.com/TuwaIO/pulsar-core/blob/7d4bdc3c91c53bb25d41d74c9edaaffd57d4789d/packages/pulsar-core/src/utils/initializePollingTracker.ts#L26)
 
 Optional callback for when a transaction is replaced (e.g., speed-up).
 
@@ -91,7 +91,7 @@ Optional callback for when a transaction is replaced (e.g., speed-up).
 
 > **onSuccess**: (`response`) => `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:20](https://github.com/TuwaIO/pulsar-core/blob/8fe0ac7851e87d430c70b4225cc964456d5fdcd8/packages/pulsar-core/src/utils/initializePollingTracker.ts#L20)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:20](https://github.com/TuwaIO/pulsar-core/blob/7d4bdc3c91c53bb25d41d74c9edaaffd57d4789d/packages/pulsar-core/src/utils/initializePollingTracker.ts#L20)
 
 Callback to be invoked when the fetcher determines the transaction has succeeded.
 
@@ -111,7 +111,7 @@ Callback to be invoked when the fetcher determines the transaction has succeeded
 
 > **stopPolling**: (`options?`) => `void`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:18](https://github.com/TuwaIO/pulsar-core/blob/8fe0ac7851e87d430c70b4225cc964456d5fdcd8/packages/pulsar-core/src/utils/initializePollingTracker.ts#L18)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:18](https://github.com/TuwaIO/pulsar-core/blob/7d4bdc3c91c53bb25d41d74c9edaaffd57d4789d/packages/pulsar-core/src/utils/initializePollingTracker.ts#L18)
 
 A callback to stop the polling mechanism, typically called on success or terminal failure.
 
@@ -133,6 +133,6 @@ A callback to stop the polling mechanism, typically called on success or termina
 
 > **tx**: `T`
 
-Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:16](https://github.com/TuwaIO/pulsar-core/blob/8fe0ac7851e87d430c70b4225cc964456d5fdcd8/packages/pulsar-core/src/utils/initializePollingTracker.ts#L16)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:16](https://github.com/TuwaIO/pulsar-core/blob/7d4bdc3c91c53bb25d41d74c9edaaffd57d4789d/packages/pulsar-core/src/utils/initializePollingTracker.ts#L16)
 
 The transaction object being tracked.
