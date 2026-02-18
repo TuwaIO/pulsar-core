@@ -6,7 +6,7 @@
 
 > **solanaFetcher**(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-solana/src/trackers/solanaTracker.ts:56](https://github.com/TuwaIO/pulsar-core/blob/b6258073b240e3dc780d2485188e70f062560dbc/packages/pulsar-solana/src/trackers/solanaTracker.ts#L56)
+Defined in: [packages/pulsar-solana/src/trackers/solanaTracker.ts:56](https://github.com/TuwaIO/pulsar-core/blob/51589730a9ca7f3b2a638b0d259ba38ebb76cdb1/packages/pulsar-solana/src/trackers/solanaTracker.ts#L56)
 
 Fetches and tracks Solana transactions using the `getSignatureStatuses` RPC method.
 Transaction details (`getTransaction`) are only fetched once, if not already present in the transaction object.

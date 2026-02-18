@@ -345,7 +345,7 @@ export type TransactionPool<T extends Transaction> = Record<string, T>;
  * on a transaction object via the `updateTxParams` action. This ensures type safety
  * and prevents accidental modification of immutable properties.
  */
-type UpdatableTransactionFields = Partial<
+export type UpdatableTransactionFields = Partial<
   Pick<
     EvmTransaction,
     | 'to'

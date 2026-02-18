@@ -33,6 +33,7 @@
 - [Transaction](type-aliases/Transaction.md)
 - [TransactionPool](type-aliases/TransactionPool.md)
 - [TxAdapter](type-aliases/TxAdapter.md)
+- [UpdatableTransactionFields](type-aliases/UpdatableTransactionFields.md)
 
 ## Variables
 

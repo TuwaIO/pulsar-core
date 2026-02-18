@@ -6,7 +6,7 @@
 
 > **initializeTxTrackingStore**\<`T`\>(`options`): [`StoreSlice`](../type-aliases/StoreSlice.md)\<[`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`T`\>\>
 
-Defined in: [packages/pulsar-core/src/store/initializeTxTrackingStore.ts:18](https://github.com/TuwaIO/pulsar-core/blob/b6258073b240e3dc780d2485188e70f062560dbc/packages/pulsar-core/src/store/initializeTxTrackingStore.ts#L18)
+Defined in: [packages/pulsar-core/src/store/initializeTxTrackingStore.ts:18](https://github.com/TuwaIO/pulsar-core/blob/51589730a9ca7f3b2a638b0d259ba38ebb76cdb1/packages/pulsar-core/src/store/initializeTxTrackingStore.ts#L18)
 
 Creates a Zustand store slice with the core logic for transaction state management.
 This function is a slice creator intended for use with Zustand's `create` function.

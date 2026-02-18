@@ -6,7 +6,7 @@
 
 > **signAndSendSolanaTx**(`params`): `Promise`\<`string`\>
 
-Defined in: [packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts:34](https://github.com/TuwaIO/pulsar-core/blob/b6258073b240e3dc780d2485188e70f062560dbc/packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts#L34)
+Defined in: [packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts:34](https://github.com/TuwaIO/pulsar-core/blob/51589730a9ca7f3b2a638b0d259ba38ebb76cdb1/packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts#L34)
 
 Creates, signs, and sends a Solana transaction with one or more instructions.
 
