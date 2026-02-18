@@ -30,13 +30,15 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 export function createPulsarStore<T extends Transaction>({
   adapter,
   maxTransactions = 50,
+  onRemoteCreate,
+  onRemoteUpdate,
   ...options
 }: PulsarAdapter<T> & PersistOptions<ITxTrackingStore<T>>) {
   return createStore<ITxTrackingStore<T>>()(
     persist(
       (set, get) => ({
         // Initialize the base store slice with core state and actions
-        ...initializeTxTrackingStore<T>({ maxTransactions })(set, get),
+        ...initializeTxTrackingStore<T>({ maxTransactions, onRemoteCreate, onRemoteUpdate })(set, get),
 
         getAdapter: () => adapter,
 

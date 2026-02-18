@@ -5,7 +5,7 @@
 
 import { produce } from 'immer';
 
-import { IInitializeTxTrackingStore, StoreSlice, Transaction } from '../types';
+import { IInitializeTxTrackingStore, PulsarAdapter, StoreSlice, Transaction } from '../types';
 
 /**
  * Creates a Zustand store slice with the core logic for transaction state management.
@@ -17,15 +17,22 @@ import { IInitializeTxTrackingStore, StoreSlice, Transaction } from '../types';
  */
 export function initializeTxTrackingStore<T extends Transaction>({
   maxTransactions,
-}: {
-  maxTransactions: number;
-}): StoreSlice<IInitializeTxTrackingStore<T>> {
+  onRemoteCreate,
+  onRemoteUpdate,
+}: Pick<PulsarAdapter<T>, 'onRemoteUpdate' | 'onRemoteCreate'> & { maxTransactions: number }): StoreSlice<
+  IInitializeTxTrackingStore<T>
+> {
   return (set, get) => ({
     transactionsPool: {},
     lastAddedTxKey: undefined,
     initialTx: undefined,
 
     addTxToPool: (tx) => {
+      const newTx = {
+        ...tx,
+        pending: true, // Ensure all new transactions start as pending.
+      };
+
       set((state) =>
         produce(state, (draft) => {
           draft.lastAddedTxKey = tx.txKey;
@@ -44,14 +51,14 @@ export function initializeTxTrackingStore<T extends Transaction>({
               }
             }
 
-            const newTx = {
-              ...tx,
-              pending: true, // Ensure all new transactions start as pending.
-            };
             draft.transactionsPool[tx.txKey] = newTx as (typeof draft.transactionsPool)[string];
           }
         }),
       );
+
+      if (onRemoteCreate) {
+        onRemoteCreate(newTx).catch((err) => console.error('[Pulsar Sync] Create failed:', err));
+      }
     },
 
     updateTxParams: (txKey, fields) => {
@@ -64,6 +71,10 @@ export function initializeTxTrackingStore<T extends Transaction>({
           }
         }),
       );
+
+      if (onRemoteUpdate) {
+        onRemoteUpdate(txKey, fields).catch((err) => console.error('[Pulsar Sync] Update failed:', txKey, err));
+      }
     },
 
     removeTxFromPool: (txKey) => {

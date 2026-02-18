@@ -12,6 +12,7 @@
 ## Interfaces
 
 - [IInitializeTxTrackingStore](interfaces/IInitializeTxTrackingStore.md)
+- [SyncCallbacks](interfaces/SyncCallbacks.md)
 - [TrackerCallbacks](interfaces/TrackerCallbacks.md)
 
 ## Type Aliases
@@ -23,7 +24,6 @@
 - [InitialTransaction](type-aliases/InitialTransaction.md)
 - [InitialTransactionParams](type-aliases/InitialTransactionParams.md)
 - [ITxTrackingStore](type-aliases/ITxTrackingStore.md)
-- [~~OnSuccessCallback~~](type-aliases/OnSuccessCallback.md)
 - [PollingFetcherParams](type-aliases/PollingFetcherParams.md)
 - [PollingTrackerConfig](type-aliases/PollingTrackerConfig.md)
 - [PulsarAdapter](type-aliases/PulsarAdapter.md)
