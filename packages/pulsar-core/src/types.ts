@@ -243,12 +243,6 @@ export interface SyncCallbacks<T extends Transaction> {
    * Use this to POST the active pending transaction to the backend.
    */
   onRemoteCreate?: (tx: T) => Promise<void>;
-
-  /**
-   * Called whenever a transaction's properties are updated (e.g. status change, new block data).
-   * Use this to PATCH the transaction on the backend.
-   */
-  onRemoteUpdate?: (txKey: string, patches: UpdatableTransactionFields) => Promise<void>;
 }
 
 /**

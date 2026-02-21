@@ -18,10 +18,7 @@ import { IInitializeTxTrackingStore, PulsarAdapter, StoreSlice, Transaction } fr
 export function initializeTxTrackingStore<T extends Transaction>({
   maxTransactions,
   onRemoteCreate,
-  onRemoteUpdate,
-}: Pick<PulsarAdapter<T>, 'onRemoteUpdate' | 'onRemoteCreate'> & { maxTransactions: number }): StoreSlice<
-  IInitializeTxTrackingStore<T>
-> {
+}: Pick<PulsarAdapter<T>, 'onRemoteCreate'> & { maxTransactions: number }): StoreSlice<IInitializeTxTrackingStore<T>> {
   return (set, get) => ({
     transactionsPool: {},
     lastAddedTxKey: undefined,
@@ -71,10 +68,6 @@ export function initializeTxTrackingStore<T extends Transaction>({
           }
         }),
       );
-
-      if (onRemoteUpdate) {
-        onRemoteUpdate(txKey, fields).catch((err) => console.error('[Pulsar Sync] Update failed:', txKey, err));
-      }
     },
 
     removeTxFromPool: (txKey) => {
