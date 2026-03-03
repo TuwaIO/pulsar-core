@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.5.0...pulsar-solana-v0.5.1) (2026-03-03)
+
+
+### Bug Fixes
+
+* gelato tracker logic ([#62](https://github.com/TuwaIO/pulsar-core/issues/62)) ([2101eb0](https://github.com/TuwaIO/pulsar-core/commit/2101eb0bbdb68c2760b3f89393eb0e2f54f33e1c))
+* updated packages ([1372a4f](https://github.com/TuwaIO/pulsar-core/commit/1372a4faf098bee85b0f68ea93869b4c7fca6afb))
+
 ## [0.5.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.4.1...pulsar-solana-v0.5.0) (2026-02-02)
 
 

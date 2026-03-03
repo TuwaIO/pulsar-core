@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.5.0...pulsar-core-v0.5.1) (2026-03-03)
+
+
+### Bug Fixes
+
+* added remote sync logic ([#60](https://github.com/TuwaIO/pulsar-core/issues/60)) ([519f4d8](https://github.com/TuwaIO/pulsar-core/commit/519f4d89669ea26ac36d52c0628d99fc9619daf2))
+* gelato tracker logic ([#62](https://github.com/TuwaIO/pulsar-core/issues/62)) ([2101eb0](https://github.com/TuwaIO/pulsar-core/commit/2101eb0bbdb68c2760b3f89393eb0e2f54f33e1c))
+* updated packages ([1372a4f](https://github.com/TuwaIO/pulsar-core/commit/1372a4faf098bee85b0f68ea93869b4c7fca6afb))
+
 ## [0.5.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.4.1...pulsar-core-v0.5.0) (2026-02-02)
 
 
