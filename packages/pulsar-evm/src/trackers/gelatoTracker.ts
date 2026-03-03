@@ -113,7 +113,7 @@ export function gelatoFetcher(
   return async ({ tx, stopPolling, onSuccess, onFailure, onIntervalTick }) => {
     const result = (await client.request({
       method: 'relayer_getStatus' as string,
-      params: [{ id: tx.txKey }] as unknown[],
+      params: [{ id: tx.txKey, logs: false }] as unknown[],
     })) as GelatoTaskStatus;
 
     onIntervalTick?.(result);
