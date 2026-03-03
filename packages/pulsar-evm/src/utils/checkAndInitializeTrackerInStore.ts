@@ -21,6 +21,7 @@ type InitializeTrackerParams<T extends Transaction> = Pick<
   config: Config;
   tx: T;
   tracker: TransactionTracker;
+  gelatoApiKey?: string;
 } & TrackerCallbacks<T>;
 
 /**
@@ -40,6 +41,7 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   onSuccess,
   onError,
   onReplaced,
+  gelatoApiKey,
   ...rest
 }: InitializeTrackerParams<T>): Promise<void> {
   switch (tracker) {
@@ -47,8 +49,15 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
       return evmTrackerForStore({ tx, config, transactionsPool, onSuccess, onError, onReplaced, ...rest });
 
     case TransactionTracker.Gelato:
+      // If no Gelato API key is provided, fall back to the default EVM tracker.
+      if (!gelatoApiKey) {
+        console.warn(
+          `Gelato tracker requested for tx '${tx.txKey}', but no 'gelatoApiKey' was provided. Falling back to default EVM tracker.`,
+        );
+        return evmTrackerForStore({ tx, config, transactionsPool, onSuccess, onError, onReplaced, ...rest });
+      }
       // The Gelato tracker does not need the `chains` param as it uses its own API endpoints.
-      return gelatoTrackerForStore({ tx, transactionsPool, onSuccess, onError, ...rest });
+      return gelatoTrackerForStore({ tx, transactionsPool, onSuccess, onError, gelatoApiKey, ...rest });
 
     case TransactionTracker.Safe:
       // The Safe tracker also uses its own API endpoints.

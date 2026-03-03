@@ -4,9 +4,9 @@
 
 # ActionTxKey
 
-> **ActionTxKey** = `` `0x${string}` `` \| [`GelatoTxKey`](GelatoTxKey.md) \| `string`
+> **ActionTxKey** = `` `0x${string}` `` \| `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:61](https://github.com/TuwaIO/pulsar-core/blob/519f4d89669ea26ac36d52c0628d99fc9619daf2/packages/pulsar-core/src/types.ts#L61)
+Defined in: [packages/pulsar-core/src/types.ts:52](https://github.com/TuwaIO/pulsar-core/blob/928b4abd468937ebb2f4d259564a606d86384480/packages/pulsar-core/src/types.ts#L52)
 
 A union type representing the unique identifier returned by an `actionFunction`
 after a transaction is submitted to the network or a relay service.
@@ -16,5 +16,4 @@ monitor the transaction.
 
 It can be one of the following:
 - A standard `0x...` transaction hash (`Hex`).
-- A structured object from a relay service like Gelato (`GelatoTxKey`).
 - A Solana transaction signature (string).

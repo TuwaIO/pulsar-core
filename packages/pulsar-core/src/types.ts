@@ -39,14 +39,6 @@ export enum TransactionStatus {
 }
 
 /**
- * Defines the shape of the identifier for a Gelato transaction task.
- */
-export type GelatoTxKey = {
-  /** The unique identifier assigned by the Gelato relay service. */
-  taskId: string;
-};
-
-/**
  * A union type representing the unique identifier returned by an `actionFunction`
  * after a transaction is submitted to the network or a relay service.
  *
@@ -55,10 +47,9 @@ export type GelatoTxKey = {
  *
  * It can be one of the following:
  * - A standard `0x...` transaction hash (`Hex`).
- * - A structured object from a relay service like Gelato (`GelatoTxKey`).
  * - A Solana transaction signature (string).
  */
-export type ActionTxKey = `0x${string}` | GelatoTxKey | string;
+export type ActionTxKey = `0x${string}` | string;
 
 /**
  * The fundamental structure for any transaction being tracked by Pulsar.
@@ -202,6 +193,8 @@ export type InitialTransactionParams = {
   withTrackedModal?: boolean;
   /** The RPC URL to use for the transaction. Required for Solana transactions. */
   rpcUrl?: string;
+  /** The transaction tracker. Required for Gelato transactions. */
+  tracker?: TransactionTracker;
 };
 
 /**
@@ -251,7 +244,24 @@ export interface SyncCallbacks<T extends Transaction> {
  */
 export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter<T>> & {
   maxTransactions?: number;
+  gelatoApiKey?: string; // https://docs.gelato.cloud/
 } & SyncCallbacks<T>;
+
+/**
+ * Represents a tracker for a specific transaction tied to an action and a connector.
+ *
+ * @typedef {Object} CheckTxTracker
+ * @property {ActionTxKey} actionTxKey - The key identifying the specific action related to the transaction.
+ * @property {string} connectorType - The type of connector used for the transaction (e.g., wallet provider, blockchain interface).
+ * @property {TransactionTracker} [tracker] - An optional tracker object that monitors the status and progress of the transaction.
+ * @property {string} [gelatoApiKey] - An optional Gelato API key for Gelato relayer integration.
+ */
+export type CheckTxTracker = {
+  actionTxKey: ActionTxKey;
+  connectorType: string;
+  tracker?: TransactionTracker;
+  gelatoApiKey?: string;
+};
 
 /**
  * Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
@@ -277,20 +287,18 @@ export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl
   checkChainForTx: (chainId: string | number) => Promise<void>;
   /**
    * Determines the appropriate tracker and final `txKey` from the result of an action.
-   * @param actionTxKey The preliminary key returned after an action function is executed.
-   * @param connectorType The type of connector used for the transaction.
    * @returns An object containing the final `txKey` and the `TransactionTracker` to be used.
    */
-  checkTransactionsTracker: (
-    actionTxKey: ActionTxKey,
-    connectorType: string,
-  ) => { txKey: string; tracker: TransactionTracker };
+  checkTransactionsTracker: ({ actionTxKey, connectorType, tracker }: CheckTxTracker) => {
+    txKey: string;
+    tracker: TransactionTracker;
+  };
   /**
    * Selects and initializes the correct background tracker for a given transaction.
    * @param params The parameters for initializing the tracker, including the transaction and store callbacks.
    */
   checkAndInitializeTrackerInStore: (
-    params: { tx: T } & TrackerCallbacks<T> &
+    params: { tx: T; gelatoApiKey?: string } & TrackerCallbacks<T> &
       Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>,
   ) => Promise<void> | void;
   /**

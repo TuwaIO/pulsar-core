@@ -4,14 +4,15 @@
 
 # checkIsGelatoAvailable()
 
-> **checkIsGelatoAvailable**(`chainId`): `Promise`\<`boolean`\>
+> **checkIsGelatoAvailable**(`chainId`, `gelatoApiKey`): `Promise`\<`boolean`\>
 
-Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:20](https://github.com/TuwaIO/pulsar-core/blob/519f4d89669ea26ac36d52c0628d99fc9619daf2/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L20)
+Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:114](https://github.com/TuwaIO/pulsar-core/blob/928b4abd468937ebb2f4d259564a606d86384480/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L114)
 
 Checks if the Gelato Relay service supports a given chain ID.
 
-This function fetches the list of supported chain IDs from the Gelato API and
-caches the result in memory for 5 minutes to reduce network requests.
+This function fetches the relay capabilities via the authenticated Gelato RPC client
+(`relayer_getCapabilities`) and checks whether the specified chain is present in the response.
+Results are cached in memory per API key for the lifetime of the application to minimize network requests.
 
 ## Parameters
 
@@ -20,6 +21,12 @@ caches the result in memory for 5 minutes to reduce network requests.
 `number`
 
 The chain identifier to check.
+
+### gelatoApiKey
+
+`string`
+
+The Gelato API key used for authentication.
 
 ## Returns
 

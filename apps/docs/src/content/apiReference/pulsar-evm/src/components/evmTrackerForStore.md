@@ -6,7 +6,7 @@
 
 > **evmTrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:123](https://github.com/TuwaIO/pulsar-core/blob/519f4d89669ea26ac36d52c0628d99fc9619daf2/packages/pulsar-evm/src/trackers/evmTracker.ts#L123)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:123](https://github.com/TuwaIO/pulsar-core/blob/928b4abd468937ebb2f4d259564a606d86384480/packages/pulsar-evm/src/trackers/evmTracker.ts#L123)
 
 A higher-level wrapper for `evmTracker` that integrates directly with the Pulsar store.
 It provides the necessary callbacks to update a transaction's state throughout its lifecycle.

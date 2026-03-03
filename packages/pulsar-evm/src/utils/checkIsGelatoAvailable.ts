@@ -1,53 +1,125 @@
 /**
  * @file This file contains a utility to check if the Gelato Relay service is available for a specific chain.
+ * It uses the authenticated Gelato RPC client to fetch relay capabilities and caches the result.
  */
 
-// --- In-memory cache to store the list of supported chains ---
-let cachedRelayChainIds: number[] | null = null;
-let cacheTimestamp: number | null = null;
-const CACHE_DURATION_MS = 5 * 60 * 1000; // Cache the list for 5 minutes
-const GELATO_API_URL = 'https://relay.gelato.digital/relays/v2/supported-chains';
+import { Transport } from 'viem';
+
+import { createGelatoClient } from './createGelatoClient';
+
+// =================================================================================================
+// 1. TYPES
+// =================================================================================================
+
+/**
+ * Represents the per-chain capabilities returned by the Gelato `relayer_getCapabilities` RPC method.
+ *
+ * @property {string} feeCollector - The address of the fee collector contract on this chain.
+ * @property {GelatoToken[]} tokens - The list of ERC-20 tokens accepted for fee payment on this chain.
+ */
+export type GelatoCapabilitiesByChain = {
+  feeCollector: string;
+  tokens: GelatoToken[];
+};
+
+/**
+ * Represents a token accepted for fee payment by the Gelato Relay on a given chain.
+ *
+ * @property {string} address - The ERC-20 token contract address.
+ * @property {number} decimals - The number of decimals for the token.
+ */
+export type GelatoToken = {
+  address: string;
+  decimals: number;
+};
+
+/**
+ * A record of Gelato relay capabilities keyed by numeric chain ID.
+ */
+export type GelatoCapabilities = Record<number, GelatoCapabilitiesByChain>;
+
+// =================================================================================================
+// 2. CACHE
+// =================================================================================================
+
+/**
+ * In-memory cache for Gelato relay capabilities, keyed by the API key used to fetch them.
+ * The cache persists for the lifetime of the application (until page reload).
+ */
+const capabilitiesCache = new Map<string, GelatoCapabilities>();
+
+// =================================================================================================
+// 3. INTERNAL HELPERS
+// =================================================================================================
+
+/**
+ * Fetches the Gelato relay capabilities from the RPC endpoint using the `relayer_getCapabilities` method.
+ * The response is a record keyed by chain ID strings, which is normalized to numeric keys.
+ *
+ * @param {ReturnType<Transport>} client - A viem transport client configured for the Gelato API.
+ * @returns {Promise<GelatoCapabilities>} The parsed capabilities record.
+ * @throws {Error} If the RPC call fails or returns an unexpected response.
+ */
+async function fetchCapabilities(client: ReturnType<Transport>): Promise<GelatoCapabilities> {
+  const result = (await client.request({
+    method: 'relayer_getCapabilities' as string,
+    params: [] as unknown[],
+  })) as Record<string, GelatoCapabilitiesByChain>;
+
+  // Normalize string chain ID keys to numbers.
+  const capabilities: GelatoCapabilities = {};
+  for (const [key, value] of Object.entries(result)) {
+    capabilities[Number(key)] = value;
+  }
+
+  return capabilities;
+}
+
+/**
+ * Retrieves the Gelato relay capabilities, using an in-memory cache to avoid redundant RPC calls.
+ * The cache is keyed by `gelatoApiKey` and persists for the lifetime of the application.
+ *
+ * @param {string} gelatoApiKey - The Gelato API key used for authentication.
+ * @returns {Promise<GelatoCapabilities>} The capabilities record, either from cache or freshly fetched.
+ */
+async function getCapabilities(gelatoApiKey: string): Promise<GelatoCapabilities> {
+  const cached = capabilitiesCache.get(gelatoApiKey);
+  if (cached) {
+    return cached;
+  }
+
+  const client = createGelatoClient({ apiKey: gelatoApiKey });
+  const capabilities = await fetchCapabilities(client);
+
+  capabilitiesCache.set(gelatoApiKey, capabilities);
+
+  return capabilities;
+}
+
+// =================================================================================================
+// 4. PUBLIC API
+// =================================================================================================
 
 /**
  * Checks if the Gelato Relay service supports a given chain ID.
  *
- * This function fetches the list of supported chain IDs from the Gelato API and
- * caches the result in memory for 5 minutes to reduce network requests.
+ * This function fetches the relay capabilities via the authenticated Gelato RPC client
+ * (`relayer_getCapabilities`) and checks whether the specified chain is present in the response.
+ * Results are cached in memory per API key for the lifetime of the application to minimize network requests.
  *
  * @param {number} chainId - The chain identifier to check.
+ * @param {string} gelatoApiKey - The Gelato API key used for authentication.
  * @returns {Promise<boolean>} A promise that resolves to `true` if Gelato supports the chain, `false` otherwise.
  */
-export async function checkIsGelatoAvailable(chainId: number): Promise<boolean> {
-  const now = Date.now();
-
-  // 1. Check if a valid, non-expired cache exists.
-  if (cachedRelayChainIds && cacheTimestamp && now - cacheTimestamp < CACHE_DURATION_MS) {
-    return cachedRelayChainIds.includes(chainId);
-  }
-
-  // 2. If no valid cache, fetch the list from the Gelato API.
+export async function checkIsGelatoAvailable(chainId: number, gelatoApiKey: string): Promise<boolean> {
   try {
-    const response = await fetch(GELATO_API_URL);
-
-    if (!response.ok) {
-      throw new Error(`Gelato API responded with status: ${response.status}`);
-    }
-
-    const data = (await response.json()) as { chains: string[] };
-    // The endpoint returns an array of strings, which we convert to numbers.
-    const supportedChainIds = data.chains.map(Number);
-
-    // 3. Update the cache with the new data and timestamp.
-    cachedRelayChainIds = supportedChainIds;
-    cacheTimestamp = now;
-
-    return supportedChainIds.includes(chainId);
+    const capabilities = await getCapabilities(gelatoApiKey);
+    return chainId in capabilities;
   } catch (error) {
-    console.error('Failed to fetch Gelato supported chains:', error);
+    console.error('Failed to fetch Gelato relay capabilities:', error);
 
-    // In case of an error, clear the cache to allow for a retry on the next call.
-    cachedRelayChainIds = null;
-    cacheTimestamp = null;
+    // Clear the cache for this key so the next call retries the request.
+    capabilitiesCache.delete(gelatoApiKey);
 
     return false;
   }

@@ -4,9 +4,9 @@
 
 # checkTransactionsTracker()
 
-> **checkTransactionsTracker**(`actionTxKey`, `connectorType`): `object`
+> **checkTransactionsTracker**(`actionTxKey`): `object`
 
-Defined in: [packages/pulsar-evm/src/utils/checkTransactionsTracker.ts:28](https://github.com/TuwaIO/pulsar-core/blob/519f4d89669ea26ac36d52c0628d99fc9619daf2/packages/pulsar-evm/src/utils/checkTransactionsTracker.ts#L28)
+Defined in: [packages/pulsar-evm/src/utils/checkTransactionsTracker.ts:27](https://github.com/TuwaIO/pulsar-core/blob/928b4abd468937ebb2f4d259564a606d86384480/packages/pulsar-evm/src/utils/checkTransactionsTracker.ts#L27)
 
 Determines which transaction tracker to use based on the format of the transaction key and the connector type.
 
@@ -21,15 +21,9 @@ The logic follows a specific priority:
 
 ### actionTxKey
 
-`ActionTxKey`
+`CheckTxTracker`
 
 The key returned from the transaction submission function (e.g., a hash or a Gelato task object).
-
-### connectorType
-
-`string`
-
-The type of the connector that initiated the action (e.g., 'safe', 'injected').
 
 ## Returns
 
