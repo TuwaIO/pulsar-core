@@ -112,8 +112,8 @@ export function gelatoFetcher(
 ): PollingTrackerConfig<GelatoTaskStatus, Transaction>['fetcher'] {
   return async ({ tx, stopPolling, onSuccess, onFailure, onIntervalTick }) => {
     const result = (await client.request({
-      method: 'relayer_getStatus' as string,
-      params: [{ id: tx.txKey, logs: false }] as unknown[],
+      method: 'relayer_getStatus',
+      params: { id: tx.txKey, logs: false },
     })) as GelatoTaskStatus;
 
     onIntervalTick?.(result);
