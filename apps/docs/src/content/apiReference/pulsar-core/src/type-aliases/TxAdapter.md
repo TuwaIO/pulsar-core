@@ -6,7 +6,7 @@
 
 > **TxAdapter**\<`T`\> = `Pick`\<`BaseAdapter`, `"getExplorerUrl"`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:260](https://github.com/TuwaIO/pulsar-core/blob/519f4d89669ea26ac36d52c0628d99fc9619daf2/packages/pulsar-core/src/types.ts#L260)
+Defined in: [packages/pulsar-core/src/types.ts:270](https://github.com/TuwaIO/pulsar-core/blob/4635500b0fb82b05bdae30ba5551c3bed49eb344/packages/pulsar-core/src/types.ts#L270)
 
 Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
 
@@ -72,23 +72,15 @@ The desired chain ID for the transaction.
 
 ### checkTransactionsTracker()
 
-> **checkTransactionsTracker**: (`actionTxKey`, `connectorType`) => `object`
+> **checkTransactionsTracker**: (`{ actionTxKey, connectorType, tracker }`) => `object`
 
 Determines the appropriate tracker and final `txKey` from the result of an action.
 
 #### Parameters
 
-##### actionTxKey
+##### \{ actionTxKey, connectorType, tracker \}
 
-[`ActionTxKey`](ActionTxKey.md)
-
-The preliminary key returned after an action function is executed.
-
-##### connectorType
-
-`string`
-
-The type of connector used for the transaction.
+[`CheckTxTracker`](CheckTxTracker.md)
 
 #### Returns
 

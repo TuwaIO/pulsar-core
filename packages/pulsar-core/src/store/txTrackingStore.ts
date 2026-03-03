@@ -31,6 +31,7 @@ export function createPulsarStore<T extends Transaction>({
   adapter,
   maxTransactions = 50,
   onRemoteCreate,
+  gelatoApiKey,
   ...options
 }: PulsarAdapter<T> & PersistOptions<ITxTrackingStore<T>>) {
   return createStore<ITxTrackingStore<T>>()(
@@ -58,6 +59,7 @@ export function createPulsarStore<T extends Transaction>({
               // Delegate tracker initialization to the appropriate adapter
               return foundAdapter?.checkAndInitializeTrackerInStore({
                 tx,
+                gelatoApiKey,
                 ...get(),
               });
             }),
@@ -70,7 +72,7 @@ export function createPulsarStore<T extends Transaction>({
          * signing, submission, and background tracker initialization.
          */
         executeTxAction: async ({ defaultTracker, actionFunction, params, ...callbacks }) => {
-          const { desiredChainID, ...restParams } = params;
+          const { desiredChainID, tracker, ...restParams } = params;
           const { onSuccess, onError, onReplaced } = callbacks;
           const localTimestamp = dayjs().unix();
 
@@ -123,10 +125,12 @@ export function createPulsarStore<T extends Transaction>({
             }
 
             // Step 4: Determine the final tracker and txKey from the action's result.
-            const { tracker: updatedTracker, txKey: finalTxKey } = foundAdapter.checkTransactionsTracker(
-              txKeyFromAction,
+            const { tracker: updatedTracker, txKey: finalTxKey } = foundAdapter.checkTransactionsTracker({
+              actionTxKey: txKeyFromAction,
               connectorType,
-            );
+              tracker,
+              gelatoApiKey,
+            });
 
             // Step 5: Construct the full transaction object for the pool.
             const newTx = {
@@ -163,6 +167,7 @@ export function createPulsarStore<T extends Transaction>({
               onSuccess,
               onError,
               onReplaced,
+              gelatoApiKey,
               ...get(),
             });
           } catch (e) {

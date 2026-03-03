@@ -6,6 +6,7 @@ export * from './utils/cancelTxAction';
 export * from './utils/checkAndInitializeTrackerInStore';
 export * from './utils/checkIsGelatoAvailable';
 export * from './utils/checkTransactionsTracker';
+export * from './utils/createGelatoClient';
 export * from './utils/safeConstants';
 export * from './utils/selectEvmTxExplorerLink';
 export * from './utils/speedUpTxAction';

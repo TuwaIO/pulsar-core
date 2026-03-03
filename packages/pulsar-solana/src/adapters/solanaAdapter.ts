@@ -58,12 +58,12 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
         );
       } catch (e) {
         if (e instanceof SolanaChainMismatchError) throw e;
-        throw new Error(`Chain check failed: ${e instanceof Error ? e.message : String(e)}`);
+        throw new Error(`Chain check failed: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
       }
     },
 
-    checkTransactionsTracker: (actionTxKey) => ({
-      tracker: TransactionTracker.Solana,
+    checkTransactionsTracker: ({ actionTxKey, tracker }) => ({
+      tracker: tracker ?? TransactionTracker.Solana,
       txKey: actionTxKey as string,
     }),
 

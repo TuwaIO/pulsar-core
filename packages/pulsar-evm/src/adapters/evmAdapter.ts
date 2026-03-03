@@ -55,7 +55,7 @@ export function pulsarEvmAdapter<T extends Transaction>(
 
     // --- Core Methods ---
     checkChainForTx: (chainId: string | number) => checkAndSwitchChain(chainId as number, config),
-    checkTransactionsTracker: (actionTxKey, connectorType) => checkTransactionsTracker(actionTxKey, connectorType),
+    checkTransactionsTracker: (props) => checkTransactionsTracker(props),
     checkAndInitializeTrackerInStore: ({ tx, ...rest }) =>
       checkAndInitializeTrackerInStore({ tracker: tx.tracker, tx, config, ...rest }),
 

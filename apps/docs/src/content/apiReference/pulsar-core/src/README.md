@@ -19,8 +19,8 @@
 
 - [ActionTxKey](type-aliases/ActionTxKey.md)
 - [BaseTransaction](type-aliases/BaseTransaction.md)
+- [CheckTxTracker](type-aliases/CheckTxTracker.md)
 - [EvmTransaction](type-aliases/EvmTransaction.md)
-- [GelatoTxKey](type-aliases/GelatoTxKey.md)
 - [InitialTransaction](type-aliases/InitialTransaction.md)
 - [InitialTransactionParams](type-aliases/InitialTransactionParams.md)
 - [ITxTrackingStore](type-aliases/ITxTrackingStore.md)

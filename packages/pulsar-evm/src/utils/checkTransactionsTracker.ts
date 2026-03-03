@@ -3,10 +3,8 @@
  * based on the key returned by the submission function and the connector type.
  */
 
-import { ActionTxKey, TransactionTracker } from '@tuwaio/pulsar-core';
+import { CheckTxTracker, TransactionTracker } from '@tuwaio/pulsar-core';
 import { isHex } from 'viem';
-
-import { isGelatoTxKey } from '../trackers/gelatoTracker';
 
 /**
  * Determines which transaction tracker to use based on the format of the transaction key and the connector type.
@@ -20,20 +18,21 @@ import { isGelatoTxKey } from '../trackers/gelatoTracker';
  *
  * @param {ActionTxKey} actionTxKey - The key returned from the transaction submission function (e.g., a hash or a Gelato task object).
  * @param {string} connectorType - The type of the connector that initiated the action (e.g., 'safe', 'injected').
- *
+ * @param {TransactionTracker} tracker - The type of transaction tracker to use.
+ * @param {string} gelatoApiKey - Gelato API key for Gelato relayer integration.
  * @returns {{ tracker: TransactionTracker; txKey: string }} An object containing the determined tracker type and the final string-based transaction key.
  *
  * @throws {Error} Throws an error if the `actionTxKey` is not a valid Hex string after failing the Gelato check.
  */
-export function checkTransactionsTracker(
-  actionTxKey: ActionTxKey,
-  connectorType: string,
-): { tracker: TransactionTracker; txKey: string } {
+export function checkTransactionsTracker({ actionTxKey, connectorType, tracker, gelatoApiKey }: CheckTxTracker): {
+  tracker: TransactionTracker;
+  txKey: string;
+} {
   // 1. Highest priority: Check if the key matches the Gelato task structure.
-  if (isGelatoTxKey(actionTxKey)) {
+  if (tracker && tracker === TransactionTracker.Gelato && gelatoApiKey) {
     return {
       tracker: TransactionTracker.Gelato,
-      txKey: actionTxKey.taskId,
+      txKey: actionTxKey,
     };
   }
 
