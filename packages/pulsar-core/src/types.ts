@@ -234,20 +234,24 @@ export interface TrackerCallbacks<T extends Transaction> {
 }
 
 /**
- * @deprecated Use `TrackerCallbacks<T>` instead.
- * Defines a callback function to be executed upon a successful transaction.
- * @template T The specific transaction type, extending `Transaction`.
+ * Callbacks for synchronizing local transaction state with a remote backend.
+ * These are injected into the store at creation time.
  */
-export type OnSuccessCallback<T extends Transaction> = {
-  /** Callback to execute when the transaction is successfully submitted. */
-  onSuccessCallback?: (tx: T) => Promise<void> | void;
-};
+export interface SyncCallbacks<T extends Transaction> {
+  /**
+   * Called immediately after a transaction is created locally (added to pool).
+   * Use this to POST the active pending transaction to the backend.
+   */
+  onRemoteCreate?: (tx: T) => Promise<void>;
+}
 
 /**
  * The configuration object containing one or more transaction adapters.
  * @template T The specific transaction type.
  */
-export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter<T>> & { maxTransactions?: number };
+export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter<T>> & {
+  maxTransactions?: number;
+} & SyncCallbacks<T>;
 
 /**
  * Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
@@ -335,7 +339,7 @@ export type TransactionPool<T extends Transaction> = Record<string, T>;
  * on a transaction object via the `updateTxParams` action. This ensures type safety
  * and prevents accidental modification of immutable properties.
  */
-type UpdatableTransactionFields = Partial<
+export type UpdatableTransactionFields = Partial<
   Pick<
     EvmTransaction,
     | 'to'
