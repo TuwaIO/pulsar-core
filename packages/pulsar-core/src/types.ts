@@ -441,6 +441,12 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
    * This is essential for resuming tracking after a page reload or application restart.
    */
   initializeTransactionsPool: () => Promise<void>;
+  /**
+   * Cross-device synchronization bridge.
+   * Injects remote pending transactions into the local pool and starts their lifecycle trackers.
+   * Also self-heals local pending transactions if the remote DB knows they are terminal.
+   */
+  injectExternalPendingTxs: (remoteTxs: T[]) => Promise<void>;
 };
 
 /**
@@ -481,6 +487,10 @@ export type ITxInMemoryStore<T extends Transaction> = {
  * @template T The transaction type.
  */
 export type ITxInMemoryStoreParameters<T extends Transaction> = {
+  /** * Callback fired when remote history is successfully fetched.
+   * Used to inject remote pending transactions into the persistent tracking store.
+   */
+  onHistoryFetched?: (remoteTxs: T[]) => void;
   getHistory?: ({
     page,
   }: {

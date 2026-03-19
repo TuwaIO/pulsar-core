@@ -58,7 +58,10 @@ const mergeTransactionIntoPool = <T extends Transaction>(pool: TransactionPool<T
  * @param params.getHistory Optional remote history fetcher.
  * @returns A Zustand vanilla store instance for in-memory transaction management.
  */
-export function createTxInMemoryStore<T extends Transaction>({ getHistory }: ITxInMemoryStoreParameters<T>) {
+export function createTxInMemoryStore<T extends Transaction>({
+  getHistory,
+  onHistoryFetched,
+}: ITxInMemoryStoreParameters<T>) {
   /**
    * Disable Immer auto-freeze because Zustand store updates are performed frequently,
    * and freezing can introduce avoidable overhead and integration issues in runtime code.
@@ -80,6 +83,12 @@ export function createTxInMemoryStore<T extends Transaction>({ getHistory }: ITx
    * @param response The paginated response returned by `getHistory`.
    */
   const applyHistoryResponse = (response: Awaited<ReturnType<NonNullable<typeof getHistory>>>) => {
+    // TRIGGER THE BRIDGE: Pass the fetched documents to the external callback
+    if (onHistoryFetched) {
+      // Use setTimeout or queueMicrotask to avoid blocking the state update render cycle
+      queueMicrotask(() => onHistoryFetched!(response.docs));
+    }
+
     return (state: ITxInMemoryStore<T>) =>
       produce(state, (draft) => {
         const pool = draft.transactionsPool as TransactionPool<T>;

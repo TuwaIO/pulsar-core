@@ -6,7 +6,7 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:416](https://github.com/TuwaIO/pulsar-core/blob/3bc7ad7f218c235540ef1eb27cc5de5c737dbede/packages/pulsar-core/src/types.ts#L416)
+Defined in: [packages/pulsar-core/src/types.ts:416](https://github.com/TuwaIO/pulsar-core/blob/2f1f6a4f06a19b6a90ce02fab5bff03e7ac74e24/packages/pulsar-core/src/types.ts#L416)
 
 The complete interface for the Pulsar transaction tracking store.
 
@@ -47,6 +47,24 @@ A getter function that returns the configured transaction adapter(s).
 
 Initializes trackers for all pending transactions in the pool.
 This is essential for resuming tracking after a page reload or application restart.
+
+#### Returns
+
+`Promise`\<`void`\>
+
+### injectExternalPendingTxs()
+
+> **injectExternalPendingTxs**: (`remoteTxs`) => `Promise`\<`void`\>
+
+Cross-device synchronization bridge.
+Injects remote pending transactions into the local pool and starts their lifecycle trackers.
+Also self-heals local pending transactions if the remote DB knows they are terminal.
+
+#### Parameters
+
+##### remoteTxs
+
+`T`[]
 
 #### Returns
 
