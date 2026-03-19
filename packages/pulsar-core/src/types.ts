@@ -505,20 +505,18 @@ export type ITxInMemoryStoreParameters<T extends Transaction> = {
     page?: number;
 
     walletAddress: string;
-  }) =>
-    | Promise<{
-        /** Array of transactions for the current page. */
-        docs: T[];
-        /** Total number of transactions matching the query. */
-        totalDocs: number;
-        /** Total number of available pages. */
-        totalPages: number;
-        /** Current page number. */
-        page: number;
-        /** Indicates whether a next page exists. */
-        hasNextPage: boolean;
-        /** Indicates whether a previous page exists. */
-        hasPrevPage: boolean;
-      }>
-    | Promise<null>;
+  }) => Promise<{
+    /** Array of transactions for the current page. */
+    docs: T[];
+    /** Total number of transactions matching the query. */
+    totalDocs: number;
+    /** Total number of available pages. */
+    totalPages: number;
+    /** Current page number. */
+    page: number;
+    /** Indicates whether a next page exists. */
+    hasNextPage: boolean;
+    /** Indicates whether a previous page exists. */
+    hasPrevPage: boolean;
+  } | null>;
 };

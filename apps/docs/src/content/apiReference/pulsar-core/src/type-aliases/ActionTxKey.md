@@ -6,7 +6,7 @@
 
 > **ActionTxKey** = `` `0x${string}` `` \| `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:52](https://github.com/TuwaIO/pulsar-core/blob/af611573e4695e0c821dd37abe309706e04c12a6/packages/pulsar-core/src/types.ts#L52)
+Defined in: [packages/pulsar-core/src/types.ts:52](https://github.com/TuwaIO/pulsar-core/blob/f7116b96322133914fc40c97a545da2d7493aa4f/packages/pulsar-core/src/types.ts#L52)
 
 A union type representing the unique identifier returned by an `actionFunction`
 after a transaction is submitted to the network or a relay service.
