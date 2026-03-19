@@ -442,3 +442,79 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
    */
   initializeTransactionsPool: () => Promise<void>;
 };
+
+/**
+ * The complete interface for the Pulsar transaction in-memory store.
+ * It keeps a paginated remote history in sync with a local transaction pool.
+ *
+ * @template T The transaction type.
+ */
+export type ITxInMemoryStore<T extends Transaction> = {
+  /** A pool of all transactions currently being tracked and loaded from history, indexed by `txKey`. */
+  transactionsPool: TransactionPool<T>;
+  /** Indicates whether the store is currently loading transaction history. */
+  isLoading: boolean;
+  /** Indicates whether the last loading request ended with an error. */
+  isError: boolean;
+  /** Indicates whether more history pages are available. */
+  hasMore: boolean;
+  /** The current page number in the paginated history. */
+  currentPage: number;
+  /** Loads the first page of transaction history. */
+  fetchInitial: () => Promise<void>;
+  /** Loads the next page of transaction history and appends it to the pool. */
+  fetchNextPage: () => Promise<void>;
+  /** Merges a local transaction pool into the in-memory store. */
+  syncWithLocalPool: (localPool: TransactionPool<T>) => void;
+};
+
+/**
+ * Parameters used to configure and manage an in-memory transaction store.
+ *
+ * @template T The transaction type.
+ */
+export type ITxInMemoryStoreParameters<T extends Transaction> = {
+  /** App name for transactions filtering. */
+  appName: string;
+  /** The maximum number of transactions fetched per page. */
+  limit?: number;
+  /**
+   * Fetches transaction history from a remote source.
+   *
+   * @param params Pagination and filtering parameters.
+   * @returns A paginated transaction history response.
+   */
+  getHistory?: ({
+    page,
+    limit,
+    appName,
+  }: {
+    /**
+     * Page number for pagination.
+     *
+     * @defaultValue `1`
+     */
+    page?: number;
+    /**
+     * Maximum number of results per page.
+     *
+     * @defaultValue `10`
+     */
+    limit?: number;
+    /** Filters history by application name. */
+    appName?: string;
+  }) => Promise<{
+    /** Array of transactions for the current page. */
+    docs: T[];
+    /** Total number of transactions matching the query. */
+    totalDocs: number;
+    /** Total number of available pages. */
+    totalPages: number;
+    /** Current page number. */
+    page: number;
+    /** Indicates whether a next page exists. */
+    hasNextPage: boolean;
+    /** Indicates whether a previous page exists. */
+    hasPrevPage: boolean;
+  }>;
+};
