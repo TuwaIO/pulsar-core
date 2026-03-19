@@ -6,7 +6,7 @@
 
 > **checkSolanaChain**(`requiredChain`, `currentChain`): `void`
 
-Defined in: [packages/pulsar-solana/src/utils/checkSolanaChain.ts:16](https://github.com/TuwaIO/pulsar-core/blob/089917b814df99bdb31d20a387b52ac9e831c621/packages/pulsar-solana/src/utils/checkSolanaChain.ts#L16)
+Defined in: [packages/pulsar-solana/src/utils/checkSolanaChain.ts:16](https://github.com/TuwaIO/pulsar-core/blob/af611573e4695e0c821dd37abe309706e04c12a6/packages/pulsar-solana/src/utils/checkSolanaChain.ts#L16)
 
 Checks if the wallet's current chain matches the required chain for a transaction.
 This function compares the `chain` property from the Wallet Standard account object

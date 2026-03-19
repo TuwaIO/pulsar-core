@@ -6,7 +6,7 @@
 
 > **pulsarEvmAdapter**\<`T`\>(`config`, `appChains`): `TxAdapter`\<`T`\>
 
-Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:33](https://github.com/TuwaIO/pulsar-core/blob/089917b814df99bdb31d20a387b52ac9e831c621/packages/pulsar-evm/src/adapters/evmAdapter.ts#L33)
+Defined in: [packages/pulsar-evm/src/adapters/evmAdapter.ts:33](https://github.com/TuwaIO/pulsar-core/blob/af611573e4695e0c821dd37abe309706e04c12a6/packages/pulsar-evm/src/adapters/evmAdapter.ts#L33)
 
 Creates an EVM-specific transaction adapter.
 

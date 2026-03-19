@@ -520,5 +520,5 @@ export type ITxInMemoryStoreParameters<T extends Transaction> = {
         /** Indicates whether a previous page exists. */
         hasPrevPage: boolean;
       }>
-    | undefined;
+    | Promise<null>;
 };

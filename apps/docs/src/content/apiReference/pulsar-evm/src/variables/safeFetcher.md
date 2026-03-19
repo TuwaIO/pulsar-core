@@ -6,7 +6,7 @@
 
 > `const` **safeFetcher**: `PollingTrackerConfig`\<[`SafeTxStatusResponse`](../type-aliases/SafeTxStatusResponse.md), `Transaction`\>\[`"fetcher"`\]
 
-Defined in: [packages/pulsar-evm/src/trackers/safeTracker.ts:54](https://github.com/TuwaIO/pulsar-core/blob/089917b814df99bdb31d20a387b52ac9e831c621/packages/pulsar-evm/src/trackers/safeTracker.ts#L54)
+Defined in: [packages/pulsar-evm/src/trackers/safeTracker.ts:54](https://github.com/TuwaIO/pulsar-core/blob/af611573e4695e0c821dd37abe309706e04c12a6/packages/pulsar-evm/src/trackers/safeTracker.ts#L54)
 
 A reusable fetcher for `initializePollingTracker` that queries the Safe Transaction Service API.
 It handles the complex logic of detecting executed, failed, and replaced multisig transactions.

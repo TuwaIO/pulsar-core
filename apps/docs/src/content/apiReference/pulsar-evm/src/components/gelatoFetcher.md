@@ -6,7 +6,7 @@
 
 > **gelatoFetcher**(`client`): (`params`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:110](https://github.com/TuwaIO/pulsar-core/blob/089917b814df99bdb31d20a387b52ac9e831c621/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L110)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:110](https://github.com/TuwaIO/pulsar-core/blob/af611573e4695e0c821dd37abe309706e04c12a6/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L110)
 
 Creates a reusable fetcher function for `initializePollingTracker` that queries the
 Gelato RPC endpoint (`relayer_getStatus`) for a task's status using an authenticated client.
