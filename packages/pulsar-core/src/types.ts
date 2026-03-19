@@ -487,6 +487,8 @@ export type ITxInMemoryStore<T extends Transaction> = {
  * @template T The transaction type.
  */
 export type ITxInMemoryStoreParameters<T extends Transaction> = {
+  /** A localTransactionsPool. */
+  localTransactionsPool: TransactionPool<T>;
   /** * Callback fired when remote history is successfully fetched.
    * Used to inject remote pending transactions into the persistent tracking store.
    */

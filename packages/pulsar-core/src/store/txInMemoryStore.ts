@@ -19,7 +19,7 @@ import {
  * @returns `true` if the status is terminal; otherwise, `false`.
  */
 const isTerminalStatus = (status?: TransactionStatus): boolean =>
-  status === TransactionStatus.Success || status === TransactionStatus.Failed || status === TransactionStatus.Replaced;
+  status === TransactionStatus.Success || status === TransactionStatus.Replaced;
 
 /**
  * Safely merges a transaction into the in-memory pool.
@@ -59,6 +59,7 @@ const mergeTransactionIntoPool = <T extends Transaction>(pool: TransactionPool<T
  * @returns A Zustand vanilla store instance for in-memory transaction management.
  */
 export function createTxInMemoryStore<T extends Transaction>({
+  localTransactionsPool,
   getHistory,
   onHistoryFetched,
 }: ITxInMemoryStoreParameters<T>) {
@@ -104,7 +105,7 @@ export function createTxInMemoryStore<T extends Transaction>({
   };
 
   return createStore<ITxInMemoryStore<T>>()((set, get) => ({
-    transactionsPool: {},
+    transactionsPool: localTransactionsPool,
     isLoading: false,
     isError: false,
     hasMore: false,
