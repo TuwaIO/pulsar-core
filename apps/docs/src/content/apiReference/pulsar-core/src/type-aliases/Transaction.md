@@ -6,6 +6,6 @@
 
 > **Transaction** = [`EvmTransaction`](EvmTransaction.md) \| [`SolanaTransaction`](SolanaTransaction.md) \| [`StarknetTransaction`](StarknetTransaction.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:168](https://github.com/TuwaIO/pulsar-core/blob/df64e6e2a3068f5625f2d13b70fb044828dcd8ee/packages/pulsar-core/src/types.ts#L168)
+Defined in: [packages/pulsar-core/src/types.ts:168](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L168)
 
 A union type representing any possible transaction structure that Pulsar can handle.

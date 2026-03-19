@@ -6,7 +6,7 @@
 
 > **ITxInMemoryStore**\<`T`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:452](https://github.com/TuwaIO/pulsar-core/blob/df64e6e2a3068f5625f2d13b70fb044828dcd8ee/packages/pulsar-core/src/types.ts#L452)
+Defined in: [packages/pulsar-core/src/types.ts:452](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L452)
 
 The complete interface for the Pulsar transaction in-memory store.
 It keeps a paginated remote history in sync with a local transaction pool.
@@ -25,7 +25,7 @@ The transaction type.
 
 > **currentPage**: `number`
 
-Defined in: [packages/pulsar-core/src/types.ts:462](https://github.com/TuwaIO/pulsar-core/blob/df64e6e2a3068f5625f2d13b70fb044828dcd8ee/packages/pulsar-core/src/types.ts#L462)
+Defined in: [packages/pulsar-core/src/types.ts:462](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L462)
 
 The current page number in the paginated history.
 
@@ -35,7 +35,7 @@ The current page number in the paginated history.
 
 > **fetchInitial**: () => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:464](https://github.com/TuwaIO/pulsar-core/blob/df64e6e2a3068f5625f2d13b70fb044828dcd8ee/packages/pulsar-core/src/types.ts#L464)
+Defined in: [packages/pulsar-core/src/types.ts:464](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L464)
 
 Loads the first page of transaction history.
 
@@ -49,7 +49,7 @@ Loads the first page of transaction history.
 
 > **fetchNextPage**: () => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:466](https://github.com/TuwaIO/pulsar-core/blob/df64e6e2a3068f5625f2d13b70fb044828dcd8ee/packages/pulsar-core/src/types.ts#L466)
+Defined in: [packages/pulsar-core/src/types.ts:466](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L466)
 
 Loads the next page of transaction history and appends it to the pool.
 
@@ -63,7 +63,7 @@ Loads the next page of transaction history and appends it to the pool.
 
 > **hasMore**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:460](https://github.com/TuwaIO/pulsar-core/blob/df64e6e2a3068f5625f2d13b70fb044828dcd8ee/packages/pulsar-core/src/types.ts#L460)
+Defined in: [packages/pulsar-core/src/types.ts:460](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L460)
 
 Indicates whether more history pages are available.
 
@@ -73,7 +73,7 @@ Indicates whether more history pages are available.
 
 > **isError**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:458](https://github.com/TuwaIO/pulsar-core/blob/df64e6e2a3068f5625f2d13b70fb044828dcd8ee/packages/pulsar-core/src/types.ts#L458)
+Defined in: [packages/pulsar-core/src/types.ts:458](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L458)
 
 Indicates whether the last loading request ended with an error.
 
@@ -83,7 +83,7 @@ Indicates whether the last loading request ended with an error.
 
 > **isLoading**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:456](https://github.com/TuwaIO/pulsar-core/blob/df64e6e2a3068f5625f2d13b70fb044828dcd8ee/packages/pulsar-core/src/types.ts#L456)
+Defined in: [packages/pulsar-core/src/types.ts:456](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L456)
 
 Indicates whether the store is currently loading transaction history.
 
@@ -93,7 +93,7 @@ Indicates whether the store is currently loading transaction history.
 
 > **syncWithLocalPool**: (`localPool`) => `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:468](https://github.com/TuwaIO/pulsar-core/blob/df64e6e2a3068f5625f2d13b70fb044828dcd8ee/packages/pulsar-core/src/types.ts#L468)
+Defined in: [packages/pulsar-core/src/types.ts:468](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L468)
 
 Merges a local transaction pool into the in-memory store.
 
@@ -113,6 +113,6 @@ Merges a local transaction pool into the in-memory store.
 
 > **transactionsPool**: [`TransactionPool`](TransactionPool.md)\<`T`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:454](https://github.com/TuwaIO/pulsar-core/blob/df64e6e2a3068f5625f2d13b70fb044828dcd8ee/packages/pulsar-core/src/types.ts#L454)
+Defined in: [packages/pulsar-core/src/types.ts:454](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L454)
 
 A pool of all transactions currently being tracked and loaded from history, indexed by `txKey`.
