@@ -4,7 +4,7 @@
 
 # SyncCallbacks\<T\>
 
-Defined in: [packages/pulsar-core/src/types.ts:233](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L233)
+Defined in: [packages/pulsar-core/src/types.ts:233](https://github.com/TuwaIO/pulsar-core/blob/409d179eb7db474173c52a361610758253656cc7/packages/pulsar-core/src/types.ts#L233)
 
 Callbacks for synchronizing local transaction state with a remote backend.
 These are injected into the store at creation time.
@@ -21,7 +21,7 @@ These are injected into the store at creation time.
 
 > `optional` **onRemoteCreate**: (`tx`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:238](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L238)
+Defined in: [packages/pulsar-core/src/types.ts:238](https://github.com/TuwaIO/pulsar-core/blob/409d179eb7db474173c52a361610758253656cc7/packages/pulsar-core/src/types.ts#L238)
 
 Called immediately after a transaction is created locally (added to pool).
 Use this to POST the active pending transaction to the backend.

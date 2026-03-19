@@ -6,7 +6,7 @@
 
 > **ITxInMemoryStoreParameters**\<`T`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:476](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L476)
+Defined in: [packages/pulsar-core/src/types.ts:476](https://github.com/TuwaIO/pulsar-core/blob/409d179eb7db474173c52a361610758253656cc7/packages/pulsar-core/src/types.ts#L476)
 
 Parameters used to configure and manage an in-memory transaction store.
 
@@ -24,7 +24,7 @@ The transaction type.
 
 > **appName**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:478](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L478)
+Defined in: [packages/pulsar-core/src/types.ts:478](https://github.com/TuwaIO/pulsar-core/blob/409d179eb7db474173c52a361610758253656cc7/packages/pulsar-core/src/types.ts#L478)
 
 App name for transactions filtering.
 
@@ -38,7 +38,7 @@ App name for transactions filtering.
     appName,
   }`) => `Promise`\<\{ `docs`: `T`[]; `hasNextPage`: `boolean`; `hasPrevPage`: `boolean`; `page`: `number`; `totalDocs`: `number`; `totalPages`: `number`; \}\>
 
-Defined in: [packages/pulsar-core/src/types.ts:487](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L487)
+Defined in: [packages/pulsar-core/src/types.ts:487](https://github.com/TuwaIO/pulsar-core/blob/409d179eb7db474173c52a361610758253656cc7/packages/pulsar-core/src/types.ts#L487)
 
 Fetches transaction history from a remote source.
 
@@ -88,6 +88,6 @@ A paginated transaction history response.
 
 > `optional` **limit**: `number`
 
-Defined in: [packages/pulsar-core/src/types.ts:480](https://github.com/TuwaIO/pulsar-core/blob/820bd4fc4144158cb642b3967328e54bb81e2fb3/packages/pulsar-core/src/types.ts#L480)
+Defined in: [packages/pulsar-core/src/types.ts:480](https://github.com/TuwaIO/pulsar-core/blob/409d179eb7db474173c52a361610758253656cc7/packages/pulsar-core/src/types.ts#L480)
 
 The maximum number of transactions fetched per page.
