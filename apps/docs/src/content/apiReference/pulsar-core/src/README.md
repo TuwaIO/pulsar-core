@@ -35,6 +35,7 @@
 - [Transaction](type-aliases/Transaction.md)
 - [TransactionPool](type-aliases/TransactionPool.md)
 - [TxAdapter](type-aliases/TxAdapter.md)
+- [TxInMemoryPagination](type-aliases/TxInMemoryPagination.md)
 - [UpdatableTransactionFields](type-aliases/UpdatableTransactionFields.md)
 
 ## Variables

@@ -444,14 +444,10 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
 };
 
 /**
- * The complete interface for the Pulsar transaction in-memory store.
- * It keeps a paginated remote history in sync with a local transaction pool.
- *
- * @template T The transaction type.
+ * Represents the structure and behavior of an in-memory pagination system
+ * for managing transaction history.
  */
-export type ITxInMemoryStore<T extends Transaction> = {
-  /** A pool of all transactions currently being tracked and loaded from history, indexed by `txKey`. */
-  transactionsPool: TransactionPool<T>;
+export type TxInMemoryPagination = {
   /** Indicates whether the store is currently loading transaction history. */
   isLoading: boolean;
   /** Indicates whether the last loading request ended with an error. */
@@ -460,13 +456,24 @@ export type ITxInMemoryStore<T extends Transaction> = {
   hasMore: boolean;
   /** The current page number in the paginated history. */
   currentPage: number;
-  /** Loads the first page of transaction history. */
-  fetchInitial: () => Promise<void>;
   /** Loads the next page of transaction history and appends it to the pool. */
   fetchNextPage: () => Promise<void>;
+};
+
+/**
+ * The complete interface for the Pulsar transaction in-memory store.
+ * It keeps a paginated remote history in sync with a local transaction pool.
+ *
+ * @template T The transaction type.
+ */
+export type ITxInMemoryStore<T extends Transaction> = {
+  /** A pool of all transactions currently being tracked and loaded from history, indexed by `txKey`. */
+  transactionsPool: TransactionPool<T>;
+  /** Loads the first page of transaction history. */
+  fetchInitial: () => Promise<void>;
   /** Merges a local transaction pool into the in-memory store. */
   syncWithLocalPool: (localPool: TransactionPool<T>) => void;
-};
+} & TxInMemoryPagination;
 
 /**
  * Parameters used to configure and manage an in-memory transaction store.
