@@ -84,6 +84,8 @@ export function createTxInMemoryStore<T extends Transaction>({
    * @param response The paginated response returned by `getHistory`.
    */
   const applyHistoryResponse = (response: Awaited<ReturnType<NonNullable<typeof getHistory>>>) => {
+    if (!response) return (state: ITxInMemoryStore<T>) => state;
+
     // TRIGGER THE BRIDGE: Pass the fetched documents to the external callback
     if (onHistoryFetched) {
       // Use setTimeout or queueMicrotask to avoid blocking the state update render cycle

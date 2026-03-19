@@ -4,7 +4,7 @@
 
 # GelatoStatusCode
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:32](https://github.com/TuwaIO/pulsar-core/blob/fd7db028903756aa49bc5aed3b6f1337a486083b/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L32)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:32](https://github.com/TuwaIO/pulsar-core/blob/089917b814df99bdb31d20a387b52ac9e831c621/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L32)
 
 Numeric status codes returned by the Gelato `relayer_getStatus` RPC method.
 
@@ -18,7 +18,7 @@ https://docs.gelato.cloud/
 
 > **Pending**: `100`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:34](https://github.com/TuwaIO/pulsar-core/blob/fd7db028903756aa49bc5aed3b6f1337a486083b/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L34)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:34](https://github.com/TuwaIO/pulsar-core/blob/089917b814df99bdb31d20a387b52ac9e831c621/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L34)
 
 The task has been received and is awaiting execution.
 
@@ -28,7 +28,7 @@ The task has been received and is awaiting execution.
 
 > **Rejected**: `400`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:40](https://github.com/TuwaIO/pulsar-core/blob/fd7db028903756aa49bc5aed3b6f1337a486083b/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L40)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:40](https://github.com/TuwaIO/pulsar-core/blob/089917b814df99bdb31d20a387b52ac9e831c621/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L40)
 
 The task was rejected by the relayer before execution (e.g., validation failure).
 
@@ -38,7 +38,7 @@ The task was rejected by the relayer before execution (e.g., validation failure)
 
 > **Reverted**: `500`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:42](https://github.com/TuwaIO/pulsar-core/blob/fd7db028903756aa49bc5aed3b6f1337a486083b/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L42)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:42](https://github.com/TuwaIO/pulsar-core/blob/089917b814df99bdb31d20a387b52ac9e831c621/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L42)
 
 The task was submitted but the transaction reverted on-chain.
 
@@ -48,7 +48,7 @@ The task was submitted but the transaction reverted on-chain.
 
 > **Submitted**: `110`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:36](https://github.com/TuwaIO/pulsar-core/blob/fd7db028903756aa49bc5aed3b6f1337a486083b/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L36)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:36](https://github.com/TuwaIO/pulsar-core/blob/089917b814df99bdb31d20a387b52ac9e831c621/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L36)
 
 The task has been submitted to the mempool and has a transaction hash.
 
@@ -58,6 +58,6 @@ The task has been submitted to the mempool and has a transaction hash.
 
 > **Success**: `200`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:38](https://github.com/TuwaIO/pulsar-core/blob/fd7db028903756aa49bc5aed3b6f1337a486083b/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L38)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:38](https://github.com/TuwaIO/pulsar-core/blob/089917b814df99bdb31d20a387b52ac9e831c621/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L38)
 
 The task was successfully executed and mined.
