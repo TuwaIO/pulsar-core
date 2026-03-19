@@ -121,13 +121,13 @@ export function createTxInMemoryStore<T extends Transaction>({
       );
     },
 
-    fetchInitial: async () => {
-      if (!getHistory) return;
+    fetchInitial: async (walletAddress) => {
+      if (!getHistory || !walletAddress) return;
 
       set(setRequestState(true));
 
       try {
-        const response = await getHistory({ page: 1 });
+        const response = await getHistory({ page: 1, walletAddress });
         set(applyHistoryResponse(response));
       } catch (error) {
         console.error('[Pulsar] Failed to fetch initial transaction history:', error);
@@ -135,16 +135,16 @@ export function createTxInMemoryStore<T extends Transaction>({
       }
     },
 
-    fetchNextPage: async () => {
+    fetchNextPage: async (walletAddress) => {
       const { hasMore, isLoading, currentPage } = get();
 
-      if (!getHistory || !hasMore || isLoading) return;
+      if (!getHistory || !hasMore || isLoading || !walletAddress) return;
 
       set(setRequestState(true));
 
       try {
         const nextPage = currentPage + 1;
-        const response = await getHistory({ page: nextPage });
+        const response = await getHistory({ page: nextPage, walletAddress });
         set(applyHistoryResponse(response));
       } catch (error) {
         console.error(`[Pulsar] Failed to fetch transaction history page ${currentPage + 1}:`, error);

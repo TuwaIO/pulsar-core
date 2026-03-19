@@ -463,7 +463,7 @@ export type TxInMemoryPagination = {
   /** The current page number in the paginated history. */
   currentPage: number;
   /** Loads the next page of transaction history and appends it to the pool. */
-  fetchNextPage: () => Promise<void>;
+  fetchNextPage: (walletAddress: string) => Promise<void>;
 };
 
 /**
@@ -476,7 +476,7 @@ export type ITxInMemoryStore<T extends Transaction> = {
   /** A pool of all transactions currently being tracked and loaded from history, indexed by `txKey`. */
   transactionsPool: TransactionPool<T>;
   /** Loads the first page of transaction history. */
-  fetchInitial: () => Promise<void>;
+  fetchInitial: (walletAddress: string) => Promise<void>;
   /** Merges a local transaction pool into the in-memory store. */
   syncWithLocalPool: (localPool: TransactionPool<T>) => void;
 } & TxInMemoryPagination;
@@ -493,6 +493,7 @@ export type ITxInMemoryStoreParameters<T extends Transaction> = {
   onHistoryFetched?: (remoteTxs: T[]) => void;
   getHistory?: ({
     page,
+    walletAddress,
   }: {
     /**
      * Page number for pagination.
@@ -500,6 +501,8 @@ export type ITxInMemoryStoreParameters<T extends Transaction> = {
      * @defaultValue `1`
      */
     page?: number;
+
+    walletAddress: string;
   }) => Promise<{
     /** Array of transactions for the current page. */
     docs: T[];

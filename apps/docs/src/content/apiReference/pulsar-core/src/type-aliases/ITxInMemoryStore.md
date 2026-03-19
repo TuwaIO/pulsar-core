@@ -6,7 +6,7 @@
 
 > **ITxInMemoryStore**\<`T`\> = `object` & [`TxInMemoryPagination`](TxInMemoryPagination.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:475](https://github.com/TuwaIO/pulsar-core/blob/2f1f6a4f06a19b6a90ce02fab5bff03e7ac74e24/packages/pulsar-core/src/types.ts#L475)
+Defined in: [packages/pulsar-core/src/types.ts:475](https://github.com/TuwaIO/pulsar-core/blob/77d854db952885a45741c9beecf7242bfe595543/packages/pulsar-core/src/types.ts#L475)
 
 The complete interface for the Pulsar transaction in-memory store.
 It keeps a paginated remote history in sync with a local transaction pool.
@@ -15,9 +15,15 @@ It keeps a paginated remote history in sync with a local transaction pool.
 
 ### fetchInitial()
 
-> **fetchInitial**: () => `Promise`\<`void`\>
+> **fetchInitial**: (`walletAddress`) => `Promise`\<`void`\>
 
 Loads the first page of transaction history.
+
+#### Parameters
+
+##### walletAddress
+
+`string`
 
 #### Returns
 

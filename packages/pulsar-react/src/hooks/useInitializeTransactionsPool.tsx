@@ -20,12 +20,6 @@ export type UseInitializeTransactionsPoolParams = {
    * @defaultValue `console.error`
    */
   onError?: (error: Error) => void;
-  /**
-   * Optional callback that performs the initial history fetch from the remote data source.
-   * This is useful when the in-memory store should be populated immediately after tracker
-   * restoration.
-   */
-  initialFetchFromDB?: () => Promise<void>;
 };
 
 /**
@@ -38,7 +32,6 @@ export type UseInitializeTransactionsPoolParams = {
  * @param params Hook configuration.
  * @param params.initializeTransactionsPool Function that restores trackers for pending transactions.
  * @param params.onError Optional custom error handler.
- * @param params.initialFetchFromDB Optional callback for loading the initial remote history.
  *
  * @example
  * ```tsx
@@ -47,7 +40,6 @@ export type UseInitializeTransactionsPoolParams = {
  * function AppLayout() {
  *   useInitializeTransactionsPool({
  *     initializeTransactionsPool: store.getState().initializeTransactionsPool,
- *     initialFetchFromDB: store.getState().fetchInitial,
  *     onError: (error) => console.warn('Failed to restore transactions:', error),
  *   });
  *
@@ -58,7 +50,6 @@ export type UseInitializeTransactionsPoolParams = {
 export const useInitializeTransactionsPool = ({
   initializeTransactionsPool,
   onError,
-  initialFetchFromDB,
 }: UseInitializeTransactionsPoolParams) => {
   useEffect(() => {
     let isActive = true;
@@ -68,10 +59,6 @@ export const useInitializeTransactionsPool = ({
         await initializeTransactionsPool();
 
         if (!isActive) return;
-
-        if (initialFetchFromDB) {
-          await initialFetchFromDB();
-        }
       } catch (error) {
         const fallbackErrorHandler = (e: Error) => {
           console.error('[Pulsar] Failed to initialize transactions pool:', e);
@@ -86,5 +73,5 @@ export const useInitializeTransactionsPool = ({
     return () => {
       isActive = false;
     };
-  }, [initializeTransactionsPool, initialFetchFromDB, onError]);
+  }, [initializeTransactionsPool, onError]);
 };

@@ -6,7 +6,7 @@
 
 > **ITxInMemoryStoreParameters**\<`T`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:489](https://github.com/TuwaIO/pulsar-core/blob/2f1f6a4f06a19b6a90ce02fab5bff03e7ac74e24/packages/pulsar-core/src/types.ts#L489)
+Defined in: [packages/pulsar-core/src/types.ts:489](https://github.com/TuwaIO/pulsar-core/blob/77d854db952885a45741c9beecf7242bfe595543/packages/pulsar-core/src/types.ts#L489)
 
 Parameters used to configure and manage an in-memory transaction store.
 
@@ -24,14 +24,16 @@ The transaction type.
 
 > `optional` **getHistory**: (`{
     page,
+    walletAddress,
   }`) => `Promise`\<\{ `docs`: `T`[]; `hasNextPage`: `boolean`; `hasPrevPage`: `boolean`; `page`: `number`; `totalDocs`: `number`; `totalPages`: `number`; \}\>
 
-Defined in: [packages/pulsar-core/src/types.ts:494](https://github.com/TuwaIO/pulsar-core/blob/2f1f6a4f06a19b6a90ce02fab5bff03e7ac74e24/packages/pulsar-core/src/types.ts#L494)
+Defined in: [packages/pulsar-core/src/types.ts:494](https://github.com/TuwaIO/pulsar-core/blob/77d854db952885a45741c9beecf7242bfe595543/packages/pulsar-core/src/types.ts#L494)
 
 #### Parameters
 
 ##### \{
     page,
+    walletAddress,
   \}
 
 ###### page?
@@ -44,6 +46,10 @@ Page number for pagination.
 
 `1`
 
+###### walletAddress
+
+`string`
+
 #### Returns
 
 `Promise`\<\{ `docs`: `T`[]; `hasNextPage`: `boolean`; `hasPrevPage`: `boolean`; `page`: `number`; `totalDocs`: `number`; `totalPages`: `number`; \}\>
@@ -54,7 +60,7 @@ Page number for pagination.
 
 > `optional` **onHistoryFetched**: (`remoteTxs`) => `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:493](https://github.com/TuwaIO/pulsar-core/blob/2f1f6a4f06a19b6a90ce02fab5bff03e7ac74e24/packages/pulsar-core/src/types.ts#L493)
+Defined in: [packages/pulsar-core/src/types.ts:493](https://github.com/TuwaIO/pulsar-core/blob/77d854db952885a45741c9beecf7242bfe595543/packages/pulsar-core/src/types.ts#L493)
 
 Callback fired when remote history is successfully fetched.
 Used to inject remote pending transactions into the persistent tracking store.

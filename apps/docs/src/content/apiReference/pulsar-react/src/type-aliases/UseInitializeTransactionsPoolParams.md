@@ -6,33 +6,17 @@
 
 > **UseInitializeTransactionsPoolParams** = `object`
 
-Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:12](https://github.com/TuwaIO/pulsar-core/blob/2f1f6a4f06a19b6a90ce02fab5bff03e7ac74e24/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L12)
+Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:12](https://github.com/TuwaIO/pulsar-core/blob/77d854db952885a45741c9beecf7242bfe595543/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L12)
 
 Configuration for [useInitializeTransactionsPool](../functions/useInitializeTransactionsPool.md).
 
 ## Properties
 
-### initialFetchFromDB()?
-
-> `optional` **initialFetchFromDB**: () => `Promise`\<`void`\>
-
-Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:28](https://github.com/TuwaIO/pulsar-core/blob/2f1f6a4f06a19b6a90ce02fab5bff03e7ac74e24/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L28)
-
-Optional callback that performs the initial history fetch from the remote data source.
-This is useful when the in-memory store should be populated immediately after tracker
-restoration.
-
-#### Returns
-
-`Promise`\<`void`\>
-
-***
-
 ### initializeTransactionsPool()
 
 > **initializeTransactionsPool**: () => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:16](https://github.com/TuwaIO/pulsar-core/blob/2f1f6a4f06a19b6a90ce02fab5bff03e7ac74e24/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L16)
+Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:16](https://github.com/TuwaIO/pulsar-core/blob/77d854db952885a45741c9beecf7242bfe595543/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L16)
 
 Re-initializes background trackers for all pending transactions stored in the Pulsar store.
 
@@ -46,7 +30,7 @@ Re-initializes background trackers for all pending transactions stored in the Pu
 
 > `optional` **onError**: (`error`) => `void`
 
-Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:22](https://github.com/TuwaIO/pulsar-core/blob/2f1f6a4f06a19b6a90ce02fab5bff03e7ac74e24/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L22)
+Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:22](https://github.com/TuwaIO/pulsar-core/blob/77d854db952885a45741c9beecf7242bfe595543/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L22)
 
 Optional error handler called when initialization or the optional initial fetch fails.
 

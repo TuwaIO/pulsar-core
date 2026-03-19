@@ -6,7 +6,7 @@
 
 > **useInitializeTransactionsPool**(`params`): `void`
 
-Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:58](https://github.com/TuwaIO/pulsar-core/blob/2f1f6a4f06a19b6a90ce02fab5bff03e7ac74e24/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L58)
+Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:50](https://github.com/TuwaIO/pulsar-core/blob/77d854db952885a45741c9beecf7242bfe595543/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L50)
 
 Re-initializes pending transaction trackers when the component mounts.
 
@@ -34,7 +34,6 @@ import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
 function AppLayout() {
   useInitializeTransactionsPool({
     initializeTransactionsPool: store.getState().initializeTransactionsPool,
-    initialFetchFromDB: store.getState().fetchInitial,
     onError: (error) => console.warn('Failed to restore transactions:', error),
   });
 
