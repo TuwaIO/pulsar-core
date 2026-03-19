@@ -6,7 +6,7 @@
 
 > **useInitializeTransactionsPool**(`params`): `void`
 
-Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:58](https://github.com/TuwaIO/pulsar-core/blob/5f182e29003409398051d1d02ec9c947396d97e5/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L58)
+Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:58](https://github.com/TuwaIO/pulsar-core/blob/3bc7ad7f218c235540ef1eb27cc5de5c737dbede/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L58)
 
 Re-initializes pending transaction trackers when the component mounts.
 

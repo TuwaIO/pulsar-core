@@ -481,20 +481,8 @@ export type ITxInMemoryStore<T extends Transaction> = {
  * @template T The transaction type.
  */
 export type ITxInMemoryStoreParameters<T extends Transaction> = {
-  /** App name for transactions filtering. */
-  appName: string;
-  /** The maximum number of transactions fetched per page. */
-  limit?: number;
-  /**
-   * Fetches transaction history from a remote source.
-   *
-   * @param params Pagination and filtering parameters.
-   * @returns A paginated transaction history response.
-   */
   getHistory?: ({
     page,
-    limit,
-    appName,
   }: {
     /**
      * Page number for pagination.
@@ -502,14 +490,6 @@ export type ITxInMemoryStoreParameters<T extends Transaction> = {
      * @defaultValue `1`
      */
     page?: number;
-    /**
-     * Maximum number of results per page.
-     *
-     * @defaultValue `10`
-     */
-    limit?: number;
-    /** Filters history by application name. */
-    appName?: string;
   }) => Promise<{
     /** Array of transactions for the current page. */
     docs: T[];

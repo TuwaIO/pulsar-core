@@ -55,16 +55,10 @@ const mergeTransactionIntoPool = <T extends Transaction>(pool: TransactionPool<T
  *
  * @template T The transaction type.
  * @param params Store configuration parameters.
- * @param params.appName The application name used to filter remote history.
- * @param params.limit The maximum number of history items requested per page.
  * @param params.getHistory Optional remote history fetcher.
  * @returns A Zustand vanilla store instance for in-memory transaction management.
  */
-export function createTxInMemoryStore<T extends Transaction>({
-  appName,
-  limit = 10,
-  getHistory,
-}: ITxInMemoryStoreParameters<T>) {
+export function createTxInMemoryStore<T extends Transaction>({ getHistory }: ITxInMemoryStoreParameters<T>) {
   /**
    * Disable Immer auto-freeze because Zustand store updates are performed frequently,
    * and freezing can introduce avoidable overhead and integration issues in runtime code.
@@ -124,7 +118,7 @@ export function createTxInMemoryStore<T extends Transaction>({
       set(setRequestState(true));
 
       try {
-        const response = await getHistory({ page: 1, limit, appName });
+        const response = await getHistory({ page: 1 });
         set(applyHistoryResponse(response));
       } catch (error) {
         console.error('[Pulsar] Failed to fetch initial transaction history:', error);
@@ -141,7 +135,7 @@ export function createTxInMemoryStore<T extends Transaction>({
 
       try {
         const nextPage = currentPage + 1;
-        const response = await getHistory({ page: nextPage, limit, appName });
+        const response = await getHistory({ page: nextPage });
         set(applyHistoryResponse(response));
       } catch (error) {
         console.error(`[Pulsar] Failed to fetch transaction history page ${currentPage + 1}:`, error);
