@@ -20,6 +20,8 @@ import { getBlock, getTransaction, waitForTransactionReceipt } from 'viem/action
 
 const DEFAULT_RETRY_COUNT = 10;
 const DEFAULT_RETRY_TIMEOUT_MS = 3000;
+const RECEIPT_MAX_RETRIES = 3;
+const RECEIPT_RETRY_DELAY = 10_000; // 10s between outer retries
 
 /**
  * Defines the parameters for the low-level EVM transaction tracker.
@@ -90,27 +92,29 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
   }
 
   // 2. Wait for the transaction to be mined and get the receipt.
-  try {
-    let wasReplaced = false;
-    const receipt = await waitForTransactionReceipt(client, {
-      hash: txDetails.hash,
-      onReplaced: (replacement) => {
-        wasReplaced = true;
-        onReplaced(replacement);
-      },
-      ...waitForTransactionReceiptParams,
-    });
-
-    if (wasReplaced) {
+  let wasReplaced = false;
+  for (let attempt = 0; attempt <= RECEIPT_MAX_RETRIES; attempt++) {
+    try {
+      const receipt = await waitForTransactionReceipt(client, {
+        hash: txDetails.hash,
+        onReplaced: (replacement) => {
+          wasReplaced = true;
+          onReplaced(replacement);
+        },
+        ...waitForTransactionReceiptParams,
+      });
+      if (!wasReplaced) await onSuccess(txDetails, receipt, client);
+      return;
+    } catch (error) {
+      const isTransient = error instanceof Error && error.name === 'TransactionReceiptNotFoundError';
+      if (isTransient && !wasReplaced && attempt < RECEIPT_MAX_RETRIES) {
+        console.warn(`[evmTracker] Receipt not found for ${tx.txKey}, retry ${attempt + 1}/${RECEIPT_MAX_RETRIES}...`);
+        await new Promise((r) => setTimeout(r, RECEIPT_RETRY_DELAY * (attempt + 1)));
+        continue;
+      }
+      onFailure(error);
       return;
     }
-
-    // 3. Transaction is mined, call the onSuccess callback.
-    // The callback handles both success and reverted states.
-    await onSuccess(txDetails, receipt, client);
-  } catch (error) {
-    console.error(`Error waiting for receipt for tx ${tx.txKey}:`, error);
-    onFailure(error);
   }
 }
 
