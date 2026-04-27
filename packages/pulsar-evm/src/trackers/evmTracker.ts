@@ -84,9 +84,13 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
       break;
     } catch (error) {
       if (i === retryCount - 1) {
-        console.error(`EVM tracker failed to fetch tx ${tx.txKey} after ${retryCount} retries:`, error);
+        console.error(`[evmTracker] Fatal error fetching transaction ${tx.txKey} on chain ${tx.chainId}:`, error);
         return onFailure(error);
       }
+      console.warn(
+        `[evmTracker] Error fetching transaction ${tx.txKey} on chain ${tx.chainId} (attempt ${i + 1}/${retryCount}):`,
+        error,
+      );
       await new Promise((resolve) => setTimeout(resolve, retryTimeout));
     }
   }
@@ -113,14 +117,16 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
         if (needed > 1) {
           while (true) {
             try {
-              const confirmations = await getTransactionConfirmations(client, { hash: txDetails.hash });
+              const confirmations = await getTransactionConfirmations(client, {
+                transactionReceipt: receipt,
+              });
               const current = Number(confirmations);
               onConfirmationsUpdate?.(current);
 
               if (current >= needed) break;
             } catch (error) {
               // Non-blocking error, just log and retry.
-              console.warn(`[evmTracker] Error fetching confirmations for ${tx.txKey}:`, error);
+              console.warn(`[evmTracker] Error fetching confirmations for ${tx.txKey} on chain ${tx.chainId}:`, error);
             }
             await new Promise((resolve) => setTimeout(resolve, CONFIRMATIONS_POLLING_INTERVAL));
           }
