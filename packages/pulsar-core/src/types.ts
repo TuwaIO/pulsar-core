@@ -94,7 +94,7 @@ export type BaseTransaction = {
    * title: ['Processing Swap', 'Swap Complete', 'Swap Error', 'Swap Replaced']
    */
   title?: string | [string, string, string, string];
-  /** The specific tracker responsible for monitoring this transaction's status. Required for Gelato tracker. */
+  /** The specific tracker responsible for monitoring this transaction's status. */
   tracker: TransactionTracker;
   /** The unique identifier for the transaction (e.g., EVM hash, Solana signature, or Gelato task ID). */
   txKey: string;
@@ -178,7 +178,7 @@ export type Transaction = EvmTransaction | SolanaTransaction | StarknetTransacti
  */
 export type InitialTransactionParams = Pick<
   BaseTransaction,
-  'description' | 'title' | 'type' | 'tracker' | 'requiredConfirmations' | 'rpcUrl' | 'payload'
+  'description' | 'title' | 'type' | 'requiredConfirmations' | 'rpcUrl' | 'payload'
 > & {
   /** The specific blockchain adapter for this transaction. */
   adapter: OrbitAdapter;
@@ -188,6 +188,8 @@ export type InitialTransactionParams = Pick<
   desiredChainID: number | string;
   /** If true, the detailed tracking modal will open automatically upon initiation. */
   withTrackedModal?: boolean;
+  /** The specific tracker responsible for monitoring this transaction's status. Required for Gelato tracker. */
+  tracker?: TransactionTracker;
 };
 
 /**

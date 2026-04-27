@@ -6,7 +6,7 @@
 
 > **InitialTransaction** = [`InitialTransactionParams`](InitialTransactionParams.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:197](https://github.com/TuwaIO/pulsar-core/blob/ce24fbe39596f795b7bbc096cc203e1d075c5618/packages/pulsar-core/src/types.ts#L197)
+Defined in: [packages/pulsar-core/src/types.ts:199](https://github.com/TuwaIO/pulsar-core/blob/e793f6c1aec3029357d46a261bbd91915587721b/packages/pulsar-core/src/types.ts#L199)
 
 Represents a transaction in its temporary, pre-submission state.
 This is used for UI feedback while the transaction is being signed and sent.

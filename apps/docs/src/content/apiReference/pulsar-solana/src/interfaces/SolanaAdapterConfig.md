@@ -4,7 +4,7 @@
 
 # SolanaAdapterConfig
 
-Defined in: [packages/pulsar-solana/src/types.ts:15](https://github.com/TuwaIO/pulsar-core/blob/ce24fbe39596f795b7bbc096cc203e1d075c5618/packages/pulsar-solana/src/types.ts#L15)
+Defined in: [packages/pulsar-solana/src/types.ts:15](https://github.com/TuwaIO/pulsar-core/blob/e793f6c1aec3029357d46a261bbd91915587721b/packages/pulsar-solana/src/types.ts#L15)
 
 Represents the simplified configuration object for the Solana adapter.
 
@@ -17,6 +17,6 @@ supporting operations like transaction tracking, name/identity resolution, and m
 
 > **rpcUrls**: `Partial`\<`Record`\<`SolanaClusterMoniker`, `string`\>\>
 
-Defined in: [packages/pulsar-solana/src/types.ts:16](https://github.com/TuwaIO/pulsar-core/blob/ce24fbe39596f795b7bbc096cc203e1d075c5618/packages/pulsar-solana/src/types.ts#L16)
+Defined in: [packages/pulsar-solana/src/types.ts:16](https://github.com/TuwaIO/pulsar-core/blob/e793f6c1aec3029357d46a261bbd91915587721b/packages/pulsar-solana/src/types.ts#L16)
 
 A mapping of cluster names to their respective RPC endpoints.
