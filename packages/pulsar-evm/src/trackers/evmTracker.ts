@@ -16,16 +16,19 @@ import {
   WaitForTransactionReceiptParameters,
   zeroHash,
 } from 'viem';
-import { getBlock, getTransaction, waitForTransactionReceipt } from 'viem/actions';
+import { getBlock, getTransaction, getTransactionConfirmations, waitForTransactionReceipt } from 'viem/actions';
 
 const DEFAULT_RETRY_COUNT = 10;
 const DEFAULT_RETRY_TIMEOUT_MS = 3000;
+const RECEIPT_MAX_RETRIES = 3;
+const RECEIPT_RETRY_DELAY = 10_000; // 10s between outer retries
+const CONFIRMATIONS_POLLING_INTERVAL = 5000; // 5s between confirmation checks
 
 /**
  * Defines the parameters for the low-level EVM transaction tracker.
  */
 export type EVMTrackerParams = {
-  tx: Pick<Transaction, 'chainId' | 'txKey'>;
+  tx: Pick<Transaction, 'chainId' | 'txKey' | 'requiredConfirmations'>;
   config: Config;
   onTxDetailsFetched: (txDetails: GetTransactionReturnType) => void;
   onSuccess: (txDetails: GetTransactionReturnType, receipt: TransactionReceipt, client: Client) => Promise<void>;
@@ -34,6 +37,7 @@ export type EVMTrackerParams = {
   onInitialize?: () => void;
   retryCount?: number;
   retryTimeout?: number;
+  onConfirmationsUpdate?: (confirmations: number) => void;
   waitForTransactionReceiptParams?: WaitForTransactionReceiptParameters;
 };
 
@@ -54,8 +58,10 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
     onReplaced,
     retryCount = DEFAULT_RETRY_COUNT,
     retryTimeout = DEFAULT_RETRY_TIMEOUT_MS,
+    onConfirmationsUpdate,
     waitForTransactionReceiptParams,
   } = params;
+  const { requiredConfirmations } = tx;
 
   onInitialize?.();
 
@@ -78,9 +84,13 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
       break;
     } catch (error) {
       if (i === retryCount - 1) {
-        console.error(`EVM tracker failed to fetch tx ${tx.txKey} after ${retryCount} retries:`, error);
+        console.error(`[evmTracker] Fatal error fetching transaction ${tx.txKey} on chain ${tx.chainId}:`, error);
         return onFailure(error);
       }
+      console.warn(
+        `[evmTracker] Error fetching transaction ${tx.txKey} on chain ${tx.chainId} (attempt ${i + 1}/${retryCount}):`,
+        error,
+      );
       await new Promise((resolve) => setTimeout(resolve, retryTimeout));
     }
   }
@@ -90,27 +100,50 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
   }
 
   // 2. Wait for the transaction to be mined and get the receipt.
-  try {
-    let wasReplaced = false;
-    const receipt = await waitForTransactionReceipt(client, {
-      hash: txDetails.hash,
-      onReplaced: (replacement) => {
-        wasReplaced = true;
-        onReplaced(replacement);
-      },
-      ...waitForTransactionReceiptParams,
-    });
+  let wasReplaced = false;
+  for (let attempt = 0; attempt <= RECEIPT_MAX_RETRIES; attempt++) {
+    try {
+      const receipt = await waitForTransactionReceipt(client, {
+        hash: txDetails.hash,
+        onReplaced: (replacement) => {
+          wasReplaced = true;
+          onReplaced(replacement);
+        },
+        ...waitForTransactionReceiptParams,
+      });
+      if (!wasReplaced) {
+        // 3. Wait for required confirmations if specified.
+        const needed = requiredConfirmations ?? 1;
+        if (needed > 1) {
+          while (true) {
+            try {
+              const confirmations = await getTransactionConfirmations(client, {
+                transactionReceipt: receipt,
+              });
+              const current = Number(confirmations);
+              onConfirmationsUpdate?.(current);
 
-    if (wasReplaced) {
+              if (current >= needed) break;
+            } catch (error) {
+              // Non-blocking error, just log and retry.
+              console.warn(`[evmTracker] Error fetching confirmations for ${tx.txKey} on chain ${tx.chainId}:`, error);
+            }
+            await new Promise((resolve) => setTimeout(resolve, CONFIRMATIONS_POLLING_INTERVAL));
+          }
+        }
+        await onSuccess(txDetails, receipt, client);
+      }
+      return;
+    } catch (error) {
+      const isTransient = error instanceof Error && error.name === 'TransactionReceiptNotFoundError';
+      if (isTransient && !wasReplaced && attempt < RECEIPT_MAX_RETRIES) {
+        console.warn(`[evmTracker] Receipt not found for ${tx.txKey}, retry ${attempt + 1}/${RECEIPT_MAX_RETRIES}...`);
+        await new Promise((r) => setTimeout(r, RECEIPT_RETRY_DELAY * (attempt + 1)));
+        continue;
+      }
+      onFailure(error);
       return;
     }
-
-    // 3. Transaction is mined, call the onSuccess callback.
-    // The callback handles both success and reverted states.
-    await onSuccess(txDetails, receipt, client);
-  } catch (error) {
-    console.error(`Error waiting for receipt for tx ${tx.txKey}:`, error);
-    onFailure(error);
   }
 }
 
@@ -143,6 +176,9 @@ export async function evmTrackerForStore<T extends Transaction>(
         maxFeePerGas: txDetails.maxFeePerGas?.toString(),
         maxPriorityFeePerGas: txDetails.maxPriorityFeePerGas?.toString(),
       });
+    },
+    onConfirmationsUpdate: (confirmations) => {
+      updateTxParams(tx.txKey, { confirmations });
     },
     onSuccess: async (txDetails, receipt, client) => {
       const block = await getBlock(client, { blockNumber: receipt.blockNumber });

@@ -6,13 +6,13 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](../interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:416](https://github.com/TuwaIO/pulsar-core/blob/4635500b0fb82b05bdae30ba5551c3bed49eb344/packages/pulsar-core/src/types.ts#L416)
+Defined in: [packages/pulsar-core/src/types.ts:413](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-core/src/types.ts#L413)
 
 The complete interface for the Pulsar transaction tracking store.
 
 ## Type Declaration
 
-### executeTxAction()
+### executeTxAction
 
 > **executeTxAction**: (`params`) => `Promise`\<`void`\>
 
@@ -31,7 +31,7 @@ The parameters for handling the transaction.
 
 `Promise`\<`void`\>
 
-### getAdapter()
+### getAdapter
 
 > **getAdapter**: () => [`TxAdapter`](TxAdapter.md)\<`T`\> \| [`TxAdapter`](TxAdapter.md)\<`T`\>[]
 
@@ -41,12 +41,30 @@ A getter function that returns the configured transaction adapter(s).
 
 [`TxAdapter`](TxAdapter.md)\<`T`\> \| [`TxAdapter`](TxAdapter.md)\<`T`\>[]
 
-### initializeTransactionsPool()
+### initializeTransactionsPool
 
 > **initializeTransactionsPool**: () => `Promise`\<`void`\>
 
 Initializes trackers for all pending transactions in the pool.
 This is essential for resuming tracking after a page reload or application restart.
+
+#### Returns
+
+`Promise`\<`void`\>
+
+### injectExternalPendingTxs
+
+> **injectExternalPendingTxs**: (`remoteTxs`) => `Promise`\<`void`\>
+
+Cross-device synchronization bridge.
+Injects remote pending transactions into the local pool and starts their lifecycle trackers.
+Also self-heals local pending transactions if the remote DB knows they are terminal.
+
+#### Parameters
+
+##### remoteTxs
+
+`T`[]
 
 #### Returns
 

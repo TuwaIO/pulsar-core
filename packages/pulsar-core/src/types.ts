@@ -79,8 +79,8 @@ export type BaseTransaction = {
   isTrackedModalOpen?: boolean;
   /** The local timestamp (in seconds) when the transaction was initiated by the user. */
   localTimestamp: number;
-  /** Any additional, custom data associated with the transaction. */
-  payload?: object;
+  /** Custom data (strings or numbers) to associate with the transaction. */
+  payload?: Record<string, string | number>;
   /** A flag indicating if the transaction is still awaiting on-chain confirmation. */
   pending: boolean;
   /** The final on-chain status of the transaction. */
@@ -102,6 +102,12 @@ export type BaseTransaction = {
   type: string;
   /** The type of connector used to sign the transaction (e.g., 'injected', 'walletConnect'). */
   connectorType: string;
+  /** The number of confirmations required for the transaction to be considered confirmed. */
+  requiredConfirmations?: number;
+  /** The number of confirmations received. A string value indicates a confirmed transaction, while `null` means it's pending. */
+  confirmations?: number | string | null;
+  /** The RPC URL to use for the transaction. Required for Solana transactions. */
+  rpcUrl?: string;
 };
 
 // =================================================================================================
@@ -146,10 +152,6 @@ export type SolanaTransaction = BaseTransaction & {
   recentBlockhash?: string;
   /** The slot in which the transaction was processed. */
   slot?: number;
-  /** The number of confirmations received. A string value indicates a confirmed transaction, while `null` means it's pending. */
-  confirmations?: number | string | null;
-  /** The RPC URL used to submit and track this transaction. */
-  rpcUrl?: string;
 };
 
 /**
@@ -174,26 +176,19 @@ export type Transaction = EvmTransaction | SolanaTransaction | StarknetTransacti
 /**
  * Represents the parameters required to initiate a new transaction tracking flow.
  */
-export type InitialTransactionParams = {
+export type InitialTransactionParams = Pick<
+  BaseTransaction,
+  'description' | 'title' | 'type' | 'requiredConfirmations' | 'rpcUrl' | 'payload'
+> & {
   /** The specific blockchain adapter for this transaction. */
   adapter: OrbitAdapter;
   /** The function that executes the on-chain action (e.g., sending a transaction) and returns a preliminary identifier like a hash. */
   actionFunction: (...args: any[]) => Promise<ActionTxKey | undefined>;
-  /** A user-facing description for the transaction. Supports state-specific descriptions. */
-  description?: string | [string, string, string, string];
   /** The target chain ID for the transaction. */
   desiredChainID: number | string;
-  /** Any custom data to associate with the transaction. */
-  payload?: object;
-  /** A user-facing title for the transaction. Supports state-specific titles. */
-  title?: string | [string, string, string, string];
-  /** The application-specific type of the transaction. */
-  type: string;
   /** If true, the detailed tracking modal will open automatically upon initiation. */
   withTrackedModal?: boolean;
-  /** The RPC URL to use for the transaction. Required for Solana transactions. */
-  rpcUrl?: string;
-  /** The transaction tracker. Required for Gelato transactions. */
+  /** The specific tracker responsible for monitoring this transaction's status. Required for Gelato tracker. */
   tracker?: TransactionTracker;
 };
 
@@ -365,6 +360,8 @@ export type UpdatableTransactionFields = Partial<
     | 'maxFeePerGas'
     | 'input'
     | 'value'
+    | 'confirmations'
+    | 'requiredConfirmations'
   >
 > &
   Partial<Pick<SolanaTransaction, 'slot' | 'confirmations' | 'fee' | 'instructions' | 'recentBlockhash' | 'rpcUrl'>>;
@@ -441,4 +438,82 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
    * This is essential for resuming tracking after a page reload or application restart.
    */
   initializeTransactionsPool: () => Promise<void>;
+  /**
+   * Cross-device synchronization bridge.
+   * Injects remote pending transactions into the local pool and starts their lifecycle trackers.
+   * Also self-heals local pending transactions if the remote DB knows they are terminal.
+   */
+  injectExternalPendingTxs: (remoteTxs: T[]) => Promise<void>;
+};
+
+/**
+ * Represents the structure and behavior of an in-memory pagination system
+ * for managing transaction history.
+ */
+export type TxInMemoryPagination = {
+  /** Indicates whether the store is currently loading transaction history. */
+  isLoading: boolean;
+  /** Indicates whether the last loading request ended with an error. */
+  isError: boolean;
+  /** Indicates whether more history pages are available. */
+  hasMore: boolean;
+  /** The current page number in the paginated history. */
+  currentPage: number;
+  /** Loads the next page of transaction history and appends it to the pool. */
+  fetchNextPage: (walletAddress: string) => Promise<void>;
+};
+
+/**
+ * The complete interface for the Pulsar transaction in-memory store.
+ * It keeps a paginated remote history in sync with a local transaction pool.
+ *
+ * @template T The transaction type.
+ */
+export type ITxInMemoryStore<T extends Transaction> = {
+  /** A pool of all transactions currently being tracked and loaded from history, indexed by `txKey`. */
+  transactionsPool: TransactionPool<T>;
+  /** Loads the first page of transaction history. */
+  fetchInitial: (walletAddress: string) => Promise<void>;
+  /** Merges a local transaction pool into the in-memory store. */
+  syncWithLocalPool: (localPool: TransactionPool<T>) => void;
+} & TxInMemoryPagination;
+
+/**
+ * Parameters used to configure and manage an in-memory transaction store.
+ *
+ * @template T The transaction type.
+ */
+export type ITxInMemoryStoreParameters<T extends Transaction> = {
+  /** A localTransactionsPool. */
+  localTransactionsPool: TransactionPool<T>;
+  /** * Callback fired when remote history is successfully fetched.
+   * Used to inject remote pending transactions into the persistent tracking store.
+   */
+  onHistoryFetched?: (remoteTxs: T[]) => void;
+  getHistory?: ({
+    page,
+    walletAddress,
+  }: {
+    /**
+     * Page number for pagination.
+     *
+     * @defaultValue `1`
+     */
+    page?: number;
+
+    walletAddress: string;
+  }) => Promise<{
+    /** Array of transactions for the current page. */
+    docs: T[];
+    /** Total number of transactions matching the query. */
+    totalDocs: number;
+    /** Total number of available pages. */
+    totalPages: number;
+    /** Current page number. */
+    page: number;
+    /** Indicates whether a next page exists. */
+    hasNextPage: boolean;
+    /** Indicates whether a previous page exists. */
+    hasPrevPage: boolean;
+  } | null>;
 };

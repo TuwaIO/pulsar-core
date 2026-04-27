@@ -10,7 +10,7 @@ import { produce } from 'immer';
 import { persist, PersistOptions } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
-import { ITxTrackingStore, PulsarAdapter, Transaction } from '../types';
+import { ITxTrackingStore, PulsarAdapter, Transaction, TransactionPool, TransactionStatus } from '../types';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 
 /**
@@ -64,6 +64,59 @@ export function createPulsarStore<T extends Transaction>({
               });
             }),
           );
+        },
+
+        injectExternalPendingTxs: async (remoteTxs: T[]) => {
+          const state = get();
+          const adapter = state.getAdapter();
+          const txsToTrack: T[] = [];
+
+          // 1. Synchronously update the local state using Immer
+          set((currentState) =>
+            produce(currentState, (draft) => {
+              const pool = draft.transactionsPool as TransactionPool<T>;
+
+              remoteTxs.forEach((remoteTx) => {
+                const localTx = pool[remoteTx.txKey];
+
+                // Case A: Transaction is pending remotely but doesn't exist locally (Cross-device).
+                if (remoteTx.pending && !localTx) {
+                  pool[remoteTx.txKey] = remoteTx as Extract<T, Transaction>;
+                  txsToTrack.push(remoteTx);
+                }
+
+                // Case B: Self-healing. Local is stuck on pending, but remote says it's terminal.
+                // Note: Ensure `isTerminalStatus` helper is accessible here or re-implemented.
+                const isRemoteTerminal =
+                  remoteTx.status === TransactionStatus.Success ||
+                  remoteTx.status === TransactionStatus.Failed ||
+                  remoteTx.status === TransactionStatus.Replaced;
+
+                if (localTx?.pending && isRemoteTerminal) {
+                  localTx.status = remoteTx.status;
+                  localTx.pending = false;
+                  if (remoteTx.txKey) localTx.txKey = remoteTx.txKey;
+                  if (remoteTx.finishedTimestamp) localTx.finishedTimestamp = remoteTx.finishedTimestamp;
+                }
+              });
+            }),
+          );
+
+          // 2. Asynchronously start trackers for the newly injected pending transactions
+          if (txsToTrack.length > 0) {
+            await Promise.all(
+              txsToTrack.map((tx) => {
+                const foundAdapter = selectAdapterByKey({ adapterKey: tx.adapter, adapter });
+
+                return foundAdapter?.checkAndInitializeTrackerInStore({
+                  tx,
+                  gelatoApiKey,
+                  // Pass the fresh state after the synchronous set above
+                  ...get(),
+                });
+              }),
+            );
+          }
         },
 
         /**

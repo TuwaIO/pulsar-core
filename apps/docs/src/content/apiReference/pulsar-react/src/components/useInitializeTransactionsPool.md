@@ -6,32 +6,21 @@
 
 > **useInitializeTransactionsPool**(`params`): `void`
 
-Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:36](https://github.com/TuwaIO/pulsar-core/blob/4635500b0fb82b05bdae30ba5551c3bed49eb344/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L36)
+Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:50](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L50)
 
-A React hook that triggers the initialization of the transaction pool when the component mounts.
+Re-initializes pending transaction trackers when the component mounts.
 
-This should be used once in your application's layout or root component. It ensures that any
-pending transactions from a previous session (stored in `localStorage`) are picked up and
-
-their trackers are re-activated.
+Use this hook once in your application's root layout or top-level provider.
+It restores tracker activity after reloads and can optionally fetch the initial
+remote transaction history right after restoration.
 
 ## Parameters
 
 ### params
 
-The parameters for the hook.
+[`UseInitializeTransactionsPoolParams`](../type-aliases/UseInitializeTransactionsPoolParams.md)
 
-#### initializeTransactionsPool
-
-() => `Promise`\<`void`\>
-
-The `initializeTransactionsPool` function from your Pulsar store instance.
-
-#### onError?
-
-(`error`) => `void`
-
-An optional custom function to handle any errors that occur during initialization. Defaults to `console.error`.
+Hook configuration.
 
 ## Returns
 
@@ -41,15 +30,13 @@ An optional custom function to handle any errors that occur during initializatio
 
 ```tsx
 import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
-import { pulsarStore } from './path/to/your/store';
 
-function AppLayout({ children }) {
-// This hook will run once when the layout mounts.
-useInitializeTransactionsPool({
-initializeTransactionsPool: pulsarStore.getState().initializeTransactionsPool,
-onError: (err) => console.warn('Failed to re-initialize trackers:', err),
-});
+function AppLayout() {
+  useInitializeTransactionsPool({
+    initializeTransactionsPool: store.getState().initializeTransactionsPool,
+    onError: (error) => console.warn('Failed to restore transactions:', error),
+  });
 
-return <div>{children}</div>;
+  return <div>...</div>;
 }
 ```

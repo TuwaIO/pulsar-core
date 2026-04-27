@@ -6,15 +6,15 @@
 
 > **TxAdapter**\<`T`\> = `Pick`\<`BaseAdapter`, `"getExplorerUrl"`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:270](https://github.com/TuwaIO/pulsar-core/blob/4635500b0fb82b05bdae30ba5551c3bed49eb344/packages/pulsar-core/src/types.ts#L270)
+Defined in: [packages/pulsar-core/src/types.ts:265](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-core/src/types.ts#L265)
 
 Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
 
 ## Type Declaration
 
-### cancelTxAction()?
+### cancelTxAction?
 
-> `optional` **cancelTxAction**: (`tx`) => `Promise`\<`string`\>
+> `optional` **cancelTxAction?**: (`tx`) => `Promise`\<`string`\>
 
 Optional: Logic to cancel a pending EVM transaction.
 
@@ -32,7 +32,7 @@ The transaction to cancel.
 
 The new transaction hash for the cancellation.
 
-### checkAndInitializeTrackerInStore()
+### checkAndInitializeTrackerInStore
 
 > **checkAndInitializeTrackerInStore**: (`params`) => `Promise`\<`void`\> \| `void`
 
@@ -50,7 +50,7 @@ The parameters for initializing the tracker, including the transaction and store
 
 `Promise`\<`void`\> \| `void`
 
-### checkChainForTx()
+### checkChainForTx
 
 > **checkChainForTx**: (`chainId`) => `Promise`\<`void`\>
 
@@ -62,15 +62,15 @@ This method should throw an error if the chain is mismatched.
 
 ##### chainId
 
-The desired chain ID for the transaction.
+`string` \| `number`
 
-`string` | `number`
+The desired chain ID for the transaction.
 
 #### Returns
 
 `Promise`\<`void`\>
 
-### checkTransactionsTracker()
+### checkTransactionsTracker
 
 > **checkTransactionsTracker**: (`{ actionTxKey, connectorType, tracker }`) => `object`
 
@@ -96,7 +96,7 @@ An object containing the final `txKey` and the `TransactionTracker` to be used.
 
 > **txKey**: `string`
 
-### getConnectorInfo()
+### getConnectorInfo
 
 > **getConnectorInfo**: () => `object`
 
@@ -116,9 +116,9 @@ The type of the connector (e.g., 'metamask', 'phantom').
 
 The currently connected wallet address.
 
-### getExplorerTxUrl()?
+### getExplorerTxUrl?
 
-> `optional` **getExplorerTxUrl**: (`tx`) => `string`
+> `optional` **getExplorerTxUrl?**: (`tx`) => `string`
 
 Optional: Constructs a full explorer URL for a specific transaction.
 May require the full transaction pool to resolve details for replaced transactions.
@@ -143,9 +143,9 @@ The full URL to the transaction on the explorer.
 
 The unique key identifying this adapter.
 
-### retryTxAction()?
+### retryTxAction?
 
-> `optional` **retryTxAction**: (`params`) => `Promise`\<`void`\>
+> `optional` **retryTxAction?**: (`params`) => `Promise`\<`void`\>
 
 Optional: Logic to retry a failed transaction.
 
@@ -161,9 +161,9 @@ The parameters for retrying the transaction.
 
 `Promise`\<`void`\>
 
-### speedUpTxAction()?
+### speedUpTxAction?
 
-> `optional` **speedUpTxAction**: (`tx`) => `Promise`\<`string`\>
+> `optional` **speedUpTxAction?**: (`tx`) => `Promise`\<`string`\>
 
 Optional: Logic to speed up a pending EVM transaction.
 
