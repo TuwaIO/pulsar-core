@@ -6,7 +6,7 @@
 
 > **SolanaTransaction** = [`BaseTransaction`](BaseTransaction.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:138](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L138)
+Defined in: [packages/pulsar-core/src/types.ts:144](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L144)
 
 Represents a Solana-specific transaction, extending the base properties.
 
@@ -18,38 +18,26 @@ Represents a Solana-specific transaction, extending the base properties.
 
 The adapter type for Solana transactions.
 
-### confirmations?
-
-> `optional` **confirmations**: `number` \| `string` \| `null`
-
-The number of confirmations received. A string value indicates a confirmed transaction, while `null` means it's pending.
-
 ### fee?
 
-> `optional` **fee**: `number`
+> `optional` **fee?**: `number`
 
 The transaction fee in lamports.
 
 ### instructions?
 
-> `optional` **instructions**: `unknown`[]
+> `optional` **instructions?**: `unknown`[]
 
 The instructions included in the transaction.
 
 ### recentBlockhash?
 
-> `optional` **recentBlockhash**: `string`
+> `optional` **recentBlockhash?**: `string`
 
 The recent blockhash used for the transaction.
 
-### rpcUrl?
-
-> `optional` **rpcUrl**: `string`
-
-The RPC URL used to submit and track this transaction.
-
 ### slot?
 
-> `optional` **slot**: `number`
+> `optional` **slot?**: `number`
 
 The slot in which the transaction was processed.

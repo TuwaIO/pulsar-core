@@ -88,7 +88,11 @@ import { config } from './wagmi'; // Your wagmi config
 async function trackMyTransaction(txHash: string, chainId: number) {
   await evmTracker({
     config,
-    tx: { txKey: txHash, chainId },
+    tx: {
+      txKey: txHash,
+      chainId,
+      requiredConfirmations: 3,
+    },
     onTxDetailsFetched: (txDetails) => {
       console.log('Transaction details:', txDetails);
     },
@@ -100,6 +104,9 @@ async function trackMyTransaction(txHash: string, chainId: number) {
     },
     onFailure: (error) => {
       console.error('Tracking failed:', error);
+    },
+    onConfirmationsUpdate: (confirmations) => {
+      console.log(`Current confirmations: ${confirmations}/3`);
     },
   });
 }

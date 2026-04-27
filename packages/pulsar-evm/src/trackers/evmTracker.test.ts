@@ -19,15 +19,18 @@ vi.mock('viem/actions', async (importActual) => {
     waitForTransactionReceipt: vi.fn(),
     getTransaction: vi.fn(),
     getBlock: vi.fn(),
+    getTransactionConfirmations: vi.fn(),
   };
 });
 
 // We need to await the mocked module to get the mocked functions.
-const { waitForTransactionReceipt, getTransaction, getBlock } = await import('viem/actions');
+const { waitForTransactionReceipt, getTransaction, getBlock, getTransactionConfirmations } =
+  await import('viem/actions');
 const viemActions = {
   waitForTransactionReceipt: vi.mocked(waitForTransactionReceipt),
   getTransaction: vi.mocked(getTransaction),
   getBlock: vi.mocked(getBlock),
+  getTransactionConfirmations: vi.mocked(getTransactionConfirmations),
 };
 
 describe('evmTracker Unit Tests', () => {
@@ -62,6 +65,7 @@ describe('evmTracker Unit Tests', () => {
       onSuccess: vi.fn(),
       onFailure: vi.fn(),
       onReplaced: vi.fn(),
+      onConfirmationsUpdate: vi.fn(),
       tx: {
         txKey: '0x0908f7a70a9f8acd9ced904f4e288bc46ae42923ce82bde706b26fdb8452abec',
         chainId: sepolia.id,
@@ -157,6 +161,39 @@ describe('evmTracker Unit Tests', () => {
     expect(baseTrackerParams.onReplaced).toHaveBeenCalledTimes(1);
     expect(baseTrackerParams.onReplaced).toHaveBeenCalledWith(replacementData);
     expect(baseTrackerParams.onSuccess).not.toHaveBeenCalled();
+  });
+
+  test('should wait for required confirmations before calling onSuccess', async () => {
+    vi.useFakeTimers();
+    const mockReceipt = { status: 'success', transactionHash: baseTrackerParams.tx.txKey } as TransactionReceipt;
+    viemActions.waitForTransactionReceipt.mockResolvedValue(mockReceipt);
+
+    // Simulate confirmation progress: 1 -> 2 -> 3
+    viemActions.getTransactionConfirmations
+      .mockResolvedValueOnce(1n)
+      .mockResolvedValueOnce(2n)
+      .mockResolvedValueOnce(3n);
+
+    const trackerPromise = evmTracker({
+      ...baseTrackerParams,
+      tx: {
+        ...baseTrackerParams.tx,
+        requiredConfirmations: 3,
+      },
+    });
+
+    // Fast-forward through the polling loops
+    await vi.advanceTimersByTimeAsync(5000); // 1st poll
+    await vi.advanceTimersByTimeAsync(5000); // 2nd poll
+    await vi.advanceTimersByTimeAsync(5000); // 3rd poll
+
+    await trackerPromise;
+
+    expect(baseTrackerParams.onConfirmationsUpdate).toHaveBeenCalledWith(1);
+    expect(baseTrackerParams.onConfirmationsUpdate).toHaveBeenCalledWith(2);
+    expect(baseTrackerParams.onConfirmationsUpdate).toHaveBeenCalledWith(3);
+    expect(baseTrackerParams.onSuccess).toHaveBeenCalled();
+    vi.useRealTimers();
   });
 });
 
@@ -390,5 +427,36 @@ describe('evmTrackerForStore Unit Tests - TrackerCallbacks', () => {
         pending: false,
       }),
     );
+  });
+
+  test('should update confirmations in store when tracking with requiredConfirmations', async () => {
+    vi.useFakeTimers();
+    const mockReceipt = { status: 'success', blockNumber: 1n } as TransactionReceipt;
+    viemActions.waitForTransactionReceipt.mockResolvedValue(mockReceipt);
+    viemActions.getTransactionConfirmations.mockResolvedValue(2n);
+
+    const updateTxParams = vi.fn() as unknown as ITxTrackingStore<Transaction>['updateTxParams'];
+    const tx = { ...createMockTx(), requiredConfirmations: 2 };
+
+    const trackerPromise = evmTrackerForStore({
+      tx,
+      config,
+      updateTxParams,
+      // @ts-expect-error - transactionsPool is not typed correctly in tests
+      transactionsPool,
+      onSuccess: vi.fn(),
+    });
+
+    await vi.advanceTimersByTimeAsync(5000);
+    await trackerPromise;
+
+    expect(updateTxParams).toHaveBeenCalledWith(mockTxKey, expect.objectContaining({ confirmations: 2 }));
+    expect(updateTxParams).toHaveBeenCalledWith(
+      mockTxKey,
+      expect.objectContaining({
+        status: TransactionStatus.Success,
+      }),
+    );
+    vi.useRealTimers();
   });
 });

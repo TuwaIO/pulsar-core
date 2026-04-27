@@ -87,6 +87,6 @@ export async function cancelTxAction<T extends Transaction>({ config, tx }: { co
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : String(e);
     // Re-throw the error with more context for easier debugging.
-    throw new Error(`Failed to cancel transaction: ${errorMessage}`);
+    throw new Error(`Failed to cancel transaction: ${errorMessage}`, { cause: e });
   }
 }

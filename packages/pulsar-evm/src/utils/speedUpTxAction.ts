@@ -88,6 +88,6 @@ export async function speedUpTxAction<T extends Transaction>({ config, tx }: { c
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : String(e);
     // Re-throw the error with more context for easier debugging.
-    throw new Error(`Failed to speed up transaction: ${errorMessage}`);
+    throw new Error(`Failed to speed up transaction: ${errorMessage}`, { cause: e });
   }
 }

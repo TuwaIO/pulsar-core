@@ -43,8 +43,8 @@
     }
   ],
   "peerDependencies": {
-    "@tuwaio/orbit-core": ">=0.2.7",
-    "@tuwaio/orbit-solana": ">=0.2.3",
+    "@tuwaio/orbit-core": ">=0.2.8",
+    "@tuwaio/orbit-solana": ">=0.2.4",
     "@tuwaio/pulsar-core": ">=0.5",
     "@wallet-standard/app": "1.x.x",
     "@wallet-standard/ui-core": "1.x.x",
@@ -56,18 +56,18 @@
   },
   "devDependencies": {
     "@tuwaio/pulsar-core": "workspace:^",
-    "@tuwaio/orbit-core": "^0.2.7",
-    "@tuwaio/orbit-solana": "^0.2.3",
+    "@tuwaio/orbit-core": "1.0.0-fix-ens-alpha.2.21c16d0",
+    "@tuwaio/orbit-solana": "1.0.0-fix-ens-alpha.2.21c16d0",
     "@wallet-standard/app": "^1.1.0",
     "@wallet-standard/ui-core": "^1.0.0",
     "@wallet-standard/ui-registry": "^1.0.1",
-    "dayjs": "^1.11.19",
+    "dayjs": "^1.11.20",
     "gill": "^0.14.0",
     "immer": "^11.1.4",
-    "jsdom": "^28.1.0",
+    "jsdom": "^29.1.0",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18",
-    "zustand": "^5.0.11"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5",
+    "zustand": "^5.0.12"
   }
 }

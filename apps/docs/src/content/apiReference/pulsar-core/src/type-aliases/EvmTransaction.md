@@ -6,7 +6,7 @@
 
 > **EvmTransaction** = [`BaseTransaction`](BaseTransaction.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:114](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L114)
+Defined in: [packages/pulsar-core/src/types.ts:120](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L120)
 
 Represents an EVM-specific transaction, extending the base properties with EVM fields.
 
@@ -20,48 +20,48 @@ The adapter type for EVM transactions.
 
 ### hash?
 
-> `optional` **hash**: `` `0x${string}` ``
+> `optional` **hash?**: `` `0x${string}` ``
 
 The on-chain transaction hash, available after submission.
 
 ### input?
 
-> `optional` **input**: `` `0x${string}` ``
+> `optional` **input?**: `` `0x${string}` ``
 
 The data payload for the transaction, typically for smart contract interactions.
 
 ### maxFeePerGas?
 
-> `optional` **maxFeePerGas**: `string`
+> `optional` **maxFeePerGas?**: `string`
 
 The maximum fee per gas for an EIP-1559 transaction (in wei).
 
 ### maxPriorityFeePerGas?
 
-> `optional` **maxPriorityFeePerGas**: `string`
+> `optional` **maxPriorityFeePerGas?**: `string`
 
 The maximum priority fee per gas for an EIP-1559 transaction (in wei).
 
 ### nonce?
 
-> `optional` **nonce**: `number`
+> `optional` **nonce?**: `number`
 
 The transaction nonce, a sequential number for the sender's account.
 
 ### replacedTxHash?
 
-> `optional` **replacedTxHash**: `` `0x${string}` ``
+> `optional` **replacedTxHash?**: `` `0x${string}` ``
 
 The hash of a transaction that this one replaced.
 
 ### to?
 
-> `optional` **to**: `` `0x${string}` ``
+> `optional` **to?**: `` `0x${string}` ``
 
 The recipient's address or contract address.
 
 ### value?
 
-> `optional` **value**: `string`
+> `optional` **value?**: `string`
 
 The amount of native currency (in wei) being sent.

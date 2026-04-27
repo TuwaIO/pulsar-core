@@ -6,7 +6,7 @@
 
 > **InitialTransaction** = [`InitialTransactionParams`](InitialTransactionParams.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:204](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L204)
+Defined in: [packages/pulsar-core/src/types.ts:197](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L197)
 
 Represents a transaction in its temporary, pre-submission state.
 This is used for UI feedback while the transaction is being signed and sent.
@@ -15,7 +15,7 @@ This is used for UI feedback while the transaction is being signed and sent.
 
 ### error?
 
-> `optional` **error**: `TuwaErrorState`
+> `optional` **error?**: `TuwaErrorState`
 
 Normalized error if the initialization fails (e.g., user rejects signature).
 
@@ -27,7 +27,7 @@ A flag indicating if the transaction is being processed (e.g., waiting for signa
 
 ### lastTxKey?
 
-> `optional` **lastTxKey**: `string`
+> `optional` **lastTxKey?**: `string`
 
 The `txKey` of the on-chain transaction that this action produced, used for linking the states.
 

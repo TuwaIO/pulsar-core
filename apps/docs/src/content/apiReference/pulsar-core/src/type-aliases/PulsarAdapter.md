@@ -6,7 +6,7 @@
 
 > **PulsarAdapter**\<`T`\> = `OrbitGenericAdapter`\<[`TxAdapter`](TxAdapter.md)\<`T`\>\> & `object` & [`SyncCallbacks`](../interfaces/SyncCallbacks.md)\<`T`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:245](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L245)
+Defined in: [packages/pulsar-core/src/types.ts:238](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L238)
 
 The configuration object containing one or more transaction adapters.
 
@@ -14,11 +14,11 @@ The configuration object containing one or more transaction adapters.
 
 ### gelatoApiKey?
 
-> `optional` **gelatoApiKey**: `string`
+> `optional` **gelatoApiKey?**: `string`
 
 ### maxTransactions?
 
-> `optional` **maxTransactions**: `number`
+> `optional` **maxTransactions?**: `number`
 
 ## Type Parameters
 

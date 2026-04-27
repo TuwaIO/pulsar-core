@@ -79,8 +79,8 @@ export type BaseTransaction = {
   isTrackedModalOpen?: boolean;
   /** The local timestamp (in seconds) when the transaction was initiated by the user. */
   localTimestamp: number;
-  /** Any additional, custom data associated with the transaction. */
-  payload?: object;
+  /** Custom data (strings or numbers) to associate with the transaction. */
+  payload?: Record<string, string | number>;
   /** A flag indicating if the transaction is still awaiting on-chain confirmation. */
   pending: boolean;
   /** The final on-chain status of the transaction. */
@@ -94,7 +94,7 @@ export type BaseTransaction = {
    * title: ['Processing Swap', 'Swap Complete', 'Swap Error', 'Swap Replaced']
    */
   title?: string | [string, string, string, string];
-  /** The specific tracker responsible for monitoring this transaction's status. */
+  /** The specific tracker responsible for monitoring this transaction's status. Required for Gelato tracker. */
   tracker: TransactionTracker;
   /** The unique identifier for the transaction (e.g., EVM hash, Solana signature, or Gelato task ID). */
   txKey: string;
@@ -102,6 +102,12 @@ export type BaseTransaction = {
   type: string;
   /** The type of connector used to sign the transaction (e.g., 'injected', 'walletConnect'). */
   connectorType: string;
+  /** The number of confirmations required for the transaction to be considered confirmed. */
+  requiredConfirmations?: number;
+  /** The number of confirmations received. A string value indicates a confirmed transaction, while `null` means it's pending. */
+  confirmations?: number | string | null;
+  /** The RPC URL to use for the transaction. Required for Solana transactions. */
+  rpcUrl?: string;
 };
 
 // =================================================================================================
@@ -146,10 +152,6 @@ export type SolanaTransaction = BaseTransaction & {
   recentBlockhash?: string;
   /** The slot in which the transaction was processed. */
   slot?: number;
-  /** The number of confirmations received. A string value indicates a confirmed transaction, while `null` means it's pending. */
-  confirmations?: number | string | null;
-  /** The RPC URL used to submit and track this transaction. */
-  rpcUrl?: string;
 };
 
 /**
@@ -174,27 +176,18 @@ export type Transaction = EvmTransaction | SolanaTransaction | StarknetTransacti
 /**
  * Represents the parameters required to initiate a new transaction tracking flow.
  */
-export type InitialTransactionParams = {
+export type InitialTransactionParams = Pick<
+  BaseTransaction,
+  'description' | 'title' | 'type' | 'tracker' | 'requiredConfirmations' | 'rpcUrl' | 'chainId' | 'payload'
+> & {
   /** The specific blockchain adapter for this transaction. */
   adapter: OrbitAdapter;
   /** The function that executes the on-chain action (e.g., sending a transaction) and returns a preliminary identifier like a hash. */
   actionFunction: (...args: any[]) => Promise<ActionTxKey | undefined>;
-  /** A user-facing description for the transaction. Supports state-specific descriptions. */
-  description?: string | [string, string, string, string];
   /** The target chain ID for the transaction. */
   desiredChainID: number | string;
-  /** Any custom data to associate with the transaction. */
-  payload?: object;
-  /** A user-facing title for the transaction. Supports state-specific titles. */
-  title?: string | [string, string, string, string];
-  /** The application-specific type of the transaction. */
-  type: string;
   /** If true, the detailed tracking modal will open automatically upon initiation. */
   withTrackedModal?: boolean;
-  /** The RPC URL to use for the transaction. Required for Solana transactions. */
-  rpcUrl?: string;
-  /** The transaction tracker. Required for Gelato transactions. */
-  tracker?: TransactionTracker;
 };
 
 /**
@@ -365,6 +358,8 @@ export type UpdatableTransactionFields = Partial<
     | 'maxFeePerGas'
     | 'input'
     | 'value'
+    | 'confirmations'
+    | 'requiredConfirmations'
   >
 > &
   Partial<Pick<SolanaTransaction, 'slot' | 'confirmations' | 'fee' | 'instructions' | 'recentBlockhash' | 'rpcUrl'>>;

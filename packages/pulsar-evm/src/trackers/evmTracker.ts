@@ -16,18 +16,19 @@ import {
   WaitForTransactionReceiptParameters,
   zeroHash,
 } from 'viem';
-import { getBlock, getTransaction, waitForTransactionReceipt } from 'viem/actions';
+import { getBlock, getTransaction, getTransactionConfirmations, waitForTransactionReceipt } from 'viem/actions';
 
 const DEFAULT_RETRY_COUNT = 10;
 const DEFAULT_RETRY_TIMEOUT_MS = 3000;
 const RECEIPT_MAX_RETRIES = 3;
 const RECEIPT_RETRY_DELAY = 10_000; // 10s between outer retries
+const CONFIRMATIONS_POLLING_INTERVAL = 5000; // 5s between confirmation checks
 
 /**
  * Defines the parameters for the low-level EVM transaction tracker.
  */
 export type EVMTrackerParams = {
-  tx: Pick<Transaction, 'chainId' | 'txKey'>;
+  tx: Pick<Transaction, 'chainId' | 'txKey' | 'requiredConfirmations'>;
   config: Config;
   onTxDetailsFetched: (txDetails: GetTransactionReturnType) => void;
   onSuccess: (txDetails: GetTransactionReturnType, receipt: TransactionReceipt, client: Client) => Promise<void>;
@@ -36,6 +37,7 @@ export type EVMTrackerParams = {
   onInitialize?: () => void;
   retryCount?: number;
   retryTimeout?: number;
+  onConfirmationsUpdate?: (confirmations: number) => void;
   waitForTransactionReceiptParams?: WaitForTransactionReceiptParameters;
 };
 
@@ -56,8 +58,10 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
     onReplaced,
     retryCount = DEFAULT_RETRY_COUNT,
     retryTimeout = DEFAULT_RETRY_TIMEOUT_MS,
+    onConfirmationsUpdate,
     waitForTransactionReceiptParams,
   } = params;
+  const { requiredConfirmations } = tx;
 
   onInitialize?.();
 
@@ -103,7 +107,26 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
         },
         ...waitForTransactionReceiptParams,
       });
-      if (!wasReplaced) await onSuccess(txDetails, receipt, client);
+      if (!wasReplaced) {
+        // 3. Wait for required confirmations if specified.
+        const needed = requiredConfirmations ?? 1;
+        if (needed > 1) {
+          while (true) {
+            try {
+              const confirmations = await getTransactionConfirmations(client, { hash: txDetails.hash });
+              const current = Number(confirmations);
+              onConfirmationsUpdate?.(current);
+
+              if (current >= needed) break;
+            } catch (error) {
+              // Non-blocking error, just log and retry.
+              console.warn(`[evmTracker] Error fetching confirmations for ${tx.txKey}:`, error);
+            }
+            await new Promise((resolve) => setTimeout(resolve, CONFIRMATIONS_POLLING_INTERVAL));
+          }
+        }
+        await onSuccess(txDetails, receipt, client);
+      }
       return;
     } catch (error) {
       const isTransient = error instanceof Error && error.name === 'TransactionReceiptNotFoundError';
@@ -147,6 +170,9 @@ export async function evmTrackerForStore<T extends Transaction>(
         maxFeePerGas: txDetails.maxFeePerGas?.toString(),
         maxPriorityFeePerGas: txDetails.maxPriorityFeePerGas?.toString(),
       });
+    },
+    onConfirmationsUpdate: (confirmations) => {
+      updateTxParams(tx.txKey, { confirmations });
     },
     onSuccess: async (txDetails, receipt, client) => {
       const block = await getBlock(client, { blockNumber: receipt.blockNumber });

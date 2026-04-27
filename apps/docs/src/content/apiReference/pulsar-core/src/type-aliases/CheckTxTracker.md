@@ -6,7 +6,7 @@
 
 > **CheckTxTracker** = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:259](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L259)
+Defined in: [packages/pulsar-core/src/types.ts:252](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L252)
 
 Represents a tracker for a specific transaction tied to an action and a connector.
 
@@ -16,7 +16,7 @@ Represents a tracker for a specific transaction tied to an action and a connecto
 
 > **actionTxKey**: [`ActionTxKey`](ActionTxKey.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:260](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L260)
+Defined in: [packages/pulsar-core/src/types.ts:253](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L253)
 
 The key identifying the specific action related to the transaction.
 
@@ -26,7 +26,7 @@ The key identifying the specific action related to the transaction.
 
 > **connectorType**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:261](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L261)
+Defined in: [packages/pulsar-core/src/types.ts:254](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L254)
 
 The type of connector used for the transaction (e.g., wallet provider, blockchain interface).
 
@@ -34,9 +34,9 @@ The type of connector used for the transaction (e.g., wallet provider, blockchai
 
 ### gelatoApiKey?
 
-> `optional` **gelatoApiKey**: `string`
+> `optional` **gelatoApiKey?**: `string`
 
-Defined in: [packages/pulsar-core/src/types.ts:263](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L263)
+Defined in: [packages/pulsar-core/src/types.ts:256](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L256)
 
 An optional Gelato API key for Gelato relayer integration.
 
@@ -44,8 +44,8 @@ An optional Gelato API key for Gelato relayer integration.
 
 ### tracker?
 
-> `optional` **tracker**: [`TransactionTracker`](../enumerations/TransactionTracker.md)
+> `optional` **tracker?**: [`TransactionTracker`](../enumerations/TransactionTracker.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:262](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L262)
+Defined in: [packages/pulsar-core/src/types.ts:255](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L255)
 
 An optional tracker object that monitors the status and progress of the transaction.

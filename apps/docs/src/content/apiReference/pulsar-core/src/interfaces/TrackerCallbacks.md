@@ -4,7 +4,7 @@
 
 # TrackerCallbacks\<T\>
 
-Defined in: [packages/pulsar-core/src/types.ts:223](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L223)
+Defined in: [packages/pulsar-core/src/types.ts:216](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L216)
 
 Defines the standard callback structure for transaction events.
 
@@ -18,11 +18,11 @@ The specific transaction type, extending `Transaction`.
 
 ## Properties
 
-### onError()?
+### onError?
 
-> `optional` **onError**: (`error`, `tx?`) => `void` \| `Promise`\<`void`\>
+> `optional` **onError?**: (`error`, `tx?`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:225](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L225)
+Defined in: [packages/pulsar-core/src/types.ts:218](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L218)
 
 #### Parameters
 
@@ -40,11 +40,11 @@ Defined in: [packages/pulsar-core/src/types.ts:225](https://github.com/TuwaIO/pu
 
 ***
 
-### onReplaced()?
+### onReplaced?
 
-> `optional` **onReplaced**: (`newTx`, `oldTx`) => `void` \| `Promise`\<`void`\>
+> `optional` **onReplaced?**: (`newTx`, `oldTx`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:226](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L226)
+Defined in: [packages/pulsar-core/src/types.ts:219](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L219)
 
 #### Parameters
 
@@ -62,11 +62,11 @@ Defined in: [packages/pulsar-core/src/types.ts:226](https://github.com/TuwaIO/pu
 
 ***
 
-### onSuccess()?
+### onSuccess?
 
-> `optional` **onSuccess**: (`tx`) => `void` \| `Promise`\<`void`\>
+> `optional` **onSuccess?**: (`tx`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:224](https://github.com/TuwaIO/pulsar-core/blob/e4ac858d48fffccbb983da2317a9e4133a8cabfb/packages/pulsar-core/src/types.ts#L224)
+Defined in: [packages/pulsar-core/src/types.ts:217](https://github.com/TuwaIO/pulsar-core/blob/1c91d65eda8baf365ba3ddea0556929964753b54/packages/pulsar-core/src/types.ts#L217)
 
 #### Parameters
 

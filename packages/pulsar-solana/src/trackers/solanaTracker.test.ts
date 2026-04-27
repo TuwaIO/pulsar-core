@@ -177,10 +177,7 @@ describe('solanaTrackerForStore', () => {
     config.onFailure(mockFailureResponse);
 
     // The error passed to onError should be the raw TransactionError
-    expect(mockParams.onError).toHaveBeenCalledWith(
-      txError,
-      expect.objectContaining({ txKey: mockTx.txKey }),
-    );
+    expect(mockParams.onError).toHaveBeenCalledWith(txError, expect.objectContaining({ txKey: mockTx.txKey }));
   });
 
   test('should call updateTxParams with FAILED on onFailure callback (timeout)', () => {
