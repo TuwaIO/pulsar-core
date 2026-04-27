@@ -6,7 +6,7 @@
 
 > **EVMTrackerParams** = `object`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:30](https://github.com/TuwaIO/pulsar-core/blob/8be19767362bf473366bbca846b06a4e9e0f99de/packages/pulsar-evm/src/trackers/evmTracker.ts#L30)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:30](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/trackers/evmTracker.ts#L30)
 
 Defines the parameters for the low-level EVM transaction tracker.
 
@@ -16,7 +16,7 @@ Defines the parameters for the low-level EVM transaction tracker.
 
 > **config**: `Config`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:32](https://github.com/TuwaIO/pulsar-core/blob/8be19767362bf473366bbca846b06a4e9e0f99de/packages/pulsar-evm/src/trackers/evmTracker.ts#L32)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:32](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/trackers/evmTracker.ts#L32)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:32](https://github.c
 
 > `optional` **onConfirmationsUpdate?**: (`confirmations`) => `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:40](https://github.com/TuwaIO/pulsar-core/blob/8be19767362bf473366bbca846b06a4e9e0f99de/packages/pulsar-evm/src/trackers/evmTracker.ts#L40)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:40](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/trackers/evmTracker.ts#L40)
 
 #### Parameters
 
@@ -42,7 +42,7 @@ Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:40](https://github.c
 
 > **onFailure**: (`error?`) => `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:36](https://github.com/TuwaIO/pulsar-core/blob/8be19767362bf473366bbca846b06a4e9e0f99de/packages/pulsar-evm/src/trackers/evmTracker.ts#L36)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:36](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/trackers/evmTracker.ts#L36)
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:36](https://github.c
 
 > `optional` **onInitialize?**: () => `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:37](https://github.com/TuwaIO/pulsar-core/blob/8be19767362bf473366bbca846b06a4e9e0f99de/packages/pulsar-evm/src/trackers/evmTracker.ts#L37)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:37](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/trackers/evmTracker.ts#L37)
 
 #### Returns
 
@@ -72,7 +72,7 @@ Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:37](https://github.c
 
 > **onReplaced**: (`replacement`) => `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:35](https://github.com/TuwaIO/pulsar-core/blob/8be19767362bf473366bbca846b06a4e9e0f99de/packages/pulsar-evm/src/trackers/evmTracker.ts#L35)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:35](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/trackers/evmTracker.ts#L35)
 
 #### Parameters
 
@@ -90,7 +90,7 @@ Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:35](https://github.c
 
 > **onSuccess**: (`txDetails`, `receipt`, `client`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:34](https://github.com/TuwaIO/pulsar-core/blob/8be19767362bf473366bbca846b06a4e9e0f99de/packages/pulsar-evm/src/trackers/evmTracker.ts#L34)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:34](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/trackers/evmTracker.ts#L34)
 
 #### Parameters
 
@@ -116,7 +116,7 @@ Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:34](https://github.c
 
 > **onTxDetailsFetched**: (`txDetails`) => `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:33](https://github.com/TuwaIO/pulsar-core/blob/8be19767362bf473366bbca846b06a4e9e0f99de/packages/pulsar-evm/src/trackers/evmTracker.ts#L33)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:33](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/trackers/evmTracker.ts#L33)
 
 #### Parameters
 
@@ -134,7 +134,7 @@ Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:33](https://github.c
 
 > `optional` **retryCount?**: `number`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:38](https://github.com/TuwaIO/pulsar-core/blob/8be19767362bf473366bbca846b06a4e9e0f99de/packages/pulsar-evm/src/trackers/evmTracker.ts#L38)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:38](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/trackers/evmTracker.ts#L38)
 
 ***
 
@@ -142,7 +142,7 @@ Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:38](https://github.c
 
 > `optional` **retryTimeout?**: `number`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:39](https://github.com/TuwaIO/pulsar-core/blob/8be19767362bf473366bbca846b06a4e9e0f99de/packages/pulsar-evm/src/trackers/evmTracker.ts#L39)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:39](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/trackers/evmTracker.ts#L39)
 
 ***
 
@@ -150,7 +150,7 @@ Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:39](https://github.c
 
 > **tx**: `Pick`\<`Transaction`, `"chainId"` \| `"txKey"` \| `"requiredConfirmations"`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:31](https://github.com/TuwaIO/pulsar-core/blob/8be19767362bf473366bbca846b06a4e9e0f99de/packages/pulsar-evm/src/trackers/evmTracker.ts#L31)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:31](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/trackers/evmTracker.ts#L31)
 
 ***
 
@@ -158,4 +158,4 @@ Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:31](https://github.c
 
 > `optional` **waitForTransactionReceiptParams?**: `WaitForTransactionReceiptParameters`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:41](https://github.com/TuwaIO/pulsar-core/blob/8be19767362bf473366bbca846b06a4e9e0f99de/packages/pulsar-evm/src/trackers/evmTracker.ts#L41)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:41](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/trackers/evmTracker.ts#L41)

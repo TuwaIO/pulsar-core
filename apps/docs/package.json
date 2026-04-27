@@ -15,7 +15,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@tuwaio/pulsar-core": "workspace:^",
-    "@tuwaio/orbit-core": "1.0.0-fix-ens-alpha.2.21c16d0",
+    "@tuwaio/orbit-core": "^0.2.8",
     "@tuwaio/docs-ui": "^0.0.8",
     "next": "^16.2.4",
     "next-themes": "^0.4.6",
