@@ -178,7 +178,7 @@ export type Transaction = EvmTransaction | SolanaTransaction | StarknetTransacti
  */
 export type InitialTransactionParams = Pick<
   BaseTransaction,
-  'description' | 'title' | 'type' | 'tracker' | 'requiredConfirmations' | 'rpcUrl' | 'chainId' | 'payload'
+  'description' | 'title' | 'type' | 'tracker' | 'requiredConfirmations' | 'rpcUrl' | 'payload'
 > & {
   /** The specific blockchain adapter for this transaction. */
   adapter: OrbitAdapter;
