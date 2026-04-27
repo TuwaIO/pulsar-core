@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.4.1...pulsar-evm-v0.5.0) (2026-04-27)
+
+
+### Features
+
+* added in memory logic & requiredConfirmation logic; updated: packages; ([#63](https://github.com/TuwaIO/pulsar-core/issues/63)) ([2916e7c](https://github.com/TuwaIO/pulsar-core/commit/2916e7c38725fb40e18fa42dfb539f4a8d0ca334))
+
 ## [0.4.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.4.0...pulsar-evm-v0.4.1) (2026-03-03)
 
 

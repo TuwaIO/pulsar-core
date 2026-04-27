@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.5.1...pulsar-solana-v0.6.0) (2026-04-27)
+
+
+### Features
+
+* added in memory logic & requiredConfirmation logic; updated: packages; ([#63](https://github.com/TuwaIO/pulsar-core/issues/63)) ([2916e7c](https://github.com/TuwaIO/pulsar-core/commit/2916e7c38725fb40e18fa42dfb539f4a8d0ca334))
+
 ## [0.5.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.5.0...pulsar-solana-v0.5.1) (2026-03-03)
 
 
