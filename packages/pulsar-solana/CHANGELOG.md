@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.6.1...pulsar-solana-v0.6.2) (2026-05-09)
+
+
+### Bug Fixes
+
+* packages ([897076a](https://github.com/TuwaIO/pulsar-core/commit/897076aa5e56338b9358abcd852cbd18d223e56f))
+* tx in memory store logic ([bfc0aae](https://github.com/TuwaIO/pulsar-core/commit/bfc0aae5e0464a9da46a97e56a60b533c56f1df2))
+
 ## [0.6.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.6.0...pulsar-solana-v0.6.1) (2026-05-09)
 
 
