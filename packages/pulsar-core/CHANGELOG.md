@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.1...pulsar-core-v0.6.2) (2026-05-09)
+
+
+### Bug Fixes
+
+* tx in memory store logic ([bfc0aae](https://github.com/TuwaIO/pulsar-core/commit/bfc0aae5e0464a9da46a97e56a60b533c56f1df2))
+
 ## [0.6.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.0...pulsar-core-v0.6.1) (2026-05-09)
 
 
