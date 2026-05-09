@@ -42,6 +42,21 @@ const mergeTransactionIntoPool = <T extends Transaction>(pool: TransactionPool<T
     }
 
     if (existingTx.pending) {
+      // If the incoming tx is terminal (Success/Replaced), it wins.
+      if (isTerminalStatus(tx.status)) {
+        pool[tx.txKey] = { ...existingTx, ...tx };
+        return true;
+      }
+
+      // If both are pending, we only update if the new one has more confirmations.
+      const newConfirmations = typeof tx.confirmations === 'number' ? tx.confirmations : 0;
+      const oldConfirmations = typeof existingTx.confirmations === 'number' ? existingTx.confirmations : 0;
+
+      if (newConfirmations > oldConfirmations) {
+        pool[tx.txKey] = { ...existingTx, ...tx };
+        return true;
+      }
+
       return false;
     }
   }

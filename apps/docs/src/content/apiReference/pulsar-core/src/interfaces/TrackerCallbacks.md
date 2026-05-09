@@ -4,7 +4,7 @@
 
 # TrackerCallbacks\<T\>
 
-Defined in: [packages/pulsar-core/src/types.ts:218](https://github.com/TuwaIO/pulsar-core/blob/ab16a1aebc8b33c0a47cb0737caca7e0c28e4818/packages/pulsar-core/src/types.ts#L218)
+Defined in: [packages/pulsar-core/src/types.ts:218](https://github.com/TuwaIO/pulsar-core/blob/67e084a82254dbfdb29bea89f48ef8ff884b8379/packages/pulsar-core/src/types.ts#L218)
 
 Defines the standard callback structure for transaction events.
 
@@ -22,7 +22,7 @@ The specific transaction type, extending `Transaction`.
 
 > `optional` **onError?**: (`error`, `tx?`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:220](https://github.com/TuwaIO/pulsar-core/blob/ab16a1aebc8b33c0a47cb0737caca7e0c28e4818/packages/pulsar-core/src/types.ts#L220)
+Defined in: [packages/pulsar-core/src/types.ts:220](https://github.com/TuwaIO/pulsar-core/blob/67e084a82254dbfdb29bea89f48ef8ff884b8379/packages/pulsar-core/src/types.ts#L220)
 
 #### Parameters
 
@@ -44,7 +44,7 @@ Defined in: [packages/pulsar-core/src/types.ts:220](https://github.com/TuwaIO/pu
 
 > `optional` **onReplaced?**: (`newTx`, `oldTx`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:221](https://github.com/TuwaIO/pulsar-core/blob/ab16a1aebc8b33c0a47cb0737caca7e0c28e4818/packages/pulsar-core/src/types.ts#L221)
+Defined in: [packages/pulsar-core/src/types.ts:221](https://github.com/TuwaIO/pulsar-core/blob/67e084a82254dbfdb29bea89f48ef8ff884b8379/packages/pulsar-core/src/types.ts#L221)
 
 #### Parameters
 
@@ -66,7 +66,7 @@ Defined in: [packages/pulsar-core/src/types.ts:221](https://github.com/TuwaIO/pu
 
 > `optional` **onSuccess?**: (`tx`) => `void` \| `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:219](https://github.com/TuwaIO/pulsar-core/blob/ab16a1aebc8b33c0a47cb0737caca7e0c28e4818/packages/pulsar-core/src/types.ts#L219)
+Defined in: [packages/pulsar-core/src/types.ts:219](https://github.com/TuwaIO/pulsar-core/blob/67e084a82254dbfdb29bea89f48ef8ff884b8379/packages/pulsar-core/src/types.ts#L219)
 
 #### Parameters
 

@@ -48,7 +48,7 @@
     "@tuwaio/pulsar-core": ">=0.5",
     "@wallet-standard/app": "1.x.x",
     "@wallet-standard/ui-core": "1.x.x",
-    "@wallet-standard/ui-registry": "1.x.x",
+    "@wallet-standard/ui-registry": "1.1.x",
     "gill": ">=0.14",
     "dayjs": "1.x.x",
     "immer": "11.x.x",

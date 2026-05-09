@@ -6,7 +6,7 @@
 
 > `const` **SafeTransactionServiceUrls**: `Record`\<`number`, `string`\>
 
-Defined in: [packages/pulsar-evm/src/utils/safeConstants.ts:64](https://github.com/TuwaIO/pulsar-core/blob/ab16a1aebc8b33c0a47cb0737caca7e0c28e4818/packages/pulsar-evm/src/utils/safeConstants.ts#L64)
+Defined in: [packages/pulsar-evm/src/utils/safeConstants.ts:64](https://github.com/TuwaIO/pulsar-core/blob/67e084a82254dbfdb29bea89f48ef8ff884b8379/packages/pulsar-evm/src/utils/safeConstants.ts#L64)
 
 A comprehensive mapping of chain IDs to their corresponding Safe Transaction Service API endpoints.
 This is used by the `safeTracker` to fetch the status of multisig transactions from the correct service.
