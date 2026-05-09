@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.0...pulsar-evm-v0.5.1) (2026-05-09)
+
+
+### Bug Fixes
+
+* update sync tx with db and fix docs a little ([fa9c9b1](https://github.com/TuwaIO/pulsar-core/commit/fa9c9b1b8256863123bb4dc8df0a24b7bef3545a))
+* updated packages ([fa9c9b1](https://github.com/TuwaIO/pulsar-core/commit/fa9c9b1b8256863123bb4dc8df0a24b7bef3545a))
+
 ## [0.5.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.4.1...pulsar-evm-v0.5.0) (2026-04-27)
 
 
