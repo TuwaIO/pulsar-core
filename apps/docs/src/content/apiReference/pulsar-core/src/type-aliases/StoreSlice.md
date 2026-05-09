@@ -6,7 +6,7 @@
 
 > **StoreSlice**\<`T`, `S`\> = (`set`, `get`) => `T`
 
-Defined in: [packages/pulsar-core/src/types.ts:9](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-core/src/types.ts#L9)
+Defined in: [packages/pulsar-core/src/types.ts:9](https://github.com/TuwaIO/pulsar-core/blob/ab16a1aebc8b33c0a47cb0737caca7e0c28e4818/packages/pulsar-core/src/types.ts#L9)
 
 A utility type for creating modular Zustand store slices, enabling composable state management.
 

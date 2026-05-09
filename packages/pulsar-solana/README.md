@@ -6,7 +6,7 @@
 
 An advanced toolkit for the Pulsar Engine that adds comprehensive support for tracking transactions on the Solana blockchain. It is built to leverage **Wallet Standard**, integrating seamlessly with modern Solana wallet ecosystems, and uses **`gill`** for modern blockchain interaction.
 
------
+---
 
 ## 🏛️ What is `@tuwaio/pulsar-solana`?
 
@@ -14,7 +14,7 @@ This package is a powerful, official adapter for `@tuwaio/pulsar-core`. It's des
 
 The architecture is designed for multi-chain robustness. You can provide RPC endpoints for different Solana clusters (e.g., Mainnet Beta, Devnet), and the adapter will automatically use the correct one based on the user's connected wallet state.
 
------
+---
 
 ## ✨ Core Features
 
@@ -24,7 +24,7 @@ The architecture is designed for multi-chain robustness. You can provide RPC end
 - **🌐 Network Verification:** Includes a utility (`checkSolanaChain`) to verify that the connected wallet's cluster matches the one required by the transaction.
 - **💡 Optional Wallet:** The adapter can be initialized without a wallet for read-only operations, such as displaying transaction history.
 
------
+---
 
 ## 💾 Installation
 
@@ -33,7 +33,7 @@ The architecture is designed for multi-chain robustness. You can provide RPC end
 pnpm add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry @wallet-standard/ui-core
 ```
 
------
+---
 
 ## 🚀 Usage
 
@@ -82,7 +82,7 @@ export const usePulsarStore = createBoundedUseStore(
 );
 ```
 
------
+---
 
 ### 2. Initiating a Transaction
 
@@ -154,7 +154,7 @@ function MyTransactionButton() {
 }
 ```
 
------
+---
 
 ## 🤝 Contributing & Support
 

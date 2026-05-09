@@ -14,12 +14,12 @@ This flexibility is ideal if:
 
 Some might ask, "Why should I use `evmTracker` when I can just call `waitForTransactionReceipt` from `viem`?" While `waitForTransactionReceipt` is effective, it only addresses part of the problem. `evmTracker` provides a more robust, comprehensive, and ready-to-use solution.
 
-| Feature                     | `waitForTransactionReceipt` (viem)                                                                     | `evmTracker` (Pulsar)                                                                                                                             |
-|----------------------------|-----------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Handles RPC Lags**       | ❌ No. If called immediately after submission, the RPC node might not have indexed the transaction yet, causing errors. | ✅ **Yes.** Built-in retry mechanism to wait for the transaction to appear in the mempool, mitigating RPC delays.                              |
-| **Full Lifecycle Support** | 🤷‍♂️ Limited. Mainly reacts once the transaction is confirmed or replaced.                              | ✅ **Yes.** Provides callbacks for each stage: initialization, details fetched, mined, replaced, failed, etc.                              |
-| **Fetches Full Tx Details** | ❌ No. Doesn't return complete info such as nonce, value, etc.                                | ✅ **Yes.** Calls `getTransaction` internally, passing all transaction details to callbacks.                                               |
-| **Abstraction Level**       | Low. You must manage the tracking states manually.                                                    | High. Encapsulates the entire process into a single, convenient async function, simplifying implementation.                                |
+| Feature                     | `waitForTransactionReceipt` (viem)                                                                                      | `evmTracker` (Pulsar)                                                                                             |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Handles RPC Lags**        | ❌ No. If called immediately after submission, the RPC node might not have indexed the transaction yet, causing errors. | ✅ **Yes.** Built-in retry mechanism to wait for the transaction to appear in the mempool, mitigating RPC delays. |
+| **Full Lifecycle Support**  | 🤷‍♂️ Limited. Mainly reacts once the transaction is confirmed or replaced.                                                | ✅ **Yes.** Provides callbacks for each stage: initialization, details fetched, mined, replaced, failed, etc.     |
+| **Fetches Full Tx Details** | ❌ No. Doesn't return complete info such as nonce, value, etc.                                                          | ✅ **Yes.** Calls `getTransaction` internally, passing all transaction details to callbacks.                      |
+| **Abstraction Level**       | Low. You must manage the tracking states manually.                                                                      | High. Encapsulates the entire process into a single, convenient async function, simplifying implementation.       |
 
 In essence, `evmTracker` is a reliable wrapper around `viem` functions, addressing common edge cases and significantly reducing manual effort.
 
@@ -36,6 +36,7 @@ This is the primary tracker for monitoring standard transactions on EVM-compatib
 `evmTracker` initially fetches transaction details using `getTransaction`. If unavailable (due to RPC indexing delay), it retries several times. Once the details are available, it actively waits for the transaction receipt using `waitForTransactionReceipt`.
 
 #### Example Usage
+
 ```tsx
 import { evmTracker } from '@tuwaio/pulsar-evm';
 import { config } from './wagmi'; // Your wagmi config
@@ -80,6 +81,7 @@ async function trackMyTransaction(txHash: string, chainId: number) {
 For polling-based tracking, especially for **Gelato** and **Safe** multisig transactions, we expose fetcher functions. You can integrate these directly with Pulsar's `initializePollingTracker` or your custom polling setup.
 
 #### Example for Handling Gelato & Safe Transactions
+
 ```tsx
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
 import { gelatoFetcher, safeFetcher } from '@tuwaio/pulsar-evm';
@@ -114,7 +116,7 @@ async function trackSafeTx(safeTxHash, chainId, fromAddress) {
     },
   });
 }
-``` 
+```
 
 ---
 
@@ -125,6 +127,7 @@ Additionally, the package provides several utilities for managing transaction st
 ### `checkTransactionsTracker`
 
 Determines which tracker is suitable based on a transaction key.
+
 ```tsx
 import { checkTransactionsTracker } from '@tuwaio/pulsar-evm';
 

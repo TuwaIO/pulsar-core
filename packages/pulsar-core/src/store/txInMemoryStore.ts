@@ -36,8 +36,14 @@ const isTerminalStatus = (status?: TransactionStatus): boolean =>
 const mergeTransactionIntoPool = <T extends Transaction>(pool: TransactionPool<T>, tx: T): boolean => {
   const existingTx = pool[tx.txKey];
 
-  if (isTerminalStatus(existingTx?.status)) {
-    return false;
+  if (existingTx) {
+    if (isTerminalStatus(existingTx.status)) {
+      return false;
+    }
+
+    if (existingTx.pending) {
+      return false;
+    }
   }
 
   pool[tx.txKey] = tx;

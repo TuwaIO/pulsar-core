@@ -116,6 +116,135 @@ The package also provides a set of selector functions to help you efficiently qu
 
 ---
 
+### `createTxInMemoryStore({ ... })`
+
+While `createPulsarStore` is the primary entry point for tracking _active_ transactions, `createTxInMemoryStore` provides an in-memory transaction store with synchronized local and remote sources. It is designed to keep a local transaction pool in sync with remote history, preserve terminal transaction states, and support paginated history loading.
+
+#### **Configuration Example**
+
+```ts
+// src/app/actions - next js app routes example of server actions
+'use server';
+
+import { Quasar, Transaction } from '@tuwaio/quasar-sdk';
+
+const quasar = new Quasar({
+  secretKey: process.env.QUASAR_SDK_SK ?? '',
+});
+
+// --- Server Action for syncCreate ---
+export async function syncTransaction(tx: Transaction) {
+  try {
+    console.log('Syncing tx to Quasar...', tx.txKey);
+
+    await quasar.pulsar.syncCreate(tx, RP_NAME);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Sync failed', error);
+    throw error;
+  }
+}
+
+// --- Server Action for getHistory ---
+export async function getHistory(params?: {
+  walletAddress: string;
+  page?: number;
+  limit?: number;
+  chainId?: string;
+  status?: string;
+  txKey?: string;
+  appName?: string;
+}) {
+  try {
+    const history = await quasar.pulsar.getHistory({
+      ...params,
+    });
+
+    return history;
+  } catch (error) {
+    console.error('Get history failed', error);
+    throw error;
+  }
+}
+```
+
+```ts
+// src/store/pulsarStoreHook.ts - pulsar store hook example
+
+'use client';
+
+import { createBoundedUseStore, createPulsarStore, createTxInMemoryStore } from '@tuwaio/pulsar-core';
+import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
+
+import { appChains, config } from '@/configs/wagmiConfig';
+import { getHistory, syncTransaction } from '@/app/actions';
+
+const storageName = 'transactions-tracking-storage-with-bd';
+
+export enum TxType {
+  example = 'example',
+}
+
+type ExampleTx = Transaction & {
+  type: TxType.example;
+  payload: {
+    value: number;
+  };
+};
+
+export type TransactionUnion = ExampleTx;
+
+const initialStore = createPulsarStore<TransactionUnion>({
+  name: storageName,
+  adapter: [
+    pulsarEvmAdapter(config, appChains),
+  ],
+  onRemoteCreate: async (tx) => {
+    await syncTransaction(tx);
+  },
+});
+
+export const usePulsarStore = createBoundedUseStore(initialStore);
+
+const pulsarInMemoryStore = createTxInMemoryStore<TransactionUnion>({
+  localTransactionsPool: initialStore.getState().transactionsPool,
+
+  getHistory: async ({ page, walletAddress }) => {
+    try {
+      const history = await getHistory({
+        walletAddress,
+        page,
+        limit: 10,
+        appName: 'Example App',
+      });
+
+      if (!history) {
+        return null;
+      }
+
+      return {
+        ...history,
+        docs: history.docs as TransactionUnion[],
+      };
+    } catch (error) {
+      console.error('[PulsarHook] Failed to fetch history:', error);
+      throw error;
+    }
+  },
+
+  onHistoryFetched: async (remoteTxs) => {
+    await initialStore.getState().injectExternalPendingTxs(remoteTxs);
+  },
+});
+
+initialStore.subscribe((state) => pulsarInMemoryStore.getState().syncWithLocalPool(state.transactionsPool));
+
+export const usePulsarInMemoryStore = createBoundedUseStore(pulsarInMemoryStore);
+```
+
+---
+
 ## 🛠️ Advanced Usage: `initializePollingTracker`
 
 For custom tracking requirements (like server-side tracking or non-standard APIs), you can use the low-level `initializePollingTracker` utility. This is the same engine used internally by Pulsar adapters for Gelato, Safe, and Solana.

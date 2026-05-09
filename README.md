@@ -40,12 +40,12 @@ The architecture is modular and layered:
 
 This repository is a monorepo managed using `pnpm` workspaces.
 
-| Package                          | Version                                                                                                                         | Description                                                                     |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| 🧠 **`@tuwaio/pulsar-core`**     | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-core.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-core)       | The framework-agnostic core with the main state machine, types, and utilities.  |
-| 🔌 **`@tuwaio/pulsar-evm`**      | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)         | An adapter for EVM-compatible chains. Integrates with Wagmi and Viem.           |
-| 🔌 **`@tuwaio/pulsar-solana`**   | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-solana.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-solana)   | An adapter for Solana chains. Supports cluster management and transaction tracking. |
-| ⚛️ **`@tuwaio/pulsar-react`**    | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react)     | React bindings, including the `useInitializeTransactionsPool` hook.             |
+| Package                        | Version                                                                                                                       | Description                                                                         |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 🧠 **`@tuwaio/pulsar-core`**   | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-core.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-core)     | The framework-agnostic core with the main state machine, types, and utilities.      |
+| 🔌 **`@tuwaio/pulsar-evm`**    | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)       | An adapter for EVM-compatible chains. Integrates with Wagmi and Viem.               |
+| 🔌 **`@tuwaio/pulsar-solana`** | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-solana.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-solana) | An adapter for Solana chains. Supports cluster management and transaction tracking. |
+| ⚛️ **`@tuwaio/pulsar-react`**  | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react)   | React bindings, including the `useInitializeTransactionsPool` hook.                 |
 
 ---
 
@@ -54,20 +54,23 @@ This repository is a monorepo managed using `pnpm` workspaces.
 Follow these steps to set up the development environment on your local machine.
 
 ### 1. Clone the Repository
+
 ```bash
  git clone [https://github.com/TuwaIO/pulsar-core.git](https://github.com/TuwaIO/pulsar-core.git) cd pulsar-core
-``` 
+```
 
 ### 2. Install Dependencies
 
 This project uses `pnpm` as its package manager.
-```bash 
+
+```bash
  pnpm install
-``` 
+```
 
 ### 3. Build All Packages
 
 After installation, build all packages to ensure the monorepo is correctly linked.
+
 ```bash
  pnpm build
 ```

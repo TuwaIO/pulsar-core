@@ -1,6 +1,19 @@
 # Introduction
 
-<img src="https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/repos/pulsar_core.png" alt="Pulsar Core" width="400" style={{ borderRadius: '10px', textAlign: 'center', marginBottom: '20px', marginTop: '20px', marginLeft: 'auto', marginRight: 'auto', display: 'block' }} />
+<img
+  src="https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/repos/pulsar_core.png"
+  alt="Pulsar Core"
+  width="400"
+  style={{
+    borderRadius: '10px',
+    textAlign: 'center',
+    marginBottom: '20px',
+    marginTop: '20px',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    display: 'block',
+  }}
+/>
 
 Welcome to the documentation for **Pulsar** 🚀 — TUWA's complete solution for creating world-class transaction tracking experiences in your Web3 applications.
 
@@ -10,11 +23,11 @@ Welcome to the documentation for **Pulsar** 🚀 — TUWA's complete solution fo
 
 Building a great Web3 user experience goes far beyond just submitting transactions to the blockchain. Modern dApp users expect:
 
--   **Real-time updates** on their transaction's status.
--   **Clear visual feedback**, from pending to confirmation.
--   **Robust error handling** with actionable options like "Retry" or "Speed Up".
--   **Support for different wallets** and transaction types (e.g., meta-transactions, multi-sigs).
--   **Beautiful, intuitive interfaces** that don't feel like developer tools.
+- **Real-time updates** on their transaction's status.
+- **Clear visual feedback**, from pending to confirmation.
+- **Robust error handling** with actionable options like "Retry" or "Speed Up".
+- **Support for different wallets** and transaction types (e.g., meta-transactions, multi-sigs).
+- **Beautiful, intuitive interfaces** that don't feel like developer tools.
 
 Building this tracking infrastructure manually is complex, time-consuming, and distracts from your core product features. Different wallet connectors, transaction replacements, network congestion, and cross-chain operations create a maze of edge cases that are difficult to handle correctly.
 
@@ -25,6 +38,7 @@ Building this tracking infrastructure manually is complex, time-consuming, and d
 ### 🏗️ Architecture Overview
 
 Our modular, layered architecture gives you maximum flexibility while maintaining simplicity. You can use the full stack or pick and choose the layers you need.
+
 ```text
 ┌───────────────────────────────────────────┐
 │       Your Application (React, etc.)      │
@@ -57,25 +71,25 @@ Our modular, layered architecture gives you maximum flexibility while maintainin
 
 ### ✨ Key Features
 
-  - **🧠 Headless Core Engine:** Use with any UI framework. Powered by Zustand for lightweight, fast state management.
-  - **⛓️ Multi-Chain & Multi-Tracker:** 
-    - **EVM Adapter:** Includes trackers for standard transactions, Safe multi-sigs, and Gelato meta-transactions.
-    - **Solana Adapter:** Supports Solana transaction tracking and seamless integration with clusters and RPCs.
-  - **🎨 Beautiful Pre-built UI:** The optional `@tuwaio/nova-transactions` package provides a complete, themeable UI suite with modals, toasts, and history components.
-  - **🔄 Persistent State:** Transaction history survives page reloads, and pending transactions automatically resume tracking.
-  - **🛠️ Rich Developer Experience:** Written in TypeScript, wallet-agnostic, and fully customizable to match your brand.
+- **🧠 Headless Core Engine:** Use with any UI framework. Powered by Zustand for lightweight, fast state management.
+- **⛓️ Multi-Chain & Multi-Tracker:**
+  - **EVM Adapter:** Includes trackers for standard transactions, Safe multi-sigs, and Gelato meta-transactions.
+  - **Solana Adapter:** Supports Solana transaction tracking and seamless integration with clusters and RPCs.
+- **🎨 Beautiful Pre-built UI:** The optional `@tuwaio/nova-transactions` package provides a complete, themeable UI suite with modals, toasts, and history components.
+- **🔄 Persistent State:** Transaction history survives page reloads, and pending transactions automatically resume tracking.
+- **🛠️ Rich Developer Experience:** Written in TypeScript, wallet-agnostic, and fully customizable to match your brand.
 
 ### 📦 Package Overview
 
-| Package                                                                                                    | Purpose           | Key Features                                     |
-| ---------------------------------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------ |
-| **[@tuwaio/pulsar-core](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-core)**            | The Core Engine   | Headless store, types, persistence logic         |
-| **[@tuwaio/pulsar-evm](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-evm)**              | EVM Support       | EVM adapter, trackers for Ethereum, Gelato, Safe |
-| **[@tuwaio/pulsar-solana](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-solana)**        | Solana Support    | Solana adapter, cluster management, trackers     |
-| **[@tuwaio/pulsar-react](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-react)**          | React Integration | Hooks for connecting the store to React's lifecycle  |
-| **[@tuwaio/nova-transactions](https://github.com/TuwaIO/nova-uikit/tree/main/packages/nova-transactions)** | UI Components     | Pre-built React components, themes, widgets      |
+| Package                                                                                                    | Purpose           | Key Features                                        |
+| ---------------------------------------------------------------------------------------------------------- | ----------------- | --------------------------------------------------- |
+| **[@tuwaio/pulsar-core](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-core)**            | The Core Engine   | Headless store, types, persistence logic            |
+| **[@tuwaio/pulsar-evm](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-evm)**              | EVM Support       | EVM adapter, trackers for Ethereum, Gelato, Safe    |
+| **[@tuwaio/pulsar-solana](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-solana)**        | Solana Support    | Solana adapter, cluster management, trackers        |
+| **[@tuwaio/pulsar-react](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-react)**          | React Integration | Hooks for connecting the store to React's lifecycle |
+| **[@tuwaio/nova-transactions](https://github.com/TuwaIO/nova-uikit/tree/main/packages/nova-transactions)** | UI Components     | Pre-built React components, themes, widgets         |
 
------
+---
 
 ## What's Next?
 

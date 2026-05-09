@@ -6,7 +6,7 @@
 
 > **createTxInMemoryStore**\<`T`\>(`params`): `StoreApi`\<[`ITxInMemoryStore`](../type-aliases/ITxInMemoryStore.md)\<`T`\>\>
 
-Defined in: [packages/pulsar-core/src/store/txInMemoryStore.ts:61](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-core/src/store/txInMemoryStore.ts#L61)
+Defined in: [packages/pulsar-core/src/store/txInMemoryStore.ts:67](https://github.com/TuwaIO/pulsar-core/blob/ab16a1aebc8b33c0a47cb0737caca7e0c28e4818/packages/pulsar-core/src/store/txInMemoryStore.ts#L67)
 
 Creates an in-memory transaction store with synchronized local and remote sources.
 

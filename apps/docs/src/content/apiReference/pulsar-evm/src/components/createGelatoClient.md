@@ -6,7 +6,7 @@
 
 > **createGelatoClient**(`parameters`): `object`
 
-Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:42](https://github.com/TuwaIO/pulsar-core/blob/ec1fbdb65038124be29ff74cedf250a5f8ff704f/packages/pulsar-evm/src/utils/createGelatoClient.ts#L42)
+Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:42](https://github.com/TuwaIO/pulsar-core/blob/ab16a1aebc8b33c0a47cb0737caca7e0c28e4818/packages/pulsar-evm/src/utils/createGelatoClient.ts#L42)
 
 Creates or retrieves a cached viem HTTP transport client configured for the Gelato Relay API.
 
