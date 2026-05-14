@@ -11,6 +11,7 @@ import { persist, PersistOptions } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
 import { ITxTrackingStore, PulsarAdapter, Transaction, TransactionPool, TransactionStatus } from '../types';
+import { validateInitialTransactionParams, validateTransaction } from '../utils/transactionValidation';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 
 /**
@@ -32,6 +33,7 @@ export function createPulsarStore<T extends Transaction>({
   maxTransactions = 50,
   onRemoteCreate,
   gelatoApiKey,
+  beforeTxProcess,
   ...options
 }: PulsarAdapter<T> & PersistOptions<ITxTrackingStore<T>>) {
   return createStore<ITxTrackingStore<T>>()(
@@ -48,10 +50,20 @@ export function createPulsarStore<T extends Transaction>({
          */
         initializeTransactionsPool: async () => {
           const pendingTxs = Object.values(get().transactionsPool).filter((tx) => tx.pending);
+          const validPendingTxs = pendingTxs.filter((tx) => {
+            try {
+              validateTransaction(tx);
+              return true;
+            } catch (error) {
+              console.warn('[Pulsar] Removed invalid persisted transaction:', error);
+              get().removeTxFromPool(tx.txKey);
+              return false;
+            }
+          });
 
           // Concurrently initialize trackers for all pending transactions
           await Promise.all(
-            pendingTxs.map((tx) => {
+            validPendingTxs.map((tx) => {
               const foundAdapter = selectAdapterByKey({
                 adapterKey: tx.adapter,
                 adapter,
@@ -70,13 +82,22 @@ export function createPulsarStore<T extends Transaction>({
           const state = get();
           const adapter = state.getAdapter();
           const txsToTrack: T[] = [];
+          const validRemoteTxs = remoteTxs.filter((remoteTx) => {
+            try {
+              validateTransaction(remoteTx);
+              return true;
+            } catch (error) {
+              console.warn('[Pulsar] Skipped invalid remote transaction:', error);
+              return false;
+            }
+          });
 
           // 1. Synchronously update the local state using Immer
           set((currentState) =>
             produce(currentState, (draft) => {
               const pool = draft.transactionsPool as TransactionPool<T>;
 
-              remoteTxs.forEach((remoteTx) => {
+              validRemoteTxs.forEach((remoteTx) => {
                 const localTx = pool[remoteTx.txKey];
 
                 // Case A: Transaction is pending remotely but doesn't exist locally (Cross-device).
@@ -124,7 +145,16 @@ export function createPulsarStore<T extends Transaction>({
          * It manages the entire lifecycle, from UI state updates and chain switching to
          * signing, submission, and background tracker initialization.
          */
-        executeTxAction: async ({ defaultTracker, actionFunction, params, ...callbacks }) => {
+        executeTxAction: async ({
+          defaultTracker,
+          actionFunction,
+          params,
+          beforeTxProcess: localBeforeTxProcess,
+          ...callbacks
+        }) => {
+          await (localBeforeTxProcess ?? beforeTxProcess)?.();
+          validateInitialTransactionParams(params);
+
           const { desiredChainID, tracker, ...restParams } = params;
           const { onSuccess, onError, onReplaced } = callbacks;
           const localTimestamp = dayjs().unix();

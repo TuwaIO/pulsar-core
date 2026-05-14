@@ -60,6 +60,8 @@ export type BaseTransaction = {
   chainId: number | string;
   /**
    * User-facing description. Can be a single string for all states, or a tuple for specific states.
+   * Each string is validated before execution and persistence. It must be 300 characters or less and must not contain
+   * executable-like patterns such as `eval(` or `javascript:`.
    * @example
    * // A single description for all states
    * description: 'Swap 1 ETH for 1,500 USDC'
@@ -79,7 +81,10 @@ export type BaseTransaction = {
   isTrackedModalOpen?: boolean;
   /** The local timestamp (in seconds) when the transaction was initiated by the user. */
   localTimestamp: number;
-  /** Custom data (strings or numbers) to associate with the transaction. */
+  /**
+   * Custom JSON-serializable data (strings or numbers) to associate with the transaction.
+   * The serialized UTF-8 payload must be 10KB or less and string values must not contain executable-like patterns.
+   */
   payload?: Record<string, string | number>;
   /** A flag indicating if the transaction is still awaiting on-chain confirmation. */
   pending: boolean;
@@ -87,6 +92,8 @@ export type BaseTransaction = {
   status?: TransactionStatus;
   /**
    * User-facing title. Can be a single string for all states, or a tuple for specific states.
+   * Each string is validated before execution and persistence. It must be 100 characters or less and must not contain
+   * executable-like patterns such as `eval(` or `javascript:`.
    * @example
    * // A single title for all states
    * title: 'ETH/USDC Swap'
@@ -234,10 +241,20 @@ export interface SyncCallbacks<T extends Transaction> {
 }
 
 /**
+ * Callback executed before Pulsar initializes or submits a transaction.
+ *
+ * Throw an error from this function to block the transaction before `initialTx`, wallet interaction,
+ * persistence, or remote synchronization starts.
+ */
+export type BeforeTxProcess = () => Promise<void> | void;
+
+/**
  * The configuration object containing one or more transaction adapters.
  * @template T The specific transaction type.
  */
 export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter<T>> & {
+  /** Optional global preflight callback executed before every transaction unless locally overridden. */
+  beforeTxProcess?: BeforeTxProcess;
   maxTransactions?: number;
   gelatoApiKey?: string; // https://docs.gelato.cloud/
 } & SyncCallbacks<T>;
@@ -419,8 +436,9 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
    *
    * @param params The parameters for handling the transaction.
    * @param params.actionFunction The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined.
-   * @param params.params The metadata for the transaction.
+   * @param params.params The metadata for the transaction. Title, description, and payload are validated before execution.
    * @param params.defaultTracker The default tracker to use if it cannot be determined automatically.
+   * @param params.beforeTxProcess Optional local preflight callback. When provided, it overrides the global callback from `createPulsarStore`.
    * @param params.onSuccess Callback to execute when the transaction is successfully submitted.
    * @param params.onError Callback to execute when the transaction fails.
    * @param params.onReplaced Callback to execute when the transaction is replaced.
@@ -430,6 +448,7 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
       actionFunction: () => Promise<ActionTxKey | undefined>;
       params: Omit<InitialTransactionParams, 'actionFunction'>;
       defaultTracker?: TransactionTracker;
+      beforeTxProcess?: BeforeTxProcess;
     } & TrackerCallbacks<T>,
   ) => Promise<void>;
 

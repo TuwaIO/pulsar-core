@@ -73,6 +73,10 @@ export const usePulsarStore = createBoundedUseStore(
     name: storageName,
     adapter: pulsarEvmAdapter(config, appChains),
     maxTransactions: 100, // Optional: defaults to 50
+    beforeTxProcess: async () => {
+      // Optional global preflight. Throw here to block a transaction before wallet interaction.
+      await assertUserCanSubmitTransactions();
+    },
   }),
 );
 ```
@@ -83,6 +87,53 @@ To prevent the `localStorage` from growing indefinitely, Pulsar Core implements 
 
 - **Maximum Transactions:** By default, the store keeps the last **50** transactions. You can customize this via the `maxTransactions` property in the `createPulsarStore` config.
 - **Eviction Process:** When the pool exceeds the `maxTransactions` limit, the oldest transaction (based on `localTimestamp`) is automatically removed from the state and storage when a new one is added.
+
+### Transaction Metadata Safety
+
+Pulsar validates transaction metadata before it creates `initialTx`, calls the wallet action, writes to the local transaction pool, persists to `localStorage`, or calls `onRemoteCreate`.
+
+- `title`: each string must be **100 characters or less**.
+- `description`: each string must be **300 characters or less**.
+- `payload`: must be JSON-serializable and **10KB or less** after UTF-8 JSON serialization.
+- `title`, `description`, and payload string values reject executable-like patterns such as `eval(`, `Function(`, `setTimeout("...")`, `setInterval("...")`, and `javascript:`.
+
+This validation is a defensive metadata gate, not a replacement for output escaping or HTML sanitization in UI code.
+
+Invalid transactions are rejected before execution. Invalid pending transactions restored from persisted storage are removed during `initializeTransactionsPool()`. Invalid remote transactions passed to `injectExternalPendingTxs()` are skipped with a warning so the rest of the batch can still sync.
+
+### `beforeTxProcess`
+
+Use `beforeTxProcess` for custom preflight policies such as auth checks, feature flags, rate limits, or application-level transaction guards. The callback receives no transaction metadata; throw an error to block the transaction before initialization or wallet interaction.
+
+```ts
+const store = createPulsarStore<TransactionUnion>({
+  name: storageName,
+  adapter: pulsarEvmAdapter(config, appChains),
+  beforeTxProcess: async () => {
+    await assertUserCanSubmitTransactions();
+  },
+});
+```
+
+You can override the global callback for one transaction by passing `beforeTxProcess` to `executeTxAction`.
+
+```ts
+await store.getState().executeTxAction({
+  actionFunction: sendSwap,
+  beforeTxProcess: async () => {
+    await assertSwapIsEnabled();
+  },
+  params: {
+    adapter: OrbitAdapter.EVM,
+    desiredChainID: 1,
+    type: 'SWAP',
+    title: 'Swap',
+    description: 'Swap tokens',
+  },
+});
+```
+
+When a local callback is provided to `executeTxAction`, it replaces the global callback for that action.
 
 ### The Returned Store API
 
@@ -96,7 +147,7 @@ The `createPulsarStore` function returns a vanilla Zustand store with the follow
 
 #### **Actions**
 
-- `executeTxAction(params)`: The primary, all-in-one function for initiating, sending, and tracking a new transaction. This is the main action you will use.
+- `executeTxAction(params)`: The primary, all-in-one function for initiating, sending, and tracking a new transaction. It runs `beforeTxProcess` and metadata validation before wallet interaction.
 - `initializeTransactionsPool()`: An async function to re-initialize trackers for any pending transactions found in storage. **This is crucial for resuming tracking after a page reload.**
 - `addTxToPool(tx)`: Adds a new transaction directly to the tracking pool.
 - `updateTxParams(txKey, fields)`: Updates one or more properties of an existing transaction in the pool.

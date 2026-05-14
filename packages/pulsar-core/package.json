@@ -16,7 +16,8 @@
   ],
   "scripts": {
     "start": "tsup src/index.ts --watch",
-    "build": "tsup"
+    "build": "tsup",
+    "test": "vitest"
   },
   "keywords": [
     "web3",
@@ -55,6 +56,7 @@
     "immer": "^11.1.8",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
+    "vitest": "^4.1.5",
     "zustand": "^5.0.13"
   }
 }

@@ -63,9 +63,15 @@ export const usePulsarStore = createBoundedUseStore(
   createPulsarStore<TransactionUnion>({
     name: storageName,
     adapter: pulsarEvmAdapter(config, appChains),
+    beforeTxProcess: async () => {
+      // Optional global preflight. Throw here to block before wallet interaction.
+      await assertUserCanSubmitTransactions();
+    },
   }),
 );
 ```
+
+The preflight and metadata validation lives in `@tuwaio/pulsar-core`, not in React. Before wallet interaction or persistence, Pulsar validates that each `title` string is 100 characters or less, each `description` string is 300 characters or less, and the serialized `payload` is 10KB or less. Invalid pending transactions restored by `useInitializeTransactionsPool` are removed from persisted storage during initialization.
 
 ### Step 2: Initialize the Store in Your App
 

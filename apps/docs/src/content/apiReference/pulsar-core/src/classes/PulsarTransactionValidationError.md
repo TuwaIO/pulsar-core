@@ -2,14 +2,11 @@
 
 ***
 
-# SolanaChainMismatchError
+# PulsarTransactionValidationError
 
-Defined in: [packages/pulsar-solana/src/errors.ts:11](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-solana/src/errors.ts#L11)
+Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:22](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-core/src/utils/transactionValidation.ts#L22)
 
-Thrown when the connected Solana chain does not match the required chain for a transaction.
-
-This allows consuming applications to `catch` this specific error and
-implement custom logic, such as prompting the user to switch networks.
+Error thrown when transaction metadata fails Pulsar's safety limits.
 
 ## Extends
 
@@ -19,23 +16,23 @@ implement custom logic, such as prompting the user to switch networks.
 
 ### Constructor
 
-> **new SolanaChainMismatchError**(`requiredChain`, `currentChain`): `SolanaChainMismatchError`
+> **new PulsarTransactionValidationError**(`field`, `message`): `PulsarTransactionValidationError`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:19](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-solana/src/errors.ts#L19)
+Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:26](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-core/src/utils/transactionValidation.ts#L26)
 
 #### Parameters
 
-##### requiredChain
+##### field
 
 `string`
 
-##### currentChain
+##### message
 
 `string`
 
 #### Returns
 
-`SolanaChainMismatchError`
+`PulsarTransactionValidationError`
 
 #### Overrides
 
@@ -55,13 +52,13 @@ Defined in: node\_modules/.pnpm/typescript@6.0.3/node\_modules/typescript/lib/li
 
 ***
 
-### currentChain
+### field
 
-> **currentChain**: `string`
+> `readonly` **field**: `string`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:17](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-solana/src/errors.ts#L17)
+Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:24](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-core/src/utils/transactionValidation.ts#L24)
 
-The chain the wallet is currently connected to.
+The transaction field that failed validation.
 
 ***
 
@@ -79,25 +76,13 @@ Defined in: node\_modules/.pnpm/typescript@6.0.3/node\_modules/typescript/lib/li
 
 ### name
 
-> **name**: `string` = `'SolanaChainMismatchError'`
+> **name**: `string`
 
-Defined in: [packages/pulsar-solana/src/errors.ts:13](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-solana/src/errors.ts#L13)
+Defined in: node\_modules/.pnpm/typescript@6.0.3/node\_modules/typescript/lib/lib.es5.d.ts:1074
 
-The name of the error, for easy identification.
-
-#### Overrides
+#### Inherited from
 
 `Error.name`
-
-***
-
-### requiredChain
-
-> **requiredChain**: `string`
-
-Defined in: [packages/pulsar-solana/src/errors.ts:15](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-solana/src/errors.ts#L15)
-
-The chain that the transaction requires (e.g., 'solana:mainnet').
 
 ***
 

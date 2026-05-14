@@ -6,6 +6,7 @@
 import { produce } from 'immer';
 
 import { IInitializeTxTrackingStore, PulsarAdapter, StoreSlice, Transaction } from '../types';
+import { validateTransaction } from '../utils/transactionValidation';
 
 /**
  * Creates a Zustand store slice with the core logic for transaction state management.
@@ -25,6 +26,8 @@ export function initializeTxTrackingStore<T extends Transaction>({
     initialTx: undefined,
 
     addTxToPool: (tx) => {
+      validateTransaction(tx);
+
       const newTx = {
         ...tx,
         pending: true, // Ensure all new transactions start as pending.

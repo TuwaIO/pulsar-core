@@ -71,9 +71,15 @@ export const usePulsarStore = createBoundedUseStore(
   createPulsarStore<TransactionUnion>({
     name: storageName,
     adapter: pulsarEvmAdapter(config, appChains),
+    beforeTxProcess: async () => {
+      // Optional global preflight. Throw here to block before wallet interaction.
+      await assertUserCanSubmitTransactions();
+    },
   }),
 );
 ```
+
+`@tuwaio/pulsar-core` validates EVM transaction metadata before any wallet interaction or persistence. `title` strings are limited to 100 characters, `description` strings to 300 characters, and the serialized `payload` to 10KB. A local `beforeTxProcess` passed to `executeTxAction` overrides the global callback from `createPulsarStore`.
 
 ### 2. Using Standalone Trackers
 

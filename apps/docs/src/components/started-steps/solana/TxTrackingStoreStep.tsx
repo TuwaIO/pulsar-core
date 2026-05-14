@@ -29,6 +29,10 @@ export const usePulsarStore = createBoundedUseStore(
     adapter: pulsarSolanaAdapter({
       rpcUrls: solanaRPCUrls,
     }),
+    beforeTxProcess: async () => {
+      // Optional global preflight. Throw here to block before wallet interaction.
+      await assertUserCanSubmitTransactions();
+    },
   }),
 );
 `;
@@ -42,7 +46,7 @@ export function TxTrackingStoreStep() {
         Next, create the central Zustand store that will manage the state of all transactions. This is where the{' '}
         <strong>Pulsar</strong> engine is initialized. The `createPulsarStore` function takes your configuration. The
         adapter is configured by passing it your `solanaRPCUrls` config, linking Pulsar to your app's solana rpc urls
-        config.
+        config. You can also add `beforeTxProcess` for app-level preflight checks before wallet interaction.
       </p>
       <CodeBlock title="txTrackingHooks.ts" titleIcons={<DocumentTextIcon />} textToCopy={codeBlockCreateHook}>
         <CodeHighlighter children={codeBlockCreateHook} language="ts" resolvedTheme={resolvedTheme ?? 'light'} />

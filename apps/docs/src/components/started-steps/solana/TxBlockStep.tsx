@@ -48,6 +48,9 @@ export const TxActionButtonIncrement = () => {
       onSuccess: async () => {
         console.log('Incremented');
       },
+      beforeTxProcess: async () => {
+        await assertIncrementIsEnabled();
+      },
       params: {
         type: TxType.increment,
         adapter: OrbitAdapter.SOLANA,
@@ -91,7 +94,8 @@ export function TxBlockStep({ importLine, buttonLine }: TxBlockStepCodeGenerateP
       <p className="mb-2 text-[var(--tuwa-text-secondary)]">
         Finally, create a component to trigger the transaction. When a user clicks 'Increment,' the `handleTransaction`
         function orchestrates the entire process. It dispatches the transaction, adds it to the pool, and from this
-        point on, the <b>Pulsar</b> engine automatically handles all status updates.
+        point on, the <b>Pulsar</b> engine automatically handles all status updates. Metadata is validated before the
+        action starts, and a local `beforeTxProcess` overrides the global store callback for this transaction.
       </p>
       <CodeBlock title="Increment.tsx" titleIcons={<DocumentTextIcon />} textToCopy={codeBlock}>
         <CodeHighlighter children={codeBlock} language="tsx" resolvedTheme={resolvedTheme ?? 'light'} />

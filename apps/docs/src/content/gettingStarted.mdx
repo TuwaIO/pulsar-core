@@ -10,6 +10,8 @@ By the end of this guide, you will have a fully functional system for tracking a
 - EVM chain support via **`@tuwaio/pulsar-evm`**.
 - Solana support via **`@tuwaio/pulsar-solana`**.
 
+Pulsar validates transaction metadata before wallet interaction or persistence. Transaction `title` strings are limited to 100 characters, `description` strings are limited to 300 characters, and serialized `payload` data is limited to 10KB. You can also add a `beforeTxProcess` callback in `createPulsarStore`, or override it per `executeTxAction`, to run project-specific preflight checks before any transaction starts.
+
 Let's begin.
 
 <StartedBlocks />

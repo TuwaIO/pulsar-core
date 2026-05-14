@@ -9,6 +9,10 @@
 - [TransactionStatus](enumerations/TransactionStatus.md)
 - [TransactionTracker](enumerations/TransactionTracker.md)
 
+## Classes
+
+- [PulsarTransactionValidationError](classes/PulsarTransactionValidationError.md)
+
 ## Interfaces
 
 - [IInitializeTxTrackingStore](interfaces/IInitializeTxTrackingStore.md)
@@ -19,6 +23,7 @@
 
 - [ActionTxKey](type-aliases/ActionTxKey.md)
 - [BaseTransaction](type-aliases/BaseTransaction.md)
+- [BeforeTxProcess](type-aliases/BeforeTxProcess.md)
 - [CheckTxTracker](type-aliases/CheckTxTracker.md)
 - [EvmTransaction](type-aliases/EvmTransaction.md)
 - [InitialTransaction](type-aliases/InitialTransaction.md)
@@ -41,6 +46,9 @@
 ## Variables
 
 - [createBoundedUseStore](variables/createBoundedUseStore.md)
+- [MAX\_TRANSACTION\_DESCRIPTION\_LENGTH](variables/MAX_TRANSACTION_DESCRIPTION_LENGTH.md)
+- [MAX\_TRANSACTION\_PAYLOAD\_BYTES](variables/MAX_TRANSACTION_PAYLOAD_BYTES.md)
+- [MAX\_TRANSACTION\_TITLE\_LENGTH](variables/MAX_TRANSACTION_TITLE_LENGTH.md)
 
 ## Functions
 
@@ -53,3 +61,5 @@
 - [selectPendingTransactions](functions/selectPendingTransactions.md)
 - [selectPendingTransactionsByActiveWallet](functions/selectPendingTransactionsByActiveWallet.md)
 - [selectTxByKey](functions/selectTxByKey.md)
+- [validateInitialTransactionParams](functions/validateInitialTransactionParams.md)
+- [validateTransaction](functions/validateTransaction.md)

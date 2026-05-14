@@ -78,9 +78,15 @@ export const usePulsarStore = createBoundedUseStore(
         rpcUrls: solanaRPCUrls,
       }),
     ],
+    beforeTxProcess: async () => {
+      // Optional global preflight. Throw here to block before wallet interaction.
+      await assertUserCanSubmitTransactions();
+    },
   }),
 );
 ```
+
+`@tuwaio/pulsar-core` validates Solana transaction metadata before any wallet interaction or persistence. `title` strings are limited to 100 characters, `description` strings to 300 characters, and the serialized `payload` to 10KB. A local `beforeTxProcess` passed to `executeTxAction` overrides the global callback from `createPulsarStore`.
 
 ---
 
@@ -137,6 +143,9 @@ function MyTransactionButton() {
         }),
       onSuccess: async () => {
         console.log('action executed')
+      },
+      beforeTxProcess: async () => {
+        await assertSolanaActionsEnabled();
       },
       params: {
         type: 'example',
