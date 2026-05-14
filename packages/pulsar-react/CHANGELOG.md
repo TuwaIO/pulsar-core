@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.4.1...pulsar-react-v0.4.2) (2026-05-14)
+
+
+### Bug Fixes
+
+* added transaction metadata validation ([976655e](https://github.com/TuwaIO/pulsar-core/commit/976655ef39137a77c638c9a13294bb5f861f1914))
+
 ## [0.4.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.4.0...pulsar-react-v0.4.1) (2026-05-09)
 
 

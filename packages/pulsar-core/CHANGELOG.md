@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.2...pulsar-core-v0.6.3) (2026-05-14)
+
+
+### Bug Fixes
+
+* added transaction metadata validation ([976655e](https://github.com/TuwaIO/pulsar-core/commit/976655ef39137a77c638c9a13294bb5f861f1914))
+
 ## [0.6.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.1...pulsar-core-v0.6.2) (2026-05-09)
 
 
