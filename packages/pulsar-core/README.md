@@ -135,6 +135,40 @@ await store.getState().executeTxAction({
 
 When a local callback is provided to `executeTxAction`, it replaces the global callback for that action.
 
+### `abortOnTxError`
+
+Use the `abortOnTxError` parameter (defaults to `true`) to control error propagation during transaction preflight and remote synchronization:
+
+- **Preflight hook (`beforeTxProcess`)**:
+  - When `abortOnTxError` is `true` (default), any error thrown in `beforeTxProcess` will populate the `initialTx.error` state and throw, aborting the transaction action immediately.
+  - When `abortOnTxError` is `false`, any error thrown in `beforeTxProcess` is caught, logged to the console as a warning, and the transaction execution continues.
+- **Remote sync hook (`onRemoteCreate`)**:
+  - Errors in `onRemoteCreate` **always** abort the transaction flow (the transaction is not added to the local tracking pool, `initialTx.error` is populated, and the error is thrown) regardless of the `abortOnTxError` setting.
+
+You can set `abortOnTxError` globally during store creation or override it locally in `executeTxAction`:
+
+```ts
+// Set globally (defaults to true if not provided)
+const store = createPulsarStore<TransactionUnion>({
+  name: storageName,
+  adapter: pulsarEvmAdapter(config, appChains),
+  abortOnTxError: false, // Disable aborting for beforeTxProcess errors globally
+});
+
+// Override locally for a specific action
+await store.getState().executeTxAction({
+  actionFunction: sendSwap,
+  abortOnTxError: true, // Force abort on beforeTxProcess errors for this action
+  params: {
+    adapter: OrbitAdapter.EVM,
+    desiredChainID: 1,
+    type: 'SWAP',
+    title: 'Swap',
+    description: 'Swap tokens',
+  },
+});
+```
+
 ### The Returned Store API
 
 The `createPulsarStore` function returns a vanilla Zustand store with the following state and actions:
@@ -248,9 +282,7 @@ export type TransactionUnion = ExampleTx;
 
 const initialStore = createPulsarStore<TransactionUnion>({
   name: storageName,
-  adapter: [
-    pulsarEvmAdapter(config, appChains),
-  ],
+  adapter: [pulsarEvmAdapter(config, appChains)],
   onRemoteCreate: async (tx) => {
     await syncTransaction(tx);
   },

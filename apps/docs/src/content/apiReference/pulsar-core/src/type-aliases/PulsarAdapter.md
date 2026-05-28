@@ -6,11 +6,17 @@
 
 > **PulsarAdapter**\<`T`\> = `OrbitGenericAdapter`\<[`TxAdapter`](TxAdapter.md)\<`T`\>\> & `object` & [`SyncCallbacks`](../interfaces/SyncCallbacks.md)\<`T`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:255](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-core/src/types.ts#L255)
+Defined in: [packages/pulsar-core/src/types.ts:255](https://github.com/TuwaIO/pulsar-core/blob/f07064903bf5431471f5c03abc5368cb0a7305e3/packages/pulsar-core/src/types.ts#L255)
 
 The configuration object containing one or more transaction adapters.
 
 ## Type Declaration
+
+### abortOnTxError?
+
+> `optional` **abortOnTxError?**: `boolean`
+
+Optional setting to abort the transaction if the beforeTxProcess hook or remote creation fails. Defaults to true.
 
 ### beforeTxProcess?
 

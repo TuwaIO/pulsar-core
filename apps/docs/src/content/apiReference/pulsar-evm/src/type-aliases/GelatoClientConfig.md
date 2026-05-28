@@ -6,7 +6,7 @@
 
 > **GelatoClientConfig** = `object`
 
-Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:16](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-evm/src/utils/createGelatoClient.ts#L16)
+Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:16](https://github.com/TuwaIO/pulsar-core/blob/f07064903bf5431471f5c03abc5368cb0a7305e3/packages/pulsar-evm/src/utils/createGelatoClient.ts#L16)
 
 Configuration options for creating a Gelato API client.
 
@@ -16,7 +16,7 @@ Configuration options for creating a Gelato API client.
 
 > **apiKey**: `string`
 
-Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:17](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-evm/src/utils/createGelatoClient.ts#L17)
+Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:17](https://github.com/TuwaIO/pulsar-core/blob/f07064903bf5431471f5c03abc5368cb0a7305e3/packages/pulsar-evm/src/utils/createGelatoClient.ts#L17)
 
 The Gelato API key used for authentication.
 
@@ -26,7 +26,7 @@ The Gelato API key used for authentication.
 
 > `optional` **baseUrl?**: `string`
 
-Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:19](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-evm/src/utils/createGelatoClient.ts#L19)
+Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:19](https://github.com/TuwaIO/pulsar-core/blob/f07064903bf5431471f5c03abc5368cb0a7305e3/packages/pulsar-evm/src/utils/createGelatoClient.ts#L19)
 
 Optional custom base URL for the Gelato API. Defaults to `https://api.gelato.cloud/rpc`.
 
@@ -36,7 +36,7 @@ Optional custom base URL for the Gelato API. Defaults to `https://api.gelato.clo
 
 > `optional` **httpTransportConfig?**: `HttpTransportConfig`
 
-Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:20](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-evm/src/utils/createGelatoClient.ts#L20)
+Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:20](https://github.com/TuwaIO/pulsar-core/blob/f07064903bf5431471f5c03abc5368cb0a7305e3/packages/pulsar-evm/src/utils/createGelatoClient.ts#L20)
 
 Optional additional viem HTTP transport configuration overrides.
 
@@ -46,6 +46,6 @@ Optional additional viem HTTP transport configuration overrides.
 
 > `optional` **timeout?**: `number`
 
-Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:18](https://github.com/TuwaIO/pulsar-core/blob/bf965952c66068de202a09f972957e7674b640f1/packages/pulsar-evm/src/utils/createGelatoClient.ts#L18)
+Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:18](https://github.com/TuwaIO/pulsar-core/blob/f07064903bf5431471f5c03abc5368cb0a7305e3/packages/pulsar-evm/src/utils/createGelatoClient.ts#L18)
 
 Optional custom HTTP timeout in milliseconds. Defaults to 15000ms.

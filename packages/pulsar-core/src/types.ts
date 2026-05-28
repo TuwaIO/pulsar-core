@@ -257,6 +257,8 @@ export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter
   beforeTxProcess?: BeforeTxProcess;
   maxTransactions?: number;
   gelatoApiKey?: string; // https://docs.gelato.cloud/
+  /** Optional setting to abort the transaction if the beforeTxProcess hook or remote creation fails. Defaults to true. */
+  abortOnTxError?: boolean;
 } & SyncCallbacks<T>;
 
 /**
@@ -399,7 +401,7 @@ export interface IInitializeTxTrackingStore<T extends Transaction> {
    * Adds a new transaction to the tracking pool and marks it as pending.
    * @param tx The transaction object to add.
    */
-  addTxToPool: (tx: T) => void;
+  addTxToPool: (tx: T) => Promise<void>;
   /**
    * Updates one or more properties of an existing transaction in the pool.
    * @param txKey The key of the transaction to update.
@@ -449,6 +451,7 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
       params: Omit<InitialTransactionParams, 'actionFunction'>;
       defaultTracker?: TransactionTracker;
       beforeTxProcess?: BeforeTxProcess;
+      abortOnTxError?: boolean;
     } & TrackerCallbacks<T>,
   ) => Promise<void>;
 

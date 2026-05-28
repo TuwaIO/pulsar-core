@@ -52,11 +52,11 @@
   },
   "devDependencies": {
     "@tuwaio/orbit-core": "^0.2.8",
-    "dayjs": "^1.11.20",
+    "dayjs": "^1.11.21",
     "immer": "^11.1.8",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.5",
+    "vitest": "^4.1.7",
     "zustand": "^5.0.13"
   }
 }

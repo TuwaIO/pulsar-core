@@ -33,32 +33,36 @@ export function initializeTxTrackingStore<T extends Transaction>({
         pending: true, // Ensure all new transactions start as pending.
       };
 
-      set((state) =>
-        produce(state, (draft) => {
-          draft.lastAddedTxKey = tx.txKey;
-          if (tx.txKey) {
-            const currentCount = Object.keys(draft.transactionsPool).length;
+      const runOnRemoteCreateAndCommit = async () => {
+        if (onRemoteCreate) {
+          await onRemoteCreate(newTx);
+        }
 
-            // FIFO Eviction Policy
-            if (currentCount >= maxTransactions) {
-              const sortedTxs = Object.values(draft.transactionsPool).sort((a, b) => {
-                return (a as T).localTimestamp - (b as T).localTimestamp;
-              });
+        set((state) =>
+          produce(state, (draft) => {
+            draft.lastAddedTxKey = tx.txKey;
+            if (tx.txKey) {
+              const currentCount = Object.keys(draft.transactionsPool).length;
 
-              if (sortedTxs.length > 0) {
-                const oldestTx = sortedTxs[0] as T;
-                delete draft.transactionsPool[oldestTx.txKey];
+              // FIFO Eviction Policy
+              if (currentCount >= maxTransactions) {
+                const sortedTxs = Object.values(draft.transactionsPool).sort((a, b) => {
+                  return (a as T).localTimestamp - (b as T).localTimestamp;
+                });
+
+                if (sortedTxs.length > 0) {
+                  const oldestTx = sortedTxs[0] as T;
+                  delete draft.transactionsPool[oldestTx.txKey];
+                }
               }
+
+              draft.transactionsPool[tx.txKey] = newTx as (typeof draft.transactionsPool)[string];
             }
+          }),
+        );
+      };
 
-            draft.transactionsPool[tx.txKey] = newTx as (typeof draft.transactionsPool)[string];
-          }
-        }),
-      );
-
-      if (onRemoteCreate) {
-        onRemoteCreate(newTx).catch((err) => console.error('[Pulsar Sync] Create failed:', err));
-      }
+      return runOnRemoteCreateAndCommit();
     },
 
     updateTxParams: (txKey, fields) => {

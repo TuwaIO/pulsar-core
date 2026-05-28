@@ -34,6 +34,7 @@ export function createPulsarStore<T extends Transaction>({
   onRemoteCreate,
   gelatoApiKey,
   beforeTxProcess,
+  abortOnTxError,
   ...options
 }: PulsarAdapter<T> & PersistOptions<ITxTrackingStore<T>>) {
   return createStore<ITxTrackingStore<T>>()(
@@ -150,14 +151,34 @@ export function createPulsarStore<T extends Transaction>({
           actionFunction,
           params,
           beforeTxProcess: localBeforeTxProcess,
+          abortOnTxError: localAbortOnTxError,
           ...callbacks
         }) => {
-          await (localBeforeTxProcess ?? beforeTxProcess)?.();
+          const shouldAbort = localAbortOnTxError ?? abortOnTxError ?? true;
+          const localTimestamp = dayjs().unix();
+
+          try {
+            await (localBeforeTxProcess ?? beforeTxProcess)?.();
+          } catch (e) {
+            if (shouldAbort) {
+              set({
+                initialTx: {
+                  ...params,
+                  actionFunction,
+                  localTimestamp,
+                  isInitializing: false,
+                  error: normalizeError(e),
+                },
+              });
+              throw e;
+            }
+            console.warn('[Pulsar] beforeTxProcess failed:', e);
+          }
+
           validateInitialTransactionParams(params);
 
           const { desiredChainID, tracker, ...restParams } = params;
           const { onSuccess, onError, onReplaced } = callbacks;
-          const localTimestamp = dayjs().unix();
 
           // Step 1: Set initial state for immediate UI feedback (e.g., loading spinner).
           set({
@@ -231,7 +252,7 @@ export function createPulsarStore<T extends Transaction>({
             };
 
             // Step 6: Add the transaction to the pool.
-            get().addTxToPool(newTx as T);
+            await get().addTxToPool(newTx as T);
 
             // Step 7: Update the initial state to link it with the newly created transaction.
             set((state) =>

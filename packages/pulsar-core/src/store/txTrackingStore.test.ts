@@ -120,7 +120,7 @@ describe('txTrackingStore validation', () => {
     expect(actionFunction).toHaveBeenCalledTimes(1);
   });
 
-  it('blocks when beforeTxProcess throws', async () => {
+  it('blocks when beforeTxProcess throws (default behavior)', async () => {
     const actionFunction = vi.fn().mockResolvedValue(txHash);
     const store = createStore({
       beforeTxProcess: vi.fn().mockRejectedValue(new Error('blocked')),
@@ -134,7 +134,46 @@ describe('txTrackingStore validation', () => {
     ).rejects.toThrow('blocked');
 
     expect(actionFunction).not.toHaveBeenCalled();
-    expect(store.getState().initialTx).toBeUndefined();
+    expect(store.getState().initialTx).toBeDefined();
+    expect(store.getState().initialTx?.error?.message).toBe('blocked');
+    expect(store.getState().initialTx?.isInitializing).toBe(false);
+  });
+
+  it('does not block when beforeTxProcess throws if abortOnTxError is false', async () => {
+    const actionFunction = vi.fn().mockResolvedValue(txHash);
+    const store = createStore({
+      beforeTxProcess: vi.fn().mockRejectedValue(new Error('blocked')),
+      abortOnTxError: false,
+    });
+
+    await store.getState().executeTxAction({
+      actionFunction,
+      params: createValidParams(),
+    });
+
+    expect(actionFunction).toHaveBeenCalledTimes(1);
+    expect(store.getState().initialTx?.error).toBeUndefined();
+  });
+
+  it('always blocks and throws when onRemoteCreate throws, regardless of abortOnTxError', async () => {
+    const actionFunction = vi.fn().mockResolvedValue(txHash);
+    const onRemoteCreate = vi.fn().mockRejectedValue(new Error('remote-sync-failed'));
+    const store = createStore({
+      onRemoteCreate,
+      abortOnTxError: false,
+    });
+
+    await expect(
+      store.getState().executeTxAction({
+        actionFunction,
+        params: createValidParams(),
+      }),
+    ).rejects.toThrow('remote-sync-failed');
+
+    expect(actionFunction).toHaveBeenCalledTimes(1);
+    expect(store.getState().transactionsPool[txHash]).toBeUndefined();
+    expect(store.getState().initialTx?.error?.message).toBe('remote-sync-failed');
+    expect(store.getState().initialTx?.isInitializing).toBe(false);
   });
 
   it('rejects invalid direct addTxToPool calls', () => {
