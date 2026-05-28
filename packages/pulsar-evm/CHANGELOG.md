@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.2...pulsar-evm-v0.5.3) (2026-05-28)
+
+
+### Bug Fixes
+
+* updated packages and added `abortOnTxError` logic ([755f667](https://github.com/TuwaIO/pulsar-core/commit/755f6677e76c48f0b667547515d766084a888303))
+
 ## [0.5.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.1...pulsar-evm-v0.5.2) (2026-05-14)
 
 
