@@ -6,7 +6,7 @@
 
 > **checkIsGelatoAvailable**(`chainId`, `gelatoApiKey`): `Promise`\<`boolean`\>
 
-Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:114](https://github.com/TuwaIO/pulsar-core/blob/f07064903bf5431471f5c03abc5368cb0a7305e3/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L114)
+Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:114](https://github.com/TuwaIO/pulsar-core/blob/2826e1017439e66e75334b50f8700599de358e24/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L114)
 
 Checks if the Gelato Relay service supports a given chain ID.
 
