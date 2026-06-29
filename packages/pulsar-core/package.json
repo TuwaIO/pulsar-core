@@ -51,12 +51,12 @@
     "zustand": "5.x.x"
   },
   "devDependencies": {
-    "@tuwaio/orbit-core": "^0.2.8",
+    "@tuwaio/orbit-core": "^0.2.12",
     "dayjs": "^1.11.21",
     "immer": "^11.1.8",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7",
-    "zustand": "^5.0.13"
+    "vitest": "^4.1.9",
+    "zustand": "^5.0.14"
   }
 }
