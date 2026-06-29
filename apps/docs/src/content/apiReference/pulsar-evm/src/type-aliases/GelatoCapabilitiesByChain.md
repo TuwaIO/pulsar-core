@@ -6,7 +6,7 @@
 
 > **GelatoCapabilitiesByChain** = `object`
 
-Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:20](https://github.com/TuwaIO/pulsar-core/blob/6fb72053683e08af14f2cd5f97b83ff4b8b500e1/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L20)
+Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:20](https://github.com/TuwaIO/pulsar-core/blob/3776e8cceb12ffbe5dc480169b68929e67178ab8/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L20)
 
 Represents the per-chain capabilities returned by the Gelato `relayer_getCapabilities` RPC method.
 
@@ -16,7 +16,7 @@ Represents the per-chain capabilities returned by the Gelato `relayer_getCapabil
 
 > **feeCollector**: `string`
 
-Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:21](https://github.com/TuwaIO/pulsar-core/blob/6fb72053683e08af14f2cd5f97b83ff4b8b500e1/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L21)
+Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:21](https://github.com/TuwaIO/pulsar-core/blob/3776e8cceb12ffbe5dc480169b68929e67178ab8/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L21)
 
 The address of the fee collector contract on this chain.
 
@@ -26,6 +26,6 @@ The address of the fee collector contract on this chain.
 
 > **tokens**: [`GelatoToken`](GelatoToken.md)[]
 
-Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:22](https://github.com/TuwaIO/pulsar-core/blob/6fb72053683e08af14f2cd5f97b83ff4b8b500e1/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L22)
+Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:22](https://github.com/TuwaIO/pulsar-core/blob/3776e8cceb12ffbe5dc480169b68929e67178ab8/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L22)
 
 The list of ERC-20 tokens accepted for fee payment on this chain.
