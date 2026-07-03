@@ -1,6 +1,6 @@
 {
-  "packages/pulsar-core": "0.6.4",
-  "packages/pulsar-evm": "0.5.3",
-  "packages/pulsar-react": "0.4.3",
-  "packages/pulsar-solana": "0.6.4"
+  "packages/pulsar-core": "0.6.5",
+  "packages/pulsar-evm": "0.5.4",
+  "packages/pulsar-react": "0.4.4",
+  "packages/pulsar-solana": "0.6.5"
 }
