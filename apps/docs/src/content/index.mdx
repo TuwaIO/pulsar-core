@@ -37,9 +37,10 @@ Building this infra yourself takes months and distracts from your primary logic.
 
 Pulsar provides the complete transactional "brain" locally on the client. It indexes and reconciles transaction states from the mempool (`pending`) to ultimate finality (`replaced`, `confirmed`, `failed`) entirely in the background, checkpointing everything directly to `localStorage`.
 
-### 🏗️ Ecosystem Architecture
+Pulsar handles the core state engineering, sitting firmly below your visual components and perfectly integrating into cloud persistence layers like the Quasar SDK.
 
-Pulsar handles the core state engineering, sitting firmly below your visual components and perfectly integrating into cloud persistence layers like Quasar:
+> [!NOTE]
+> Pulsar does not ship pre-bundled visual nodes natively; layout rendering is strictly delegated to the Nova UI Kit layer, while cloud state sync mapping is handled by the Quasar SDK.
 
 ```text
                       (The Baseline Core Foundation)

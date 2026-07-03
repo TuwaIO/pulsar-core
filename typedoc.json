@@ -1,5 +1,6 @@
 {
   "$schema": "https://typedoc.org/schema.json",
+  "name": "API Reference.",
   "entryPoints": [
     "packages/pulsar-core/src/index.ts",
     "packages/pulsar-evm/src/index.ts",

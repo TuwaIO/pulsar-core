@@ -4,15 +4,15 @@
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-react.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-Official React bindings for the Pulsar Engine. This package provides the essential **`useInitializeTransactionsPool`** hook to seamlessly integrate Pulsar's state with your application's lifecycle.
+Global React context bindings, hooks, and transaction pool initializers for orchestrating framework-agnostic Pulsar stores.
 
 ---
 
 ## 🏛️ What is `@tuwaio/pulsar-react`?
 
-This package is the official bridge between the framework-agnostic `@tuwaio/pulsar-core` and a React application. It provides hooks and utilities that simplify the process of connecting Pulsar's state management to the React component lifecycle.
+This package serves as the integration layer between the framework-agnostic `@tuwaio/pulsar-core` headless state machine and React. It provides global bindings, hooks, and transaction pool initializers to orchestrate Pulsar stores within the React component lifecycle.
 
-Its primary role is to ensure that transaction tracking can resume reliably after a page reload.
+Its primary role is to execute `useInitializeTransactionsPool` to resume pending transaction tracking automatically across client-side refreshes.
 
 ---
 

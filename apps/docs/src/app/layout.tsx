@@ -57,7 +57,8 @@ export const metadata: Metadata = {
 
   openGraph: {
     title: 'Pulsar Engine Documentation',
-    description: 'The modular, headless-first Web3 infrastructure. Build self-custodial applications with zero vendor lock-in.',
+    description:
+      'The modular, headless-first Web3 infrastructure. Build self-custodial applications with zero vendor lock-in.',
     url: 'https://docs.tuwa.io/',
     siteName: 'Pulsar Engine Docs',
     images: [

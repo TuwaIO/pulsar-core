@@ -7,6 +7,7 @@ export default {
   quickStart: 'Quick Start',
   evmStandalone: 'Pulsar EVM Standalone',
   solanaStandalone: 'Pulsar Solana Standalone',
+  quasarIntegration: 'Quasar SaaS Integration',
   apiReference: 'API reference',
   '---': {
     type: 'separator',

@@ -4,7 +4,7 @@
   "private": false,
   "author": "Oleksandr Tkach",
   "license": "Apache-2.0",
-  "description": "The core, framework-agnostic engine for real-time tracking of Web3 transaction lifecycles (pending, success, failed, replaced).",
+  "description": "Tier 3 of the TUWA Ecosystem. Framework-agnostic headless core store providing append-only localStorage transaction history ledgers.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -53,7 +53,7 @@
   "devDependencies": {
     "@tuwaio/orbit-core": "^0.2.12",
     "dayjs": "^1.11.21",
-    "immer": "^11.1.8",
+    "immer": "^11.1.9",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9",

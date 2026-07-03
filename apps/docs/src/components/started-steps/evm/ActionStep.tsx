@@ -10,7 +10,7 @@ export async function increment({ wagmiConfig }: { wagmiConfig?: Config }) {
   if (wagmiConfig) {
     return writeContract(wagmiConfig, {
       abi: CounterAbi, // ABI from previous step
-      address: COUNTER_ADDRESS, // Contract address
+      address: COUNTER_ADDRESS, // Contract address (0xAe7f46914De82028eCB7E2bF97Feb3D3dDCc2BAB: sepolia testenet for example)
       functionName: 'increment',
       args: [],
       chainId: sepolia.id,

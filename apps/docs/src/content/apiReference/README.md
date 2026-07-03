@@ -1,8 +1,8 @@
-**@tuwaio/pulsar-core-monorepo**
+**API Reference.**
 
 ***
 
-# @tuwaio/pulsar-core-monorepo
+# API Reference.
 
 ## Modules
 

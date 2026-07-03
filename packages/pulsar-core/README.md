@@ -4,15 +4,15 @@
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-core.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-The core, framework-agnostic engine for real-time tracking of Web3 transaction lifecycles (pending, success, failed, replaced).
+Tier 3 of the TUWA Ecosystem. Framework-agnostic headless core store providing append-only localStorage transaction history ledgers.
 
 ---
 
 ## 🏛️ What is `@tuwaio/pulsar-core`?
 
-`@tuwaio/pulsar-core` is the central nervous system of the Pulsar ecosystem. It is a **headless** and **framework-agnostic** library, meaning it contains no UI components or framework-specific code (like React hooks).
+`@tuwaio/pulsar-core` is the framework-agnostic, zero-dependency client-side ledger layer of the Pulsar ecosystem. It contains no visual interface components or framework-specific render hooks.
 
-Its sole purpose is to provide a powerful state machine for managing multi-chain transactions, built on top of **Zustand** (for state management) and **Immer** (for immutable updates). Think of it as a pre-configured, extensible "brain" that you can integrate into any JavaScript or TypeScript application to handle complex transaction tracking logic with ease.
+Its single purpose is to act as a headless state machine providing deterministic transaction status reconciliation and client-side state persistence across user sessions. Built on top of **Zustand** and **Immer**, it maintains transaction pool stability using persistent browser storage engines to secure an append-only transaction ledger.
 
 This package exports one primary factory function: `createPulsarStore`.
 
@@ -20,11 +20,11 @@ This package exports one primary factory function: `createPulsarStore`.
 
 ## ✨ Key Features
 
-- **Framework-Agnostic:** Use it with React, Vue, Svelte, or even in a Node.js environment.
-- **Multi-Chain by Design:** Built to handle different blockchain architectures via a powerful adapter system.
-- **Persistent State:** Automatically saves transaction state to `localStorage`, allowing tracking to resume after a page refresh.
-- **Extensible:** Customize its behavior with adapters, callbacks, and custom trackers.
-- **Type-Safe:** Written entirely in TypeScript for a robust developer experience.
+- **Framework-Agnostic:** Orchestrate and integrate state logic into any environment (React, Vue, Svelte, or Node.js).
+- **Multi-Chain by Design:** Isolated state machine adapter system to support heterogeneous blockchain networks.
+- **Persistent State:** Client-side state persistence powered by browser storage engines to resume lifecycle tracking across refreshes.
+- **Append-Only Ledger:** High-stability transaction pool management using FIFO eviction policies.
+- **Type-Safe:** Zero-compromise TypeScript implementation with explicit interfaces.
 
 ---
 

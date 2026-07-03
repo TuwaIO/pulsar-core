@@ -1,4 +1,4 @@
-[**@tuwaio/pulsar-core-monorepo**](../../../README.md)
+[**API Reference.**](../../../README.md)
 
 ***
 
@@ -6,6 +6,6 @@
 
 > `const` **MAX\_TRANSACTION\_TITLE\_LENGTH**: `100` = `100`
 
-Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:4](https://github.com/TuwaIO/pulsar-core/blob/3776e8cceb12ffbe5dc480169b68929e67178ab8/packages/pulsar-core/src/utils/transactionValidation.ts#L4)
+Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:4](https://github.com/TuwaIO/pulsar-core/blob/b07dd22051bc55774d8350cd6e66a57ea987b080/packages/pulsar-core/src/utils/transactionValidation.ts#L4)
 
 Maximum allowed length for each transaction title string.

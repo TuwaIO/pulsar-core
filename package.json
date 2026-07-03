@@ -5,7 +5,7 @@
   "author": "Oleksandr Tkach",
   "license": "Apache-2.0",
   "packageManager": "pnpm@11.9.0",
-  "description": "Monorepo for the Pulsar Engine, the headless state management system for tracking Web3 transactions in the TUWA ecosystem.",
+  "description": "Monorepo for Pulsar: A headless, local-first transaction lifecycle tracking engine for the TUWA Ecosystem.",
   "scripts": {
     "build": "pnpm --filter \"./packages/**\" build",
     "postinstall": "pnpm build",
@@ -13,7 +13,7 @@
     "format": "prettier --write .",
     "test": "pnpm --filter \"./packages/**\" test",
     "clean": "find . -name node_modules -type d -prune -exec rm -rf '{}' + && find . -name dist -type d -prune -exec rm -rf '{}' + && rm -rf .turbo",
-    "docs:gen": "typedoc",
+    "docs:gen": "typedoc && cp apps/docs/src/content/apiReference-meta.tsx apps/docs/src/content/apiReference/_meta.tsx",
     "prepare": "husky"
   },
   "repository": {
@@ -43,7 +43,7 @@
     "eslint-plugin-simple-import-sort": "^13.0.0",
     "globals": "^17.7.0",
     "husky": "^9.1.7",
-    "prettier": "^3.9.3",
+    "prettier": "^3.9.4",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "semantic-release": "^25.0.5",
     "typedoc": "^0.28.19",

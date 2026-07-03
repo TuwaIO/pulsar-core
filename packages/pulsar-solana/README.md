@@ -4,13 +4,13 @@
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-solana.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-An advanced toolkit for the Pulsar Engine that adds comprehensive support for tracking transactions on the Solana blockchain. It is built to leverage **Wallet Standard**, integrating seamlessly with modern Solana wallet ecosystems, and uses **`gill`** for modern blockchain interaction.
+Tier 4 of the TUWA Ecosystem. Low-level Solana block state monitors and RPC cluster lifecycle indexers powered strictly by gill.
 
 ---
 
 ## 🏛️ What is `@tuwaio/pulsar-solana`?
 
-This package is a powerful, official adapter for `@tuwaio/pulsar-core`. It's designed to be compatible with wallets that follow the **Wallet Standard**. By leveraging standard wallet interfaces, you can utilize Pulsar's powerful transaction tracking engine across a wide range of Solana wallets.
+This package is the low-level Solana block state monitor and RPC cluster lifecycle indexing adapter for `@tuwaio/pulsar-core`. It leverages **Wallet Standard** for deep integration with modern Solana wallet environments, performing fast-block signature status tracking, signature swap detection, and cluster manager alignment using `gill` primitives.
 
 The architecture is designed for multi-chain robustness. You can provide RPC endpoints for different Solana clusters (e.g., Mainnet Beta, Devnet), and the adapter will automatically use the correct one based on the user's connected wallet state.
 
@@ -18,11 +18,11 @@ The architecture is designed for multi-chain robustness. You can provide RPC end
 
 ## ✨ Core Features
 
-- **🔌 Wallet Standard Integration:** A single `pulsarSolanaAdapter` factory that works with any wallet supporting the **Wallet Standard**.
-- **🔗 Multi-Chain RPC:** Configure with a map of RPC URLs for different clusters; the adapter intelligently selects the correct one.
-- **🛰️ Robust Polling Tracker:** A durable transaction tracker that polls for signature statuses until finality.
-- **🌐 Network Verification:** Includes a utility (`checkSolanaChain`) to verify that the connected wallet's cluster matches the one required by the transaction.
-- **💡 Optional Wallet:** The adapter can be initialized without a wallet for read-only operations, such as displaying transaction history.
+- **🔌 Wallet Standard Integration:** A single `pulsarSolanaAdapter` factory that interfaces with any wallet conforming to the **Wallet Standard**.
+- **🔗 Multi-Chain RPC:** Configuration mapping for RPC endpoints across multiple Solana clusters (mainnet-beta, devnet, testnet).
+- **🛰️ Signature Swap & Status Tracker:** A high-speed transaction signature monitor that checks RPC node block states and tracks signature mutations.
+- **🌐 Cluster Verification:** Includes a pre-flight validator (`checkSolanaChain`) to ensure the connected wallet's cluster matches the transaction's target network.
+- **💡 Read-Only Operations:** The adapter can initialize without wallet contexts to fetch and parse histories.
 
 ---
 
@@ -106,7 +106,7 @@ import { useWalletAccountTransactionSendingSigner } from '@solana/react';
 import { Wallet } from '@tuwaio/nova-connect/satellite';
 import { OrbitAdapter } from '@tuwaio/orbit-core';
 import { createSolanaClientWithCache } from '@tuwaio/orbit-solana';
-import { SolanaWallet } from '@tuwaio/satellite-solana';
+import { SolanaConnection } from '@tuwaio/satellite-solana';
 
 import { usePulsarStore } from '@/hooks/pulsarStoreHook';
 
@@ -127,7 +127,7 @@ function MyTransactionButton() {
   const getLastTxKey = usePulsarStore((state) => state.getLastTxKey);
   const activeConnection = useSatelliteConnectStore((state) => state.activeConnection);
 
-  const activeWalletSolana = activeConnection as SolanaWallet;
+  const activeWalletSolana = activeConnection as SolanaConnection;
 
   const signer = useWalletAccountTransactionSendingSigner(
     activeWalletSolana.connectedAccount as UiWalletAccount,
