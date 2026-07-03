@@ -9,7 +9,7 @@
  * implement custom logic, such as prompting the user to switch networks.
  */
 export class SolanaChainMismatchError extends Error {
-  /** The name of the error, for easy identification. */
+  /** The name identifier of the error class. */
   name = 'SolanaChainMismatchError';
   /** The chain that the transaction requires (e.g., 'solana:mainnet'). */
   requiredChain: string;

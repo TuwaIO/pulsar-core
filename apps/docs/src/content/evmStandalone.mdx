@@ -1,18 +1,21 @@
 # Using EVM Trackers Standalone
 
-While the Pulsar suite offers a full stack solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture remains modular and flexible. This means you can utilize the low-level **trackers** (`evmTracker`, `gelatoFetcher`, `safeFetcher`) from `@tuwaio/pulsar-evm` directly, without installing or configuring the complete state management store.
+While the Pulsar suite offers a full stack solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture remains modular and flexible. This allows utilizing the low-level **trackers** (`evmTracker`, `gelatoFetcher`, `safeFetcher`) from `@tuwaio/pulsar-evm` directly, bypassing the complete state management store.
 
 This flexibility is ideal if:
 
-- You already have your own state management solution (Redux, MobX, Valtio, etc.) and want to integrate only the transaction tracking logic.
-- You require tracking on the server-side, where a client-centric store isn't necessary.
-- You desire granular control over each stage of a transaction’s lifecycle for custom workflows.
+- Integrating transaction tracking logic into your own state management solution (Zustand, Redux, MobX, etc.).
+- Requiring tracking on the server-side, where client-centric store persistence is unnecessary.
+- Granular control over each stage of a transaction’s lifecycle is required for custom workflows.
+
+> [!WARNING]
+> Use of legacy `web3.js` and `ethers.js` libraries is strictly prohibited. All tracking pipelines are built strictly upon `viem` and `wagmi` primitives to ensure deterministic transaction status reconciliation and application sovereignty.
 
 ---
 
 ## Why Use `evmTracker`?
 
-Some might ask, "Why should I use `evmTracker` when I can just call `waitForTransactionReceipt` from `viem`?" While `waitForTransactionReceipt` is effective, it only addresses part of the problem. `evmTracker` provides a more robust, comprehensive, and ready-to-use solution.
+Using `evmTracker` provides client-side state persistence, mempool retry logic, and multi-chain indexing helpers that standard RPC calls lack.
 
 | Feature                     | `waitForTransactionReceipt` (viem)                                                                                      | `evmTracker` (Pulsar)                                                                                             |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -21,7 +24,7 @@ Some might ask, "Why should I use `evmTracker` when I can just call `waitForTran
 | **Fetches Full Tx Details** | ❌ No. Doesn't return complete info such as nonce, value, etc.                                                          | ✅ **Yes.** Calls `getTransaction` internally, passing all transaction details to callbacks.                      |
 | **Abstraction Level**       | Low. You must manage the tracking states manually.                                                                      | High. Encapsulates the entire process into a single, convenient async function, simplifying implementation.       |
 
-In essence, `evmTracker` is a reliable wrapper around `viem` functions, addressing common edge cases and significantly reducing manual effort.
+In essence, `evmTracker` is a reliable tracking pipeline wrapper around `viem` functions, addressing common edge cases and ensuring robust transaction lifecycle tracking.
 
 ---
 
@@ -33,7 +36,7 @@ This is the primary tracker for monitoring standard transactions on EVM-compatib
 
 #### How It Works
 
-`evmTracker` initially fetches transaction details using `getTransaction`. If unavailable (due to RPC indexing delay), it retries several times. Once the details are available, it actively waits for the transaction receipt using `waitForTransactionReceipt`.
+`evmTracker` initially fetches transaction details using `getTransaction`. If unavailable (due to RPC indexing delay), it retries. Once details are resolved, it actively waits for the transaction receipt using `waitForTransactionReceipt`.
 
 #### Example Usage
 
@@ -84,13 +87,19 @@ For polling-based tracking, especially for **Gelato** and **Safe** multisig tran
 
 ```tsx
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
-import { gelatoFetcher, safeFetcher } from '@tuwaio/pulsar-evm';
+import { gelatoFetcher, safeFetcher, createGelatoClient } from '@tuwaio/pulsar-evm';
+
+// Initialize Gelato HTTP transport client
+const gelatoClient = createGelatoClient({ apiKey: 'YOUR_GELATO_API_KEY' });
 
 // Tracking a Gelato relay task
-async function trackGelatoTask(taskId) {
+async function trackGelatoTask(taskId: string) {
   await initializePollingTracker({
-    tx: { txKey: taskId },
-    fetcher: gelatoFetcher,
+    tx: {
+      txKey: taskId,
+      pending: true, // Crucial: must be true to start polling loop
+    },
+    fetcher: gelatoFetcher(gelatoClient),
     onSuccess: (status) => {
       console.log('Gelato task succeeded:', status);
     },
@@ -101,9 +110,14 @@ async function trackGelatoTask(taskId) {
 }
 
 // Tracking a Safe multisig transaction
-async function trackSafeTx(safeTxHash, chainId, fromAddress) {
+async function trackSafeTx(safeTxHash: string, chainId: number, fromAddress: string) {
   await initializePollingTracker({
-    tx: { txKey: safeTxHash, chainId, from: fromAddress },
+    tx: {
+      txKey: safeTxHash,
+      chainId,
+      from: fromAddress,
+      pending: true, // Crucial: must be true to start polling loop
+    },
     fetcher: safeFetcher,
     onSuccess: (status) => {
       console.log('Safe transaction succeeded:', status);
@@ -135,7 +149,3 @@ const { tracker, txKey } = checkTransactionsTracker('0xabc...', 'injected');
 // tracker -> 'ethereum' or relevant tracker type
 // txKey -> same as input or derived key
 ```
-
----
-
-Feel free to ask for further customization examples or clarifications on implementing specific trackers or utilities!

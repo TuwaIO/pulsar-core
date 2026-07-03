@@ -4,15 +4,15 @@
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-core.svg)](./LICENSE)
 [![Contributors](https://img.shields.io/github/contributors/TuwaIO/pulsar-core)](https://github.com/TuwaIO/pulsar-core/graphs/contributors)
 
-<img src="https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/repos/pulsar_core.png" alt="Pulsar Core" width="400" style="border-radius: 10px; text-align: center; margin-bottom: 20px; margin-top: 20px; margin-left: auto; margin-right: auto; display: block;" />
+<img src="https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/preview/repos/pulsar_core.png" alt="Pulsar Core" width="400" style="border-radius: 10px; text-align: center; margin-bottom: 20px; margin-top: 20px; margin-left: auto; margin-right: auto; display: block;" />
 
-Welcome to the official monorepo for the **Pulsar Engine**, a headless state management system for tracking Web3 transactions.
+Welcome to the official monorepo for **Pulsar**, a headless, local-first transaction lifecycle tracking engine for the TUWA Ecosystem.
 
 ---
 
 ## 🏛️ Architecture Philosophy
 
-Pulsar is the "brain" behind TUWA's transaction tracking capabilities. It's a **headless** engine, meaning it contains no UI components. Its sole purpose is to provide a robust, reliable, and extensible system for managing the lifecycle of on-chain transactions across different blockchain ecosystems.
+Pulsar is "The Tracker" within the ecosystem, occupying Tier 3 (Headless Core Store) and Tier 4 (Network State Adapters & Framework Bindings). Its single purpose is asynchronous multi-chain transaction lifecycle indexing and client-side reconciliation.
 
 It is designed to be consumed by any UI layer, with our official implementation being the **[Nova UI Kit](https://github.com/TuwaIO/nova-uikit)**.
 
@@ -26,7 +26,7 @@ The architecture is modular and layered:
 
 ## ✨ Key Features
 
-- **Framework-Agnostic Core:** Built with Zustand and Immer for maximum portability.
+- **Framework-Agnostic Core:** Framework-agnostic headless core store providing append-only localStorage transaction history ledgers.
 - **Multi-Chain by Design:** The adapter pattern allows for extending support to any blockchain.
 - **Persistent State:** Automatically resumes tracking pending transactions after a page reload.
 - **Rich Ecosystem Support:**
@@ -40,12 +40,12 @@ The architecture is modular and layered:
 
 This repository is a monorepo managed using `pnpm` workspaces.
 
-| Package                        | Version                                                                                                                       | Description                                                                         |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| 🧠 **`@tuwaio/pulsar-core`**   | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-core.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-core)     | The framework-agnostic core with the main state machine, types, and utilities.      |
-| 🔌 **`@tuwaio/pulsar-evm`**    | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)       | An adapter for EVM-compatible chains. Integrates with Wagmi and Viem.               |
-| 🔌 **`@tuwaio/pulsar-solana`** | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-solana.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-solana) | An adapter for Solana chains. Supports cluster management and transaction tracking. |
-| ⚛️ **`@tuwaio/pulsar-react`**  | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react)   | React bindings, including the `useInitializeTransactionsPool` hook.                 |
+| Package                        | Version                                                                                                                       | Description                                                                                                                          |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 🧠 **`@tuwaio/pulsar-core`**   | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-core.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-core)     | Tier 3 of the TUWA Ecosystem. Framework-agnostic headless core store providing append-only localStorage transaction history ledgers. |
+| 🔌 **`@tuwaio/pulsar-evm`**    | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)       | Tier 4 of the TUWA Ecosystem. Low-level EVM state trackers and lifecycle indexers powered strictly by viem and wagmi primitives.     |
+| 🔌 **`@tuwaio/pulsar-solana`** | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-solana.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-solana) | Tier 4 of the TUWA Ecosystem. Low-level Solana block state monitors and RPC cluster lifecycle indexers powered strictly by gill.     |
+| ⚛️ **`@tuwaio/pulsar-react`**  | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react)   | Global React context bindings, hooks, and transaction pool initializers for orchestrating framework-agnostic Pulsar stores.          |
 
 ---
 

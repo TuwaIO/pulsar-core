@@ -1,6 +1,8 @@
 import '@/styles/app.css';
 
-import { Footer, Navbar } from '@tuwaio/docs-ui';
+import { Footer, Navbar, RemoteLogo } from '@tuwaio/docs-ui';
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
 import NextTopLoader from 'nextjs-toploader';
 import { Head } from 'nextra/components';
 import { getPageMap } from 'nextra/page-map';
@@ -8,14 +10,33 @@ import { Layout } from 'nextra-theme-docs';
 
 import { navLinks } from '@/constants';
 
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+});
+
+const navbarLogo = <RemoteLogo width={105} height={45} className="tuwadocs:transition-opacity tuwadocs:duration-300" />;
+const footerLogo = <RemoteLogo width={100} height={42} className="tuwadocs:transition-opacity tuwadocs:duration-300" />;
+
 // --- Metadata Configuration ---
-export const metadata = {
+export const metadata: Metadata = {
   title: {
     default: 'Pulsar Engine Documentation',
     template: '%s – Pulsar Engine',
   },
   description:
-    'Official documentation for the Pulsar Engine, the headless state management system for tracking Web3 transactions.',
+    'Official documentation for the Pulsar Engine. The modular, headless-first Web3 infrastructure for building self-custodial applications with zero vendor lock-in.',
+
+  icons: {
+    icon: 'https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/icon0.svg',
+    shortcut: 'https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/web-app-manifest-512x512.png',
+    apple: 'https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/web-app-manifest-512x512.png',
+  },
 
   keywords: [
     'Pulsar',
@@ -36,12 +57,13 @@ export const metadata = {
 
   openGraph: {
     title: 'Pulsar Engine Documentation',
-    description: 'The official documentation for the headless state management system for tracking Web3 transactions.',
+    description:
+      'The modular, headless-first Web3 infrastructure. Build self-custodial applications with zero vendor lock-in.',
     url: 'https://docs.tuwa.io/',
     siteName: 'Pulsar Engine Docs',
     images: [
       {
-        url: 'https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/preview-logo.png',
+        url: 'https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/preview/preview-logo.png',
         width: 1200,
         height: 630,
       },
@@ -53,8 +75,9 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Pulsar Engine Documentation',
-    description: 'The official documentation for the headless state management system for tracking Web3 transactions.',
-    images: ['https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/preview-logo.png'],
+    description:
+      'The modular, headless-first Web3 infrastructure. Build self-custodial applications with zero vendor lock-in.',
+    images: ['https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/preview/preview-logo.png'],
   },
 };
 
@@ -64,10 +87,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <Head>
         <meta name="apple-mobile-web-app-title" content="Pulsar Docs" />
       </Head>
-      <body>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
         <Layout
-          navbar={<Navbar key="navbar" links={navLinks} />}
-          footer={<Footer key="footer" />}
+          navbar={<Navbar key="navbar" links={navLinks} logo={navbarLogo} />}
+          footer={<Footer key="footer" logo={footerLogo} />}
           pageMap={await getPageMap()}
           docsRepositoryBase="https://github.com/TuwaIO/pulsar-core/tree/main/apps/docs"
           navigation={{ prev: true, next: true }}

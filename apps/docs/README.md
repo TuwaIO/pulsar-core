@@ -1,12 +1,12 @@
-# Pulsar Engine - Documentation Site
+# TUWA Pulsar - Documentation Site
 
 > 🔴 **Private Repository:** This repository contains the source code for the official Pulsar Engine documentation website, available at **[pulsar.docs.tuwa.io](https://pulsar.docs.tuwa.io)**.
 
 ## About This Project
 
-This project houses the official documentation for the entire Pulsar Engine ecosystem. It's built with **Next.js** and **Nextra**, a powerful documentation framework that allows us to write content in MDX and create a fast, searchable, and user-friendly website.
+This project houses the official documentation for the TUWA Pulsar transaction lifecycle tracker. It's built with **Next.js** and **Nextra**, allowing content to be written in MDX to produce a fast, searchable, and user-friendly documentation hub.
 
-The goal is to provide clear, comprehensive, and easy-to-navigate documentation for all packages in the `pulsar-core` monorepo.
+The goal is to provide clear, comprehensive, and structured technical documentation for all Tier 3 and Tier 4 packages in the `pulsar-core` monorepo.
 
 ---
 

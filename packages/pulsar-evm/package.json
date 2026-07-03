@@ -4,7 +4,7 @@
   "private": false,
   "author": "Oleksandr Tkach",
   "license": "Apache-2.0",
-  "description": "An adapter for the Pulsar Engine that adds support for tracking transactions on EVM-compatible chains. Integrates with Viem and Wagmi.",
+  "description": "Tier 4 of the TUWA Ecosystem. Low-level EVM state trackers and lifecycle indexers powered strictly by viem and wagmi primitives.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -55,17 +55,17 @@
   },
   "devDependencies": {
     "@tuwaio/pulsar-core": "workspace:^",
-    "@tuwaio/orbit-core": "^0.2.8",
-    "@tuwaio/orbit-evm": "^0.2.13",
-    "@wagmi/core": "^3.5.0",
+    "@tuwaio/orbit-core": "^0.2.12",
+    "@tuwaio/orbit-evm": "^0.2.17",
+    "@wagmi/core": "^3.5.5",
     "dayjs": "^1.11.21",
-    "immer": "^11.1.8",
+    "immer": "^11.1.9",
     "jsdom": "^29.1.1",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
-    "viem": "^2.51.3",
-    "vitest": "^4.1.7",
-    "zustand": "^5.0.13",
+    "viem": "^2.54.2",
+    "vitest": "^4.1.9",
+    "zustand": "^5.0.14",
     "dotenv": "^17.4.2"
   }
 }

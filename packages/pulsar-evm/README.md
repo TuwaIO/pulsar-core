@@ -4,13 +4,16 @@
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-evm.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-An advanced toolkit for the Pulsar Engine that adds comprehensive support for tracking transactions on EVM-compatible chains. It integrates seamlessly with **Viem** & **Wagmi** and provides multiple tracking strategies, utility actions, and helpers.
+Tier 4 of the TUWA Ecosystem. Low-level EVM state trackers and lifecycle indexers powered strictly by viem and wagmi primitives.
+
+> [!WARNING]
+> Use of legacy `web3.js` and `ethers.js` libraries is strictly prohibited. All interactions must proceed via `viem` and `wagmi` primitives to ensure deterministic transaction status reconciliation and application sovereignty.
 
 ---
 
 ## 🏛️ What is `@tuwaio/pulsar-evm`?
 
-This package is a powerful, official adapter for `@tuwaio/pulsar-core`. It contains all the necessary logic to interact with EVM-compatible blockchains, acting as the primary logic provider for most dApps.
+This package is the low-level EVM state tracking and indexing adapter for `@tuwaio/pulsar-core`. It provides specialized tracking pipelines for standard transactions, contract wallets, Safe multisignature wallets, and Gelato transaction relayers utilizing `viem` clients.
 
 While its main export is the `pulsarEvmAdapter`, it also includes a suite of standalone trackers, actions, and utilities that can be used for advanced or custom implementations.
 
@@ -18,13 +21,13 @@ While its main export is the `pulsarEvmAdapter`, it also includes a suite of sta
 
 ## ✨ Core Features
 
-- **🔌 Simple Integration:** A single `pulsarEvmAdapter` factory function to easily plug full EVM support into `@tuwaio/pulsar-core`.
-- **🎯 Multi-Tracker Support:** Provides distinct, optimized trackers for:
+- **🔌 Seamless Integration:** A single `pulsarEvmAdapter` factory function to integrate full EVM tracking capabilities into `@tuwaio/pulsar-core`.
+- **🎯 Specialized Pipelines:** Distinct, optimized trackers for:
   - **Standard EVM Transactions** (via `evmTracker` and `viem`).
-  - **Safe (formerly Gnosis Safe)** Multisig Transactions (via `safeFetcher` and the Safe Transaction Service API).
-  - **Gelato Relay** Meta-Transactions (via `gelatoFetcher` and the Gelato API).
-- **🤖 Automatic Routing:** The adapter automatically detects the correct tracker to use (Safe, Gelato, or standard EVM) based on the transaction context and wallet type.
-- **⚡ Built-in Actions:** Includes ready-to-use functions for common user needs like `speedUpTxAction` and `cancelTxAction`.
+  - **Safe (formerly Gnosis Safe) Multi-Sigs** (via `safeFetcher` and the Safe Transaction Service API).
+  - **Gelato Relayer Pipes** (via `gelatoFetcher` and the Gelato API).
+- **🤖 Automatic Routing:** Automatically resolves the correct pipeline (Safe, Gelato, or standard EVM) based on the transaction context and wallet type.
+- **⚡ Built-in Actions:** Ready-to-use actions for managing transaction state, including `speedUpTxAction` and `cancelTxAction`.
 
 ---
 

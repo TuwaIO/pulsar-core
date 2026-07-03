@@ -6,6 +6,10 @@ allowBuilds:
   sharp: false
 
 minimumReleaseAgeExclude:
-  - "@tuwaio/*"
+  - '@tuwaio/*'
   - viem
-
+  - '@tailwindcss/*'
+  - '@typescript-eslint/*'
+  - prettier
+  - tailwindcss
+  - typescript-eslint

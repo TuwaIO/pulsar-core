@@ -1,18 +1,18 @@
 # Using Solana Trackers Standalone
 
-While the Pulsar suite offers a full stack solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture remains modular and flexible. This means you can utilize the low-level **trackers** (`solanaFetcher`) from `@tuwaio/pulsar-solana` directly, without installing or configuring the complete state management store.
+While the Pulsar suite offers a full stack solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture remains modular and flexible. This allows utilizing the low-level **trackers** (`solanaFetcher`) from `@tuwaio/pulsar-solana` directly, bypassing the complete state management store.
 
 This flexibility is ideal if:
 
-- You already have your own state management solution (Redux, MobX, Valtio, etc.) and want to integrate only the transaction tracking logic.
-- You require tracking on the server-side, where a client-centric store isn't necessary.
-- You desire granular control over each stage of a transaction’s lifecycle for custom workflows.
+- Integrating transaction tracking logic into your own state management solution (Zustand, Redux, MobX, etc.).
+- Requiring tracking on the server-side, where client-centric store persistence is unnecessary.
+- Granular control over each stage of a transaction’s lifecycle is required for custom workflows.
 
 ---
 
 ## Why Use `solanaFetcher`?
 
-Some might ask, "Why should I use `solanaFetcher` when I can just manually track the transaction state using the Solana RPC?" While manual polling is possible, `solanaFetcher` provides a more robust, comprehensive, and ready-to-use solution.
+Using `solanaFetcher` provides fast-block monitoring and signature status checking at the RPC node level, handling network lags and transaction signature swaps natively.
 
 | Feature                     | Solana RPC (manual polling)                                                                                             | `solanaFetcher` (Pulsar)                                                                                      |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -21,7 +21,7 @@ Some might ask, "Why should I use `solanaFetcher` when I can just manually track
 | **Fetches Full Tx Details** | ❌ No. Requires additional RPC calls to get full transaction info after confirmation.                                   | ✅ **Yes.** Calls for `getTransaction` internally, providing parsed transaction details to callbacks.         |
 | **Abstraction Level**       | Low. You must manage the tracking states and polling manually.                                                          | High. Encapsulates the entire process into a single, convenient async function, simplifying implementation.   |
 
-In essence, `solanaFetcher` is a reliable wrapper around Solana RPC functions, addressing common edge cases and significantly reducing manual effort.
+In essence, `solanaFetcher` is a reliable tracking pipeline wrapper around Solana RPC functions, resolving common edge cases and ensuring robust signature status monitoring.
 
 ---
 
@@ -29,11 +29,11 @@ In essence, `solanaFetcher` is a reliable wrapper around Solana RPC functions, a
 
 ### 1. Solana Tracker
 
-This is the primary tracker for monitoring standard transactions on Solana, identified via a transaction signature. It is designed to be used with the `initializePollingTracker` from `@tuwaio/pulsar-core`.
+This is the primary tracker for monitoring standard transactions on Solana, identified via a transaction signature. It is designed to be used with `initializePollingTracker` from `@tuwaio/pulsar-core`.
 
 #### How It Works
 
-`solanaFetcher` initially attempts to fetch transaction signature status. If the transaction is not found (due to RPC indexing lag), it retries until it is found or a timeout occurs. Once found, it continues to poll until the transaction is finalized. It also fetches full transaction details once they become available.
+`solanaFetcher` initially attempts to fetch the transaction signature status. If the transaction is not found (due to RPC indexing lag), it retries. Once resolved, it continues to poll until the transaction is finalized. It also fetches full transaction details once they become available.
 
 #### Example Usage
 
@@ -50,6 +50,7 @@ async function trackMySolanaTransaction(txSignature: string, rpcUrl: string, cha
       chainId: chainId, // e.g., 'solana:mainnet' or 'solana:devnet'
       adapter: OrbitAdapter.SOLANA,
       localTimestamp: Math.floor(Date.now() / 1000),
+      pending: true, // Crucial: must be true to start polling loop
     },
     fetcher: solanaFetcher,
     onIntervalTick: (response) => {
@@ -117,7 +118,3 @@ async function ensureCorrectNetwork(requiredChain: string, currentChain: string)
   }
 }
 ```
-
----
-
-Feel free to ask for further customization examples or clarifications on implementing specific trackers or utilities!

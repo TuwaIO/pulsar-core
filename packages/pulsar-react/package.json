@@ -4,7 +4,7 @@
   "private": false,
   "author": "Oleksandr Tkach",
   "license": "Apache-2.0",
-  "description": "Provides React bindings for the Pulsar Engine, including the essential `useInitializeTransactionsPool` hook to resume tracking pending transactions after a page reload.",
+  "description": "Global React context bindings, hooks, and transaction pool initializers for orchestrating framework-agnostic Pulsar stores.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -45,8 +45,8 @@
     "react": ">=19.2.3"
   },
   "devDependencies": {
-    "@types/react": "^19.2.15",
-    "react": "^19.2.6",
+    "@types/react": "^19.2.17",
+    "react": "^19.2.7",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3"
   }

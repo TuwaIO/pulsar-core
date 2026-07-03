@@ -1,7 +1,7 @@
 # Introduction
 
 <img
-  src="https://raw.githubusercontent.com/TuwaIO/workflows/refs/heads/main/preview/repos/pulsar_core.png"
+  src="https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/preview/repos/pulsar_core.png"
   alt="Pulsar Core"
   width="400"
   style={{
@@ -15,71 +15,76 @@
   }}
 />
 
-Welcome to the documentation for **Pulsar** 🚀 — TUWA's complete solution for creating world-class transaction tracking experiences in your Web3 applications.
+Welcome to **Pulsar** — the headless-first, local-first transaction lifecycle tracking engine engineered for absolute application sovereignty.
+
+Pulsar is **The Tracker** of the TUWA Ecosystem. It completely decouples transaction execution tracking from your interface, replacing fragile UI hooks with a robust, deterministic client-side state machine.
 
 ---
 
-## The Challenge of Web3 UX
+## The Broken Web3 UX Standard
 
-Building a great Web3 user experience goes far beyond just submitting transactions to the blockchain. Modern dApp users expect:
+Most dApps look completely broken when the network is congested. Standard developer workflows rely on basic RPC broadcasts and blind polling, failing completely under production stress. If you are building tracking manually, you are likely trapped in a maze of edge cases:
 
-- **Real-time updates** on their transaction's status.
-- **Clear visual feedback**, from pending to confirmation.
-- **Robust error handling** with actionable options like "Retry" or "Speed Up".
-- **Support for different wallets** and transaction types (e.g., meta-transactions, multi-sigs).
-- **Beautiful, intuitive interfaces** that don't feel like developer tools.
+- **Dropped Context on Reload:** If a user refreshes the page while a transaction is pending, your client-side tracking state is wiped out.
 
-Building this tracking infrastructure manually is complex, time-consuming, and distracts from your core product features. Different wallet connectors, transaction replacements, network congestion, and cross-chain operations create a maze of edge cases that are difficult to handle correctly.
+- **Blind Replacement Invalidation:** When a user speeds up or cancels a transaction via their wallet, your dApp loses track of the transaction signature, throwing false errors or freezing loaders.
 
-## Our Solution: Pulsar
+- **Tight UI Coupling:** Forcing local React `useState` hooks to manage complex tx states (`isLoading`, `isSuccess`) creates messy, fragmented, and non-persistent transaction pipelines.
 
-**Pulsar** transforms transaction tracking from a complex technical challenge into a simple, elegant integration. We provide the "brain" (headless engine) and the "body" (UI) to deliver a seamless, professional transaction experience with just a few lines of code.
+Building this infra yourself takes months and distracts from your primary logic.
 
-### 🏗️ Architecture Overview
+## The Solution: Pulsar Engine
 
-Our modular, layered architecture gives you maximum flexibility while maintaining simplicity. You can use the full stack or pick and choose the layers you need.
+Pulsar provides the complete transactional "brain" locally on the client. It indexes and reconciles transaction states from the mempool (`pending`) to ultimate finality (`replaced`, `confirmed`, `failed`) entirely in the background, checkpointing everything directly to `localStorage`.
+
+Pulsar handles the core state engineering, sitting firmly below your visual components and perfectly integrating into cloud persistence layers like the Quasar SDK.
+
+> [!NOTE]
+> Pulsar does not ship pre-bundled visual nodes natively; layout rendering is strictly delegated to the Nova UI Kit layer, while cloud state sync mapping is handled by the Quasar SDK.
 
 ```text
+                      (The Baseline Core Foundation)
 ┌───────────────────────────────────────────┐
-│       Your Application (React, etc.)      │
+│          @tuwaio/pulsar-core (Tier 3)     │
+│  • Framework-Agnostic Headless Store      │
+│  • Local Storage Append-Only Ledger       │
 └───────────────────┬───────────────────────┘
-                    │ (Optional but Recommended)
-┌───────────────────▼───────────────────────┐
-│     @tuwaio/nova-transactions (UI Kit)    │
-│  • Pre-built Modals, Toasts, and Widgets  │
-└───────────────────┬───────────────────────┘
-                    │ (React Hooks)
-┌───────────────────▼───────────────────────┐
-│       @tuwaio/pulsar-react (Bindings)     │
-│  • Hooks for easy integration (e.g.,      │
-│    `useInitializeTransactionsPool`)       │
-└───────────────────┬───────────────────────┘
-                    │ (Plugs into Adapters)
+                    │ (Isolated Network Adapters)
 ┌───────────────────▼───────────────────────┐
 │     @tuwaio/pulsar-evm / pulsar-solana    │
-│  • EVM-specific and Solana-specific logic │
-│  • Trackers: Standard, Safe, Gelato, etc. │
+│  • EVM (Viem/Wagmi) & Solana (Gill) Logic │
+│  • Standard, Safe Multi-Sig, Gelato Pipes │
 └───────────────────┬───────────────────────┘
-                    │ (The Core Engine)
+                    │ (React Hook Bindings)
 ┌───────────────────▼───────────────────────┐
-│          @tuwaio/pulsar-core              │
-│  • Headless state machine (Zustand)       │
-│  • Persistent transaction history         │
-│  • Framework-agnostic                     │
+│       @tuwaio/pulsar-react (Tier 4)       │
+│  • `usePulsarStore` & `executeTxAction`   │
+└───────────────────┬───────────────────────┘
+                    │ (Visual Logic Execution Layer)
+┌───────────────────▼───────────────────────┐
+│     @tuwaio/nova-transactions (UI Kit)    │
+│  • Pure Visual Rendering: Modals & Toasts │
+└───────────────────┬───────────────────────┘
+                    │
+┌───────────────────▼───────────────────────┐
+│       Your Application (React, Next.js)   │
 └───────────────────────────────────────────┘
 ```
 
-### ✨ Key Features
+### ✨ Core Engineering Features
 
-- **🧠 Headless Core Engine:** Use with any UI framework. Powered by Zustand for lightweight, fast state management.
-- **⛓️ Multi-Chain & Multi-Tracker:**
-  - **EVM Adapter:** Includes trackers for standard transactions, Safe multi-sigs, and Gelato meta-transactions.
-  - **Solana Adapter:** Supports Solana transaction tracking and seamless integration with clusters and RPCs.
-- **🎨 Beautiful Pre-built UI:** The optional `@tuwaio/nova-transactions` package provides a complete, themeable UI suite with modals, toasts, and history components.
-- **🔄 Persistent State:** Transaction history survives page reloads, and pending transactions automatically resume tracking.
-- **🛠️ Rich Developer Experience:** Written in TypeScript, wallet-agnostic, and fully customizable to match your brand.
+- **🧠 Headless Purist Architecture:** Controlled via an ultra-fast, framework-agnostic Zustand store. Zero rendering overhead, zero forced UI design lock-in.
 
-### 📦 Package Overview
+- **⛓️ Pure Multi-Chain Adapters:**
+- **EVM Adapter:** Built strictly on `viem` and `wagmi`. Includes specialized tracking logic for contract wallets, Safe multi-sigs, and Gelato meta-transactions. Legacy `ethers.js` or `web3.js` is strictly prohibited.
+
+- **Solana Adapter:** Built strictly on `gill` and `@tuwaio/orbit-solana` helpers to monitor fast-block lifecycles at the RPC level.
+
+- **🔄 Local-First Resilience:** Your transaction pool automatically checkpoints to `localStorage`. Pending trackers instantly resume execution lifecycle monitoring immediately upon client reboots or network reconnects.
+
+- **🛠️ Strict Type Integrity:** Built with zero-compromise strict TypeScript. Every payload, error state, and lifecycle swap is explicitly typed — absolutely no `any` parameters are allowed.
+
+### 📦 Package Map
 
 | Package                                                                                                    | Purpose           | Key Features                                        |
 | ---------------------------------------------------------------------------------------------------------- | ----------------- | --------------------------------------------------- |
@@ -93,10 +98,10 @@ Our modular, layered architecture gives you maximum flexibility while maintainin
 
 ## What's Next?
 
-Ready to transform your dApp's transaction experience?
-
 1.  **[Getting Started](./gettingStarted)** - Set up Pulsar in your project.
 2.  **[Quick Start](./quickStart)** - Implement your first tracked transaction in minutes.
-3.  **[API Reference](./apiReference)** - Dive deep into customization and advanced features.
+3.  **[API Reference](./apiReference/README)** - Dive deep into customization and advanced features.
+
+---
 
 **Built with ❤️ by the [TUWA Team](https://github.com/TuwaIO)**

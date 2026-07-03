@@ -1,11 +1,11 @@
 {
-  "name": "Pulsar Engine Documentation",
-  "short_name": "Pulsar Engine Documentation",
-  "description": "The official documentation for the headless state management system for tracking Web3 transactions.",
-  "iconPath": "icon0.svg",
+  "name": "TUWA Pulsar Documentation",
+  "short_name": "Pulsar Docs",
+  "description": "Technical documentation hub for TUWA Pulsar: The headless client-side transaction lifecycle tracking engine.",
+  "iconPath": "https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/icon0.svg",
   "icons": [
     {
-      "iconPath": "icon0.svg",
+      "iconPath": "https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/icon0.svg",
       "sizes": "32x32",
       "type": "image/svg"
     }
