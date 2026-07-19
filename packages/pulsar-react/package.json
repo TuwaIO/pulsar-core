@@ -4,7 +4,7 @@
   "private": false,
   "author": "Oleksandr Tkach",
   "license": "Apache-2.0",
-  "description": "Global React context bindings, hooks, and transaction pool initializers for orchestrating framework-agnostic Pulsar stores.",
+  "description": "Layer 4 (L4) of the TUWA Ecosystem. Global React context bindings, hooks, and transaction pool initializers for orchestrating framework-agnostic Pulsar stores.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

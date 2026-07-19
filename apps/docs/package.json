@@ -15,8 +15,8 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@tuwaio/pulsar-core": "workspace:^",
-    "@tuwaio/orbit-core": "^0.2.12",
-    "@tuwaio/docs-ui": "^0.0.30",
+    "@tuwaio/orbit-core": "^0.2.13",
+    "@tuwaio/docs-ui": "^0.0.32",
     "next": "^16.2.10",
     "next-themes": "^0.4.6",
     "next-images": "^1.8.5",
@@ -31,7 +31,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.2",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",

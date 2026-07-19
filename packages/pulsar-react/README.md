@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-react.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-Global React context bindings, hooks, and transaction pool initializers for orchestrating framework-agnostic Pulsar stores.
+Layer 4 (L4) of the TUWA Ecosystem. Global React context bindings, hooks, and transaction pool initializers for orchestrating framework-agnostic Pulsar stores.
 
 ---
 

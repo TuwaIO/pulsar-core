@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-evm.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-Tier 4 of the TUWA Ecosystem. Low-level EVM state trackers and lifecycle indexers powered strictly by viem and wagmi primitives.
+Layer 4 (L4) of the TUWA Ecosystem. Low-level EVM state trackers and lifecycle indexers powered strictly by viem and wagmi primitives.
 
 > [!WARNING]
 > Use of legacy `web3.js` and `ethers.js` libraries is strictly prohibited. All interactions must proceed via `viem` and `wagmi` primitives to ensure deterministic transaction status reconciliation and application sovereignty.

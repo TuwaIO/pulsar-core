@@ -12,7 +12,7 @@ Welcome to the official monorepo for **Pulsar**, a headless, local-first transac
 
 ## 🏛️ Architecture Philosophy
 
-Pulsar is "The Tracker" within the ecosystem, occupying Tier 3 (Headless Core Store) and Tier 4 (Network State Adapters & Framework Bindings). Its single purpose is asynchronous multi-chain transaction lifecycle indexing and client-side reconciliation.
+Pulsar is "The Tracker" within the ecosystem, occupying Layer 3 (L3) (Headless Core Store) and Layer 4 (L4) (Network State Adapters & Framework Bindings). Its single purpose is asynchronous multi-chain transaction lifecycle indexing and client-side reconciliation.
 
 It is designed to be consumed by any UI layer, with our official implementation being the **[Nova UI Kit](https://github.com/TuwaIO/nova-uikit)**.
 
@@ -40,12 +40,12 @@ The architecture is modular and layered:
 
 This repository is a monorepo managed using `pnpm` workspaces.
 
-| Package                        | Version                                                                                                                       | Description                                                                                                                          |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 🧠 **`@tuwaio/pulsar-core`**   | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-core.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-core)     | Tier 3 of the TUWA Ecosystem. Framework-agnostic headless core store providing append-only localStorage transaction history ledgers. |
-| 🔌 **`@tuwaio/pulsar-evm`**    | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)       | Tier 4 of the TUWA Ecosystem. Low-level EVM state trackers and lifecycle indexers powered strictly by viem and wagmi primitives.     |
-| 🔌 **`@tuwaio/pulsar-solana`** | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-solana.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-solana) | Tier 4 of the TUWA Ecosystem. Low-level Solana block state monitors and RPC cluster lifecycle indexers powered strictly by gill.     |
-| ⚛️ **`@tuwaio/pulsar-react`**  | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react)   | Global React context bindings, hooks, and transaction pool initializers for orchestrating framework-agnostic Pulsar stores.          |
+| Package                        | Version                                                                                                                       | Description                                                                                                                                                     |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🧠 **`@tuwaio/pulsar-core`**   | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-core.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-core)     | Layer 3 (L3) of the TUWA Ecosystem. Framework-agnostic headless core store providing append-only localStorage transaction history ledgers.                      |
+| 🔌 **`@tuwaio/pulsar-evm`**    | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)       | Layer 4 (L4) of the TUWA Ecosystem. Low-level EVM state trackers and lifecycle indexers powered strictly by viem and wagmi primitives.                          |
+| 🔌 **`@tuwaio/pulsar-solana`** | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-solana.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-solana) | Layer 4 (L4) of the TUWA Ecosystem. Low-level Solana block state monitors and RPC cluster lifecycle indexers powered strictly by gill.                          |
+| ⚛️ **`@tuwaio/pulsar-react`**  | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react)   | Layer 4 (L4) of the TUWA Ecosystem. Global React context bindings, hooks, and transaction pool initializers for orchestrating framework-agnostic Pulsar stores. |
 
 ---
 

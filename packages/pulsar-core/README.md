@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-core.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-Tier 3 of the TUWA Ecosystem. Framework-agnostic headless core store providing append-only localStorage transaction history ledgers.
+Layer 3 (L3) of the TUWA Ecosystem. Framework-agnostic headless core store providing append-only localStorage transaction history ledgers.
 
 ---
 
