@@ -6,7 +6,7 @@
 
 > **TxInMemoryPagination** = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:475](https://github.com/TuwaIO/pulsar-core/blob/17a55cf59aedebd775206822ceabe49db52c0f88/packages/pulsar-core/src/types.ts#L475)
+Defined in: [packages/pulsar-core/src/types.ts:476](https://github.com/TuwaIO/pulsar-core/blob/7537cc09a326a69451e7718b6995858cbe2f63a0/packages/pulsar-core/src/types.ts#L476)
 
 Represents the structure and behavior of an in-memory pagination system
 for managing transaction history.
@@ -17,7 +17,7 @@ for managing transaction history.
 
 > **currentPage**: `number`
 
-Defined in: [packages/pulsar-core/src/types.ts:483](https://github.com/TuwaIO/pulsar-core/blob/17a55cf59aedebd775206822ceabe49db52c0f88/packages/pulsar-core/src/types.ts#L483)
+Defined in: [packages/pulsar-core/src/types.ts:484](https://github.com/TuwaIO/pulsar-core/blob/7537cc09a326a69451e7718b6995858cbe2f63a0/packages/pulsar-core/src/types.ts#L484)
 
 The current page number in the paginated history.
 
@@ -27,7 +27,7 @@ The current page number in the paginated history.
 
 > **fetchNextPage**: (`walletAddress`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:485](https://github.com/TuwaIO/pulsar-core/blob/17a55cf59aedebd775206822ceabe49db52c0f88/packages/pulsar-core/src/types.ts#L485)
+Defined in: [packages/pulsar-core/src/types.ts:486](https://github.com/TuwaIO/pulsar-core/blob/7537cc09a326a69451e7718b6995858cbe2f63a0/packages/pulsar-core/src/types.ts#L486)
 
 Loads the next page of transaction history and appends it to the pool.
 
@@ -47,7 +47,7 @@ Loads the next page of transaction history and appends it to the pool.
 
 > **hasMore**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:481](https://github.com/TuwaIO/pulsar-core/blob/17a55cf59aedebd775206822ceabe49db52c0f88/packages/pulsar-core/src/types.ts#L481)
+Defined in: [packages/pulsar-core/src/types.ts:482](https://github.com/TuwaIO/pulsar-core/blob/7537cc09a326a69451e7718b6995858cbe2f63a0/packages/pulsar-core/src/types.ts#L482)
 
 Indicates whether more history pages are available.
 
@@ -57,7 +57,7 @@ Indicates whether more history pages are available.
 
 > **isError**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:479](https://github.com/TuwaIO/pulsar-core/blob/17a55cf59aedebd775206822ceabe49db52c0f88/packages/pulsar-core/src/types.ts#L479)
+Defined in: [packages/pulsar-core/src/types.ts:480](https://github.com/TuwaIO/pulsar-core/blob/7537cc09a326a69451e7718b6995858cbe2f63a0/packages/pulsar-core/src/types.ts#L480)
 
 Indicates whether the last loading request ended with an error.
 
@@ -67,6 +67,6 @@ Indicates whether the last loading request ended with an error.
 
 > **isLoading**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:477](https://github.com/TuwaIO/pulsar-core/blob/17a55cf59aedebd775206822ceabe49db52c0f88/packages/pulsar-core/src/types.ts#L477)
+Defined in: [packages/pulsar-core/src/types.ts:478](https://github.com/TuwaIO/pulsar-core/blob/7537cc09a326a69451e7718b6995858cbe2f63a0/packages/pulsar-core/src/types.ts#L478)
 
 Indicates whether the store is currently loading transaction history.

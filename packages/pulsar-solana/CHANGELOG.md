@@ -2,10 +2,9 @@
 
 ## [0.6.6](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.6.5...pulsar-solana-v0.6.6) (2026-07-19)
 
-
 ### Bug Fixes
 
-* updated packages ([ae61f17](https://github.com/TuwaIO/pulsar-core/commit/ae61f1787897b7163cf2cc06d33dc8ad814d390b))
+- updated packages ([ae61f17](https://github.com/TuwaIO/pulsar-core/commit/ae61f1787897b7163cf2cc06d33dc8ad814d390b))
 
 ## [0.6.5](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.6.4...pulsar-solana-v0.6.5) (2026-07-03)
 

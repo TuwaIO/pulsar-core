@@ -190,6 +190,7 @@ export type InitialTransactionParams = Pick<
   /** The specific blockchain adapter for this transaction. */
   adapter: OrbitAdapter;
   /** The function that executes the on-chain action (e.g., sending a transaction) and returns a preliminary identifier like a hash. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   actionFunction: (...args: any[]) => Promise<ActionTxKey | undefined>;
   /** The target chain ID for the transaction. */
   desiredChainID: number | string;

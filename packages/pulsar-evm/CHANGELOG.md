@@ -2,10 +2,9 @@
 
 ## [0.5.5](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.4...pulsar-evm-v0.5.5) (2026-07-19)
 
-
 ### Bug Fixes
 
-* updated packages ([ae61f17](https://github.com/TuwaIO/pulsar-core/commit/ae61f1787897b7163cf2cc06d33dc8ad814d390b))
+- updated packages ([ae61f17](https://github.com/TuwaIO/pulsar-core/commit/ae61f1787897b7163cf2cc06d33dc8ad814d390b))
 
 ## [0.5.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.3...pulsar-evm-v0.5.4) (2026-07-03)
 
