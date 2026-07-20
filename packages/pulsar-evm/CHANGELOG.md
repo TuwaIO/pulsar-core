@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.6](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.5...pulsar-evm-v0.5.6) (2026-07-20)
+
+
+### Bug Fixes
+
+* linter errors ([8cfbade](https://github.com/TuwaIO/pulsar-core/commit/8cfbadec1ff006fcd5a609038bad8f215abfa284))
+
 ## [0.5.5](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.4...pulsar-evm-v0.5.5) (2026-07-19)
 
 ### Bug Fixes
