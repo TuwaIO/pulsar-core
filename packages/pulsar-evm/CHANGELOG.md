@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.7](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.6...pulsar-evm-v0.5.7) (2026-07-24)
+
+
+### Bug Fixes
+
+* updated packages and added socket.json ([0bf8a38](https://github.com/TuwaIO/pulsar-core/commit/0bf8a3823a81bb778a4031cf267f41ab92eb0cad))
+
 ## [0.5.6](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.5...pulsar-evm-v0.5.6) (2026-07-20)
 
 ### Bug Fixes
