@@ -8,7 +8,7 @@ import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/.turbo/**', '**/.next/**'] },
+  { ignores: ['**/dist/**', '**/node_modules/**', '**/.turbo/**', '**/.next/**', '**/apiReference/**'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
