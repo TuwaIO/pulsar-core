@@ -6,7 +6,7 @@
 
 > **UseInitializeTransactionsPoolParams** = `object`
 
-Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:12](https://github.com/TuwaIO/pulsar-core/blob/bb2c7f5adf67dff511491c128becfd729d029745/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L12)
+Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:12](https://github.com/TuwaIO/pulsar-core/blob/61d8f47844d57c138581e481416b47757f9283c6/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L12)
 
 Configuration for [useInitializeTransactionsPool](../functions/useInitializeTransactionsPool.md).
 
@@ -16,7 +16,7 @@ Configuration for [useInitializeTransactionsPool](../functions/useInitializeTran
 
 > **initializeTransactionsPool**: () => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:16](https://github.com/TuwaIO/pulsar-core/blob/bb2c7f5adf67dff511491c128becfd729d029745/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L16)
+Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:16](https://github.com/TuwaIO/pulsar-core/blob/61d8f47844d57c138581e481416b47757f9283c6/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L16)
 
 Re-initializes background trackers for all pending transactions stored in the Pulsar store.
 
@@ -30,7 +30,7 @@ Re-initializes background trackers for all pending transactions stored in the Pu
 
 > `optional` **onError?**: (`error`) => `void`
 
-Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:22](https://github.com/TuwaIO/pulsar-core/blob/bb2c7f5adf67dff511491c128becfd729d029745/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L22)
+Defined in: [packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx:22](https://github.com/TuwaIO/pulsar-core/blob/61d8f47844d57c138581e481416b47757f9283c6/packages/pulsar-react/src/hooks/useInitializeTransactionsPool.tsx#L22)
 
 Optional error handler called when initialization or the optional initial fetch fails.
 

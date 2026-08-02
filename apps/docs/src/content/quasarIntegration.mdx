@@ -76,7 +76,78 @@ export const wagmiConfig = createConfig({
 
 ---
 
-### 2. Store Initialization (Client-Side)
+### 2. Server-Side Synchronization Actions
+
+Implement server actions (or backend endpoints) to verify client requests and forward them to Quasar securely.
+
+> [!IMPORTANT]
+> Always verify the `MiniSessionAuth` signature on the server to prevent unauthorized users from consuming your API credit quota.
+
+```typescript
+// src/app/actions.ts
+'use server';
+
+import { MiniSessionAuth, Quasar, Transaction, utils } from '@tuwaio/quasar-sdk';
+import { appConfig } from '@/configs/appConfig';
+
+const quasar = new Quasar({
+  secretKey: process.env.QUASAR_SDK_SK ?? '',
+});
+
+/**
+ * Synchronizes a client-side transaction with Quasar.
+ * Gated by a client-side mini-session signature verification.
+ */
+export async function syncTransaction(tx: Transaction, authData: MiniSessionAuth) {
+  // Validate signature to prevent quota draining
+  const isValidSignature = await utils.verifyMiniSession(authData);
+
+  if (!isValidSignature) {
+    throw new Error('Invalid or expired security signature. Access denied.');
+  }
+
+  try {
+    // Send transaction to Quasar Engine for cloud indexing and webhook execution
+    await quasar.pulsar.syncCreate(tx, appConfig.appName);
+    return { success: true };
+  } catch (error) {
+    console.error('[Quasar Sync] Failed to register transaction:', error);
+    throw error;
+  }
+}
+
+/**
+ * Retrieves the organization's transaction history from Quasar.
+ */
+export async function getHistory(
+  params: {
+    walletAddress: string;
+    page?: number;
+    limit?: number;
+    chainId?: string;
+    status?: string;
+    txKey?: string;
+    appName?: string;
+  },
+  authData: MiniSessionAuth,
+) {
+  const isValidSignature = await utils.verifyMiniSession(authData);
+
+  if (!isValidSignature) {
+    throw new Error('Invalid or expired security signature. Access denied.');
+  }
+
+  try {
+    const history = await quasar.pulsar.getHistory(params);
+    return history;
+  } catch (error) {
+    console.error('[Quasar History] Failed to retrieve history:', error);
+    throw error;
+  }
+}
+```
+
+### 3. Store Initialization (Client-Side)
 
 Create your Pulsar store and configure the `onRemoteCreate` hook. This hook triggers whenever a new transaction enters the local pool, sending it to the server action for backend synchronization.
 
@@ -110,6 +181,7 @@ export const initialStore = createPulsarStore<TransactionUnion>({
       await syncTransaction(tx, auth);
     } catch (err) {
       console.error('[Pulsar Store] Remote sync failed:', err);
+      throw err; // Rethrow to inform pulsar-core that sync failed
     }
   },
 });
@@ -119,6 +191,7 @@ export const usePulsarStore = createBoundedUseStore(initialStore);
 // 2. Initialize the paginated in-memory history store
 const pulsarInMemoryStore = createTxInMemoryStore<TransactionUnion>({
   localTransactionsPool: initialStore.getState().transactionsPool,
+  reconcileUnsyncedTransactions: initialStore.getState().reconcileUnsyncedTransactions,
 
   // Fetch paginated history from Quasar via server action
   getHistory: async ({ page, walletAddress }) => {
@@ -156,90 +229,6 @@ const pulsarInMemoryStore = createTxInMemoryStore<TransactionUnion>({
 initialStore.subscribe((state) => pulsarInMemoryStore.getState().syncWithLocalPool(state.transactionsPool));
 
 export const usePulsarInMemoryStore = createBoundedUseStore(pulsarInMemoryStore);
-```
-
----
-
-### 3. Server-Side Synchronization Actions
-
-Implement server actions (or backend endpoints) to verify client requests and forward them to Quasar securely.
-
-> [!IMPORTANT]
-> Always verify the `MiniSessionAuth` signature on the server to prevent unauthorized users from consuming your API credit quota.
-
-```typescript
-// src/app/actions.ts
-'use server';
-
-import { MiniSessionAuth, Quasar, Transaction, utils } from '@tuwaio/quasar-sdk';
-import { appConfig } from '@/configs/appConfig';
-
-const quasar = new Quasar({
-  baseUrl: process.env.NEXT_PUBLIC_QUASAR_API_URL,
-  secretKey: process.env.QUASAR_SDK_SK ?? '',
-});
-
-/**
- * Synchronizes a client-side transaction with Quasar.
- * Gated by a client-side mini-session signature verification.
- */
-export async function syncTransaction(tx: Transaction, authData: MiniSessionAuth) {
-  // Validate signature to prevent quota draining
-  const isValidSignature = await utils.verifyMiniSession({
-    walletAddress: authData.walletAddress,
-    signature: authData.signature,
-    timestamp: authData.timestamp,
-    chainType: authData.chainType,
-  });
-
-  if (!isValidSignature) {
-    throw new Error('Invalid or expired security signature. Access denied.');
-  }
-
-  try {
-    // Send transaction to Quasar Engine for cloud indexing and webhook execution
-    await quasar.pulsar.syncCreate(tx, appConfig.appName);
-    return { success: true };
-  } catch (error) {
-    console.error('[Quasar Sync] Failed to register transaction:', error);
-    throw error;
-  }
-}
-
-/**
- * Retrieves the organization's transaction history from Quasar.
- */
-export async function getHistory(
-  params: {
-    walletAddress: string;
-    page?: number;
-    limit?: number;
-    chainId?: string;
-    status?: string;
-    txKey?: string;
-    appName?: string;
-  },
-  authData: MiniSessionAuth,
-) {
-  const isValidSignature = await utils.verifyMiniSession({
-    walletAddress: authData.walletAddress,
-    signature: authData.signature,
-    timestamp: authData.timestamp,
-    chainType: authData.chainType,
-  });
-
-  if (!isValidSignature) {
-    throw new Error('Invalid or expired security signature. Access denied.');
-  }
-
-  try {
-    const history = await quasar.pulsar.getHistory(params);
-    return history;
-  } catch (error) {
-    console.error('[Quasar History] Failed to retrieve history:', error);
-    throw error;
-  }
-}
 ```
 
 ---

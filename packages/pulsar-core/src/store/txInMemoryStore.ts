@@ -81,6 +81,7 @@ const mergeTransactionIntoPool = <T extends Transaction>(pool: TransactionPool<T
  */
 export function createTxInMemoryStore<T extends Transaction>({
   localTransactionsPool,
+  reconcileUnsyncedTransactions,
   getHistory,
   onHistoryFetched,
 }: ITxInMemoryStoreParameters<T>) {
@@ -149,6 +150,10 @@ export function createTxInMemoryStore<T extends Transaction>({
       if (!getHistory || !walletAddress) return;
 
       set(setRequestState(true));
+
+      if (reconcileUnsyncedTransactions) {
+        await reconcileUnsyncedTransactions();
+      }
 
       try {
         const response = await getHistory({ page: 1, walletAddress });

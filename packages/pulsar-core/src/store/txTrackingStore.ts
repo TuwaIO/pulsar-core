@@ -50,10 +50,6 @@ export function createPulsarStore<T extends Transaction>({
          * This is crucial for resuming tracking after a page refresh or session restoration.
          */
         initializeTransactionsPool: async () => {
-          // Trigger background reconciliation on mount
-          get()
-            .reconcileUnsyncedTransactions()
-            .catch((err) => console.error('[Pulsar] Reconciliation failed:', err));
           const pendingTxs = Object.values(get().transactionsPool).filter((tx) => tx.pending);
           const validPendingTxs = pendingTxs.filter((tx) => {
             try {

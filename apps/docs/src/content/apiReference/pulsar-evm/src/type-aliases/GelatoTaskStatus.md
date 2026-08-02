@@ -6,7 +6,7 @@
 
 > **GelatoTaskStatus** = `GelatoBaseStatus` & `object` \| `GelatoBaseStatus` & `object` \| `GelatoBaseStatus` & `object` \| `GelatoBaseStatus` & `object` \| `GelatoBaseStatus` & `object`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:61](https://github.com/TuwaIO/pulsar-core/blob/bb2c7f5adf67dff511491c128becfd729d029745/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L61)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:61](https://github.com/TuwaIO/pulsar-core/blob/61d8f47844d57c138581e481416b47757f9283c6/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L61)
 
 Discriminated union representing all possible Gelato task status responses.
 Each variant corresponds to a specific [GelatoStatusCode](../enumerations/GelatoStatusCode.md).

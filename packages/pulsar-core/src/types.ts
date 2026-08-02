@@ -521,6 +521,11 @@ export type ITxInMemoryStore<T extends Transaction> = {
 export type ITxInMemoryStoreParameters<T extends Transaction> = {
   /** A localTransactionsPool. */
   localTransactionsPool: TransactionPool<T>;
+  /**
+   * Attempts to synchronize any transactions in `unsyncedTxKeys` that have reached a terminal
+   * status but failed their initial `onRemoteCreate` call.
+   */
+  reconcileUnsyncedTransactions?: () => Promise<void>;
   /** * Callback fired when remote history is successfully fetched.
    * Used to inject remote pending transactions into the persistent tracking store.
    */

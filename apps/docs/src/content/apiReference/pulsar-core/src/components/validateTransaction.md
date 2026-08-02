@@ -6,7 +6,7 @@
 
 > **validateTransaction**\<`T`\>(`tx`): `void`
 
-Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:55](https://github.com/TuwaIO/pulsar-core/blob/bb2c7f5adf67dff511491c128becfd729d029745/packages/pulsar-core/src/utils/transactionValidation.ts#L55)
+Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:55](https://github.com/TuwaIO/pulsar-core/blob/61d8f47844d57c138581e481416b47757f9283c6/packages/pulsar-core/src/utils/transactionValidation.ts#L55)
 
 Validates a complete transaction before it is persisted or synchronized.
 Throws when title, description, or payload violates Pulsar safety limits.
