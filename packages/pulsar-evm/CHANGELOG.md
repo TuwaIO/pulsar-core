@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.8](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.7...pulsar-evm-v0.5.8) (2026-08-02)
+
+
+### Bug Fixes
+
+* updated packages and onRemoteCreate sync logic ([3bd8a45](https://github.com/TuwaIO/pulsar-core/commit/3bd8a45b7a59ed43f69b5f98ca282878438e4905))
+
 ## [0.5.7](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.6...pulsar-evm-v0.5.7) (2026-07-24)
 
 ### Bug Fixes
