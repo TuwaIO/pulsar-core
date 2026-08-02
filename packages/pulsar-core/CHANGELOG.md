@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.10](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.9...pulsar-core-v0.6.10) (2026-08-02)
+
+
+### Bug Fixes
+
+* fixed reconcileUnsyncedTransactions call logic ([f697719](https://github.com/TuwaIO/pulsar-core/commit/f6977197b42dd0efb83627052e9c414b74e643f1))
+
 ## [0.6.9](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.8...pulsar-core-v0.6.9) (2026-08-02)
 
 
