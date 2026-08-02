@@ -6,6 +6,6 @@
 
 > `const` **MAX\_TRANSACTION\_PAYLOAD\_BYTES**: `number`
 
-Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:10](https://github.com/TuwaIO/pulsar-core/blob/c009e922cecf941d1fcdf2f75b06344c7f83e79e/packages/pulsar-core/src/utils/transactionValidation.ts#L10)
+Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:10](https://github.com/TuwaIO/pulsar-core/blob/bb2c7f5adf67dff511491c128becfd729d029745/packages/pulsar-core/src/utils/transactionValidation.ts#L10)
 
 Maximum allowed serialized UTF-8 payload size in bytes.

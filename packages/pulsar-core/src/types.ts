@@ -115,6 +115,8 @@ export type BaseTransaction = {
   confirmations?: number | string | null;
   /** The RPC URL to use for the transaction. Required for Solana transactions. */
   rpcUrl?: string;
+  /** Indicates the synchronization status of the transaction with the remote backend (Quasar). */
+  syncStatus?: 'synced' | 'pending-sync';
 };
 
 // =================================================================================================
@@ -424,6 +426,16 @@ export interface IInitializeTxTrackingStore<T extends Transaction> {
    * @returns The key of the last added transaction, or undefined if none exists.
    */
   getLastTxKey: () => string | undefined;
+  /**
+   * A record of transaction keys that failed to sync with the remote backend (Quasar)
+   * when `onRemoteCreate` was called. They will be retried automatically.
+   */
+  unsyncedTxKeys?: Record<string, boolean>;
+  /**
+   * Attempts to synchronize any transactions in `unsyncedTxKeys` that have reached a terminal
+   * status but failed their initial `onRemoteCreate` call.
+   */
+  reconcileUnsyncedTransactions: () => Promise<void>;
 }
 
 /**

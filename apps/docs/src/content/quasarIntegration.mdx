@@ -87,7 +87,7 @@ Create your Pulsar store and configure the `onRemoteCreate` hook. This hook trig
 import { createBoundedUseStore, createPulsarStore, createTxInMemoryStore } from '@tuwaio/pulsar-core';
 import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
 import { pulsarSolanaAdapter } from '@tuwaio/pulsar-solana';
-import { getMiniSessionAuth } from '@tuwaio/quasar-sdk/react';
+import { preFlightTxCheck, getMiniSessionAuth } from '@tuwaio/quasar-sdk/react';
 
 import { syncTransaction, getHistory } from '@/app/actions';
 import { wagmiConfig, solanaRPCUrls, appEVMChains, appConfig } from '@/configs/appConfig';
@@ -99,9 +99,9 @@ const STORAGE_KEY = 'transactions-tracking-storage-tuwa';
 export const initialStore = createPulsarStore<TransactionUnion>({
   name: STORAGE_KEY,
   adapter: [pulsarEvmAdapter(wagmiConfig, appEVMChains), pulsarSolanaAdapter({ rpcUrls: solanaRPCUrls })],
-  // Pre-verification hook to check authentication before sending to wallet
+  // Pre-verification hook to check authentication and API quota before sending to wallet
   beforeTxProcess: async () => {
-    await getMiniSessionAuth();
+    await preFlightTxCheck();
   },
   // Remote synchronization hook (POST to Quasar)
   onRemoteCreate: async (tx) => {
@@ -251,3 +251,4 @@ If the Quasar SaaS quota becomes exhausted or the service is temporarily unreach
 1. The `onRemoteCreate` sync failure is caught and logged, preventing transaction processing errors from propagating to the wallet level (`abortOnTxError` config controls this behavior).
 2. The transaction remains in the browser's persistent `localStorage` transaction pool.
 3. The local client-side background polling indexers (`evmTracker` or `solanaTracker`) continue monitoring transaction receipt hashes to confirm finalized states locally, guaranteeing zero data loss or visual interruption for the user.
+4. Once the transaction reaches a terminal state (Success, Failed, Replaced) or the application is reloaded, the store automatically triggers background reconciliation (`reconcileUnsyncedTransactions`) to self-heal and index the transaction on the Quasar Engine.

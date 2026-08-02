@@ -155,24 +155,23 @@ describe('txTrackingStore validation', () => {
     expect(store.getState().initialTx?.error).toBeUndefined();
   });
 
-  it('always blocks and throws when onRemoteCreate throws, regardless of abortOnTxError', async () => {
+  it('does not block or throw when onRemoteCreate throws, adds to unsyncedTxKeys instead', async () => {
     const actionFunction = vi.fn().mockResolvedValue(txHash);
     const onRemoteCreate = vi.fn().mockRejectedValue(new Error('remote-sync-failed'));
     const store = createStore({
       onRemoteCreate,
-      abortOnTxError: false,
     });
 
-    await expect(
-      store.getState().executeTxAction({
-        actionFunction,
-        params: createValidParams(),
-      }),
-    ).rejects.toThrow('remote-sync-failed');
+    await store.getState().executeTxAction({
+      actionFunction,
+      params: createValidParams(),
+    });
 
     expect(actionFunction).toHaveBeenCalledTimes(1);
-    expect(store.getState().transactionsPool[txHash]).toBeUndefined();
-    expect(store.getState().initialTx?.error?.message).toBe('remote-sync-failed');
+    const poolTx = store.getState().transactionsPool[txHash];
+    expect(poolTx).toBeDefined();
+    expect(poolTx.syncStatus).toBe('pending-sync');
+    expect(store.getState().unsyncedTxKeys?.[txHash]).toBe(true);
     expect(store.getState().initialTx?.isInitializing).toBe(false);
   });
 
