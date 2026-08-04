@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.9](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.8...pulsar-evm-v0.5.9) (2026-08-04)
+
+
+### Bug Fixes
+
+* updated evm tracker logic ([de7cdfa](https://github.com/TuwaIO/pulsar-core/commit/de7cdfa1c26eba0e05c0ee8e7a0675154715bbb4))
+
 ## [0.5.8](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.7...pulsar-evm-v0.5.8) (2026-08-02)
 
 
