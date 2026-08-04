@@ -6,10 +6,10 @@
 
 > **evmTrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:156](https://github.com/TuwaIO/pulsar-core/blob/61d8f47844d57c138581e481416b47757f9283c6/packages/pulsar-evm/src/trackers/evmTracker.ts#L156)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:243](https://github.com/TuwaIO/pulsar-core/blob/4b3041607464e8599b86f8d9452bc13711d9f645/packages/pulsar-evm/src/trackers/evmTracker.ts#L243)
 
 A higher-level wrapper for `evmTracker` that integrates directly with the Pulsar store.
-It provides the necessary callbacks to update a transaction's state throughout its lifecycle.
+Updates transaction lifecycle states (pending, success, failed, replaced) in the Zustand store.
 
 ## Type Parameters
 
@@ -17,7 +17,7 @@ It provides the necessary callbacks to update a transaction's state throughout i
 
 `T` *extends* `Transaction`
 
-The application-specific transaction type.
+The application-specific transaction state structure extending `Transaction`.
 
 ## Parameters
 
@@ -25,6 +25,10 @@ The application-specific transaction type.
 
 `Pick`\<[`EVMTrackerParams`](../type-aliases/EVMTrackerParams.md), `"config"`\> & `Pick`\<`ITxTrackingStore`\<`T`\>, `"updateTxParams"` \| `"transactionsPool"`\> & `object` & `TrackerCallbacks`\<`T`\>
 
+Configuration connecting `@wagmi/core`, store mutation methods, target transaction, and callbacks.
+
 ## Returns
 
 `Promise`\<`void`\>
+
+A promise that resolves when transaction tracking finishes and store state is committed.

@@ -36,6 +36,7 @@
 - [evmTrackerForStore](functions/evmTrackerForStore.md)
 - [gelatoFetcher](functions/gelatoFetcher.md)
 - [gelatoTrackerForStore](functions/gelatoTrackerForStore.md)
+- [isRetryableReceiptError](functions/isRetryableReceiptError.md)
 - [pulsarEvmAdapter](functions/pulsarEvmAdapter.md)
 - [safeTrackerForStore](functions/safeTrackerForStore.md)
 - [selectEvmTxExplorerLink](functions/selectEvmTxExplorerLink.md)

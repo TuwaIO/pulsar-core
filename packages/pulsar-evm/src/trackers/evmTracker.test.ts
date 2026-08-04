@@ -5,11 +5,20 @@
  */
 
 import { createConfig } from '@wagmi/core';
-import { createClient, Hex, http, TransactionReceipt, zeroAddress, zeroHash } from 'viem';
+import {
+  createClient,
+  Hex,
+  http,
+  HttpRequestError,
+  TransactionReceipt,
+  WaitForTransactionReceiptTimeoutError,
+  zeroAddress,
+  zeroHash,
+} from 'viem';
 import { mainnet, sepolia } from 'viem/chains';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { evmTracker, EVMTrackerParams } from './evmTracker';
+import { evmTracker, EVMTrackerParams, isRetryableReceiptError } from './evmTracker';
 
 // Mock the entire 'viem/actions' module to control its behavior in tests.
 vi.mock('viem/actions', async (importActual) => {
@@ -194,6 +203,37 @@ describe('evmTracker Unit Tests', () => {
     expect(baseTrackerParams.onConfirmationsUpdate).toHaveBeenCalledWith(3);
     expect(baseTrackerParams.onSuccess).toHaveBeenCalled();
     vi.useRealTimers();
+  });
+});
+
+describe('isRetryableReceiptError Unit Tests', () => {
+  test('should return true for explicit WaitForTransactionReceiptTimeoutError', () => {
+    const error = new WaitForTransactionReceiptTimeoutError({ hash: '0x123' });
+    expect(isRetryableReceiptError(error)).toBe(true);
+  });
+
+  test('should return true for network and transport errors', () => {
+    const httpErr = new HttpRequestError({ url: 'https://rpc.example.com', details: 'fetch failed' });
+    expect(isRetryableReceiptError(httpErr)).toBe(true);
+
+    const genericTimeout = new Error('Request timed out after 60000ms');
+    expect(isRetryableReceiptError(genericTimeout)).toBe(true);
+  });
+
+  test('should return true for nested error cause (wrapped Viem BaseError)', () => {
+    const innerError = new HttpRequestError({ url: 'https://rpc.example.com', details: '502 Bad Gateway' });
+    const outerError = new Error('RPC Call Failed');
+    outerError.cause = innerError;
+
+    expect(isRetryableReceiptError(outerError)).toBe(true);
+  });
+
+  test('should return false for non-retryable errors or non-Error objects', () => {
+    expect(isRetryableReceiptError(null)).toBe(false);
+    expect(isRetryableReceiptError('some error string')).toBe(false);
+
+    const fatalError = new Error('Execution reverted by EVM');
+    expect(isRetryableReceiptError(fatalError)).toBe(false);
   });
 });
 

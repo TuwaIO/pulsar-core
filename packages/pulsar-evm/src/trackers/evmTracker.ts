@@ -1,7 +1,7 @@
 /**
  * @file This file contains the tracker implementation for standard EVM transactions.
  * It uses viem's public actions (`getTransaction`, `waitForTransactionReceipt`) to monitor
- * a transaction's lifecycle from submission to finality.
+ * a transaction's lifecycle from submission to finality with robust timeout handling.
  */
 
 import { normalizeError } from '@tuwaio/orbit-core';
@@ -11,41 +11,117 @@ import {
   Client,
   GetTransactionReturnType,
   Hex,
+  HttpRequestError,
   ReplacementReturnType,
   TransactionReceipt,
+  TransactionReceiptNotFoundError,
   WaitForTransactionReceiptParameters,
+  WaitForTransactionReceiptTimeoutError,
+  WebSocketRequestError,
   zeroHash,
 } from 'viem';
 import { getBlock, getTransaction, getTransactionConfirmations, waitForTransactionReceipt } from 'viem/actions';
 
 const DEFAULT_RETRY_COUNT = 10;
 const DEFAULT_RETRY_TIMEOUT_MS = 3000;
-const RECEIPT_MAX_RETRIES = 3;
-const RECEIPT_RETRY_DELAY = 10_000; // 10s between outer retries
+const RECEIPT_MAX_RETRIES = 5;
+const RECEIPT_RETRY_DELAY = 5_000; // 5s base delay for outer retries
 const CONFIRMATIONS_POLLING_INTERVAL = 5000; // 5s between confirmation checks
+const SINGLE_ATTEMPT_TIMEOUT = 60_000; // 60s timeout per single RPC call
+
+/**
+ * Checks whether an error during receipt polling is transient (RPC network glitch, timeout, or unindexed tx).
+ * Recursively inspects nested error causes to handle wrapped Viem transport errors.
+ *
+ * @param error - The caught error object.
+ * @returns `true` if the error is considered transient and retryable; otherwise `false`.
+ */
+export function isRetryableReceiptError(error: unknown): boolean {
+  if (!error) return false;
+
+  const checkSingleError = (err: unknown): boolean => {
+    if (!(err instanceof Error)) return false;
+
+    // Viem explicit receipt errors
+    if (
+      err instanceof WaitForTransactionReceiptTimeoutError ||
+      err instanceof TransactionReceiptNotFoundError ||
+      err.name === 'WaitForTransactionReceiptTimeoutError' ||
+      err.name === 'TransactionReceiptNotFoundError'
+    ) {
+      return true;
+    }
+
+    // Network and transport-level glitches (Alchemy/Infura rate limits, 502/503, connection drops)
+    if (
+      err instanceof HttpRequestError ||
+      err instanceof WebSocketRequestError ||
+      err.name === 'HttpRequestError' ||
+      err.name === 'WebSocketRequestError' ||
+      err.name === 'TimeoutError'
+    ) {
+      return true;
+    }
+
+    const msg = err.message.toLowerCase();
+    return (
+      msg.includes('fetch failed') ||
+      msg.includes('network error') ||
+      msg.includes('timeout') ||
+      msg.includes('timed out') ||
+      msg.includes('econnreset') ||
+      msg.includes('rate limit') ||
+      msg.includes('502') ||
+      msg.includes('503') ||
+      msg.includes('504')
+    );
+  };
+
+  if (checkSingleError(error)) return true;
+
+  // Inspect nested cause for wrapped Viem BaseErrors
+  if (error instanceof Error && 'cause' in error && error.cause) {
+    return isRetryableReceiptError(error.cause);
+  }
+
+  return false;
+}
 
 /**
  * Defines the parameters for the low-level EVM transaction tracker.
  */
 export type EVMTrackerParams = {
+  /** The transaction identity parameters (chainId, txKey, requiredConfirmations). */
   tx: Pick<Transaction, 'chainId' | 'txKey' | 'requiredConfirmations'>;
+  /** The `@wagmi/core` configuration instance used to resolve network clients. */
   config: Config;
+  /** Callback fired once transaction details (nonce, input, values) are successfully fetched. */
   onTxDetailsFetched: (txDetails: GetTransactionReturnType) => void;
+  /** Callback fired when the transaction is mined successfully (or reverted on-chain). */
   onSuccess: (txDetails: GetTransactionReturnType, receipt: TransactionReceipt, client: Client) => Promise<void>;
+  /** Callback fired when the transaction has been replaced (repriced or cancelled). */
   onReplaced: (replacement: ReplacementReturnType) => void;
+  /** Callback fired when tracking fails fatally or exceeds all retry attempts. */
   onFailure: (error?: unknown) => void;
+  /** Optional callback fired when tracker initialization starts. */
   onInitialize?: () => void;
+  /** Number of retries for the initial `getTransaction` fetch step. Defaults to 10. */
   retryCount?: number;
+  /** Timeout in milliseconds between `getTransaction` retry attempts. Defaults to 3000ms. */
   retryTimeout?: number;
+  /** Optional callback fired whenever required block confirmation count updates. */
   onConfirmationsUpdate?: (confirmations: number) => void;
+  /** Optional custom parameters passed directly to viem's `waitForTransactionReceipt`. */
   waitForTransactionReceiptParams?: WaitForTransactionReceiptParameters;
 };
 
 /**
  * A low-level tracker for monitoring a standard EVM transaction by its hash.
- * It retries fetching the transaction and then waits for its receipt to determine the final status.
+ * Retries fetching transaction details and gracefully polls for transaction receipt,
+ * recovering automatically from RPC network glitches and timeout errors.
  *
- * @param {EVMTrackerParams} params - The configuration object for the tracker.
+ * @param params - The configuration parameters and lifecycle callbacks for the EVM tracker.
+ * @returns A promise that resolves when tracking completes or fails fatally.
  */
 export async function evmTracker(params: EVMTrackerParams): Promise<void> {
   const {
@@ -109,8 +185,12 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
           wasReplaced = true;
           onReplaced(replacement);
         },
+        retryCount: DEFAULT_RETRY_COUNT,
+        retryDelay: DEFAULT_RETRY_TIMEOUT_MS,
+        timeout: SINGLE_ATTEMPT_TIMEOUT,
         ...waitForTransactionReceiptParams,
       });
+
       if (!wasReplaced) {
         // 3. Wait for required confirmations if specified.
         const needed = requiredConfirmations ?? 1;
@@ -125,7 +205,6 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
 
               if (current >= needed) break;
             } catch (error) {
-              // Non-blocking error, just log and retry.
               console.warn(`[evmTracker] Error fetching confirmations for ${tx.txKey} on chain ${tx.chainId}:`, error);
             }
             await new Promise((resolve) => setTimeout(resolve, CONFIRMATIONS_POLLING_INTERVAL));
@@ -135,12 +214,18 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
       }
       return;
     } catch (error) {
-      const isTransient = error instanceof Error && error.name === 'TransactionReceiptNotFoundError';
-      if (isTransient && !wasReplaced && attempt < RECEIPT_MAX_RETRIES) {
-        console.warn(`[evmTracker] Receipt not found for ${tx.txKey}, retry ${attempt + 1}/${RECEIPT_MAX_RETRIES}...`);
+      const isRetryable = isRetryableReceiptError(error);
+
+      if (isRetryable && !wasReplaced && attempt < RECEIPT_MAX_RETRIES) {
+        console.warn(
+          `[evmTracker] Transient error for ${tx.txKey} on chain ${tx.chainId} (attempt ${attempt + 1}/${RECEIPT_MAX_RETRIES}). Error: ${
+            error instanceof Error ? error.name : 'Unknown'
+          }. Retrying...`,
+        );
         await new Promise((r) => setTimeout(r, RECEIPT_RETRY_DELAY * (attempt + 1)));
         continue;
       }
+
       onFailure(error);
       return;
     }
@@ -149,9 +234,11 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
 
 /**
  * A higher-level wrapper for `evmTracker` that integrates directly with the Pulsar store.
- * It provides the necessary callbacks to update a transaction's state throughout its lifecycle.
+ * Updates transaction lifecycle states (pending, success, failed, replaced) in the Zustand store.
  *
- * @template T - The application-specific transaction type.
+ * @template T - The application-specific transaction state structure extending `Transaction`.
+ * @param params - Configuration connecting `@wagmi/core`, store mutation methods, target transaction, and callbacks.
+ * @returns A promise that resolves when transaction tracking finishes and store state is committed.
  */
 export async function evmTrackerForStore<T extends Transaction>(
   params: Pick<EVMTrackerParams, 'config'> &
@@ -192,13 +279,10 @@ export async function evmTrackerForStore<T extends Transaction>(
         finishedTimestamp: timestamp,
       });
 
-      // After the final state update, retrieve the latest version of the transaction
-      // and trigger the global success callback if applicable.
       const updatedTx = transactionsPool[tx.txKey];
       if (isSuccess && onSuccess && updatedTx) {
         onSuccess(updatedTx);
       }
-      // Call onError for reverted transactions
       if (!isSuccess && onError && updatedTx) {
         onError(new Error('Transaction reverted'), updatedTx);
       }
