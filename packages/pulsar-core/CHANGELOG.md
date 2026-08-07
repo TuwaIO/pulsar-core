@@ -2,17 +2,15 @@
 
 ## [0.6.10](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.9...pulsar-core-v0.6.10) (2026-08-02)
 
-
 ### Bug Fixes
 
-* fixed reconcileUnsyncedTransactions call logic ([f697719](https://github.com/TuwaIO/pulsar-core/commit/f6977197b42dd0efb83627052e9c414b74e643f1))
+- fixed reconcileUnsyncedTransactions call logic ([f697719](https://github.com/TuwaIO/pulsar-core/commit/f6977197b42dd0efb83627052e9c414b74e643f1))
 
 ## [0.6.9](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.8...pulsar-core-v0.6.9) (2026-08-02)
 
-
 ### Bug Fixes
 
-* updated packages and onRemoteCreate sync logic ([3bd8a45](https://github.com/TuwaIO/pulsar-core/commit/3bd8a45b7a59ed43f69b5f98ca282878438e4905))
+- updated packages and onRemoteCreate sync logic ([3bd8a45](https://github.com/TuwaIO/pulsar-core/commit/3bd8a45b7a59ed43f69b5f98ca282878438e4905))
 
 ## [0.6.8](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.7...pulsar-core-v0.6.8) (2026-07-24)
 
