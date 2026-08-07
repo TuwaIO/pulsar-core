@@ -13,7 +13,7 @@ When integrating Pulsar with Quasar, the local-first engine and the cloud-layer 
 1. **Pulsar Client Store**: Monitors the transaction status directly from the user's browser using local polling adapters.
 2. **Quasar Engine**: Verifies and indexes the transactions on the backend, generating immutable billing ledgers and dispatching webhooks.
 
-This workflow uses **Mini-Sessions** on the client side to protect your Quasar private keys and prevent API quota draining.
+This workflow uses **SIWX (Sign-In With X) Sessions** on the client side to protect your Quasar private keys and prevent API quota draining.
 
 ```mermaid
 sequenceDiagram
@@ -26,8 +26,8 @@ sequenceDiagram
     User->>Client: Triggers executeTxAction()
     Client->>Client: Submits tx to chain & saves to Local Storage
     Client->>Client: Triggers onRemoteCreate(tx)
-    Client->>Action: POST syncTransaction(tx, MiniSessionAuth)
-    Action->>Action: Verify Mini-Session Signature (Server-Side)
+    Client->>Action: POST syncTransaction(tx, SiwxSession)
+    Action->>Action: Verify SIWX Signature (Server-Side)
     Action->>Quasar: syncCreate(tx, appName) with Secret Key
     Quasar-->>Action: Ack
     Action-->>Client: Success Response
@@ -81,13 +81,14 @@ export const wagmiConfig = createConfig({
 Implement server actions (or backend endpoints) to verify client requests and forward them to Quasar securely.
 
 > [!IMPORTANT]
-> Always verify the `MiniSessionAuth` signature on the server to prevent unauthorized users from consuming your API credit quota.
+> Always verify the `SiwxSession` signature on the server to prevent unauthorized users from consuming your API credit quota.
 
 ```typescript
 // src/app/actions.ts
 'use server';
 
-import { MiniSessionAuth, Quasar, Transaction, utils } from '@tuwaio/quasar-sdk';
+import { Quasar, Transaction } from '@tuwaio/quasar-sdk';
+import { SiwxSession, verifySiwxPayload } from '@tuwaio/siwx-server';
 import { appConfig } from '@/configs/appConfig';
 
 const quasar = new Quasar({
@@ -96,13 +97,17 @@ const quasar = new Quasar({
 
 /**
  * Synchronizes a client-side transaction with Quasar.
- * Gated by a client-side mini-session signature verification.
+ * Gated by a client-side SIWX session signature verification.
  */
-export async function syncTransaction(tx: Transaction, authData: MiniSessionAuth) {
+export async function syncTransaction(tx: Transaction, authData: SiwxSession | null) {
   // Validate signature to prevent quota draining
-  const isValidSignature = await utils.verifyMiniSession(authData);
+  if (!authData) {
+     throw new Error('Unauthorized');
+  }
 
-  if (!isValidSignature) {
+  const { success } = await verifySiwxPayload({ session: authData });
+
+  if (!success) {
     throw new Error('Invalid or expired security signature. Access denied.');
   }
 
@@ -129,11 +134,15 @@ export async function getHistory(
     txKey?: string;
     appName?: string;
   },
-  authData: MiniSessionAuth,
+  authData: SiwxSession | null,
 ) {
-  const isValidSignature = await utils.verifyMiniSession(authData);
+  if (!authData) {
+     throw new Error('Unauthorized');
+  }
 
-  if (!isValidSignature) {
+  const { success } = await verifySiwxPayload({ session: authData });
+
+  if (!success) {
     throw new Error('Invalid or expired security signature. Access denied.');
   }
 
@@ -158,7 +167,8 @@ Create your Pulsar store and configure the `onRemoteCreate` hook. This hook trig
 import { createBoundedUseStore, createPulsarStore, createTxInMemoryStore } from '@tuwaio/pulsar-core';
 import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
 import { pulsarSolanaAdapter } from '@tuwaio/pulsar-solana';
-import { preFlightTxCheck, getMiniSessionAuth } from '@tuwaio/quasar-sdk/react';
+import { useSiwxSessionStore } from '@tuwaio/siwx-react';
+import { preFlightTxCheck } from '@tuwaio/quasar-sdk';
 
 import { syncTransaction, getHistory } from '@/app/actions';
 import { wagmiConfig, solanaRPCUrls, appEVMChains, appConfig } from '@/configs/appConfig';
@@ -170,14 +180,16 @@ const STORAGE_KEY = 'transactions-tracking-storage-tuwa';
 export const initialStore = createPulsarStore<TransactionUnion>({
   name: STORAGE_KEY,
   adapter: [pulsarEvmAdapter(wagmiConfig, appEVMChains), pulsarSolanaAdapter({ rpcUrls: solanaRPCUrls })],
+  
   // Pre-verification hook to check authentication and API quota before sending to wallet
   beforeTxProcess: async () => {
     await preFlightTxCheck();
   },
+
   // Remote synchronization hook (POST to Quasar)
   onRemoteCreate: async (tx) => {
     try {
-      const auth = await getMiniSessionAuth();
+      const auth = useSiwxSessionStore.getState().session;
       await syncTransaction(tx, auth);
     } catch (err) {
       console.error('[Pulsar Store] Remote sync failed:', err);
@@ -196,7 +208,7 @@ const pulsarInMemoryStore = createTxInMemoryStore<TransactionUnion>({
   // Fetch paginated history from Quasar via server action
   getHistory: async ({ page, walletAddress }) => {
     try {
-      const auth = await getMiniSessionAuth();
+      const auth = useSiwxSessionStore.getState().session;
       const history = await getHistory(
         {
           walletAddress,
@@ -229,6 +241,48 @@ const pulsarInMemoryStore = createTxInMemoryStore<TransactionUnion>({
 initialStore.subscribe((state) => pulsarInMemoryStore.getState().syncWithLocalPool(state.transactionsPool));
 
 export const usePulsarInMemoryStore = createBoundedUseStore(pulsarInMemoryStore);
+```
+
+### 4. Connection & Automatic Sign-In
+
+To tie everything together seamlessly, initialize the `SatelliteConnectProvider` at the root of your app. 
+Use the `callbackAfterConnected` property alongside the `@tuwaio/siwx-react` hook to automatically request a signature immediately after the user connects their wallet.
+
+```tsx
+// src/app/providers.tsx
+'use client';
+
+import { SatelliteConnectProvider } from '@tuwaio/satellite-react';
+import { satelliteEVMAdapter } from '@tuwaio/satellite-evm';
+import { satelliteSolanaAdapter } from '@tuwaio/satellite-solana';
+import { useSiwx } from '@tuwaio/siwx-react';
+import { isSafeApp, getAdapterFromConnectorType, OrbitAdapter } from '@tuwaio/orbit-core';
+import { wagmiConfig, appEVMChains, solanaRPCUrls } from '@/configs/appConfig';
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const { signIn } = useSiwx();
+
+  return (
+    <SatelliteConnectProvider
+      adapter={[
+        satelliteEVMAdapter(wagmiConfig, appEVMChains), 
+        satelliteSolanaAdapter({ rpcUrls: solanaRPCUrls })
+      ]}
+      // Automatically request a SIWX signature after successful connection
+      callbackAfterConnected={async (connector) => {
+        const isEVM = getAdapterFromConnectorType(connector.connectorType) === OrbitAdapter.EVM;
+        
+        // Skip SIWX for Smart Contract wallets like Safe
+        if (isEVM && isSafeApp) return;
+
+        // Trigger sign-in flow
+        await signIn();
+      }}
+    >
+      {children}
+    </SatelliteConnectProvider>
+  );
+}
 ```
 
 ---
