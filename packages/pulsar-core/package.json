@@ -54,7 +54,7 @@
   "devDependencies": {
     "@tuwaio/orbit-core": "^0.2.15",
     "dayjs": "^1.11.21",
-    "immer": "^11.1.15",
+    "immer": "^11.1.16",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10",

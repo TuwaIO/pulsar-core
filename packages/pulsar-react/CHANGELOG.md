@@ -2,10 +2,9 @@
 
 ## [0.4.8](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.4.7...pulsar-react-v0.4.8) (2026-08-02)
 
-
 ### Bug Fixes
 
-* updated packages and onRemoteCreate sync logic ([3bd8a45](https://github.com/TuwaIO/pulsar-core/commit/3bd8a45b7a59ed43f69b5f98ca282878438e4905))
+- updated packages and onRemoteCreate sync logic ([3bd8a45](https://github.com/TuwaIO/pulsar-core/commit/3bd8a45b7a59ed43f69b5f98ca282878438e4905))
 
 ## [0.4.7](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.4.6...pulsar-react-v0.4.7) (2026-07-24)
 
