@@ -6,7 +6,7 @@
 
 > **isRetryableReceiptError**(`error`): `boolean`
 
-Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:39](https://github.com/TuwaIO/pulsar-core/blob/6a829cc584a4473ad994020ccbe6fa99848e8820/packages/pulsar-evm/src/trackers/evmTracker.ts#L39)
+Defined in: [packages/pulsar-evm/src/trackers/evmTracker.ts:39](https://github.com/TuwaIO/pulsar-core/blob/819c1d985f271976d4b4810e53af195599d5e021/packages/pulsar-evm/src/trackers/evmTracker.ts#L39)
 
 Checks whether an error during receipt polling is transient (RPC network glitch, timeout, or unindexed tx).
 Recursively inspects nested error causes to handle wrapped Viem transport errors.

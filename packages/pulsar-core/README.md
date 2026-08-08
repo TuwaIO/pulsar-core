@@ -261,6 +261,7 @@ export async function getHistory(params?: {
 
 import { createBoundedUseStore, createPulsarStore, createTxInMemoryStore } from '@tuwaio/pulsar-core';
 import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
+import { useSiwxSessionStore } from '@tuwaio/siwx-react';
 
 import { appChains, config } from '@/configs/wagmiConfig';
 import { getHistory, syncTransaction } from '@/app/actions';
@@ -284,7 +285,8 @@ const initialStore = createPulsarStore<TransactionUnion>({
   name: storageName,
   adapter: [pulsarEvmAdapter(config, appChains)],
   onRemoteCreate: async (tx) => {
-    await syncTransaction(tx);
+    const auth = useSiwxSessionStore.getState().session;
+    await syncTransaction(tx, auth);
   },
 });
 
@@ -292,15 +294,20 @@ export const usePulsarStore = createBoundedUseStore(initialStore);
 
 const pulsarInMemoryStore = createTxInMemoryStore<TransactionUnion>({
   localTransactionsPool: initialStore.getState().transactionsPool,
+  reconcileUnsyncedTransactions: initialStore.getState().reconcileUnsyncedTransactions,
 
   getHistory: async ({ page, walletAddress }) => {
     try {
-      const history = await getHistory({
-        walletAddress,
-        page,
-        limit: 10,
-        appName: 'Example App',
-      });
+      const auth = useSiwxSessionStore.getState().session;
+      const history = await getHistory(
+        {
+          walletAddress,
+          page,
+          limit: 10,
+          appName: 'Example App',
+        },
+        auth,
+      );
 
       if (!history) {
         return null;

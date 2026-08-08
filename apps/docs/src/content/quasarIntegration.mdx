@@ -109,7 +109,8 @@ Implement server actions (or backend endpoints) to verify client requests and fo
 'use server';
 
 import { Quasar, Transaction } from '@tuwaio/quasar-sdk';
-import { SiwxSession, verifySiwxPayload } from '@tuwaio/siwx-server';
+import { isSessionMatchingTarget, SiwxClientSession } from '@tuwaio/siwx-core';
+import { SiwxSession } from '@tuwaio/siwx-server';
 import { appConfig } from '@/configs/appConfig';
 
 const quasar = new Quasar({
@@ -118,15 +119,21 @@ const quasar = new Quasar({
 
 /**
  * Synchronizes a client-side transaction with Quasar.
- * Gated by a client-side SIWX session signature verification.
+ * Gated by a client-side SIWX session signature verification and target address validation.
  */
-export async function syncTransaction(tx: Transaction, authData: SiwxSession | null) {
-  // Validate signature to prevent quota draining
-  if (!authData) {
-    throw new Error('Unauthorized');
+export async function syncTransaction(tx: Transaction, session: SiwxClientSession | SiwxSession | null) {
+  if (!session) {
+    return { success: false, reason: 'unauthenticated' };
   }
 
-  // The SiwxSession in authData is already verified by the SIWX API route and deserialized from the secure HttpOnly cookie.
+  // Verify that the active SIWX session matches the transaction sender address & chain
+  if (tx.from && !isSessionMatchingTarget(session, tx.from, tx.chainId)) {
+    console.warn('[Quasar Action] Session mismatch for syncTransaction:', {
+      sessionAddress: session.address,
+      txFrom: tx.from,
+    });
+    return { success: false, reason: 'session_mismatch' };
+  }
 
   try {
     // Send transaction to Quasar Engine for cloud indexing and webhook execution
@@ -134,12 +141,13 @@ export async function syncTransaction(tx: Transaction, authData: SiwxSession | n
     return { success: true };
   } catch (error) {
     console.error('[Quasar Sync] Failed to register transaction:', error);
-    throw error;
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
 /**
  * Retrieves the organization's transaction history from Quasar.
+ * Validates session ownership against target walletAddress.
  */
 export async function getHistory(
   params: {
@@ -151,20 +159,34 @@ export async function getHistory(
     txKey?: string;
     appName?: string;
   },
-  authData: SiwxSession | null,
+  session: SiwxClientSession | SiwxSession | null,
 ) {
-  if (!authData) {
-    throw new Error('Unauthorized');
+  if (!session || !isSessionMatchingTarget(session, params.walletAddress, params.chainId)) {
+    return {
+      docs: [],
+      totalDocs: 0,
+      limit: params.limit ?? 10,
+      page: params.page ?? 1,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+    };
   }
-
-  // The session is inherently trusted since it was decrypted from the HttpOnly session cookie.
 
   try {
     const history = await quasar.pulsar.getHistory(params);
     return history;
   } catch (error) {
     console.error('[Quasar History] Failed to retrieve history:', error);
-    throw error;
+    return {
+      docs: [],
+      totalDocs: 0,
+      limit: params.limit ?? 10,
+      page: params.page ?? 1,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+    };
   }
 }
 ```
@@ -209,6 +231,9 @@ export const initialStore = createPulsarStore<TransactionUnion>({
       throw err; // Rethrow to inform pulsar-core that sync failed
     }
   },
+
+  // Optional Gelato Relayer API Key for gasless transactions
+  gelatoApiKey: process.env.NEXT_PUBLIC_GELATO_API_KEY,
 });
 
 export const usePulsarStore = createBoundedUseStore(initialStore);
@@ -256,49 +281,150 @@ initialStore.subscribe((state) => pulsarInMemoryStore.getState().syncWithLocalPo
 export const usePulsarInMemoryStore = createBoundedUseStore(pulsarInMemoryStore);
 ```
 
-### 5. Connection & Automatic Sign-In
+### 5. Provider & SIWX Authentication Integration
 
-To tie everything together seamlessly, initialize the `SatelliteConnectProvider` at the root of your app.
-Use the `callbackAfterConnected` property alongside the `@tuwaio/siwx-react` hook to automatically request a signature immediately after the user connects their wallet.
+To tie everything together seamlessly, initialize `SatelliteConnectProvider`, `NovaConnectProvider`, `NovaTransactionsProvider`, and the root `Providers` wrapper in your application layout.
+
+#### A. Nova Transactions Provider (`src/providers/NovaTransactionsProvider.tsx`)
+
+Binds the Pulsar store instance to the UI layer (modals, toasts, and history feeds) and invokes `useInitializeTransactionsPool` to resume tracking pending transactions across page reloads.
 
 ```tsx
-// src/app/providers.tsx
+// src/providers/NovaTransactionsProvider.tsx
+'use client';
+
+import { useSatelliteConnectStore } from '@tuwaio/satellite-react';
+import { NovaTransactionsProvider as NTP } from '@tuwaio/nova-transactions';
+import { getAdapterFromConnectorType } from '@tuwaio/orbit-core';
+import { TxInMemoryPagination, useInitializeTransactionsPool } from '@tuwaio/pulsar-core';
+import { usePulsarInMemoryStore, usePulsarStore } from '@/hooks/usePulsarStore';
+
+export function NovaTransactionsProvider({ pagination }: { pagination: TxInMemoryPagination }) {
+  const initialTx = usePulsarStore((state) => state.initialTx);
+  const closeTxTrackedModal = usePulsarStore((state) => state.closeTxTrackedModal);
+  const executeTxAction = usePulsarStore((state) => state.executeTxAction);
+  const initializeTransactionsPool = usePulsarStore((state) => state.initializeTransactionsPool);
+  const activeConnection = useSatelliteConnectStore((state) => state.activeConnection);
+  const getAdapter = usePulsarStore((state) => state.getAdapter);
+  const transactionsPool = usePulsarInMemoryStore((state) => state.transactionsPool);
+
+  // Resume tracking pending transactions on mount
+  useInitializeTransactionsPool({ initializeTransactionsPool });
+
+  return (
+    <NTP
+      transactionsPool={transactionsPool}
+      initialTx={initialTx}
+      closeTxTrackedModal={closeTxTrackedModal}
+      executeTxAction={executeTxAction}
+      connectedWalletAddress={activeConnection?.isConnected ? activeConnection.address : undefined}
+      connectedAdapterType={getAdapterFromConnectorType(activeConnection?.connectorType ?? 'evm:')}
+      adapter={getAdapter()}
+      pagination={pagination}
+    />
+  );
+}
+```
+
+#### B. Satellite Connect Providers (`src/providers/SatelliteConnectProviders.tsx`)
+
+Configures wallet connection adapters, connector watchers, SIWX session state synchronization, and `NovaConnectProvider`.
+
+```tsx
+// src/providers/SatelliteConnectProviders.tsx
 'use client';
 
 import { SatelliteConnectProvider } from '@tuwaio/satellite-react';
 import { satelliteEVMAdapter } from '@tuwaio/satellite-evm';
 import { satelliteSolanaAdapter } from '@tuwaio/satellite-solana';
-import { useSatelliteSiwx } from '@tuwaio/satellite-react';
-import { isSafeApp, getAdapterFromConnectorType, OrbitAdapter } from '@tuwaio/orbit-core';
+import { EVMConnectorsWatcher, NovaConnectProvider, SolanaConnectorsWatcher } from '@tuwaio/nova-connect';
+import { useSiwxSessionStore } from '@tuwaio/siwx-react';
 import { wagmiConfig, appEVMChains, solanaRPCUrls } from '@/configs/appConfig';
+import { usePulsarStore, usePulsarInMemoryStore } from '@/hooks/usePulsarStore';
+import { NovaTransactionsProvider } from '@/providers/NovaTransactionsProvider';
 
-export function Providers({ children }: { children: React.ReactNode }) {
-  const { signIn } = useSatelliteSiwx();
+export function SatelliteConnectProviders({ children }: { children: React.ReactNode }) {
+  const siwxSession = useSiwxSessionStore((s) => s.session);
+
+  const getAdapter = usePulsarStore((state) => state.getAdapter);
+  const transactionsPool = usePulsarInMemoryStore((state) => state.transactionsPool);
+  const isLoading = usePulsarInMemoryStore((state) => state.isLoading);
+  const isError = usePulsarInMemoryStore((state) => state.isError);
+  const currentPage = usePulsarInMemoryStore((state) => state.currentPage);
+  const hasMore = usePulsarInMemoryStore((state) => state.hasMore);
+  const fetchNextPage = usePulsarInMemoryStore((state) => state.fetchNextPage);
+  const fetchInitial = usePulsarInMemoryStore((state) => state.fetchInitial);
+
+  const pagination = {
+    isLoading,
+    isError,
+    currentPage,
+    hasMore,
+    fetchNextPage,
+  };
 
   return (
     <SatelliteConnectProvider
       adapter={[satelliteEVMAdapter(wagmiConfig, appEVMChains), satelliteSolanaAdapter({ rpcUrls: solanaRPCUrls })]}
-      // Automatically request a SIWX signature after successful connection
-      callbackAfterConnected={async (connector) => {
-        const isEVM = getAdapterFromConnectorType(connector.connectorType) === OrbitAdapter.EVM;
-
-        // Skip SIWX for Smart Contract wallets like Safe
-        if (isEVM && isSafeApp) return;
-
-        // Trigger sign-in flow
-        await signIn({
+      autoConnect={true}
+    >
+      <EVMConnectorsWatcher wagmiConfig={wagmiConfig} siwx={siwxSession ?? undefined} />
+      <SolanaConnectorsWatcher siwx={siwxSession ?? undefined} />
+      <NovaTransactionsProvider pagination={pagination} />
+      <NovaConnectProvider
+        appChains={appEVMChains}
+        solanaRPCUrls={solanaRPCUrls}
+        transactionPool={transactionsPool}
+        pulsarAdapter={getAdapter()}
+        pagination={pagination}
+        siwx={{
           verifier: async (payload) => {
             const res = await fetch('/api/siwx/verify', {
               method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload),
             });
             return res.ok ? res.json() : null;
           },
-        });
-      }}
-    >
-      {children}
+          onSuccess: (session) => {
+            const address = session.address.includes(':') ? session.address.split(':').pop()! : session.address;
+            fetchInitial(address);
+          },
+          onError: (error) => {
+            console.warn('[SIWX Auth Error]', error);
+          },
+        }}
+      >
+        {children}
+      </NovaConnectProvider>
     </SatelliteConnectProvider>
+  );
+}
+```
+
+#### C. Root Application Providers (`src/providers/index.tsx`)
+
+Combines `WagmiProvider`, `QueryClientProvider`, `SatelliteConnectProviders`, and your application state into a single provider hierarchy.
+
+```tsx
+// src/providers/index.tsx
+'use client';
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactNode } from 'react';
+import { WagmiProvider } from 'wagmi';
+import { wagmiConfig } from '@/configs/appConfig';
+import { SatelliteConnectProviders } from '@/providers/SatelliteConnectProviders';
+
+const queryClient = new QueryClient();
+
+export function Providers({ children }: { children: ReactNode }) {
+  return (
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <SatelliteConnectProviders>{children}</SatelliteConnectProviders>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
 ```
