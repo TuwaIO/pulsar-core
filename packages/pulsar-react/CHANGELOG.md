@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.9](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.4.8...pulsar-react-v0.4.9) (2026-08-08)
+
+
+### Bug Fixes
+
+* updated packages and docs fix ([#77](https://github.com/TuwaIO/pulsar-core/issues/77)) ([fce6612](https://github.com/TuwaIO/pulsar-core/commit/fce661257912a256f3eaf57f15371325f3781b9a))
+
 ## [0.4.8](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.4.7...pulsar-react-v0.4.8) (2026-08-02)
 
 ### Bug Fixes
