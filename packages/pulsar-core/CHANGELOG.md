@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.12](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.11...pulsar-core-v0.6.12) (2026-08-09)
+
+
+### Bug Fixes
+
+* updated beforeTxProcess logic ([b2b11bd](https://github.com/TuwaIO/pulsar-core/commit/b2b11bd75adf6240e7268fce4938f7d66c7beb0c))
+
 ## [0.6.11](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.10...pulsar-core-v0.6.11) (2026-08-08)
 
 ### Bug Fixes
