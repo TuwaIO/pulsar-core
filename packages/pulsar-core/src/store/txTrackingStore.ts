@@ -162,24 +162,6 @@ export function createPulsarStore<T extends Transaction>({
             .reconcileUnsyncedTransactions()
             .catch((err) => console.error('[Pulsar] Reconciliation failed:', err));
 
-          try {
-            await (localBeforeTxProcess ?? beforeTxProcess)?.();
-          } catch (e) {
-            if (shouldAbort) {
-              set({
-                initialTx: {
-                  ...params,
-                  actionFunction,
-                  localTimestamp,
-                  isInitializing: false,
-                  error: normalizeError(e),
-                },
-              });
-              throw e;
-            }
-            console.warn('[Pulsar] beforeTxProcess failed:', e);
-          }
-
           validateInitialTransactionParams(params);
 
           const { desiredChainID, tracker, ...restParams } = params;
@@ -223,6 +205,24 @@ export function createPulsarStore<T extends Transaction>({
 
             // Step 2: Ensure the wallet is connected to the correct chain.
             await foundAdapter.checkChainForTx(desiredChainID);
+
+            try {
+              await (localBeforeTxProcess ?? beforeTxProcess)?.();
+            } catch (e) {
+              if (shouldAbort) {
+                set({
+                  initialTx: {
+                    ...params,
+                    actionFunction,
+                    localTimestamp,
+                    isInitializing: false,
+                    error: normalizeError(e),
+                  },
+                });
+                throw e;
+              }
+              console.warn('[Pulsar] beforeTxProcess failed:', e);
+            }
 
             // Step 3: Execute the provided action (e.g., signing and sending the transaction).
             const txKeyFromAction = await actionFunction();

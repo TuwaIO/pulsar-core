@@ -6,7 +6,7 @@
 
 > **GelatoToken** = `object`
 
-Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:31](https://github.com/TuwaIO/pulsar-core/blob/3dc4a6cf92ff800817c9254f1839b404b495b304/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L31)
+Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:31](https://github.com/TuwaIO/pulsar-core/blob/39a0d2c484c435456f9a8bddf17d40cdfe938312/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L31)
 
 Represents a token accepted for fee payment by the Gelato Relay on a given chain.
 
@@ -16,7 +16,7 @@ Represents a token accepted for fee payment by the Gelato Relay on a given chain
 
 > **address**: `string`
 
-Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:32](https://github.com/TuwaIO/pulsar-core/blob/3dc4a6cf92ff800817c9254f1839b404b495b304/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L32)
+Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:32](https://github.com/TuwaIO/pulsar-core/blob/39a0d2c484c435456f9a8bddf17d40cdfe938312/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L32)
 
 The ERC-20 token contract address.
 
@@ -26,6 +26,6 @@ The ERC-20 token contract address.
 
 > **decimals**: `number`
 
-Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:33](https://github.com/TuwaIO/pulsar-core/blob/3dc4a6cf92ff800817c9254f1839b404b495b304/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L33)
+Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:33](https://github.com/TuwaIO/pulsar-core/blob/39a0d2c484c435456f9a8bddf17d40cdfe938312/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L33)
 
 The number of decimals for the token.

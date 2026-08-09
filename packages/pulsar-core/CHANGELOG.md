@@ -2,10 +2,9 @@
 
 ## [0.6.11](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.10...pulsar-core-v0.6.11) (2026-08-08)
 
-
 ### Bug Fixes
 
-* updated packages and docs fix ([#77](https://github.com/TuwaIO/pulsar-core/issues/77)) ([fce6612](https://github.com/TuwaIO/pulsar-core/commit/fce661257912a256f3eaf57f15371325f3781b9a))
+- updated packages and docs fix ([#77](https://github.com/TuwaIO/pulsar-core/issues/77)) ([fce6612](https://github.com/TuwaIO/pulsar-core/commit/fce661257912a256f3eaf57f15371325f3781b9a))
 
 ## [0.6.10](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.6.9...pulsar-core-v0.6.10) (2026-08-02)
 
