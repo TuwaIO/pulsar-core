@@ -10,10 +10,10 @@ To achieve this, the TUWA Ecosystem links **Pulsar (the client-side tracker)** w
 
 When integrating Pulsar with Quasar, the local-first engine and the cloud-layer database synchronize via a dual-store topology:
 
-1. **Pulsar Client Store**: Monitors the transaction status directly from the user's browser using local polling adapters.
-2. **Quasar Engine**: Verifies and indexes the transactions on the backend, generating immutable billing ledgers and dispatching webhooks.
+1. **Pulsar Client Store**: Monitors transaction lifecycle events directly from the user's browser using local polling adapters.
+2. **Quasar Engine**: Verifies and indexes transactions on the backend, generating immutable billing ledgers and dispatching webhooks.
 
-This workflow uses **SIWX (Sign-In With X) Sessions** on the client side to protect your Quasar private keys and prevent API quota draining.
+This workflow uses **SIWX (Sign-In With X) Sessions** stored in Secure `HttpOnly` cookies to protect your Quasar private keys and prevent unauthorized API quota consumption. The client never passes an in-memory session object as an identity proof; authentication is validated server-side on every Server Action.
 
 ```mermaid
 sequenceDiagram
@@ -26,16 +26,28 @@ sequenceDiagram
     User->>Client: Triggers executeTxAction()
     Client->>Client: Submits tx to chain & saves to Local Storage
     Client->>Client: Triggers onRemoteCreate(tx)
-    Client->>Action: POST syncTransaction(tx, SiwxSession)
-    Action->>Action: Verify SIWX Signature (Server-Side)
-    Action->>Quasar: syncCreate(tx, appName) with Secret Key
+    Client->>Action: POST syncTransaction(tx)
+    Action->>Action: getSiwxServerSession() (Reads HttpOnly Cookie)
+    Action->>Action: Verify Session Matches tx.from Sender
+    Action->>Quasar: syncCreate(tx, appName) with Server Secret Key
     Quasar-->>Action: Ack
     Action-->>Client: Success Response
     loop Polling / Webhook Sync
         Client->>Client: Background polling (resilient fallback)
-        Quasar->>Quasar: Indexed state reconciliation
+        Quasar->>Quasar: Cloud indexed state reconciliation
     end
 ```
+
+---
+
+## 🛡️ Authentication Profiles
+
+The TUWA SIWX ecosystem supports two distinct server integration profiles:
+
+| Profile | Target Environment | Storage Requirement | Features |
+| :--- | :--- | :--- | :--- |
+| **Durable Profile** (Recommended) | Production SaaS & Multi-Replica dApps | Redis / PostgreSQL / Database | Opaque session tokens, atomic single-use nonce consumption, memory self-healing, instant session revocation. |
+| **Stateless Demo Profile** | Sandboxes, Playgrounds, Landing Demos | Zero Infrastructure (No DB/Redis) | HMAC-SHA256 authenticated cookies, deployment-provided secret key, fail-closed validation. |
 
 ---
 
@@ -43,13 +55,13 @@ sequenceDiagram
 
 ### 1. Network & Wallet Configuration
 
-First, define your application identity, network endpoints, supported EVM chains, and your Wagmi client configuration. Below is a clean, minimal setup using standard `injected()` connectors:
+First, define your application identity, network endpoints, supported EVM chains, and your Wagmi client configuration:
 
 ```typescript
 // src/configs/appConfig.ts
 import { createDefaultTransports } from '@tuwaio/satellite-evm';
 import { createConfig, injected } from '@wagmi/core';
-import { mainnet, sepolia, polygon, Chain } from 'viem/chains';
+import { mainnet, sepolia, polygon, type Chain } from 'viem/chains';
 
 export const appConfig = {
   appName: 'TUWA Pulsar & Quasar Integration',
@@ -65,7 +77,7 @@ export const solanaRPCUrls = {
 // Supported EVM networks
 export const appEVMChains = [mainnet, sepolia, polygon] as readonly [Chain, ...Chain[]];
 
-// Minimalist Wagmi config containing only the injected connectors
+// Wagmi configuration
 export const wagmiConfig = createConfig({
   connectors: [injected()],
   transports: createDefaultTransports(appEVMChains),
@@ -76,52 +88,219 @@ export const wagmiConfig = createConfig({
 
 ---
 
-### 2. SIWX Authentication API Route
+### 2. Backend Auth Stores (`src/lib/authStores.ts`)
 
-To securely authenticate wallets and issue sessions for server-side actions, you must set up the SIWX API handler. This handler processes CAIP-122 signatures, verifies them, and manages Secure HttpOnly session cookies.
+> [!NOTE]
+> This step is required for the **Durable Profile**. If you are building a zero-infrastructure prototype using the **Stateless Demo Profile**, you can skip this step.
+
+Configure persistent session and nonce stores backed by Redis for atomic single-use nonce consumption and per-wallet active session limits:
 
 ```typescript
-// src/app/api/siwx/[...siwx]/route.ts
-import { createSiwxApiHandler } from '@tuwaio/siwx-server/next';
+// src/lib/authStores.ts
+import crypto from 'crypto';
+import type {
+  SiwxNonceStore,
+  SiwxSession,
+  SiwxSessionRecord,
+  SiwxSessionStore,
+} from '@tuwaio/siwx-server';
+import { MemorySiwxNonceStore, MemorySiwxSessionStore } from '@tuwaio/siwx-server';
+import Redis from 'ioredis';
 
-const handler = createSiwxApiHandler({
-  cookieOptions: {
-    name: 'tuwa-session',
-    secure: process.env.NODE_ENV === 'production',
-  },
-});
+const redis = process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null;
 
-// This automatically exposes GET /session, POST /verify, and DELETE /logout (or DELETE /session)
-export const { GET, POST, DELETE } = handler;
+/**
+ * Production Redis durable session store with self-healing LRU eviction.
+ */
+export class RedisSiwxSessionStore implements SiwxSessionStore {
+  private keyPrefix = '{siwx}:session:';
+  private maxSessionsPerAddress = 5;
+
+  async create(input: { session: SiwxSession; ttlSeconds: number }): Promise<SiwxSessionRecord> {
+    if (!redis) throw new Error('Redis not configured.');
+    const id = crypto.randomBytes(32).toString('base64url');
+    const now = Date.now();
+    const expiresAt = now + input.ttlSeconds * 1000;
+
+    const record: SiwxSessionRecord = {
+      id,
+      session: input.session,
+      createdAt: now,
+      expiresAt,
+    };
+
+    const key = `${this.keyPrefix}${id}`;
+    await redis.set(key, JSON.stringify(record), 'EX', input.ttlSeconds);
+
+    // Enforce per-address session cap to prevent memory bloat
+    const addrKey = `{siwx}:addr:${input.session.address.toLowerCase()}`;
+    await redis.zadd(addrKey, String(Math.floor(now / 1000)), id);
+    await redis.expire(addrKey, input.ttlSeconds);
+
+    const count = await redis.zcard(addrKey);
+    if (count > this.maxSessionsPerAddress) {
+      const excess = count - this.maxSessionsPerAddress;
+      const oldestIds = await redis.zrange(addrKey, '0', String(excess - 1));
+      if (oldestIds.length > 0) {
+        await redis.del(...oldestIds.map((sid) => `${this.keyPrefix}${sid}`));
+        await redis.zrem(addrKey, ...oldestIds);
+      }
+    }
+
+    return record;
+  }
+
+  async get(id: string): Promise<SiwxSessionRecord | null> {
+    if (!redis) return null;
+    const data = await redis.get(`${this.keyPrefix}${id}`);
+    if (!data) return null;
+
+    try {
+      const record = JSON.parse(data) as SiwxSessionRecord;
+      if (record.expiresAt <= Date.now()) {
+        await redis.del(`${this.keyPrefix}${id}`);
+        return null;
+      }
+      return record;
+    } catch {
+      await redis.del(`${this.keyPrefix}${id}`); // Self-healing on malformed data
+      return null;
+    }
+  }
+
+  async bindSubject(id: string, subjectId: string): Promise<boolean> {
+    if (!redis) return false;
+    const record = await this.get(id);
+    if (!record) return false;
+    record.subjectId = subjectId;
+    const remainingTtl = Math.max(1, Math.floor((record.expiresAt - Date.now()) / 1000));
+    await redis.set(`${this.keyPrefix}${id}`, JSON.stringify(record), 'EX', remainingTtl);
+    return true;
+  }
+
+  async revoke(id: string): Promise<void> {
+    if (redis) await redis.del(`${this.keyPrefix}${id}`);
+  }
+}
+
+/**
+ * Production Redis single-use nonce store.
+ */
+export class RedisSiwxNonceStore implements SiwxNonceStore {
+  private keyPrefix = '{siwx}:nonce:';
+
+  async issue(input: { nonce: string; ttlSeconds: number }): Promise<void> {
+    if (redis) await redis.set(`${this.keyPrefix}${input.nonce}`, '1', 'EX', input.ttlSeconds);
+  }
+
+  async consume(input: { nonce: string }): Promise<boolean> {
+    if (!redis) return false;
+    // Atomic single-use consumption via DEL (returns 1 on first use, 0 on replay)
+    const deleted = await redis.del(`${this.keyPrefix}${input.nonce}`);
+    return deleted === 1;
+  }
+}
+
+// Export singleton instances (or fallback to in-memory stores in local development)
+export const sessionStore: SiwxSessionStore = redis ? new RedisSiwxSessionStore() : new MemorySiwxSessionStore();
+export const nonceStore: SiwxNonceStore = redis ? new RedisSiwxNonceStore() : new MemorySiwxNonceStore();
 ```
 
 ---
 
-### 3. Server-Side Synchronization Actions
+### 3. SIWX Authentication API Route (`src/app/api/siwx/[...siwx]/route.ts`)
 
-Implement server actions (or backend endpoints) to verify client requests and forward them to Quasar securely.
+Create a Next.js App Router Route Handler to process CAIP-122 signatures and manage Secure `HttpOnly` session cookies.
 
-> [!IMPORTANT]
-> Always verify the `SiwxSession` signature on the server to prevent unauthorized users from consuming your API credit quota.
+#### Option A: Durable Profile (Production SaaS)
 
 ```typescript
-// src/app/actions.ts
+// src/app/api/siwx/[...siwx]/route.ts
+import { createSiwxApiHandler } from '@tuwaio/siwx-server/next';
+import { nonceStore, sessionStore } from '@/lib/authStores';
+
+const handler = createSiwxApiHandler({
+  sessionStore,
+  nonceStore,
+  policy: {
+    expectedDomain: process.env.SIWX_EXPECTED_DOMAIN || 'app.tuwa.io',
+    expectedUri: process.env.SIWX_EXPECTED_URI || 'https://app.tuwa.io',
+    allowedChainIds: ['eip155:1', 'eip155:11155111', 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpK'],
+    requireExpirationTime: true,
+    maxIssuedAtAgeSeconds: 300,
+  },
+  cookieOptions: {
+    name: 'siwx-session',
+    secure: process.env.NODE_ENV === 'production',
+  },
+});
+
+export const { GET, POST, DELETE } = handler;
+```
+
+#### Option B: Stateless Demo Profile (Zero-Infrastructure)
+
+```typescript
+// src/app/api/siwx/[...siwx]/route.ts
+import { createStatelessDemoSiwxHandler } from '@tuwaio/siwx-server/next';
+
+const handler = createStatelessDemoSiwxHandler({
+  signingSecret: process.env.SIWX_DEMO_SIGNING_SECRET!, // Minimum 32 characters
+  policy: {
+    expectedDomain: process.env.SIWX_EXPECTED_DOMAIN || 'demo.tuwa.io',
+    expectedUri: process.env.SIWX_EXPECTED_URI || 'https://demo.tuwa.io',
+    requireExpirationTime: true,
+    maxIssuedAtAgeSeconds: 300,
+    maxSessionLifetimeSeconds: 1800, // 30 minutes max session
+  },
+  cookieOptions: {
+    name: 'siwx-demo-session',
+    secure: process.env.NODE_ENV === 'production',
+  },
+});
+
+export const { GET, POST, DELETE } = handler;
+```
+
+> **Warning**: The Stateless Demo profile is intended exclusively for zero-infrastructure demonstrations and sandbox prototypes. Without a persistent Redis/PostgreSQL storage adapter, atomic nonce single-use enforcement and immediate revocation across horizontal replicas cannot be guaranteed.
+
+---
+
+### 4. Server-Side Synchronization Actions (`src/app/actions.ts`)
+
+Implement server actions to verify client requests and forward them to Quasar securely.
+
+> [!IMPORTANT]
+> Always verify the `SiwxSession` on the server by reading the `HttpOnly` cookie via `getSiwxServerSession()`. Never accept client-supplied session objects as proof of identity.
+
+#### Option A: Durable Profile Server Actions
+
+```typescript
+// src/app/actions.ts (Durable Profile)
 'use server';
 
-import { Quasar, Transaction } from '@tuwaio/quasar-sdk';
-import { isSessionMatchingTarget, SiwxClientSession } from '@tuwaio/siwx-core';
-import { SiwxSession } from '@tuwaio/siwx-server';
+import { cookies } from 'next/headers';
+import { Quasar, type Transaction } from '@tuwaio/quasar-sdk';
+import { isSessionMatchingTarget } from '@tuwaio/siwx-core';
+import { getSiwxServerSession } from '@tuwaio/siwx-server';
 import { appConfig } from '@/configs/appConfig';
+import { sessionStore } from '@/lib/authStores';
 
 const quasar = new Quasar({
   secretKey: process.env.QUASAR_SDK_SK ?? '',
 });
 
-/**
- * Synchronizes a client-side transaction with Quasar.
- * Gated by a client-side SIWX session signature verification and target address validation.
- */
-export async function syncTransaction(tx: Transaction, session: SiwxClientSession | SiwxSession | null) {
+async function getVerifiedSession() {
+  const cookieStore = await cookies();
+  return getSiwxServerSession({
+    cookieSource: cookieStore,
+    cookieName: 'siwx-session',
+    sessionStore,
+  });
+}
+
+export async function syncTransaction(tx: Transaction) {
+  const session = await getVerifiedSession();
   if (!session) {
     return { success: false, reason: 'unauthenticated' };
   }
@@ -136,7 +315,6 @@ export async function syncTransaction(tx: Transaction, session: SiwxClientSessio
   }
 
   try {
-    // Send transaction to Quasar Engine for cloud indexing and webhook execution
     await quasar.pulsar.syncCreate(tx, appConfig.appName);
     return { success: true };
   } catch (error) {
@@ -145,22 +323,16 @@ export async function syncTransaction(tx: Transaction, session: SiwxClientSessio
   }
 }
 
-/**
- * Retrieves the organization's transaction history from Quasar.
- * Validates session ownership against target walletAddress.
- */
-export async function getHistory(
-  params: {
-    walletAddress: string;
-    page?: number;
-    limit?: number;
-    chainId?: string;
-    status?: string;
-    txKey?: string;
-    appName?: string;
-  },
-  session: SiwxClientSession | SiwxSession | null,
-) {
+export async function getHistory(params: {
+  walletAddress: string;
+  page?: number;
+  limit?: number;
+  chainId?: string;
+  status?: string;
+  txKey?: string;
+  appName?: string;
+}) {
+  const session = await getVerifiedSession();
   if (!session || !isSessionMatchingTarget(session, params.walletAddress, params.chainId)) {
     return {
       docs: [],
@@ -191,9 +363,95 @@ export async function getHistory(
 }
 ```
 
-### 4. Store Initialization (Client-Side)
+#### Option B: Stateless Demo Profile Server Actions
 
-Create your Pulsar store and configure the `onRemoteCreate` hook. This hook triggers whenever a new transaction enters the local pool, sending it to the server action for backend synchronization.
+```typescript
+// src/app/actions.ts (Stateless Demo Profile)
+'use server';
+
+import { cookies } from 'next/headers';
+import { Quasar, type Transaction } from '@tuwaio/quasar-sdk';
+import { isSessionMatchingTarget } from '@tuwaio/siwx-core';
+import { getSiwxServerSession } from '@tuwaio/siwx-server';
+import { appConfig } from '@/configs/appConfig';
+
+const quasar = new Quasar({
+  secretKey: process.env.QUASAR_SDK_SK ?? '',
+});
+
+async function getVerifiedSession() {
+  const cookieStore = await cookies();
+  return getSiwxServerSession({
+    cookieSource: cookieStore,
+    cookieName: 'siwx-demo-session',
+    signingSecret: process.env.SIWX_DEMO_SIGNING_SECRET!,
+  });
+}
+
+export async function syncTransaction(tx: Transaction) {
+  const session = await getVerifiedSession();
+  if (!session) {
+    return { success: false, reason: 'unauthenticated' };
+  }
+
+  if (tx.from && !isSessionMatchingTarget(session, tx.from, tx.chainId)) {
+    return { success: false, reason: 'session_mismatch' };
+  }
+
+  try {
+    await quasar.pulsar.syncCreate(tx, appConfig.appName);
+    return { success: true };
+  } catch (error) {
+    console.error('[Quasar Sync] Failed to register transaction:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export async function getHistory(params: {
+  walletAddress: string;
+  page?: number;
+  limit?: number;
+  chainId?: string;
+  status?: string;
+  txKey?: string;
+  appName?: string;
+}) {
+  const session = await getVerifiedSession();
+  if (!session || !isSessionMatchingTarget(session, params.walletAddress, params.chainId)) {
+    return {
+      docs: [],
+      totalDocs: 0,
+      limit: params.limit ?? 10,
+      page: params.page ?? 1,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+    };
+  }
+
+  try {
+    const history = await quasar.pulsar.getHistory(params);
+    return history;
+  } catch (error) {
+    console.error('[Quasar History] Failed to retrieve history:', error);
+    return {
+      docs: [],
+      totalDocs: 0,
+      limit: params.limit ?? 10,
+      page: params.page ?? 1,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+    };
+  }
+}
+```
+
+---
+
+### 5. Client-Side Store Initialization (`src/hooks/usePulsarStore.ts`)
+
+Create your Pulsar store and configure the `onRemoteCreate` hook. This hook triggers whenever a new transaction enters the local pool, delegating synchronization to the server action.
 
 ```typescript
 // src/hooks/usePulsarStore.ts
@@ -202,12 +460,11 @@ Create your Pulsar store and configure the `onRemoteCreate` hook. This hook trig
 import { createBoundedUseStore, createPulsarStore, createTxInMemoryStore } from '@tuwaio/pulsar-core';
 import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
 import { pulsarSolanaAdapter } from '@tuwaio/pulsar-solana';
-import { useSiwxSessionStore } from '@tuwaio/siwx-react';
 import { preFlightTxCheck } from '@tuwaio/quasar-sdk';
 
 import { syncTransaction, getHistory } from '@/app/actions';
 import { wagmiConfig, solanaRPCUrls, appEVMChains, appConfig } from '@/configs/appConfig';
-import { TransactionUnion } from '@/transactions';
+import { type TransactionUnion } from '@/transactions';
 
 const STORAGE_KEY = 'transactions-tracking-storage-tuwa';
 
@@ -221,11 +478,10 @@ export const initialStore = createPulsarStore<TransactionUnion>({
     await preFlightTxCheck();
   },
 
-  // Remote synchronization hook (POST to Quasar)
+  // Remote synchronization hook (POST to Quasar via Server Action)
   onRemoteCreate: async (tx) => {
     try {
-      const auth = useSiwxSessionStore.getState().session;
-      await syncTransaction(tx, auth);
+      await syncTransaction(tx);
     } catch (err) {
       console.error('[Pulsar Store] Remote sync failed:', err);
       throw err; // Rethrow to inform pulsar-core that sync failed
@@ -246,16 +502,12 @@ const pulsarInMemoryStore = createTxInMemoryStore<TransactionUnion>({
   // Fetch paginated history from Quasar via server action
   getHistory: async ({ page, walletAddress }) => {
     try {
-      const auth = useSiwxSessionStore.getState().session;
-      const history = await getHistory(
-        {
-          walletAddress,
-          page,
-          limit: 10,
-          appName: appConfig.appName,
-        },
-        auth,
-      );
+      const history = await getHistory({
+        walletAddress,
+        page,
+        limit: 10,
+        appName: appConfig.appName,
+      });
 
       if (!history) return null;
 
@@ -281,13 +533,13 @@ initialStore.subscribe((state) => pulsarInMemoryStore.getState().syncWithLocalPo
 export const usePulsarInMemoryStore = createBoundedUseStore(pulsarInMemoryStore);
 ```
 
-### 5. Provider & SIWX Authentication Integration
+---
 
-To tie everything together seamlessly, initialize `SatelliteConnectProvider`, `NovaConnectProvider`, `NovaTransactionsProvider`, and the root `Providers` wrapper in your application layout.
+### 6. Provider & UI Component Integration
+
+Initialize `SatelliteConnectProvider`, `NovaConnectProvider`, and `NovaTransactionsProvider` in your application layout:
 
 #### A. Nova Transactions Provider (`src/providers/NovaTransactionsProvider.tsx`)
-
-Binds the Pulsar store instance to the UI layer (modals, toasts, and history feeds) and invokes `useInitializeTransactionsPool` to resume tracking pending transactions across page reloads.
 
 ```tsx
 // src/providers/NovaTransactionsProvider.tsx
@@ -296,7 +548,7 @@ Binds the Pulsar store instance to the UI layer (modals, toasts, and history fee
 import { useSatelliteConnectStore } from '@tuwaio/satellite-react';
 import { NovaTransactionsProvider as NTP } from '@tuwaio/nova-transactions';
 import { getAdapterFromConnectorType } from '@tuwaio/orbit-core';
-import { TxInMemoryPagination, useInitializeTransactionsPool } from '@tuwaio/pulsar-core';
+import { type TxInMemoryPagination, useInitializeTransactionsPool } from '@tuwaio/pulsar-core';
 import { usePulsarInMemoryStore, usePulsarStore } from '@/hooks/usePulsarStore';
 
 export function NovaTransactionsProvider({ pagination }: { pagination: TxInMemoryPagination }) {
@@ -327,8 +579,6 @@ export function NovaTransactionsProvider({ pagination }: { pagination: TxInMemor
 ```
 
 #### B. Satellite Connect Providers (`src/providers/SatelliteConnectProviders.tsx`)
-
-Configures wallet connection adapters, connector watchers, SIWX session state synchronization, and `NovaConnectProvider`.
 
 ```tsx
 // src/providers/SatelliteConnectProviders.tsx
@@ -404,12 +654,11 @@ export function SatelliteConnectProviders({ children }: { children: React.ReactN
 
 #### C. Root Application Providers (`src/providers/index.tsx`)
 
-Combines `WagmiProvider`, `QueryClientProvider`, `SatelliteConnectProviders`, and your application state into a single provider hierarchy.
-
 ```tsx
 // src/providers/index.tsx
 'use client';
 
+import { type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { wagmiConfig } from '@/configs/appConfig';

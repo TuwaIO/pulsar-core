@@ -6,7 +6,7 @@
 
 > **selectPendingTransactions**\<`T`\>(`transactionsPool`): `T`[]
 
-Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:24](https://github.com/TuwaIO/pulsar-core/blob/39a0d2c484c435456f9a8bddf17d40cdfe938312/packages/pulsar-core/src/store/transactionsSelectors.ts#L24)
+Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:24](https://github.com/TuwaIO/pulsar-core/blob/04262b00f797406a8a57df5eb1e0a1258d30caf9/packages/pulsar-core/src/store/transactionsSelectors.ts#L24)
 
 Selects all transactions that are currently in a pending state, sorted chronologically.
 

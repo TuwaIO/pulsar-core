@@ -4,7 +4,7 @@
 
 # PulsarTransactionValidationError
 
-Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:22](https://github.com/TuwaIO/pulsar-core/blob/39a0d2c484c435456f9a8bddf17d40cdfe938312/packages/pulsar-core/src/utils/transactionValidation.ts#L22)
+Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:22](https://github.com/TuwaIO/pulsar-core/blob/04262b00f797406a8a57df5eb1e0a1258d30caf9/packages/pulsar-core/src/utils/transactionValidation.ts#L22)
 
 Error thrown when transaction metadata fails Pulsar's safety limits.
 
@@ -18,7 +18,7 @@ Error thrown when transaction metadata fails Pulsar's safety limits.
 
 > **new PulsarTransactionValidationError**(`field`, `message`): `PulsarTransactionValidationError`
 
-Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:26](https://github.com/TuwaIO/pulsar-core/blob/39a0d2c484c435456f9a8bddf17d40cdfe938312/packages/pulsar-core/src/utils/transactionValidation.ts#L26)
+Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:26](https://github.com/TuwaIO/pulsar-core/blob/04262b00f797406a8a57df5eb1e0a1258d30caf9/packages/pulsar-core/src/utils/transactionValidation.ts#L26)
 
 #### Parameters
 
@@ -56,7 +56,7 @@ Defined in: node\_modules/.pnpm/typescript@6.0.3/node\_modules/typescript/lib/li
 
 > `readonly` **field**: `string`
 
-Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:24](https://github.com/TuwaIO/pulsar-core/blob/39a0d2c484c435456f9a8bddf17d40cdfe938312/packages/pulsar-core/src/utils/transactionValidation.ts#L24)
+Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:24](https://github.com/TuwaIO/pulsar-core/blob/04262b00f797406a8a57df5eb1e0a1258d30caf9/packages/pulsar-core/src/utils/transactionValidation.ts#L24)
 
 The transaction field that failed validation.
 
