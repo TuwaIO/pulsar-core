@@ -2,7 +2,7 @@
  * @file Defines the core types and enums specific to the @tuwaio/pulsar-solana package.
  */
 
-import type { SolanaClusterMoniker } from 'gill';
+import type { SolanaClusterMoniker } from '@tuwaio/orbit-solana';
 
 /**
  * Represents the simplified configuration object for the Solana adapter.

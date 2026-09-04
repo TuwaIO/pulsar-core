@@ -2,11 +2,11 @@
 
 ***
 
-# createGelatoClient()
+# ~~createGelatoClient()~~
 
 > **createGelatoClient**(`parameters`): `object`
 
-Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:42](https://github.com/TuwaIO/pulsar-core/blob/04262b00f797406a8a57df5eb1e0a1258d30caf9/packages/pulsar-evm/src/utils/createGelatoClient.ts#L42)
+Defined in: [packages/pulsar-evm/src/utils/createGelatoClient.ts:43](https://github.com/TuwaIO/pulsar-core/blob/18e5da55b3b8542aa1cb462dd015c6097e4ec4f0/packages/pulsar-evm/src/utils/createGelatoClient.ts#L43)
 
 Creates or retrieves a cached viem HTTP transport client configured for the Gelato Relay API.
 
@@ -31,14 +31,18 @@ The configuration for the Gelato client.
 
 A viem transport instance configured for the Gelato API.
 
-### config
+### ~~config~~
 
 > **config**: `TransportConfig`\<`string`\>
 
-### request
+### ~~request~~
 
 > **request**: `EIP1193RequestFn`
 
-### value?
+### ~~value?~~
 
 > `optional` **value?**: `Record`\<`string`, `any`\>
+
+## Deprecated
+
+Gelato relay is deprecated. Use TransactionTracker.ERC4337 and createBundlerRpcClient instead.

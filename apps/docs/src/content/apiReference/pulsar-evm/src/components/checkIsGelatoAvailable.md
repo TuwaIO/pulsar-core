@@ -2,11 +2,11 @@
 
 ***
 
-# checkIsGelatoAvailable()
+# ~~checkIsGelatoAvailable()~~
 
 > **checkIsGelatoAvailable**(`chainId`, `gelatoApiKey`): `Promise`\<`boolean`\>
 
-Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:114](https://github.com/TuwaIO/pulsar-core/blob/04262b00f797406a8a57df5eb1e0a1258d30caf9/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L114)
+Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:115](https://github.com/TuwaIO/pulsar-core/blob/18e5da55b3b8542aa1cb462dd015c6097e4ec4f0/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L115)
 
 Checks if the Gelato Relay service supports a given chain ID.
 
@@ -33,3 +33,7 @@ The Gelato API key used for authentication.
 `Promise`\<`boolean`\>
 
 A promise that resolves to `true` if Gelato supports the chain, `false` otherwise.
+
+## Deprecated
+
+Gelato relay is deprecated. Use TransactionTracker.ERC4337 instead.

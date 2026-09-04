@@ -22,12 +22,15 @@ const idlContent = `{
 }
 `;
 
-const configContent = `import { createCodamaConfig } from 'gill';
-
-export default createCodamaConfig({
-  clientJs: 'src/programs/...your contract name.../generated',
-  idl: 'src/targets/...your contract name.../idl/...your contract name....json',
-});
+const configContent = `{
+  "idl": "src/targets/...your contract name.../idl/...your contract name....json",
+  "scripts": {
+    "js": {
+      "from": "@codama/renderers-js",
+      "args": ["src/programs/...your contract name.../generated"]
+    }
+  }
+}
 `;
 
 export function IDLStep() {
@@ -47,29 +50,33 @@ export function IDLStep() {
         Generating Type-Safe Instructions
       </h4>
       <p className="mb-2 text-[var(--tuwa-text-secondary)]">
-        To use the IDL easily and safely, you can generate type-safe instructions. We recommend using the **Codama** CLI
-        for this. First, make sure you have it installed:
+        To use the IDL easily and safely, you can generate type-safe instructions. We recommend using the **Codama CLI**
+        (`@codama/cli`) for this. First, install the CLI and the JavaScript/Solana Kit renderer:
       </p>
-      <CodeBlock title="bash" textToCopy="pnpm add -g codama" titleIcons={<DocumentTextIcon />}>
-        <CodeHighlighter children="pnpm add -g codama" language="bash" resolvedTheme={resolvedTheme ?? 'light'} />
-      </CodeBlock>
-      <p className="mb-2 text-[var(--tuwa-text-secondary)]">
-        Next, configure it to point to your IDL file. Create a `codama.js` file in your project root with the following
-        configuration:
-      </p>
-      <CodeBlock title="codama.js" textToCopy={configContent} titleIcons={<DocumentTextIcon />}>
-        <CodeHighlighter children={configContent} language="ts" resolvedTheme={resolvedTheme ?? 'light'} />
-      </CodeBlock>
-      <p className="mb-2 mt-4 text-[var(--tuwa-text-secondary)]">
-        Now you can run the generation script. It will create a `src/programs/solanatest/generated` directory with all
-        the necessary files.
-      </p>
-      <CodeBlock title="bash" textToCopy="pnpm run codama run js -c ./codama.js" titleIcons={<DocumentTextIcon />}>
+      <CodeBlock
+        title="bash"
+        textToCopy="pnpm add -D @codama/cli @codama/renderers-js"
+        titleIcons={<DocumentTextIcon />}
+      >
         <CodeHighlighter
-          children="pnpm run codama run js -c ./codama.js"
+          children="pnpm add -D @codama/cli @codama/renderers-js"
           language="bash"
           resolvedTheme={resolvedTheme ?? 'light'}
         />
+      </CodeBlock>
+      <p className="mb-2 text-[var(--tuwa-text-secondary)]">
+        Next, configure it to point to your IDL file and output directory. Create a `codama.json` configuration file in
+        your project root:
+      </p>
+      <CodeBlock title="codama.json" textToCopy={configContent} titleIcons={<DocumentTextIcon />}>
+        <CodeHighlighter children={configContent} language="json" resolvedTheme={resolvedTheme ?? 'light'} />
+      </CodeBlock>
+      <p className="mb-2 mt-4 text-[var(--tuwa-text-secondary)]">
+        Now run the generation command. It will create a `src/programs/.../generated` directory with typed instructions
+        fully compatible with `@solana/kit`:
+      </p>
+      <CodeBlock title="bash" textToCopy="pnpm exec codama run js" titleIcons={<DocumentTextIcon />}>
+        <CodeHighlighter children="pnpm exec codama run js" language="bash" resolvedTheme={resolvedTheme ?? 'light'} />
       </CodeBlock>
       <p className="mt-4 text-[var(--tuwa-text-secondary)]">
         Once these files are generated, you can use the typed instructions to build your transactions, which we'll cover

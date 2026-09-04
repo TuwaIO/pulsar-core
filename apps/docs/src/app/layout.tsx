@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     'viem',
     'typescript',
     'solana',
-    'gill',
+    '@solana/kit',
     'solanakit',
   ],
   authors: [{ name: 'TUWA', url: 'https://github.com/TuwaIO' }],

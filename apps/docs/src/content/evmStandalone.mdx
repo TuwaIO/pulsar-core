@@ -1,6 +1,6 @@
 # Using EVM Trackers Standalone
 
-While the Pulsar suite offers a full stack solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture remains modular and flexible. This allows utilizing the low-level **trackers** (`evmTracker`, `gelatoFetcher`, `safeFetcher`) from `@tuwaio/pulsar-evm` directly, bypassing the complete state management store.
+While the Pulsar suite offers a full stack solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture remains modular and flexible. This allows utilizing the low-level **trackers** (`evmTracker`, `erc4337Fetcher`, `safeFetcher`, `gelatoFetcher`) from `@tuwaio/pulsar-evm` directly, bypassing the complete state management store.
 
 This flexibility is ideal if:
 
@@ -79,35 +79,53 @@ async function trackMyTransaction(txHash: string, chainId: number) {
 
 ---
 
-### 2. Gelato & Safe Fetchers
+### 2. ERC-4337 UserOperation Tracker (Pimlico / Native Bundler)
 
-For polling-based tracking, especially for **Gelato** and **Safe** multisig transactions, we expose fetcher functions. You can integrate these directly with Pulsar's `initializePollingTracker` or your custom polling setup.
+For Account Abstraction and ERC-4337 UserOperations, `@tuwaio/pulsar-evm` natively integrates with Pimlico and standard ERC-4337 bundlers via `@tuwaio/orbit-evm`.
 
-#### Example for Handling Gelato & Safe Transactions
+The `erc4337Fetcher` polls `eth_getUserOperationByHash` and `eth_getUserOperationReceipt`, automatically reconciling the underlying on-chain transaction receipt once executed.
+
+#### Example Usage
 
 ```tsx
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
-import { gelatoFetcher, safeFetcher, createGelatoClient } from '@tuwaio/pulsar-evm';
+import { erc4337Fetcher } from '@tuwaio/pulsar-evm';
 
-// Initialize Gelato HTTP transport client
-const gelatoClient = createGelatoClient({ apiKey: 'YOUR_GELATO_API_KEY' });
-
-// Tracking a Gelato relay task
-async function trackGelatoTask(taskId: string) {
+// Tracking an ERC-4337 UserOperation hash
+async function trackUserOp(userOpHash: string, chainId: number, pimlicoApiKey?: string) {
   await initializePollingTracker({
     tx: {
-      txKey: taskId,
-      pending: true, // Crucial: must be true to start polling loop
+      txKey: userOpHash,
+      chainId,
+      pimlicoApiKey, // or pass custom bundlerUrl
+      pending: true,
     },
-    fetcher: gelatoFetcher(gelatoClient),
-    onSuccess: (status) => {
-      console.log('Gelato task succeeded:', status);
+    fetcher: erc4337Fetcher,
+    onSuccess: (response) => {
+      console.log('UserOperation confirmed on-chain:', response);
+      // response.receipt contains the underlying transaction receipt
     },
-    onFailure: (status) => {
-      console.error('Gelato task failed:', status);
+    onFailure: (error) => {
+      console.error('UserOperation failed:', error);
     },
   });
 }
+```
+
+---
+
+### 3. Safe Multisig Fetcher & Gelato Relay
+
+For Safe multisig transactions and legacy Gelato relay tasks, fetcher functions are available.
+
+> [!NOTE]
+> **Gelato Deprecation:** Gelato Network tracking is deprecated in favor of native ERC-4337 UserOperations via `@tuwaio/orbit-evm` and `erc4337Fetcher`.
+
+#### Example for Handling Safe & Gelato Transactions
+
+```tsx
+import { initializePollingTracker } from '@tuwaio/pulsar-core';
+import { safeFetcher, gelatoFetcher, createGelatoClient } from '@tuwaio/pulsar-evm';
 
 // Tracking a Safe multisig transaction
 async function trackSafeTx(safeTxHash: string, chainId: number, fromAddress: string) {
@@ -127,6 +145,24 @@ async function trackSafeTx(safeTxHash: string, chainId: number, fromAddress: str
     },
     onReplaced: (replacement) => {
       console.warn('Transaction was replaced:', replacement);
+    },
+  });
+}
+
+// Tracking a Gelato relay task (deprecated)
+const gelatoClient = createGelatoClient({ apiKey: 'YOUR_GELATO_API_KEY' });
+async function trackGelatoTask(taskId: string) {
+  await initializePollingTracker({
+    tx: {
+      txKey: taskId,
+      pending: true,
+    },
+    fetcher: gelatoFetcher(gelatoClient),
+    onSuccess: (status) => {
+      console.log('Gelato task succeeded:', status);
+    },
+    onFailure: (status) => {
+      console.error('Gelato task failed:', status);
     },
   });
 }

@@ -60,6 +60,8 @@ export const useInitializeTransactionsPool = ({
 
         if (!isActive) return;
       } catch (error) {
+        if (!isActive) return;
+
         const fallbackErrorHandler = (e: Error) => {
           console.error('[Pulsar] Failed to initialize transactions pool:', e);
         };

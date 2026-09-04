@@ -16,7 +16,7 @@ export function StartedBlockWrapper({
       <div>
         <h3 className="mb-2 text-xl font-semibold text-[var(--tuwa-text-primary)]">Step 1: Wallet Connector Setup</h3>
         <p className="text-[var(--tuwa-text-secondary)]">
-          The <b>Pulsar</b> engine works with any solana/kit or gill setup. This guide uses{' '}
+          The <b>Pulsar</b> engine works with any @solana/kit setup. This guide uses{' '}
           <StyledLink href={link}>{title}</StyledLink> as an example.
         </p>
         <CombineSteps />

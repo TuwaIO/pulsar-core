@@ -6,6 +6,7 @@
 import { ITxTrackingStore, TrackerCallbacks, Transaction, TransactionTracker } from '@tuwaio/pulsar-core';
 import { Config } from '@wagmi/core';
 
+import { erc4337TrackerForStore } from '../trackers/erc4337Tracker';
 import { evmTrackerForStore } from '../trackers/evmTracker';
 import { gelatoTrackerForStore } from '../trackers/gelatoTracker';
 import { safeTrackerForStore } from '../trackers/safeTracker';
@@ -27,7 +28,7 @@ type InitializeTrackerParams<T extends Transaction> = Pick<
 /**
  * Initializes the appropriate tracker for a given transaction based on its `tracker` type.
  * This function acts as a central router, delegating to the specific tracker implementation
- * (e.g., standard EVM, Gelato, or Safe).
+ * (e.g., standard EVM, Gelato, Safe, or ERC-4337).
  *
  * @template T - The application-specific transaction type, extending the base `Transaction`.
  * @param {InitializeTrackerParams<T>} params - The parameters for initializing the tracker.
@@ -47,6 +48,9 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   switch (tracker) {
     case TransactionTracker.Ethereum:
       return evmTrackerForStore({ tx, config, transactionsPool, onSuccess, onError, onReplaced, ...rest });
+
+    case TransactionTracker.ERC4337:
+      return erc4337TrackerForStore({ tx, transactionsPool, onSuccess, onError, ...rest });
 
     case TransactionTracker.Gelato:
       // If no Gelato API key is provided, fall back to the default EVM tracker.

@@ -11,7 +11,7 @@
 - **Core:** TypeScript v5.9+, Node.js, pnpm v10+ (Workspace).
 - **State Management:** `zustand` v5.x, `immer` v11.x (Immutable state updates).
 - **Web3 (EVM):** `viem` v2.x, `@wagmi/core` v3.x.
-- **Web3 (Solana):** `gill` v0.14+, `@wallet-standard/*`.
+- **Web3 (Solana):** `@solana/kit` v8.x, `@wallet-standard/*`, `@tuwaio/orbit-solana`.
 - **Frameworks:**
   - `apps/docs`: Next.js v16, Nextra v4, Tailwind CSS v4.
   - `packages/pulsar-react`: React v19.
@@ -53,7 +53,7 @@ pulsar-core/
 
 - **`pulsar-core`**: The absolute core. Defines the _shape_ of a transaction and how to update it. Zero external Web3 dependencies.
 - **`pulsar-evm`**: Adapter that teaches Pulsar how to talk to Ethereum. Uses `viem` for RPC calls and `wagmi` for chain alignment.
-- **`pulsar-solana`**: Adapter that teaches Pulsar how to talk to Solana. Uses `gill` for modern RPC interactions.
+- **`pulsar-solana`**: Adapter that teaches Pulsar how to talk to Solana. Uses `@solana/kit` and `@tuwaio/orbit-solana` for modern RPC interactions.
 - **`pulsar-react`**: React-specific wrapper to make using Pulsar easy in React apps (hooks, lifecycle management).
 
 ## 4. Coding Standards (STRICT)
@@ -81,5 +81,6 @@ pulsar-core/
 - **Dependency Rule:** Never install new packages without explicit user permission.
 - **Hallucination Check:**
   - Do **NOT** import `ethers.js` (We use `viem`).
-  - Do **NOT** import legacy `@solana/web3.js` classes unless wrapped by `gill`.
+  - Do **NOT** import `gill` (Eradicated; we use `@solana/kit` and `@tuwaio/orbit-solana`).
+  - Do **NOT** import legacy `@solana/web3.js` classes.
   - Do **NOT** assume UI components exist in `pulsar-core` (It is headless). UI lives in `nova-uikit`.

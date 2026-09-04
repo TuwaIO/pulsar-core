@@ -20,10 +20,15 @@ export enum TransactionTracker {
   Ethereum = 'ethereum',
   /** For multi-signature transactions managed and executed via a Safe contract. */
   Safe = 'safe',
-  /** For meta-transactions relayed and executed by the Gelato Network. */
+  /**
+   * For meta-transactions relayed and executed by the Gelato Network.
+   * @deprecated Gelato gasless relay is deprecated. Use TransactionTracker.ERC4337 instead.
+   */
   Gelato = 'gelato',
   /** The tracker for monitoring standard Solana transaction signatures. */
   Solana = 'solana',
+  /** For native ERC-4337 UserOperation transactions tracked via bundler RPC. */
+  ERC4337 = 'erc4337',
 }
 
 /**
@@ -145,6 +150,10 @@ export type EvmTransaction = BaseTransaction & {
   to?: `0x${string}`;
   /** The amount of native currency (in wei) being sent. */
   value?: string;
+  /** Optional custom bundler RPC URL for ERC-4337 UserOperation tracking. */
+  bundlerUrl?: string;
+  /** Optional Pimlico API key for ERC-4337 UserOperation tracking. */
+  pimlicoApiKey?: string;
 };
 
 /**
@@ -271,13 +280,20 @@ export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter
  * @property {ActionTxKey} actionTxKey - The key identifying the specific action related to the transaction.
  * @property {string} connectorType - The type of connector used for the transaction (e.g., wallet provider, blockchain interface).
  * @property {TransactionTracker} [tracker] - An optional tracker object that monitors the status and progress of the transaction.
- * @property {string} [gelatoApiKey] - An optional Gelato API key for Gelato relayer integration.
+ * @property {string} [gelatoApiKey] - @deprecated Gelato API key for Gelato relayer integration.
+ * @property {string} [bundlerUrl] - Optional custom bundler RPC URL for ERC-4337 UserOperation tracking.
+ * @property {string} [pimlicoApiKey] - Optional Pimlico API key for ERC-4337 UserOperation tracking.
  */
 export type CheckTxTracker = {
   actionTxKey: ActionTxKey;
   connectorType: string;
   tracker?: TransactionTracker;
+  /** @deprecated Gelato relay is deprecated. Use bundlerUrl / pimlicoApiKey with ERC-4337 instead. */
   gelatoApiKey?: string;
+  /** Optional custom bundler RPC URL for ERC-4337 UserOperation tracking. */
+  bundlerUrl?: string;
+  /** Optional Pimlico API key for ERC-4337 UserOperation tracking. */
+  pimlicoApiKey?: string;
 };
 
 /**

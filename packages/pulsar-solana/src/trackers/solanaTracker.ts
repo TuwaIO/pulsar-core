@@ -4,6 +4,7 @@
  * `getSignatureStatuses` RPC method for updates on transaction status.
  */
 
+import type { Signature, TransactionError } from '@solana/kit';
 import { normalizeError, OrbitAdapter } from '@tuwaio/orbit-core';
 import { createSolanaRPC, getCluster } from '@tuwaio/orbit-solana';
 import {
@@ -15,7 +16,6 @@ import {
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
 import dayjs from 'dayjs';
-import { Signature, TransactionError } from 'gill';
 
 /**
  * @typedef SolanaSignatureStatusResponse

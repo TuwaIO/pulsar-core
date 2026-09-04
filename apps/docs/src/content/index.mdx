@@ -46,8 +46,8 @@ Pulsar handles the core state engineering, sitting firmly below your visual comp
                     │ (Isolated Network Adapters)
 ┌───────────────────▼───────────────────────┐
 │     @tuwaio/pulsar-evm / pulsar-solana    │
-│  • EVM (Viem/Wagmi) & Solana (Gill) Logic │
-│  • Standard, Safe Multi-Sig, Gelato Pipes │
+│  • EVM (Viem/Wagmi) & Solana (@solana/kit)│
+│  • Standard, Safe, ERC-4337 Account Abstr.│
 └───────────────────┬───────────────────────┘
                     │ (React Hook Bindings)
 ┌───────────────────▼───────────────────────┐
@@ -70,9 +70,9 @@ Pulsar handles the core state engineering, sitting firmly below your visual comp
 - **🧠 Headless Purist Architecture:** Controlled via an ultra-fast, framework-agnostic Zustand store. Zero rendering overhead, zero forced UI design lock-in.
 
 - **⛓️ Pure Multi-Chain Adapters:**
-- **EVM Adapter:** Built strictly on `viem` and `wagmi`. Includes specialized tracking logic for contract wallets, Safe multi-sigs, and Gelato meta-transactions. Legacy `ethers.js` or `web3.js` is strictly prohibited.
+- **EVM Adapter:** Built strictly on `viem` and `wagmi`. Includes specialized tracking logic for contract wallets, Safe multi-sigs, and ERC-4337 UserOperations via Pimlico/native bundlers. Legacy `ethers.js` or `web3.js` is strictly prohibited.
 
-- **Solana Adapter:** Built strictly on `gill` and `@tuwaio/orbit-solana` helpers to monitor fast-block lifecycles at the RPC level.
+- **Solana Adapter:** Built strictly on `@solana/kit` and `@tuwaio/orbit-solana` helpers to monitor fast-block lifecycles at the RPC level.
 
 - **🔄 Local-First Resilience:** Your transaction pool automatically checkpoints to `localStorage`. Pending trackers instantly resume execution lifecycle monitoring immediately upon client reboots or network reconnects.
 

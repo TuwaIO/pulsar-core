@@ -104,6 +104,7 @@ function isGelatoTxPending(status: GelatoStatusCode): boolean {
  * - {@link GelatoStatusCode.Rejected} / {@link GelatoStatusCode.Reverted} → `onFailure`
  * - {@link GelatoStatusCode.Submitted} → `onIntervalTick` (to update the tx hash)
  *
+ * @deprecated Gelato relay is deprecated. Use TransactionTracker.ERC4337 and erc4337Fetcher instead.
  * @param {ReturnType<Transport>} client - A viem transport client configured for the Gelato API.
  * @returns {PollingTrackerConfig<GelatoTaskStatus, Transaction>['fetcher']} The fetcher function.
  */
@@ -143,6 +144,7 @@ export function gelatoFetcher(
 // =================================================================================================
 
 /**
+ * @deprecated Gelato relay is deprecated. Use TransactionTracker.ERC4337 and erc4337TrackerForStore instead.
  * A higher-level wrapper that integrates the Gelato polling logic with the Pulsar store.
  * It creates an authenticated Gelato RPC client and uses {@link gelatoFetcher} to
  * build the fetcher, then delegates to `initializePollingTracker` with store-specific callbacks.
@@ -231,3 +233,8 @@ export function gelatoTrackerForStore<T extends Transaction>({
     },
   });
 }
+
+/**
+ * @deprecated Gelato relay is deprecated. Use TransactionTracker.ERC4337 and erc4337Tracker instead.
+ */
+export const gelatoTracker = gelatoTrackerForStore;

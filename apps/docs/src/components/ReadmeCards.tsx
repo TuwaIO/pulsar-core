@@ -211,7 +211,7 @@ export const ReadmeCards: React.FC = () => {
     {
       title: 'Next.js + Nova Connect (Solana only)',
       description:
-        'Dedicated Solana ecosystem template featuring Gill cluster manager integration and signature status tracking.',
+        'Dedicated Solana ecosystem template featuring @solana/kit cluster manager integration and signature status tracking.',
       framework: 'Next.js 16',
       technologies: ['React 19', 'TypeScript', '@tuwaio/nova-connect', 'Wagmi', 'TailwindCSS'],
       status: 'ready',

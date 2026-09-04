@@ -78,7 +78,8 @@ This utility function simplifies the process of creating, signing, and broadcast
 #### Example Usage
 
 ```tsx
-import type { Instruction, SolanaClient, TransactionSendingSigner } from 'gill';
+import type { Instruction, TransactionSendingSigner } from '@solana/kit';
+import type { SolanaClient } from '@tuwaio/orbit-solana';
 import { signAndSendSolanaTx } from '@tuwaio/pulsar-solana';
 
 async function sendTransaction(
