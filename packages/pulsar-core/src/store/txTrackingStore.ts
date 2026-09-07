@@ -238,7 +238,9 @@ export function createPulsarStore<T extends Transaction>({
               actionTxKey: txKeyFromAction,
               connectorType,
               tracker,
-              gelatoApiKey,
+              gelatoApiKey: params.gelatoApiKey ?? gelatoApiKey,
+              bundlerUrl: params.bundlerUrl,
+              pimlicoApiKey: params.pimlicoApiKey,
             });
 
             // Step 5: Construct the full transaction object for the pool.
@@ -250,6 +252,8 @@ export function createPulsarStore<T extends Transaction>({
               chainId: setChainId(desiredChainID),
               localTimestamp,
               txKey: finalTxKey,
+              bundlerUrl: params.bundlerUrl,
+              pimlicoApiKey: params.pimlicoApiKey,
               // For EVM, the hash is often the preliminary key from the action.
               hash: updatedTracker === 'ethereum' ? (txKeyFromAction as `0x${string}`) : undefined,
               pending: false, // will be set to true by addTxToPool

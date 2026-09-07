@@ -6,7 +6,7 @@
 
 > **erc4337Tracker**\<`T`\>(`config`): `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:114](https://github.com/TuwaIO/pulsar-core/blob/ea1149b0cc6a30a2063b7734187b89d4981eb82e/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L114)
+Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:149](https://github.com/TuwaIO/pulsar-core/blob/e0149314d187da7baa08d06ba8554c6c4a303013/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L149)
 
 Initializes a low-level polling tracker for ERC-4337 UserOperations.
 

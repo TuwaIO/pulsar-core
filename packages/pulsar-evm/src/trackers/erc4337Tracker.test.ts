@@ -77,6 +77,33 @@ describe('erc4337Tracker', () => {
       expect(onFailure).not.toHaveBeenCalled();
     });
 
+    test('should treat UserOperationReceiptNotFoundError as pending without throwing or stopping', async () => {
+      const notFoundError = new Error('User Operation receipt with hash "0x1111" could not be found.');
+      notFoundError.name = 'UserOperationReceiptNotFoundError';
+      mockGetUserOperationReceipt.mockRejectedValueOnce(notFoundError);
+
+      const stopPolling = vi.fn();
+      const onSuccess = vi.fn();
+      const onFailure = vi.fn();
+      const onIntervalTick = vi.fn();
+
+      await erc4337Fetcher({
+        tx: mockTx,
+        stopPolling,
+        onSuccess,
+        onFailure,
+        onIntervalTick,
+      });
+
+      expect(onIntervalTick).toHaveBeenCalledWith({
+        receipt: null,
+        status: 'pending',
+      });
+      expect(stopPolling).not.toHaveBeenCalled();
+      expect(onSuccess).not.toHaveBeenCalled();
+      expect(onFailure).not.toHaveBeenCalled();
+    });
+
     test('should trigger onSuccess and stopPolling when UserOperation succeeded', async () => {
       const mockReceipt = {
         success: true,

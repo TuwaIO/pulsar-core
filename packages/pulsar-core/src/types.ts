@@ -197,19 +197,22 @@ export type Transaction = EvmTransaction | SolanaTransaction | StarknetTransacti
 export type InitialTransactionParams = Pick<
   BaseTransaction,
   'description' | 'title' | 'type' | 'requiredConfirmations' | 'rpcUrl' | 'payload'
-> & {
-  /** The specific blockchain adapter for this transaction. */
-  adapter: OrbitAdapter;
-  /** The function that executes the on-chain action (e.g., sending a transaction) and returns a preliminary identifier like a hash. */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  actionFunction: (...args: any[]) => Promise<ActionTxKey | undefined>;
-  /** The target chain ID for the transaction. */
-  desiredChainID: number | string;
-  /** If true, the detailed tracking modal will open automatically upon initiation. */
-  withTrackedModal?: boolean;
-  /** The specific tracker responsible for monitoring this transaction's status. Required for Gelato tracker. */
-  tracker?: TransactionTracker;
-};
+> &
+  Pick<EvmTransaction, 'bundlerUrl' | 'pimlicoApiKey'> & {
+    /** The specific blockchain adapter for this transaction. */
+    adapter: OrbitAdapter;
+    /** The function that executes the on-chain action (e.g., sending a transaction) and returns a preliminary identifier like a hash. */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    actionFunction: (...args: any[]) => Promise<ActionTxKey | undefined>;
+    /** The target chain ID for the transaction. */
+    desiredChainID: number | string;
+    /** If true, the detailed tracking modal will open automatically upon initiation. */
+    withTrackedModal?: boolean;
+    /** The specific tracker responsible for monitoring this transaction's status. Required for Gelato / ERC-4337 tracker. */
+    tracker?: TransactionTracker;
+    /** @deprecated Gelato relay is deprecated. */
+    gelatoApiKey?: string;
+  };
 
 /**
  * Represents a transaction in its temporary, pre-submission state.

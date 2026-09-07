@@ -56,8 +56,8 @@
   },
   "devDependencies": {
     "@tuwaio/pulsar-core": "workspace:^",
-    "@tuwaio/orbit-core": "1.0.0-feat-update-alpha.3.d6b82d7",
-    "@tuwaio/orbit-evm": "1.0.0-feat-update-alpha.3.d6b82d7",
+    "@tuwaio/orbit-core": "1.0.0-feat-update-alpha.4.d411095",
+    "@tuwaio/orbit-evm": "1.0.0-feat-update-alpha.4.d411095",
     "@wagmi/core": "^3.6.5",
     "dayjs": "^1.11.23",
     "immer": "^11.1.18",

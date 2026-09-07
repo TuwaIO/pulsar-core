@@ -6,7 +6,7 @@
 
 > **checkTransactionsTracker**(`actionTxKey`): `object`
 
-Defined in: [packages/pulsar-evm/src/utils/checkTransactionsTracker.ts:27](https://github.com/TuwaIO/pulsar-core/blob/ea1149b0cc6a30a2063b7734187b89d4981eb82e/packages/pulsar-evm/src/utils/checkTransactionsTracker.ts#L27)
+Defined in: [packages/pulsar-evm/src/utils/checkTransactionsTracker.ts:27](https://github.com/TuwaIO/pulsar-core/blob/e0149314d187da7baa08d06ba8554c6c4a303013/packages/pulsar-evm/src/utils/checkTransactionsTracker.ts#L27)
 
 Determines which transaction tracker to use based on the format of the transaction key and the connector type.
 

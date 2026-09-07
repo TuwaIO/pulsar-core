@@ -52,7 +52,18 @@ export async function erc4337Fetcher<T extends Transaction>({
   onIntervalTick,
 }: Erc4337FetcherParams<T>): Promise<void> {
   const evmTx = tx as unknown as EvmTransaction;
-  const chainId = typeof evmTx.chainId === 'number' ? evmTx.chainId : parseInt(String(evmTx.chainId), 10);
+  const rawChainId = evmTx.chainId;
+  const chainId = typeof rawChainId === 'number' ? rawChainId : parseInt(String(rawChainId), 10);
+
+  if (!chainId || Number.isNaN(chainId)) {
+    stopPolling();
+    onFailure({
+      receipt: null,
+      status: 'failed',
+      reason: `Invalid chainId: ${String(rawChainId)}`,
+    });
+    return;
+  }
 
   const client = createBundlerRpcClient({
     chainId,
@@ -60,9 +71,33 @@ export async function erc4337Fetcher<T extends Transaction>({
     bundlerUrl: evmTx.bundlerUrl,
   });
 
-  const receipt = await client.getUserOperationReceipt({
-    hash: evmTx.txKey as Hex,
-  });
+  let receipt: Erc4337UserOpReceipt | null;
+
+  try {
+    receipt = await client.getUserOperationReceipt({
+      hash: evmTx.txKey as Hex,
+    });
+  } catch (err: unknown) {
+    const error = err as { name?: string; message?: string; shortMessage?: string; details?: string };
+    const isReceiptNotFound =
+      error?.name === 'UserOperationReceiptNotFoundError' ||
+      error?.message?.includes('could not be found') ||
+      error?.shortMessage?.includes('could not be found') ||
+      error?.details?.includes('could not be found') ||
+      error?.message?.includes('not been processed yet') ||
+      error?.shortMessage?.includes('not been processed yet');
+
+    if (isReceiptNotFound) {
+      onIntervalTick?.({
+        receipt: null,
+        status: 'pending',
+      });
+      return;
+    }
+
+    // Re-throw transient network/RPC errors to allow polling tracker to retry
+    throw err;
+  }
 
   if (!receipt) {
     onIntervalTick?.({
@@ -73,7 +108,7 @@ export async function erc4337Fetcher<T extends Transaction>({
   }
 
   const txHash = (receipt.receipt?.transactionHash ??
-    (receipt as unknown as { transactionHash?: Hex }).transactionHash) as Hex;
+    (receipt as unknown as { transactionHash?: Hex }).transactionHash) as Hex | undefined;
 
   if (receipt.success) {
     stopPolling();
@@ -116,6 +151,7 @@ export function erc4337Tracker<T extends Transaction>(config: Erc4337TrackerConf
     ...config,
     fetcher: erc4337Fetcher,
     pollingInterval: config.pollingInterval ?? 2000,
+    maxRetries: config.maxRetries ?? 60,
   });
 }
 
@@ -139,6 +175,7 @@ export function erc4337TrackerForStore<T extends Transaction>({
     fetcher: erc4337Fetcher,
     removeTxFromPool,
     pollingInterval: 2000,
+    maxRetries: 60,
     onSuccess: (response) => {
       const hash = response.hash;
 

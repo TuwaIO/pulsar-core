@@ -4,7 +4,7 @@
 
 # TransactionTracker
 
-Defined in: [packages/pulsar-core/src/types.ts:18](https://github.com/TuwaIO/pulsar-core/blob/ea1149b0cc6a30a2063b7734187b89d4981eb82e/packages/pulsar-core/src/types.ts#L18)
+Defined in: [packages/pulsar-core/src/types.ts:18](https://github.com/TuwaIO/pulsar-core/blob/e0149314d187da7baa08d06ba8554c6c4a303013/packages/pulsar-core/src/types.ts#L18)
 
 Enum representing the different tracking strategies available for transactions.
 Each tracker corresponds to a specific method of monitoring a transaction's lifecycle.
@@ -15,7 +15,7 @@ Each tracker corresponds to a specific method of monitoring a transaction's life
 
 > **ERC4337**: `"erc4337"`
 
-Defined in: [packages/pulsar-core/src/types.ts:31](https://github.com/TuwaIO/pulsar-core/blob/ea1149b0cc6a30a2063b7734187b89d4981eb82e/packages/pulsar-core/src/types.ts#L31)
+Defined in: [packages/pulsar-core/src/types.ts:31](https://github.com/TuwaIO/pulsar-core/blob/e0149314d187da7baa08d06ba8554c6c4a303013/packages/pulsar-core/src/types.ts#L31)
 
 For native ERC-4337 UserOperation transactions tracked via bundler RPC.
 
@@ -25,7 +25,7 @@ For native ERC-4337 UserOperation transactions tracked via bundler RPC.
 
 > **Ethereum**: `"ethereum"`
 
-Defined in: [packages/pulsar-core/src/types.ts:20](https://github.com/TuwaIO/pulsar-core/blob/ea1149b0cc6a30a2063b7734187b89d4981eb82e/packages/pulsar-core/src/types.ts#L20)
+Defined in: [packages/pulsar-core/src/types.ts:20](https://github.com/TuwaIO/pulsar-core/blob/e0149314d187da7baa08d06ba8554c6c4a303013/packages/pulsar-core/src/types.ts#L20)
 
 For standard on-chain EVM transactions tracked by their hash.
 
@@ -35,7 +35,7 @@ For standard on-chain EVM transactions tracked by their hash.
 
 > **Gelato**: `"gelato"`
 
-Defined in: [packages/pulsar-core/src/types.ts:27](https://github.com/TuwaIO/pulsar-core/blob/ea1149b0cc6a30a2063b7734187b89d4981eb82e/packages/pulsar-core/src/types.ts#L27)
+Defined in: [packages/pulsar-core/src/types.ts:27](https://github.com/TuwaIO/pulsar-core/blob/e0149314d187da7baa08d06ba8554c6c4a303013/packages/pulsar-core/src/types.ts#L27)
 
 For meta-transactions relayed and executed by the Gelato Network.
 
@@ -49,7 +49,7 @@ Gelato gasless relay is deprecated. Use TransactionTracker.ERC4337 instead.
 
 > **Safe**: `"safe"`
 
-Defined in: [packages/pulsar-core/src/types.ts:22](https://github.com/TuwaIO/pulsar-core/blob/ea1149b0cc6a30a2063b7734187b89d4981eb82e/packages/pulsar-core/src/types.ts#L22)
+Defined in: [packages/pulsar-core/src/types.ts:22](https://github.com/TuwaIO/pulsar-core/blob/e0149314d187da7baa08d06ba8554c6c4a303013/packages/pulsar-core/src/types.ts#L22)
 
 For multi-signature transactions managed and executed via a Safe contract.
 
@@ -59,6 +59,6 @@ For multi-signature transactions managed and executed via a Safe contract.
 
 > **Solana**: `"solana"`
 
-Defined in: [packages/pulsar-core/src/types.ts:29](https://github.com/TuwaIO/pulsar-core/blob/ea1149b0cc6a30a2063b7734187b89d4981eb82e/packages/pulsar-core/src/types.ts#L29)
+Defined in: [packages/pulsar-core/src/types.ts:29](https://github.com/TuwaIO/pulsar-core/blob/e0149314d187da7baa08d06ba8554c6c4a303013/packages/pulsar-core/src/types.ts#L29)
 
 The tracker for monitoring standard Solana transaction signatures.

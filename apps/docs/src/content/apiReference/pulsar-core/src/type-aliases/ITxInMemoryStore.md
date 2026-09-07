@@ -6,7 +6,7 @@
 
 > **ITxInMemoryStore**\<`T`\> = `object` & [`TxInMemoryPagination`](TxInMemoryPagination.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:523](https://github.com/TuwaIO/pulsar-core/blob/ea1149b0cc6a30a2063b7734187b89d4981eb82e/packages/pulsar-core/src/types.ts#L523)
+Defined in: [packages/pulsar-core/src/types.ts:526](https://github.com/TuwaIO/pulsar-core/blob/e0149314d187da7baa08d06ba8554c6c4a303013/packages/pulsar-core/src/types.ts#L526)
 
 The complete interface for the Pulsar transaction in-memory store.
 It keeps a paginated remote history in sync with a local transaction pool.
