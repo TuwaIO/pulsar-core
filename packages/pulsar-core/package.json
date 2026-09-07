@@ -52,12 +52,12 @@
     "zustand": "5.x.x"
   },
   "devDependencies": {
-    "@tuwaio/orbit-core": "1.0.0-feat-update-alpha.2.addd21d",
+    "@tuwaio/orbit-core": "1.0.0-feat-update-alpha.3.d6b82d7",
     "dayjs": "^1.11.23",
     "immer": "^11.1.18",
     "tsup": "^8.5.1",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.11",
+    "typescript": "6.0.3",
+    "vitest": "^5.0.0",
     "zustand": "^5.0.15"
   }
 }

@@ -57,8 +57,8 @@
   },
   "devDependencies": {
     "@tuwaio/pulsar-core": "workspace:^",
-    "@tuwaio/orbit-core": "1.0.0-feat-update-alpha.2.addd21d",
-    "@tuwaio/orbit-solana": "1.0.0-feat-update-alpha.2.addd21d",
+    "@tuwaio/orbit-core": "1.0.0-feat-update-alpha.3.d6b82d7",
+    "@tuwaio/orbit-solana": "1.0.0-feat-update-alpha.3.d6b82d7",
     "@wallet-standard/app": "^1.1.1",
     "@wallet-standard/ui-core": "^1.0.1",
     "@wallet-standard/ui-registry": "^1.1.1",
@@ -67,8 +67,8 @@
     "immer": "^11.1.18",
     "jsdom": "^30.0.1",
     "tsup": "^8.5.1",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.11",
+    "typescript": "6.0.3",
+    "vitest": "^5.0.0",
     "zustand": "^5.0.15"
   }
 }

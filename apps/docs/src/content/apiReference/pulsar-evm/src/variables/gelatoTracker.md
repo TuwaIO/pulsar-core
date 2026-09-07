@@ -6,7 +6,7 @@
 
 > `const` **gelatoTracker**: \<`T`\>(`__namedParameters`) => `void` = `gelatoTrackerForStore`
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:240](https://github.com/TuwaIO/pulsar-core/blob/18e5da55b3b8542aa1cb462dd015c6097e4ec4f0/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L240)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:240](https://github.com/TuwaIO/pulsar-core/blob/ea1149b0cc6a30a2063b7734187b89d4981eb82e/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L240)
 
 ## Type Parameters
 
