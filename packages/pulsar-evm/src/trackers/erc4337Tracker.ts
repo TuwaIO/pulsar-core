@@ -15,9 +15,13 @@ import {
   Transaction,
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
+import { Config } from '@wagmi/core';
 import dayjs from 'dayjs';
 import { Hex } from 'viem';
 import type { GetUserOperationReceiptReturnType } from 'viem/account-abstraction';
+import { getBlock } from 'viem/actions';
+
+import { evmTracker } from './evmTracker';
 
 /**
  * The receipt returned by `getUserOperationReceipt`.
@@ -56,7 +60,7 @@ export async function erc4337Fetcher<T extends Transaction>({
   const chainId = typeof rawChainId === 'number' ? rawChainId : parseInt(String(rawChainId), 10);
 
   if (!chainId || Number.isNaN(chainId)) {
-    stopPolling();
+    stopPolling({ withoutRemoving: true });
     onFailure({
       receipt: null,
       status: 'failed',
@@ -111,14 +115,14 @@ export async function erc4337Fetcher<T extends Transaction>({
     (receipt as unknown as { transactionHash?: Hex }).transactionHash) as Hex | undefined;
 
   if (receipt.success) {
-    stopPolling();
+    stopPolling({ withoutRemoving: true });
     onSuccess({
       receipt,
       status: 'success',
       hash: txHash,
     });
   } else {
-    stopPolling();
+    stopPolling({ withoutRemoving: true });
     onFailure({
       receipt,
       status: 'failed',
@@ -156,41 +160,165 @@ export function erc4337Tracker<T extends Transaction>(config: Erc4337TrackerConf
 }
 
 /**
- * High-level tracker that connects ERC-4337 UserOperation polling to the Zustand store.
- *
- * @param params - The store actions and transaction object to track.
+ * Parameters for the store-connected ERC-4337 tracker.
  */
-export function erc4337TrackerForStore<T extends Transaction>({
+export type Erc4337TrackerForStoreParams<T extends Transaction> = Pick<
+  ITxTrackingStore<T>,
+  'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
+> & {
+  tx: T;
+  config?: Config;
+} & TrackerCallbacks<T>;
+
+/**
+ * High-level two-stage tracker for ERC-4337 UserOperations integrated with the Pulsar store.
+ *
+ * - Stage 1 (Bundler Mempool): Polls `eth_getUserOperationReceipt` against the Bundler RPC.
+ *   As soon as the UserOp is bundled on-chain, writes `tx.hash` to the store and stops Bundler polling
+ *   without evicting the transaction from the pool.
+ * - Stage 2 (EVM On-Chain Finality): Hands off tracking to `evmTracker` for on-chain block confirmations,
+ *   block timestamp resolution, and final terminal status update.
+ *
+ * Supports seamless session restoration across page reloads: if `tx.hash` is already populated,
+ * Stage 1 is bypassed and tracking resumes directly at Stage 2.
+ *
+ * @param params - The store actions, Wagmi config, and transaction object to track.
+ */
+export async function erc4337TrackerForStore<T extends Transaction>({
   tx,
+  config,
   updateTxParams,
-  removeTxFromPool,
   transactionsPool,
   onSuccess,
   onError,
-}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> & {
-  tx: T;
-} & TrackerCallbacks<T>) {
-  return initializePollingTracker<Erc4337FetchResult, T>({
+  onReplaced,
+}: Erc4337TrackerForStoreParams<T>): Promise<void> {
+  // Helper to execute Stage 2 EVM on-chain tracking once the on-chain hash is known
+  const runOnChainStage = async (txHash: Hex): Promise<void> => {
+    if (config) {
+      return evmTracker({
+        tx: {
+          chainId: tx.chainId,
+          txKey: txHash,
+          requiredConfirmations: tx.requiredConfirmations,
+        },
+        config,
+        onTxDetailsFetched: (txDetails) => {
+          updateTxParams(tx.txKey, {
+            to: txDetails.to ?? undefined,
+            input: txDetails.input,
+            value: txDetails.value?.toString(),
+            nonce: txDetails.nonce,
+            maxFeePerGas: txDetails.maxFeePerGas?.toString(),
+            maxPriorityFeePerGas: txDetails.maxPriorityFeePerGas?.toString(),
+          });
+        },
+        onConfirmationsUpdate: (confirmations) => {
+          updateTxParams(tx.txKey, { confirmations });
+        },
+        onSuccess: async (_txDetails, receipt, client) => {
+          const block = await getBlock(client, { blockNumber: receipt.blockNumber });
+          const timestamp = Number(block.timestamp);
+          const isSuccess = receipt.status === 'success';
+
+          updateTxParams(tx.txKey, {
+            status: isSuccess ? TransactionStatus.Success : TransactionStatus.Failed,
+            isError: !isSuccess,
+            pending: false,
+            hash: txHash,
+            finishedTimestamp: timestamp,
+          });
+
+          const updatedTx = transactionsPool[tx.txKey];
+          if (isSuccess && onSuccess && updatedTx) {
+            onSuccess(updatedTx);
+          }
+          if (!isSuccess && onError && updatedTx) {
+            onError(new Error('Transaction reverted on-chain.'), updatedTx);
+          }
+        },
+        onFailure: (error) => {
+          updateTxParams(tx.txKey, {
+            status: TransactionStatus.Failed,
+            pending: false,
+            isError: true,
+            hash: txHash,
+            error: normalizeError(error),
+            finishedTimestamp: dayjs().unix(),
+          });
+
+          const updatedTx = transactionsPool[tx.txKey];
+          if (onError && updatedTx) {
+            onError(error, updatedTx);
+          }
+        },
+        onReplaced: (replacement) => {
+          updateTxParams(tx.txKey, {
+            status: TransactionStatus.Replaced,
+            replacedTxHash: replacement.transaction.hash,
+            pending: false,
+          });
+
+          const updatedTx = transactionsPool[tx.txKey];
+          if (onReplaced && updatedTx) {
+            onReplaced(updatedTx, tx);
+          }
+        },
+      });
+    }
+
+    // Fallback if no Wagmi config is provided (standalone mode)
+    updateTxParams(tx.txKey, {
+      status: TransactionStatus.Success,
+      pending: false,
+      isError: false,
+      hash: txHash,
+      finishedTimestamp: dayjs().unix(),
+    });
+
+    const updatedTx = transactionsPool[tx.txKey];
+    if (onSuccess && updatedTx) {
+      onSuccess(updatedTx);
+    }
+  };
+
+  const evmTx = tx as unknown as EvmTransaction;
+
+  // Session restoration: if tx already has an on-chain hash, skip Stage 1 and resume Stage 2
+  if (evmTx.hash) {
+    return runOnChainStage(evmTx.hash);
+  }
+
+  // Stage 1: Bundler Mempool Polling
+  initializePollingTracker<Erc4337FetchResult, T>({
     tx,
     fetcher: erc4337Fetcher,
-    removeTxFromPool,
+    // CRITICAL: Do NOT pass removeTxFromPool to prevent premature eviction from the store
     pollingInterval: 2000,
     maxRetries: 60,
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       const hash = response.hash;
 
-      updateTxParams(tx.txKey, {
-        status: TransactionStatus.Success,
-        pending: false,
-        isError: false,
-        hash,
-        finishedTimestamp: dayjs().unix(),
-      });
+      if (!hash) {
+        updateTxParams(tx.txKey, {
+          status: TransactionStatus.Success,
+          pending: false,
+          isError: false,
+          finishedTimestamp: dayjs().unix(),
+        });
 
-      const updatedTx = transactionsPool[tx.txKey];
-      if (onSuccess && updatedTx) {
-        onSuccess(updatedTx);
+        const updatedTx = transactionsPool[tx.txKey];
+        if (onSuccess && updatedTx) {
+          onSuccess(updatedTx);
+        }
+        return;
       }
+
+      // Immediately commit the on-chain hash to the store so the UI displays it
+      updateTxParams(tx.txKey, { hash });
+
+      // Hand off to Stage 2 (EVM On-Chain Confirmation & Finality)
+      await runOnChainStage(hash);
     },
     onIntervalTick: (response) => {
       if (response.hash) {

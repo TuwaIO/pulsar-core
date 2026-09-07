@@ -12,6 +12,7 @@
 
 - [Erc4337FetchResult](type-aliases/Erc4337FetchResult.md)
 - [Erc4337TrackerConfig](type-aliases/Erc4337TrackerConfig.md)
+- [Erc4337TrackerForStoreParams](type-aliases/Erc4337TrackerForStoreParams.md)
 - [Erc4337UserOpReceipt](type-aliases/Erc4337UserOpReceipt.md)
 - [EVMTrackerParams](type-aliases/EVMTrackerParams.md)
 - [GelatoCapabilities](type-aliases/GelatoCapabilities.md)

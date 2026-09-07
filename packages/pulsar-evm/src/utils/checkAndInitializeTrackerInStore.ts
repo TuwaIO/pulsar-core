@@ -50,7 +50,7 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
       return evmTrackerForStore({ tx, config, transactionsPool, onSuccess, onError, onReplaced, ...rest });
 
     case TransactionTracker.ERC4337:
-      return erc4337TrackerForStore({ tx, transactionsPool, onSuccess, onError, ...rest });
+      return erc4337TrackerForStore({ tx, config, transactionsPool, onSuccess, onError, onReplaced, ...rest });
 
     case TransactionTracker.Gelato:
       // If no Gelato API key is provided, fall back to the default EVM tracker.

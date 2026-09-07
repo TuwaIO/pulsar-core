@@ -11,9 +11,11 @@ import {
   TransactionStatus,
   TransactionTracker,
 } from '@tuwaio/pulsar-core';
+import { Config } from '@wagmi/core';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { erc4337Fetcher, Erc4337FetchResult, erc4337TrackerForStore } from './erc4337Tracker';
+import { evmTracker } from './evmTracker';
 
 // Mock the core polling utility to isolate tracker logic
 vi.mock('@tuwaio/pulsar-core', async (importActual) => {
@@ -32,6 +34,16 @@ vi.mock('@tuwaio/orbit-evm', () => ({
   })),
 }));
 
+// Mock evmTracker for Stage 2 on-chain testing
+vi.mock('./evmTracker', () => ({
+  evmTracker: vi.fn(),
+}));
+
+// Mock viem/actions getBlock
+vi.mock('viem/actions', () => ({
+  getBlock: vi.fn().mockResolvedValue({ timestamp: 1700000042n }),
+}));
+
 describe('erc4337Tracker', () => {
   let mockTx: EvmTransaction;
 
@@ -48,6 +60,7 @@ describe('erc4337Tracker', () => {
       adapter: OrbitAdapter.EVM,
       localTimestamp: 1700000000,
       pimlicoApiKey: 'test-pimlico-key',
+      requiredConfirmations: 2,
     };
   });
 
@@ -104,7 +117,7 @@ describe('erc4337Tracker', () => {
       expect(onFailure).not.toHaveBeenCalled();
     });
 
-    test('should trigger onSuccess and stopPolling when UserOperation succeeded', async () => {
+    test('should trigger onSuccess and stopPolling WITH withoutRemoving: true when UserOperation succeeded', async () => {
       const mockReceipt = {
         success: true,
         userOpHash: mockTx.txKey,
@@ -126,7 +139,7 @@ describe('erc4337Tracker', () => {
         onFailure,
       });
 
-      expect(stopPolling).toHaveBeenCalled();
+      expect(stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
       expect(onSuccess).toHaveBeenCalledWith({
         receipt: mockReceipt,
         status: 'success',
@@ -135,7 +148,7 @@ describe('erc4337Tracker', () => {
       expect(onFailure).not.toHaveBeenCalled();
     });
 
-    test('should trigger onFailure and stopPolling when UserOperation reverted', async () => {
+    test('should trigger onFailure and stopPolling WITH withoutRemoving: true when UserOperation reverted', async () => {
       const mockReceipt = {
         success: false,
         userOpHash: mockTx.txKey,
@@ -157,7 +170,7 @@ describe('erc4337Tracker', () => {
         onFailure,
       });
 
-      expect(stopPolling).toHaveBeenCalled();
+      expect(stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
       expect(onFailure).toHaveBeenCalledWith({
         receipt: mockReceipt,
         status: 'failed',
@@ -173,49 +186,140 @@ describe('erc4337Tracker', () => {
       ITxTrackingStore<EvmTransaction>,
       'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
     > &
-      TrackerCallbacks<EvmTransaction> & { tx: EvmTransaction };
+      TrackerCallbacks<EvmTransaction> & { tx: EvmTransaction; config?: Config };
 
     let mockParams: MockStoreParams;
+    const mockConfig = {} as Config;
 
     beforeEach(() => {
       mockParams = {
         tx: mockTx,
+        config: mockConfig,
         transactionsPool: { [mockTx.txKey]: mockTx },
         updateTxParams: vi.fn(),
         onSuccess: vi.fn(),
         onError: vi.fn(),
+        onReplaced: vi.fn(),
         removeTxFromPool: vi.fn(),
       };
-
-      erc4337TrackerForStore(mockParams);
     });
 
-    test('should update store on success and invoke onSuccess callback', () => {
-      const config = vi.mocked(initializePollingTracker).mock.calls[0][0] as {
-        onSuccess: (res: Erc4337FetchResult) => void;
+    test('should initialize polling without passing removeTxFromPool to prevent pool eviction', async () => {
+      await erc4337TrackerForStore(mockParams);
+
+      const callArg = vi.mocked(initializePollingTracker).mock.calls[0][0];
+      expect(callArg.removeTxFromPool).toBeUndefined();
+    });
+
+    test('should execute Two-Stage tracking: update hash and delegate to evmTracker for Stage 2', async () => {
+      await erc4337TrackerForStore(mockParams);
+
+      const pollingConfig = vi.mocked(initializePollingTracker).mock.calls[0][0] as unknown as {
+        onSuccess: (res: Erc4337FetchResult) => Promise<void>;
       };
 
-      const txHash = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-      config.onSuccess({
+      const onChainTxHash = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
+      // Simulate Stage 1 success: Bundler returns on-chain hash
+      await pollingConfig.onSuccess({
         receipt: null,
         status: 'success',
-        hash: txHash,
+        hash: onChainTxHash,
       });
 
-      expect(mockParams.updateTxParams).toHaveBeenCalledWith(
-        mockTx.txKey,
+      // 1. Must immediately commit on-chain hash
+      expect(mockParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
+        hash: onChainTxHash,
+      });
+
+      // 2. Must delegate to evmTracker with txKey = onChainTxHash
+      expect(evmTracker).toHaveBeenCalledWith(
         expect.objectContaining({
-          status: TransactionStatus.Success,
-          pending: false,
-          isError: false,
-          hash: txHash,
+          tx: {
+            chainId: mockTx.chainId,
+            txKey: onChainTxHash,
+            requiredConfirmations: mockTx.requiredConfirmations,
+          },
+          config: mockConfig,
         }),
       );
+
+      // Simulate Stage 2 callbacks from evmTracker
+      const evmParams = vi.mocked(evmTracker).mock.calls[0][0];
+
+      // On tx details fetched
+      evmParams.onTxDetailsFetched({
+        to: '0x1234567890123456789012345678901234567890',
+        input: '0xabcdef',
+        nonce: 5,
+        maxFeePerGas: 2000000000n,
+        maxPriorityFeePerGas: 1000000000n,
+      } as unknown as Parameters<typeof evmParams.onTxDetailsFetched>[0]);
+
+      expect(mockParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
+        to: '0x1234567890123456789012345678901234567890',
+        input: '0xabcdef',
+        value: undefined,
+        nonce: 5,
+        maxFeePerGas: '2000000000',
+        maxPriorityFeePerGas: '1000000000',
+      });
+
+      // On confirmations update
+      evmParams.onConfirmationsUpdate?.(2);
+      expect(mockParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
+        confirmations: 2,
+      });
+
+      // On Stage 2 success
+      await evmParams.onSuccess(
+        {} as unknown as Parameters<typeof evmParams.onSuccess>[0],
+        { status: 'success', blockNumber: 123456n } as unknown as Parameters<typeof evmParams.onSuccess>[1],
+        {} as unknown as Parameters<typeof evmParams.onSuccess>[2],
+      );
+
+      expect(mockParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
+        status: TransactionStatus.Success,
+        pending: false,
+        isError: false,
+        hash: onChainTxHash,
+        finishedTimestamp: 1700000042,
+      });
+
       expect(mockParams.onSuccess).toHaveBeenCalledWith(mockParams.transactionsPool[mockTx.txKey]);
     });
 
-    test('should update hash on onIntervalTick when hash is present', () => {
-      const config = vi.mocked(initializePollingTracker).mock.calls[0][0] as {
+    test('should resume directly at Stage 2 if tx.hash is already populated (session restoration)', async () => {
+      const restoredTx: EvmTransaction = {
+        ...mockTx,
+        hash: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      };
+
+      await erc4337TrackerForStore({
+        ...mockParams,
+        tx: restoredTx,
+      });
+
+      // Stage 1 (Bundler polling) must NOT be started
+      expect(initializePollingTracker).not.toHaveBeenCalled();
+
+      // Stage 2 (EVM tracking) must be invoked immediately
+      expect(evmTracker).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tx: {
+            chainId: restoredTx.chainId,
+            txKey: restoredTx.hash,
+            requiredConfirmations: restoredTx.requiredConfirmations,
+          },
+          config: mockConfig,
+        }),
+      );
+    });
+
+    test('should update hash on onIntervalTick when hash is present', async () => {
+      await erc4337TrackerForStore(mockParams);
+
+      const config = vi.mocked(initializePollingTracker).mock.calls[0][0] as unknown as {
         onIntervalTick: (res: Erc4337FetchResult) => void;
       };
 
@@ -231,8 +335,10 @@ describe('erc4337Tracker', () => {
       });
     });
 
-    test('should update store on failure and invoke onError callback', () => {
-      const config = vi.mocked(initializePollingTracker).mock.calls[0][0] as {
+    test('should update store on failure and invoke onError callback', async () => {
+      await erc4337TrackerForStore(mockParams);
+
+      const config = vi.mocked(initializePollingTracker).mock.calls[0][0] as unknown as {
         onFailure: (res?: Erc4337FetchResult) => void;
       };
 

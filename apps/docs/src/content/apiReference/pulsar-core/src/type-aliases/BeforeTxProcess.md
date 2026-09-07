@@ -6,7 +6,7 @@
 
 > **BeforeTxProcess** = () => `Promise`\<`void`\> \| `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:264](https://github.com/TuwaIO/pulsar-core/blob/e0149314d187da7baa08d06ba8554c6c4a303013/packages/pulsar-core/src/types.ts#L264)
+Defined in: [packages/pulsar-core/src/types.ts:264](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-core/src/types.ts#L264)
 
 Callback executed before Pulsar initializes or submits a transaction.
 
