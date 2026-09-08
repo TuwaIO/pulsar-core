@@ -4,13 +4,13 @@
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-solana.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-Layer 4 (L4) of the TUWA Ecosystem. Low-level Solana block state monitors and RPC cluster lifecycle indexers powered strictly by gill.
+Layer 4 (L4) of the TUWA Ecosystem. Low-level Solana block state monitors and RPC cluster lifecycle indexers powered strictly by @solana/kit and @tuwaio/orbit-solana.
 
 ---
 
 ## 🏛️ What is `@tuwaio/pulsar-solana`?
 
-This package is the low-level Solana block state monitor and RPC cluster lifecycle indexing adapter for `@tuwaio/pulsar-core`. It leverages **Wallet Standard** for deep integration with modern Solana wallet environments, performing fast-block signature status tracking, signature swap detection, and cluster manager alignment using `gill` primitives.
+This package is the low-level Solana block state monitor and RPC cluster lifecycle indexing adapter for `@tuwaio/pulsar-core`. It leverages **Wallet Standard** for deep integration with modern Solana wallet environments, performing fast-block signature status tracking, signature swap detection, and cluster manager alignment using `@solana/kit` and `@tuwaio/orbit-solana` primitives.
 
 The architecture is designed for multi-chain robustness. You can provide RPC endpoints for different Solana clusters (e.g., Mainnet Beta, Devnet), and the adapter will automatically use the correct one based on the user's connected wallet state.
 
@@ -30,7 +30,7 @@ The architecture is designed for multi-chain robustness. You can provide RPC end
 
 ```bash
 # Using pnpm (recommended), but you can use npm, yarn or bun as well
-pnpm add @tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry @wallet-standard/ui-core
+pnpm add @tuwaio/pulsar-solana @tuwaio/pulsar-core @solana/kit @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry @wallet-standard/ui-core
 ```
 
 ---
@@ -101,7 +101,8 @@ import { TransactionAdapter } from '@tuwaio/pulsar-core';
 import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 // The action function receives the wallet and client from the adapter.
 import { signAndSendSolanaTx } from '@tuwaio/pulsar-solana';
-import { Address, SolanaClient, TransactionSendingSigner } from 'gill';
+import type { Address, TransactionSendingSigner } from '@solana/kit';
+import type { SolanaClient } from '@tuwaio/orbit-solana';
 import { useWalletAccountTransactionSendingSigner } from '@solana/react';
 import { Wallet } from '@tuwaio/nova-connect/satellite';
 import { OrbitAdapter } from '@tuwaio/orbit-core';

@@ -10,9 +10,9 @@ import {
   getConnectedSolanaConnector,
   getRpcUrlForCluster,
   getSolanaExplorerLink,
+  type SolanaClusterMoniker,
 } from '@tuwaio/orbit-solana';
 import { Transaction, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
-import { SolanaClusterMoniker } from 'gill';
 
 import { SolanaChainMismatchError } from '../errors';
 import { SolanaAdapterConfig } from '../types';

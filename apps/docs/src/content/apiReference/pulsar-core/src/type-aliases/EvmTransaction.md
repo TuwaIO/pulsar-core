@@ -6,7 +6,7 @@
 
 > **EvmTransaction** = [`BaseTransaction`](BaseTransaction.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:129](https://github.com/TuwaIO/pulsar-core/blob/04262b00f797406a8a57df5eb1e0a1258d30caf9/packages/pulsar-core/src/types.ts#L129)
+Defined in: [packages/pulsar-core/src/types.ts:134](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-core/src/types.ts#L134)
 
 Represents an EVM-specific transaction, extending the base properties with EVM fields.
 
@@ -17,6 +17,12 @@ Represents an EVM-specific transaction, extending the base properties with EVM f
 > **adapter**: `OrbitAdapter.EVM`
 
 The adapter type for EVM transactions.
+
+### bundlerUrl?
+
+> `optional` **bundlerUrl?**: `string`
+
+Optional custom bundler RPC URL for ERC-4337 UserOperation tracking.
 
 ### hash?
 
@@ -47,6 +53,12 @@ The maximum priority fee per gas for an EIP-1559 transaction (in wei).
 > `optional` **nonce?**: `number`
 
 The transaction nonce, a sequential number for the sender's account.
+
+### pimlicoApiKey?
+
+> `optional` **pimlicoApiKey?**: `string`
+
+Optional Pimlico API key for ERC-4337 UserOperation tracking.
 
 ### replacedTxHash?
 

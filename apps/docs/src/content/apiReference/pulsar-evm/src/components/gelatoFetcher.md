@@ -2,11 +2,11 @@
 
 ***
 
-# gelatoFetcher()
+# ~~gelatoFetcher()~~
 
 > **gelatoFetcher**(`client`): (`params`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:110](https://github.com/TuwaIO/pulsar-core/blob/04262b00f797406a8a57df5eb1e0a1258d30caf9/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L110)
+Defined in: [packages/pulsar-evm/src/trackers/gelatoTracker.ts:111](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L111)
 
 Creates a reusable fetcher function for `initializePollingTracker` that queries the
 Gelato RPC endpoint (`relayer_getStatus`) for a task's status using an authenticated client.
@@ -39,3 +39,7 @@ A viem transport client configured for the Gelato API.
 The fetcher function.
 
 (`params`) => `Promise`\<`void`\>
+
+## Deprecated
+
+Gelato relay is deprecated. Use TransactionTracker.ERC4337 and erc4337Fetcher instead.

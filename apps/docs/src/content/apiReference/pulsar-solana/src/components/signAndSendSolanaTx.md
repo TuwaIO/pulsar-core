@@ -6,13 +6,13 @@
 
 > **signAndSendSolanaTx**(`params`): `Promise`\<`string`\>
 
-Defined in: [packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts:34](https://github.com/TuwaIO/pulsar-core/blob/04262b00f797406a8a57df5eb1e0a1258d30caf9/packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts#L34)
+Defined in: [packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts:43](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts#L43)
 
 Creates, signs, and sends a Solana transaction with one or more instructions.
 
 This async function orchestrates the common flow for broadcasting a transaction:
 1. Fetches the latest blockhash from the RPC.
-2. Creates a versioned transaction (`v0`).
+2. Creates a versioned transaction message (`v0`).
 3. Signs the transaction with the provided signer.
 4. Sends the transaction to the network.
 5. Decodes and returns the resulting transaction signature.
@@ -55,9 +55,9 @@ Will throw an error if any of the async operations (fetching blockhash, signing,
 
 ```ts
 const signature = await signAndSendSolanaTx({
-client: mySolanaClient,
-signer: wallet,
-instruction: myTransferInstruction,
+  client: mySolanaClient,
+  signer: wallet,
+  instruction: myTransferInstruction,
 });
 console.log('Transaction sent with signature:', signature);
 ```

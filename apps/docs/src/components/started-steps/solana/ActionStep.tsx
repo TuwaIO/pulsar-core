@@ -3,11 +3,12 @@ import { CodeBlock, CodeHighlighter } from '@tuwaio/docs-ui';
 import { useTheme } from 'next-themes';
 
 const codeBlock = `import { signAndSendSolanaTx } from '@tuwaio/pulsar-solana';
-import { Address, SolanaClient, TransactionSendingSigner } from 'gill';
+import type { Address, TransactionSendingSigner } from '@solana/kit';
+import type { SolanaClient } from '@tuwaio/orbit-solana';
 
 import { getIncrementInstruction } from '@/programs';
 
-export function increment({ client, signer, solanatest }: {
+export function increment({ client, signer, incrementContractAddress }: {
   client: SolanaClient;
   signer: TransactionSendingSigner;
   incrementContractAddress: Address;

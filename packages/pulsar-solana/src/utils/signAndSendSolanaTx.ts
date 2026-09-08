@@ -3,15 +3,24 @@
  * It simplifies the process of creating, signing, and broadcasting a transaction to the network.
  */
 
-import type { Instruction, SolanaClient, TransactionSendingSigner } from 'gill';
-import { createTransaction, getBase58Decoder, signAndSendTransactionMessageWithSigners } from 'gill';
+import type { Instruction, TransactionSendingSigner } from '@solana/kit';
+import {
+  appendTransactionMessageInstructions,
+  createTransactionMessage,
+  getBase58Decoder,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+  signAndSendTransactionMessageWithSigners,
+} from '@solana/kit';
+import type { SolanaClient } from '@tuwaio/orbit-solana';
 
 /**
  * Creates, signs, and sends a Solana transaction with one or more instructions.
  *
  * This async function orchestrates the common flow for broadcasting a transaction:
  * 1. Fetches the latest blockhash from the RPC.
- * 2. Creates a versioned transaction (`v0`).
+ * 2. Creates a versioned transaction message (`v0`).
  * 3. Signs the transaction with the provided signer.
  * 4. Sends the transaction to the network.
  * 5. Decodes and returns the resulting transaction signature.
@@ -25,9 +34,9 @@ import { createTransaction, getBase58Decoder, signAndSendTransactionMessageWithS
  *
  * @example
  * const signature = await signAndSendSolanaTx({
- * client: mySolanaClient,
- * signer: wallet,
- * instruction: myTransferInstruction,
+ *   client: mySolanaClient,
+ *   signer: wallet,
+ *   instruction: myTransferInstruction,
  * });
  * console.log('Transaction sent with signature:', signature);
  */
@@ -39,21 +48,21 @@ export async function signAndSendSolanaTx({
   client: SolanaClient;
   signer: TransactionSendingSigner;
   instruction: Instruction | Instruction[];
-}) {
+}): Promise<string> {
   // 1. Fetch the latest blockhash to ensure transaction validity.
   const { value: latestBlockhash } = await client.rpc.getLatestBlockhash().send();
 
-  // 2. Create a version 0 transaction, which is the current standard.
-  const transaction = createTransaction({
-    feePayer: signer,
-    version: 0,
-    latestBlockhash,
-    instructions: Array.isArray(instruction) ? instruction : [instruction],
-  });
+  // 2. Create a version 0 transaction message using @solana/kit pipeline.
+  const transactionMessage = pipe(
+    createTransactionMessage({ version: 0 }),
+    (m) => setTransactionMessageFeePayerSigner(signer, m),
+    (m) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
+    (m) => appendTransactionMessageInstructions(Array.isArray(instruction) ? instruction : [instruction], m),
+  );
 
   // 3. Sign the transaction message and send it to the network.
-  const signature = await signAndSendTransactionMessageWithSigners(transaction);
+  const signature = await signAndSendTransactionMessageWithSigners(transactionMessage);
 
-  // 4. Decode the resulting signature into the final format.
+  // 4. Decode the resulting signature into the final base58 format.
   return getBase58Decoder().decode(signature);
 }

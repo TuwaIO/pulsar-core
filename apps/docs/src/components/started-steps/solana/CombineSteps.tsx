@@ -13,7 +13,7 @@ export function CombineSteps() {
         First, install the necessary <b>Pulsar</b> packages for transaction tracking and state management.
       </p>
       <PackageInstallationTabs
-        packagesList="@tuwaio/pulsar-solana @tuwaio/pulsar-core gill @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry"
+        packagesList="@tuwaio/pulsar-solana @tuwaio/pulsar-core @solana/kit @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry @wallet-standard/ui-core"
         resolvedTheme={resolvedTheme ?? 'light'}
       />
       <IDLStep />

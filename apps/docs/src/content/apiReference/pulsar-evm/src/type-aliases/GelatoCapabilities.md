@@ -6,6 +6,6 @@
 
 > **GelatoCapabilities** = `Record`\<`number`, [`GelatoCapabilitiesByChain`](GelatoCapabilitiesByChain.md)\>
 
-Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:39](https://github.com/TuwaIO/pulsar-core/blob/04262b00f797406a8a57df5eb1e0a1258d30caf9/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L39)
+Defined in: [packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts:39](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-evm/src/utils/checkIsGelatoAvailable.ts#L39)
 
 A record of Gelato relay capabilities keyed by numeric chain ID.

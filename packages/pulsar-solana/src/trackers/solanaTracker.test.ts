@@ -6,6 +6,7 @@
  * @vitest-environment jsdom
  */
 
+import type { TransactionError } from '@solana/kit';
 import { OrbitAdapter } from '@tuwaio/orbit-core';
 import {
   initializePollingTracker,
@@ -16,7 +17,6 @@ import {
   TransactionTracker,
 } from '@tuwaio/pulsar-core';
 import dayjs from 'dayjs';
-import { TransactionError } from 'gill';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { solanaTrackerForStore } from './solanaTracker';

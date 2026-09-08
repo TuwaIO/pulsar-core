@@ -36,7 +36,7 @@ export function checkTransactionsTracker({ actionTxKey, connectorType, tracker, 
     };
   }
 
-  // At this point, actionTxKey must be a Hex string (e.g., a transaction hash or SafeTxHash).
+  // At this point, actionTxKey must be a Hex string (e.g., a transaction hash, userOpHash, or SafeTxHash).
   // This check adds robustness in case of type mismatches.
   if (!isHex(actionTxKey)) {
     throw new Error(
@@ -44,6 +44,14 @@ export function checkTransactionsTracker({ actionTxKey, connectorType, tracker, 
         actionTxKey,
       )}`,
     );
+  }
+
+  // Check for native ERC-4337 UserOperation tracker.
+  if (tracker && tracker === TransactionTracker.ERC4337) {
+    return {
+      tracker: TransactionTracker.ERC4337,
+      txKey: actionTxKey,
+    };
   }
 
   // 2. Second priority: Check if the transaction came from a Safe wallet.

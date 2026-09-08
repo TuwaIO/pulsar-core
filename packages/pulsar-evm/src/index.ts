@@ -1,4 +1,5 @@
 export * from './adapters/evmAdapter';
+export * from './trackers/erc4337Tracker';
 export * from './trackers/evmTracker';
 export * from './trackers/gelatoTracker';
 export * from './trackers/safeTracker';

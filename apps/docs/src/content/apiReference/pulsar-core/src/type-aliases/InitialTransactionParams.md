@@ -4,9 +4,9 @@
 
 # InitialTransactionParams
 
-> **InitialTransactionParams** = `Pick`\<[`BaseTransaction`](BaseTransaction.md), `"description"` \| `"title"` \| `"type"` \| `"requiredConfirmations"` \| `"rpcUrl"` \| `"payload"`\> & `object`
+> **InitialTransactionParams** = `Pick`\<[`BaseTransaction`](BaseTransaction.md), `"description"` \| `"title"` \| `"type"` \| `"requiredConfirmations"` \| `"rpcUrl"` \| `"payload"`\> & `Pick`\<[`EvmTransaction`](EvmTransaction.md), `"bundlerUrl"` \| `"pimlicoApiKey"`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:188](https://github.com/TuwaIO/pulsar-core/blob/04262b00f797406a8a57df5eb1e0a1258d30caf9/packages/pulsar-core/src/types.ts#L188)
+Defined in: [packages/pulsar-core/src/types.ts:197](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-core/src/types.ts#L197)
 
 Represents the parameters required to initiate a new transaction tracking flow.
 
@@ -40,11 +40,19 @@ The specific blockchain adapter for this transaction.
 
 The target chain ID for the transaction.
 
+### ~~gelatoApiKey?~~
+
+> `optional` **gelatoApiKey?**: `string`
+
+#### Deprecated
+
+Gelato relay is deprecated.
+
 ### tracker?
 
 > `optional` **tracker?**: [`TransactionTracker`](../enumerations/TransactionTracker.md)
 
-The specific tracker responsible for monitoring this transaction's status. Required for Gelato tracker.
+The specific tracker responsible for monitoring this transaction's status. Required for Gelato / ERC-4337 tracker.
 
 ### withTrackedModal?
 

@@ -24,7 +24,7 @@
 - [ActionTxKey](type-aliases/ActionTxKey.md)
 - [BaseTransaction](type-aliases/BaseTransaction.md)
 - [BeforeTxProcess](type-aliases/BeforeTxProcess.md)
-- [CheckTxTracker](type-aliases/CheckTxTracker.md)
+- [~~CheckTxTracker~~](type-aliases/CheckTxTracker.md)
 - [EvmTransaction](type-aliases/EvmTransaction.md)
 - [InitialTransaction](type-aliases/InitialTransaction.md)
 - [InitialTransactionParams](type-aliases/InitialTransactionParams.md)

@@ -107,6 +107,7 @@ async function getCapabilities(gelatoApiKey: string): Promise<GelatoCapabilities
  * (`relayer_getCapabilities`) and checks whether the specified chain is present in the response.
  * Results are cached in memory per API key for the lifetime of the application to minimize network requests.
  *
+ * @deprecated Gelato relay is deprecated. Use TransactionTracker.ERC4337 instead.
  * @param {number} chainId - The chain identifier to check.
  * @param {string} gelatoApiKey - The Gelato API key used for authentication.
  * @returns {Promise<boolean>} A promise that resolves to `true` if Gelato supports the chain, `false` otherwise.

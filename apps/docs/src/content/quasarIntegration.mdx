@@ -44,10 +44,10 @@ sequenceDiagram
 
 The TUWA SIWX ecosystem supports two distinct server integration profiles:
 
-| Profile | Target Environment | Storage Requirement | Features |
-| :--- | :--- | :--- | :--- |
-| **Durable Profile** (Recommended) | Production SaaS & Multi-Replica dApps | Redis / PostgreSQL / Database | Opaque session tokens, atomic single-use nonce consumption, memory self-healing, instant session revocation. |
-| **Stateless Demo Profile** | Sandboxes, Playgrounds, Landing Demos | Zero Infrastructure (No DB/Redis) | HMAC-SHA256 authenticated cookies, deployment-provided secret key, fail-closed validation. |
+| Profile                           | Target Environment                    | Storage Requirement               | Features                                                                                                     |
+| :-------------------------------- | :------------------------------------ | :-------------------------------- | :----------------------------------------------------------------------------------------------------------- |
+| **Durable Profile** (Recommended) | Production SaaS & Multi-Replica dApps | Redis / PostgreSQL / Database     | Opaque session tokens, atomic single-use nonce consumption, memory self-healing, instant session revocation. |
+| **Stateless Demo Profile**        | Sandboxes, Playgrounds, Landing Demos | Zero Infrastructure (No DB/Redis) | HMAC-SHA256 authenticated cookies, deployment-provided secret key, fail-closed validation.                   |
 
 ---
 
@@ -98,12 +98,7 @@ Configure persistent session and nonce stores backed by Redis for atomic single-
 ```typescript
 // src/lib/authStores.ts
 import crypto from 'crypto';
-import type {
-  SiwxNonceStore,
-  SiwxSession,
-  SiwxSessionRecord,
-  SiwxSessionStore,
-} from '@tuwaio/siwx-server';
+import type { SiwxNonceStore, SiwxSession, SiwxSessionRecord, SiwxSessionStore } from '@tuwaio/siwx-server';
 import { MemorySiwxNonceStore, MemorySiwxSessionStore } from '@tuwaio/siwx-server';
 import Redis from 'ioredis';
 

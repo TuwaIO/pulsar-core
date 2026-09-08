@@ -36,6 +36,7 @@ const gelatoClientCache = new Map<string, ReturnType<Transport>>();
  * Gelato's synchronous relay methods may take up to 10 seconds on the server side,
  * and the client should not time out before the server does.
  *
+ * @deprecated Gelato relay is deprecated. Use TransactionTracker.ERC4337 and createBundlerRpcClient instead.
  * @param {GelatoClientConfig} parameters - The configuration for the Gelato client.
  * @returns {ReturnType<Transport>} A viem transport instance configured for the Gelato API.
  */
