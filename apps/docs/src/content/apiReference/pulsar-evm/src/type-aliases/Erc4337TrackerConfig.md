@@ -6,7 +6,7 @@
 
 > **Erc4337TrackerConfig**\<`T`\> = `object`
 
-Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:138](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L138)
+Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:138](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L138)
 
 Configuration options for the low-level ERC-4337 tracker.
 
@@ -22,7 +22,7 @@ Configuration options for the low-level ERC-4337 tracker.
 
 > `optional` **maxRetries?**: `number`
 
-Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:145](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L145)
+Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:145](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L145)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:145](https://git
 
 > **onFailure**: (`result?`) => `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:141](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L141)
+Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:141](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L141)
 
 #### Parameters
 
@@ -48,7 +48,7 @@ Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:141](https://git
 
 > `optional` **onIntervalTick?**: (`result`) => `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:142](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L142)
+Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:142](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L142)
 
 #### Parameters
 
@@ -66,7 +66,7 @@ Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:142](https://git
 
 > **onSuccess**: (`result`) => `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:140](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L140)
+Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:140](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L140)
 
 #### Parameters
 
@@ -84,7 +84,7 @@ Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:140](https://git
 
 > `optional` **pollingInterval?**: `number`
 
-Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:144](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L144)
+Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:144](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L144)
 
 ***
 
@@ -92,7 +92,7 @@ Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:144](https://git
 
 > `optional` **removeTxFromPool?**: (`txKey`) => `void`
 
-Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:143](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L143)
+Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:143](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L143)
 
 #### Parameters
 
@@ -110,4 +110,4 @@ Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:143](https://git
 
 > **tx**: `T` & `Pick`\<`Transaction`, `"txKey"` \| `"pending"`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:139](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L139)
+Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:139](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L139)

@@ -121,6 +121,23 @@ async function trackMyTransaction(txHash: string, chainId: number) {
 }
 ```
 
+#### Two-Stage ERC-4337 UserOperation Architecture (Pimlico / Account Abstraction)
+
+For ERC-4337 smart accounts (e.g. Solady smart accounts orchestrated with Pimlico via `@tuwaio/orbit-evm`), `@tuwaio/pulsar-evm` provides a resilient **Two-Stage tracking pipeline**:
+
+1. **Stage 1: Bundler Mempool (`erc4337Fetcher`)**:
+   - The initial `userOpHash` is submitted to the Pimlico / Bundler RPC endpoint.
+   - `erc4337Fetcher` polls `eth_getUserOperationReceipt` until the UserOp is bundled into an on-chain transaction.
+   - Updates the store record with `tx.hash` (the mined transaction hash) and extracted parameters (`to`, `nonce`, `input`, `maxFeePerGas`).
+2. **Stage 2: On-Chain Block Settlement (`evmTracker`)**:
+   - Transitions to `evmTracker` with `{ withoutRemoving: true }` so the store entry is never deleted prematurely.
+   - Waits for full on-chain block confirmations (`requiredConfirmations`), resolves the native transaction receipt, and queries the block header timestamp (`getBlock`).
+3. **Session Restoration Resilience**:
+   - If the user refreshes or reloads the browser, `initializeTransactionsPool()` inspects the stored transaction.
+   - If `tx.hash` is already present, it bypasses Stage 1 completely and resumes directly in Stage 2 (`evmTracker`).
+4. **Native Explorer Linking**:
+   - Links directly to standard block explorers (e.g. Etherscan `/tx/${hash}`) with zero reliance on third-party indexers.
+
 ### 3. Using Standalone Actions
 
 This package also exports utility actions that you can wire up to your UI for features like speeding up or canceling transactions.

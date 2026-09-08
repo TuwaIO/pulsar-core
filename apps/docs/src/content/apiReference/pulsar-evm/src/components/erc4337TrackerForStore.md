@@ -6,7 +6,7 @@
 
 > **erc4337TrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:187](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L187)
+Defined in: [packages/pulsar-evm/src/trackers/erc4337Tracker.ts:187](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L187)
 
 High-level two-stage tracker for ERC-4337 UserOperations integrated with the Pulsar store.
 

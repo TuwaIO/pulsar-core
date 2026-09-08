@@ -30,7 +30,7 @@ The architecture is modular and layered:
 - **Multi-Chain by Design:** The adapter pattern allows for extending support to any blockchain.
 - **Persistent State:** Automatically resumes tracking pending transactions after a page reload.
 - **Rich Ecosystem Support:**
-  - **EVM Adapter:** Supports standard transactions, Safe multisigs, and Gelato relay.
+  - **EVM Adapter:** Supports standard transactions, ERC-4337 UserOperations (Two-Stage Pimlico Smart Account tracking), Safe multisigs, and Gelato relay.
   - **Solana Adapter:** Supports Wallet Standard, cluster management, and transaction tracking.
 - **Type-Safe:** Written entirely in TypeScript to ensure a robust developer experience.
 

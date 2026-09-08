@@ -23,11 +23,19 @@ const idlContent = `{
 `;
 
 const configContent = `{
-  "idl": "src/targets/...your contract name.../idl/...your contract name....json",
+  "idl": "src/targets/...your contract name.../idl/...your contract name...json",
   "scripts": {
     "js": {
       "from": "@codama/renderers-js",
-      "args": ["src/programs/...your contract name.../generated"]
+      "args": [
+        "src/programs/...your contract name.../generated",
+        {
+          "generatedFolder": "",
+          "syncPackageJson": false,
+          "deleteFolderBeforeRendering": true,
+          "kitImportStrategy": "rootOnly"
+        }
+      ]
     }
   }
 }

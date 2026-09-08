@@ -6,6 +6,6 @@
 
 > `const` **MAX\_TRANSACTION\_DESCRIPTION\_LENGTH**: `300` = `300`
 
-Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:7](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-core/src/utils/transactionValidation.ts#L7)
+Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:7](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-core/src/utils/transactionValidation.ts#L7)
 
 Maximum allowed length for each transaction description string.

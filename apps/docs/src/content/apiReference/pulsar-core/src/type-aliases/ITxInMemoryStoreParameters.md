@@ -6,7 +6,7 @@
 
 > **ITxInMemoryStoreParameters**\<`T`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:540](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-core/src/types.ts#L540)
+Defined in: [packages/pulsar-core/src/types.ts:540](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-core/src/types.ts#L540)
 
 Parameters used to configure and manage an in-memory transaction store.
 
@@ -27,7 +27,7 @@ The transaction type.
     walletAddress,
   }`) => `Promise`\<\{ `docs`: `T`[]; `hasNextPage`: `boolean`; `hasPrevPage`: `boolean`; `page`: `number`; `totalDocs`: `number`; `totalPages`: `number`; \} \| `null`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:552](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-core/src/types.ts#L552)
+Defined in: [packages/pulsar-core/src/types.ts:552](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-core/src/types.ts#L552)
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Page number for pagination.
 
 > **localTransactionsPool**: [`TransactionPool`](TransactionPool.md)\<`T`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:542](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-core/src/types.ts#L542)
+Defined in: [packages/pulsar-core/src/types.ts:542](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-core/src/types.ts#L542)
 
 A localTransactionsPool.
 
@@ -70,7 +70,7 @@ A localTransactionsPool.
 
 > `optional` **onHistoryFetched?**: (`remoteTxs`) => `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:551](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-core/src/types.ts#L551)
+Defined in: [packages/pulsar-core/src/types.ts:551](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-core/src/types.ts#L551)
 
 Callback fired when remote history is successfully fetched.
 Used to inject remote pending transactions into the persistent tracking store.
@@ -91,7 +91,7 @@ Used to inject remote pending transactions into the persistent tracking store.
 
 > `optional` **reconcileUnsyncedTransactions?**: () => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:547](https://github.com/TuwaIO/pulsar-core/blob/51498c2594c27f405fc78282593fff48a93004ea/packages/pulsar-core/src/types.ts#L547)
+Defined in: [packages/pulsar-core/src/types.ts:547](https://github.com/TuwaIO/pulsar-core/blob/d8faba2b05042ba673e3ec758d4763f15973e717/packages/pulsar-core/src/types.ts#L547)
 
 Attempts to synchronize any transactions in `unsyncedTxKeys` that have reached a terminal
 status but failed their initial `onRemoteCreate` call.
