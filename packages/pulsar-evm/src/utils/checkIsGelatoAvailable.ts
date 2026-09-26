@@ -1,6 +1,5 @@
 /**
- * @file This file contains a utility to check if the Gelato Relay service is available for a specific chain.
- * It uses the authenticated Gelato RPC client to fetch relay capabilities and caches the result.
+ * @file Checks whether Gelato Relay supports a chain, using the `relayer_getCapabilities` RPC method.
  */
 
 import { Transport } from 'viem';
@@ -12,29 +11,33 @@ import { createGelatoClient } from './createGelatoClient';
 // =================================================================================================
 
 /**
- * Represents the per-chain capabilities returned by the Gelato `relayer_getCapabilities` RPC method.
+ * The Gelato Relay capabilities of one chain, as returned by `relayer_getCapabilities`.
  *
- * @property {string} feeCollector - The address of the fee collector contract on this chain.
- * @property {GelatoToken[]} tokens - The list of ERC-20 tokens accepted for fee payment on this chain.
+ * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` instead.
  */
 export type GelatoCapabilitiesByChain = {
+  /** The address of the fee collector contract on this chain. */
   feeCollector: string;
+  /** The ERC-20 tokens accepted for fee payment on this chain. */
   tokens: GelatoToken[];
 };
 
 /**
- * Represents a token accepted for fee payment by the Gelato Relay on a given chain.
+ * A token accepted for fee payment by Gelato Relay.
  *
- * @property {string} address - The ERC-20 token contract address.
- * @property {number} decimals - The number of decimals for the token.
+ * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` instead.
  */
 export type GelatoToken = {
+  /** The ERC-20 token contract address. */
   address: string;
+  /** The number of decimals of the token. */
   decimals: number;
 };
 
 /**
- * A record of Gelato relay capabilities keyed by numeric chain ID.
+ * Gelato Relay capabilities by numeric chain ID.
+ *
+ * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` instead.
  */
 export type GelatoCapabilities = Record<number, GelatoCapabilitiesByChain>;
 
@@ -101,16 +104,16 @@ async function getCapabilities(gelatoApiKey: string): Promise<GelatoCapabilities
 // =================================================================================================
 
 /**
- * Checks if the Gelato Relay service supports a given chain ID.
+ * Checks whether Gelato Relay supports a chain.
  *
- * This function fetches the relay capabilities via the authenticated Gelato RPC client
- * (`relayer_getCapabilities`) and checks whether the specified chain is present in the response.
- * Results are cached in memory per API key for the lifetime of the application to minimize network requests.
+ * Side effects: the first call for an API key sends `relayer_getCapabilities` to the Gelato API (see
+ * {@link createGelatoClient}); the result is cached in memory per API key until the page is reloaded. A failed request
+ * is logged, is not cached, and returns `false`.
  *
- * @deprecated Gelato relay is deprecated. Use TransactionTracker.ERC4337 instead.
- * @param {number} chainId - The chain identifier to check.
- * @param {string} gelatoApiKey - The Gelato API key used for authentication.
- * @returns {Promise<boolean>} A promise that resolves to `true` if Gelato supports the chain, `false` otherwise.
+ * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` instead.
+ * @param chainId - The chain ID to check.
+ * @param gelatoApiKey - The Gelato API key.
+ * @returns `true` if the chain is supported; `false` if it is not or the request failed. Never rejects.
  */
 export async function checkIsGelatoAvailable(chainId: number, gelatoApiKey: string): Promise<boolean> {
   try {

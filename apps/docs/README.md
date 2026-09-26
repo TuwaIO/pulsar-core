@@ -1,109 +1,119 @@
-# TUWA Pulsar - Documentation Site
+# Pulsar — Documentation Site
 
-> 🔴 **Private Repository:** This repository contains the source code for the official Pulsar Engine documentation website, available at **[pulsar.docs.tuwa.io](https://pulsar.docs.tuwa.io)**.
+Source of the official Pulsar documentation at **[pulsar.docs.tuwa.io](https://pulsar.docs.tuwa.io)**. It covers `@tuwaio/pulsar-core`, `@tuwaio/pulsar-evm`, `@tuwaio/pulsar-solana` and `@tuwaio/pulsar-react`.
 
-## About This Project
-
-This project houses the official documentation for the TUWA Pulsar transaction lifecycle tracker. It's built with **Next.js** and **Nextra**, allowing content to be written in MDX to produce a fast, searchable, and user-friendly documentation hub.
-
-The goal is to provide clear, comprehensive, and structured technical documentation for all Tier 3 and Tier 4 packages in the `pulsar-core` monorepo.
+The site follows the TUWA **Packages** layout introduced by Orbit Utils and used by SIWX: hand-written pages plus one page per npm package, where the package README is followed by a reference of every export generated from the source. Pulsar also has hand-written guide pages with complete examples. Other TUWA documentation sites follow the same structure.
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Framework**: Next.js & Nextra
-- **Styling**: Tailwind CSS
-- **Search**: Pagefind (for fast, client-side search)
-- **Deployment**: Vercel
+- **Framework:** Next.js 16 (App Router)
+- **Docs theme:** Nextra 4 (`nextra`, `nextra-theme-docs`)
+- **Shared TUWA UI:** `@tuwaio/docs-ui` (navbar, footer, logo, code blocks, design tokens)
+- **Styling:** Tailwind CSS 4
+- **Search:** Pagefind (built in the `postbuild` step)
+- **Reference generation:** TypeDoc + `typedoc-plugin-markdown`, plus two local plugins in [`typedoc/`](./typedoc)
+- **Deployment:** Vercel
 
 ---
 
 ## 🚀 Getting Started
 
-To run the documentation website on your local machine, follow these steps.
-
-### 1. Prerequisites
-
-Ensure you have installed all dependencies from the **root of the monorepo**:
+Install dependencies from the **monorepo root** (this also builds all packages through the root `postinstall` script):
 
 ```bash
-# Run from the monorepo root, not from this directory
 pnpm install
 ```
 
-### 2\. Running the Dev Server
-
-Run the following command from the **root of the monorepo** to start the Next.js development server for the docs site:
+Start the dev server from the monorepo root:
 
 ```bash
 pnpm --filter @tuwaio/pulsar-core-docs dev
 ```
 
-The documentation site will then be available at **[http://localhost:3000](http://localhost:3000)**.
+The site runs at **[http://localhost:3000](http://localhost:3000)**.
 
 ---
 
-## ✍️ How to Add and Edit Content
+## 🗂 Content Structure
 
-Content creation is straightforward with Nextra's file-based routing.
-
-### Creating Pages
-
-All documentation pages are **MDX files** (`.mdx`) located in the `src/content` directory. The file and folder structure within this directory directly maps to the URL structure of the site.
-
-- `src/content/index.mdx` → `/`
-- `src/content/getting-started.mdx` → `/getting-started`
-- `src/content/api-reference/pulsar-core.mdx` → `/api-reference/pulsar-core`
-
-### Managing Sidebar Navigation
-
-The sidebar navigation is controlled by `_meta.json` files within each directory. To add a new page, change the order, or create sections, simply edit the corresponding `_meta.json` file.
-
-**Example: `src/content/_meta.json`**
-
-```json
-{
-  "index": "Introduction",
-  "-- Getting Started": {
-    "type": "separator",
-    "title": "Getting Started"
-  },
-  "gettingStarted": "Installation",
-  "quickStart": "Quick Start",
-  "-- API": {
-    "type": "separator",
-    "title": "API Reference"
-  },
-  "apiReference": "Overview"
-}
+```
+apps/docs/
+├── src/content/
+│   ├── _meta.tsx              # Sidebar: hand-written pages, Packages, Guides (link to docs.tuwa.io/guides)
+│   ├── index.mdx              # Introduction
+│   ├── gettingStarted.mdx     # Step-by-step React setup for EVM and Solana (renders <StartedBlocks />)
+│   ├── quickStart.mdx         # Cosmos Playground templates (renders <ReadmeCards />) and the CLI
+│   ├── evmStandalone.mdx      # EVM trackers without the store
+│   ├── solanaStandalone.mdx   # Solana tracker without the store
+│   └── packages/              # GENERATED — do not edit by hand
+│       ├── _meta.tsx          # Copied from typedoc/packages-meta.tsx
+│       ├── index.md           # Packages overview (typedoc/packages-overview.md + package list)
+│       └── pulsar-core/       # One folder per package
+│           ├── index.md       # Package README + list of exports
+│           ├── functions/     # One page per exported function
+│           ├── classes/
+│           ├── interfaces/
+│           └── type-aliases/
+├── src/components/
+│   ├── started-blocks/        # StartedBlocks.tsx (EVM / Solana tabs) and, per chain, the connector tabs and step wrapper
+│   ├── started-steps/         # The steps; code examples are template strings in these files
+│   │   ├── PulsarInitializerStep.tsx  # Step 5, shared by both chains
+│   │   ├── evm/               # Install, ABI, action (incl. ERC-4337), store, transaction button
+│   │   └── solana/            # Install, IDL + Codama, action, store, transaction button
+│   └── ReadmeCards.tsx        # Template cards of the Quick Start page (links to TuwaIO/cosmos-playground)
+└── typedoc/
+    ├── packages-meta.tsx          # Sidebar labels for the Packages section
+    ├── packages-overview.md       # Intro text of the /packages page
+    ├── preserveTypeAnnotations.mjs # Keeps named library types (e.g. viem's Client) from being inlined
+    └── nextraRoutes.mjs           # Rewrites `.../index.md` links to Nextra folder routes
 ```
 
-This configuration creates a structured sidebar with separators and custom titles.
+Hand-written pages are MDX files in `src/content`; the folder structure maps to URLs, and `_meta.tsx` files control sidebar titles and order.
 
-### Using Custom Components
+### Hand-Written Pages
 
-You can create custom React components and import them directly into your MDX files to create rich, interactive content. Place your custom components in the `src/components` directory and use them like any other React component.
+- **Introduction** (`index.mdx`): what Pulsar is, where it fits in TUWA, principles, the tracking flow, packages and installation. No code beyond installation commands.
+- **Getting Started** (`gettingStarted.mdx`): the complete scenario for a React app. The page text is in MDX; the steps and their code examples live in `src/components/started-steps/**` as template strings, so they must be checked like any other example.
+- **Quick Start** (`quickStart.mdx`): the Cosmos Playground templates and `npx @tuwaio/create-cosmos-playground`. The cards in `ReadmeCards.tsx` must match the folders in `examples/` of `TuwaIO/cosmos-playground`.
+- **EVM Trackers Standalone** / **Solana Trackers Standalone**: using the trackers without the store.
+
+Each topic has one home: a package README keeps a short usage example and links to the page with the full scenario; the Introduction links to pages instead of repeating code. Quasar integration is documented in the [TUWA SDK docs](https://sdk.docs.tuwa.io/full-stack).
+
+---
+
+## 📦 Packages Reference
+
+Everything under `src/content/packages` is generated by TypeDoc from the root [`typedoc.json`](../../typedoc.json):
+
+```bash
+pnpm docs:gen   # run from the monorepo root; also runs in the pre-commit hook
+```
+
+- **Source of truth:** each package's entry point exports, their JSDoc, and the package `README.md` (which becomes the package overview page). To change a package page, edit the package README or the JSDoc in the source, never the generated Markdown.
+- **Entry points:** `src/index.ts` of every package. No package has subpath exports; if one is added, follow `packages/siwx-server/typedoc.json` in the SIWX repository (`@module` names and sidebar labels in `typedoc/meta/`).
+- **Cross-package types:** `compilerOptions.paths` in `typedoc.json` resolves the `@tuwaio/pulsar-*` imports to their sources, so links point to the package that defines a type and the output does not depend on built `dist` files.
+- **README rules:** use absolute URLs for links (TypeDoc copies relative link targets into the output, and Nextra cannot render them), and do not hand-write lists of exports; the generated reference lists them.
+- **Stable output:** source links point to `main` instead of a commit hash, and members inherited from external types (such as `Error`) are excluded, so a regeneration only changes pages whose source changed.
+- **Excluded symbols:** exports marked `@internal` are left out of the reference.
 
 ---
 
 ## 🚀 Deployment
 
-The documentation site is automatically deployed to **Vercel**.
-
-- **Production URL:** [**https://pulsar.docs.tuwa.io**](https://pulsar.docs.tuwa.io)
-- Deployment is triggered automatically on every push to the `main` branch.
-- The search index is generated by `pagefind` during the `postbuild` step and requires no extra configuration.
-
----
+The site is deployed to **Vercel**. The Pagefind search index is generated in the `postbuild` step of `apps/docs/package.json` and needs no extra configuration.
 
 ## 🔗 Quick Links
 
-| Resource                   | Link                                                   |
-| -------------------------- | ------------------------------------------------------ |
-| **Live Docs Site**         | [**pulsar.docs.tuwa.io**](https://pulsar.docs.tuwa.io) |
-| **Nextra Documentation**   | [`https://nextra.site/docs`](https://nextra.site/docs) |
-| **Pagefind Documentation** | [`https://pagefind.app/`](https://pagefind.app/)       |
+| Resource                         | Link                                                                    |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| **Live Docs Site**               | [pulsar.docs.tuwa.io](https://pulsar.docs.tuwa.io)                      |
+| **TUWA Guides**                  | [docs.tuwa.io/guides](https://docs.tuwa.io/guides)                      |
+| **Templates**                    | [TuwaIO/cosmos-playground](https://github.com/TuwaIO/cosmos-playground) |
+| **Nextra Documentation**         | [nextra.site/docs](https://nextra.site/docs)                            |
+| **TypeDoc Markdown Plugin Docs** | [typedoc-plugin-markdown.org](https://typedoc-plugin-markdown.org)      |
+| **Pagefind Documentation**       | [pagefind.app](https://pagefind.app/)                                   |
 
 ## 📄 License
 

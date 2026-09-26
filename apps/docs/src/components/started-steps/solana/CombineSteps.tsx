@@ -10,10 +10,11 @@ export function CombineSteps() {
   return (
     <>
       <p className="my-2 text-[var(--tuwa-text-secondary)]">
-        First, install the necessary <b>Pulsar</b> packages for transaction tracking and state management.
+        Install the <b>Pulsar</b> packages and their peer dependencies, plus `@solana/react` for the transaction signer
+        used in Step 6.
       </p>
       <PackageInstallationTabs
-        packagesList="@tuwaio/pulsar-solana @tuwaio/pulsar-core @solana/kit @tuwaio/orbit-core @tuwaio/orbit-solana zustand immer dayjs @wallet-standard/app @wallet-standard/ui-registry @wallet-standard/ui-core"
+        packagesList="@tuwaio/pulsar-core @tuwaio/pulsar-solana @tuwaio/pulsar-react @tuwaio/orbit-core @tuwaio/orbit-solana @solana/kit @solana/react @wallet-standard/app @wallet-standard/ui-core @wallet-standard/ui-registry zustand immer dayjs"
         resolvedTheme={resolvedTheme ?? 'light'}
       />
       <IDLStep />

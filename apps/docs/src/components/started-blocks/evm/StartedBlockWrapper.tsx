@@ -16,8 +16,10 @@ export function StartedBlockWrapper({
       <div>
         <h3 className="mb-2 text-xl font-semibold text-[var(--tuwa-text-primary)]">Step 1: Wallet Connector Setup</h3>
         <p className="text-[var(--tuwa-text-secondary)]">
-          The <b>Pulsar</b> engine works with any wagmi-based setup. This guide uses{' '}
-          <StyledLink href={link}>{title}</StyledLink> as an example.
+          The <b>Pulsar</b> EVM adapter works with any `@wagmi/core` setup. This guide uses{' '}
+          <StyledLink href={link}>{title}</StyledLink> to connect the wallet; set it up first. The code below expects
+          your wagmi config and viem chains to be exported as `wagmiConfig` and `appChains` from
+          `@/configs/wagmiConfig`.
         </p>
         <CombineSteps />
       </div>

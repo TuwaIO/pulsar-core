@@ -1,156 +1,63 @@
-# Pulsar React
+# @tuwaio/pulsar-react
 
 [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react)
-[![License](https://img.shields.io/npm/l/@tuwaio/pulsar-react.svg)](./LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
+[![License](https://img.shields.io/npm/l/@tuwaio/pulsar-react.svg)](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-react/LICENSE)
 
-Layer 4 (L4) of the TUWA Ecosystem. Global React context bindings, hooks, and transaction pool initializers for orchestrating framework-agnostic Pulsar stores.
+`@tuwaio/pulsar-react` is the React Layer 4 (L4) package of **Pulsar**, the transaction tracking project of TUWA Stage 2 ("State & Connection", next to Satellite Connect). Built on **`react`** only, it ships one hook, `useInitializeTransactionsPool`, that restarts the trackers of pending transactions when your app mounts. It has no UI components and no dependency on the other Pulsar packages: to read the store in components, use `createBoundedUseStore` from [`@tuwaio/pulsar-core`](https://pulsar.docs.tuwa.io/packages/pulsar-core).
 
 ---
 
-## 🏛️ What is `@tuwaio/pulsar-react`?
+## 🏛️ Core Capabilities
 
-This package serves as the integration layer between the framework-agnostic `@tuwaio/pulsar-core` headless state machine and React. It provides global bindings, hooks, and transaction pool initializers to orchestrate Pulsar stores within the React component lifecycle.
-
-Its primary role is to execute `useInitializeTransactionsPool` to resume pending transaction tracking automatically across client-side refreshes.
+- **Resume after reload:** `useInitializeTransactionsPool` calls the store's `initializeTransactionsPool` in an effect, on the client and after the store has restored its pool from `localStorage`, so transactions that were pending before a reload are tracked again.
+- **Runs once:** the effect depends only on `initializeTransactionsPool`, and the latest `onError` is read without re-running it, so an inline `onError` does not start new trackers on every render.
+- **Errors:** a rejected initialization goes to `onError`, or to `console.error` by default; nothing is reported after unmount.
 
 ---
 
 ## 💾 Installation
 
-To use this package, you need the complete Pulsar stack, including `@wagmi/core` for EVM interactions.
-
 ```bash
-# Using pnpm (recommended), but you can use npm, yarn or bun as well
 pnpm add @tuwaio/pulsar-react react
 ```
 
+> [!IMPORTANT]
+> `react` (>=19.2.3) is a peer dependency and must be installed alongside `@tuwaio/pulsar-react`. The hook is used with a store from [`@tuwaio/pulsar-core`](https://pulsar.docs.tuwa.io/packages/pulsar-core).
+
 ---
 
-## 🚀 Getting Started
+## 🚀 Usage
 
-The recommended way to integrate Pulsar with React is to create a vanilla store instance, create a bounded hook for it, and then use `useInitializeTransactionsPool` in your main layout component.
-
-Here is a complete step-by-step example:
-
-### Step 1: Create the Pulsar Store and Hook
-
-First, create your vanilla Pulsar store and a reusable, bounded hook to access it. This pattern is recommended by Zustand for type safety and ease of use.
-
-```ts
-// src/hooks/txTrackingHooks.ts
-import { createBoundedUseStore, createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
-import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
-
-import { appChains, config } from '@/configs/wagmiConfig';
-
-const storageName = 'transactions-tracking-storage';
-
-export enum TxType {
-  example = 'example',
-}
-
-type ExampleTx = Transaction & {
-  type: TxType.example;
-  payload: {
-    value: number;
-  };
-};
-
-export type TransactionUnion = ExampleTx;
-
-export const usePulsarStore = createBoundedUseStore(
-  createPulsarStore<TransactionUnion>({
-    name: storageName,
-    adapter: pulsarEvmAdapter(config, appChains),
-    beforeTxProcess: async () => {
-      // Optional global preflight. Throw here to block before wallet interaction.
-      await assertUserCanSubmitTransactions();
-    },
-  }),
-);
-```
-
-The preflight and metadata validation lives in `@tuwaio/pulsar-core`, not in React. Before wallet interaction or persistence, Pulsar validates that each `title` string is 100 characters or less, each `description` string is 300 characters or less, and the serialized `payload` is 10KB or less. Invalid pending transactions restored by `useInitializeTransactionsPool` are removed from persisted storage during initialization.
-
-### Step 2: Initialize the Store in Your App
-
-Create a small, client-side component that uses the `useInitializeTransactionsPool` hook. This component's job is to re-activate trackers for pending transactions when the app loads.
+Render the initializer once, in a component that stays mounted, such as your root providers:
 
 ```tsx
-// src/components/PulsarInitializer.tsx
 'use client';
 
+import { createPulsarStore, type Transaction, type TxAdapter } from '@tuwaio/pulsar-core';
 import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
-import { usePulsarStore } from '../hooks/txTrackingHooks';
 
-export const PulsarInitializer = () => {
-  // Get the initialization function from the store via our custom hook
-  const initializeTransactionsPool = usePulsarStore((state) => state.initializeTransactionsPool);
+declare const adapter: TxAdapter<Transaction>; // pulsarEvmAdapter(...) or pulsarSolanaAdapter(...)
 
-  // Pass the function to the hook from this package
-  useInitializeTransactionsPool({ initializeTransactionsPool });
+export const pulsarStore = createPulsarStore<Transaction>({ name: 'pulsar-transactions', adapter });
 
-  return null; // This component renders nothing to the DOM
-};
-```
+export function PulsarInitializer() {
+  useInitializeTransactionsPool({
+    initializeTransactionsPool: pulsarStore.getState().initializeTransactionsPool,
+    onError: (error) => console.warn('Could not resume transaction tracking:', error),
+  });
 
-### Step 3: Add the Initializer to Your Root Layout
-
-Finally, place the `PulsarInitializer` component at a high level in your application tree (e.g., in your root layout or providers component) so it runs on every page load.
-
-```tsx
-// src/app/layout.tsx (Next.js example)
-import { WagmiProvider } from 'wagmi';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { wagmiConfig } from '../configs/wagmi';
-import { PulsarInitializer } from '../components/PulsarInitializer';
-
-const queryClient = new QueryClient();
-
-export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <body>
-        <WagmiProvider config={wagmiConfig}>
-          <QueryClientProvider client={queryClient}>
-            <PulsarInitializer />
-            {children}
-          </QueryClientProvider>
-        </WagmiProvider>
-      </body>
-    </html>
-  );
+  return null;
 }
 ```
 
-With this setup, your application is now fully configured to track transactions and resume tracking across page reloads.
+Every call of `initializeTransactionsPool` starts new trackers, so do not render the initializer more than once. In development, React Strict Mode runs effects twice. The complete setup is on the **[Getting Started](https://pulsar.docs.tuwa.io/gettingStarted)** page.
 
 ---
 
-## 📖 API Reference
+## 📚 API Reference
 
-### `useInitializeTransactionsPool(params)`
-
-This is the primary hook exported by this package. Its sole purpose is to re-initialize the transaction store on component mount.
-
-#### **Parameters**
-
-The hook accepts a single object with the following properties:
-
-- `initializeTransactionsPool: () => Promise<void>`: **(Required)** The initialization function obtained from your Pulsar store.
-- `onError?: (error: Error) => void`: **(Optional)** A callback function to handle any errors that occur during initialization. If not provided, errors will be logged to the console.
-
----
-
-## 🤝 Contributing & Support
-
-Contributions are welcome! Please read our main **[Contribution Guidelines](https://github.com/TuwaIO/workflows/blob/main/CONTRIBUTING.md)**.
-
-If you find this library useful, please consider supporting its development. Every contribution helps!
-
-[**➡️ View Support Options**](https://github.com/TuwaIO/workflows/blob/main/Donation.md)
+Every export, with signatures and types generated from the source, is documented at **[pulsar.docs.tuwa.io/packages/pulsar-react](https://pulsar.docs.tuwa.io/packages/pulsar-react)**.
 
 ## 📄 License
 
-This project is licensed under the **Apache-2.0 License** - see the [LICENSE](./LICENSE) file for details.
+Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-react/LICENSE) file for details.

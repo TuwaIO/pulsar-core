@@ -1,5 +1,5 @@
 /**
- * @file This file contains a selector utility for generating a block explorer URL for a given EVM transaction.
+ * @file Builds the explorer URL of an EVM transaction.
  */
 
 import { OrbitAdapter } from '@tuwaio/orbit-core';
@@ -9,18 +9,17 @@ import { Chain } from 'viem';
 import { gnosisSafeLinksHelper } from './safeConstants';
 
 /**
- * Generates a URL to a block explorer or Safe UI for a given transaction.
- * It handles different URL structures for standard EVM transactions, Safe multi-sig, and ERC-4337 UserOperations.
- * Both standard transactions and ERC-4337 UserOperations link to the native block explorer (e.g., Etherscan).
+ * Builds the URL of a transaction page:
+ * - Safe transactions link to the transaction in the Safe web app ({@link gnosisSafeLinksHelper}).
+ * - Other transactions link to `<explorer>/tx/<hash>` on the default block explorer of the chain in `chains`, where
+ *   `<hash>` is `replacedTxHash`, else `hash`, else `txKey`. Before an ERC-4337 UserOperation is bundled, this is the
+ *   `userOpHash`, which block explorers do not know.
  *
- * @template T - The transaction type, extending the base `Transaction`.
- *
- * @param {object} params - The parameters for the selection.
- * @param {Chain[]} params.chains - An array of supported chain objects, typically from `viem/chains`.
- * @param {T} params.tx - The transaction object for which to generate the link.
- *
- * @returns {string} The full URL to the transaction on the corresponding block explorer or Safe app,
- * or an empty string if the transaction or required chain configuration is not found.
+ * @template T - The application transaction type.
+ * @param params - The chains and the transaction.
+ * @param params.chains - The viem chains of the app.
+ * @param params.tx - The transaction.
+ * @returns The URL, or an empty string when the chain or its explorer is not configured.
  */
 export const selectEvmTxExplorerLink = <T extends Transaction>({
   chains,

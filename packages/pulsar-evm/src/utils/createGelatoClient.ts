@@ -1,44 +1,39 @@
 /**
- * @file This file contains a utility function for creating a cached viem HTTP transport
- * client configured for the Gelato Relay API.
+ * @file Creates a cached viem HTTP transport for the Gelato Relay RPC API.
  */
 
 import { http, HttpTransportConfig, Transport } from 'viem';
 
 /**
- * Configuration options for creating a Gelato API client.
+ * The configuration of {@link createGelatoClient}.
  *
- * @property {string} apiKey - The Gelato API key used for authentication.
- * @property {number} [timeout] - Optional custom HTTP timeout in milliseconds. Defaults to 15000ms.
- * @property {string} [baseUrl] - Optional custom base URL for the Gelato API. Defaults to `https://api.gelato.cloud/rpc`.
- * @property {HttpTransportConfig} [httpTransportConfig] - Optional additional viem HTTP transport configuration overrides.
+ * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` instead.
  */
 export type GelatoClientConfig = {
+  /** The Gelato API key, sent as a `Bearer` token. */
   apiKey: string;
+  /** HTTP timeout in milliseconds. Defaults to 15000. */
   timeout?: number;
+  /** The base URL of the Gelato API; `/rpc` is appended. Defaults to `https://api.gelato.cloud`. */
   baseUrl?: string;
+  /** Additional options for viem's `http` transport. Its `timeout` overrides `timeout`. */
   httpTransportConfig?: HttpTransportConfig;
 };
 
-/**
- * In-memory cache for Gelato transport instances, keyed by `apiKey:baseUrl`.
- * Prevents creating duplicate transport instances for the same API key and endpoint.
- */
+/** In-memory cache of Gelato transports, keyed by `apiKey:baseUrl`. */
 const gelatoClientCache = new Map<string, ReturnType<Transport>>();
 
 /**
- * Creates or retrieves a cached viem HTTP transport client configured for the Gelato Relay API.
+ * Creates a viem HTTP transport for `<baseUrl>/rpc` of the Gelato Relay API, authenticated with `apiKey`. The default
+ * timeout is 15 s because Gelato's synchronous relay methods can take up to 10 s.
  *
- * The client is cached by a composite key of `apiKey` and `baseUrl` to avoid
- * creating redundant transport instances for identical configurations.
+ * Side effects: the transport is cached in memory by `apiKey` and `baseUrl` until the page is reloaded; later calls
+ * with the same pair return the cached transport and ignore the other options. Creating it sends no request.
  *
- * The default HTTP timeout is set to 15 seconds (instead of viem's default) because
- * Gelato's synchronous relay methods may take up to 10 seconds on the server side,
- * and the client should not time out before the server does.
- *
- * @deprecated Gelato relay is deprecated. Use TransactionTracker.ERC4337 and createBundlerRpcClient instead.
- * @param {GelatoClientConfig} parameters - The configuration for the Gelato client.
- * @returns {ReturnType<Transport>} A viem transport instance configured for the Gelato API.
+ * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` and `createBundlerRpcClient` from
+ * `@tuwaio/orbit-evm` instead.
+ * @param parameters - The API key and transport options.
+ * @returns The transport; use its `request` method to call the Gelato RPC API.
  */
 export const createGelatoClient = (parameters: GelatoClientConfig): ReturnType<Transport> => {
   const { apiKey, baseUrl, timeout } = parameters;

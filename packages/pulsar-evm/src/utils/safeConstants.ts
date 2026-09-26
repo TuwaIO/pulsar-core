@@ -1,6 +1,6 @@
 /**
- * @file This file contains constants related to Safe (formerly Gnosis Safe) configuration,
- * including SDK options, web app URLs, and transaction service API endpoints for various chains.
+ * @file Safe (formerly Gnosis Safe) constants: Safe Apps SDK options, Safe web app URLs and Safe Transaction Service
+ * endpoints by chain.
  */
 
 import {
@@ -22,21 +22,19 @@ import {
 } from 'viem/chains';
 
 /**
- * Configuration options for the Safe Apps SDK.
- * This is typically used when integrating with the Safe environment.
+ * Options for the Safe Apps SDK (`@safe-global/safe-apps-sdk`), for apps that run inside the Safe web app. Pulsar does
+ * not use them itself.
  */
 export const safeSdkOptions = {
-  // A list of allowed domains to interact with the Safe Apps SDK.
+  /** Domains of Safe web apps the SDK accepts messages from. */
   allowedDomains: [/gnosis-safe.io$/, /app.safe.global$/, /metissafe.tech$/],
-  // A flag to enable or disable debug logging for the SDK.
+  /** Whether the SDK logs debug messages. */
   debug: false,
 };
 
 /**
- * A mapping of chain IDs to their corresponding Safe web application URL prefixes.
- * Used by selectors like `selectTxExplorerLink` to build correct links for Safe transactions.
- * The prefixes (e.g., 'eth:', 'gor:') are part of the Safe URL scheme.
- * @type {Record<number, string>}
+ * Safe web app URL prefixes by chain ID, such as `https://app.safe.global/eth:`. The Safe address follows the prefix.
+ * Used by {@link selectEvmTxExplorerLink} to link Safe transactions.
  */
 export const gnosisSafeLinksHelper: Record<number, string> = {
   [mainnet.id]: 'https://app.safe.global/eth:',
@@ -57,9 +55,8 @@ export const gnosisSafeLinksHelper: Record<number, string> = {
 };
 
 /**
- * A comprehensive mapping of chain IDs to their corresponding Safe Transaction Service API endpoints.
- * This is used by the `safeTracker` to fetch the status of multisig transactions from the correct service.
- * @type {Record<number, string>}
+ * Safe Transaction Service API base URLs by chain ID. {@link safeFetcher} uses them; chains that are not listed cannot be
+ * tracked with the Safe tracker.
  */
 export const SafeTransactionServiceUrls: Record<number, string> = {
   [mainnet.id]: 'https://safe-transaction-mainnet.safe.global/api/v1',

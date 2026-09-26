@@ -1,36 +1,39 @@
 /**
- * @file This file contains selector functions for deriving state from the transaction tracking store.
- * Selectors help abstract the state's shape and provide efficient, memoized access to computed data.
+ * @file Selectors that derive lists of transactions from a transaction pool. They are plain functions: each call
+ * returns a new array, so memoize the result (or compare it shallowly) when using it in a React selector.
  */
 
 import { Transaction, TransactionPool } from '../types';
 
 /**
- * Selects all transactions from the pool and sorts them by their creation timestamp in ascending order.
- * @template T - The transaction type.
- * @param {TransactionPool<T>} transactionsPool - The entire transaction pool from the store.
- * @returns {T[]} An array of all transactions, sorted chronologically.
+ * Returns every transaction of the pool, oldest first (by `localTimestamp`).
+ *
+ * @template T - The application transaction type.
+ * @param transactionsPool - The transaction pool of the store.
+ * @returns A new array of all transactions, sorted chronologically.
  */
 export const selectAllTransactions = <T extends Transaction>(transactionsPool: TransactionPool<T>): T[] => {
   return Object.values(transactionsPool).sort((a, b) => Number(a.localTimestamp) - Number(b.localTimestamp));
 };
 
 /**
- * Selects all transactions that are currently in a pending state, sorted chronologically.
- * @template T - The transaction type.
- * @param {TransactionPool<T>} transactionsPool - The entire transaction pool from the store.
- * @returns {T[]} An array of pending transactions.
+ * Returns the transactions with `pending: true`, oldest first.
+ *
+ * @template T - The application transaction type.
+ * @param transactionsPool - The transaction pool of the store.
+ * @returns A new array of pending transactions, sorted chronologically.
  */
 export const selectPendingTransactions = <T extends Transaction>(transactionsPool: TransactionPool<T>): T[] => {
   return selectAllTransactions(transactionsPool).filter((tx) => tx.pending);
 };
 
 /**
- * Selects a single transaction from the pool by its unique key (`txKey`).
- * @template T - The transaction type.
- * @param {TransactionPool<T>} transactionsPool - The entire transaction pool from the store.
- * @param {string} key - The `txKey` of the transaction to retrieve.
- * @returns {T | undefined} The transaction object if found, otherwise undefined.
+ * Returns the transaction stored under a `txKey`.
+ *
+ * @template T - The application transaction type.
+ * @param transactionsPool - The transaction pool of the store.
+ * @param key - The `txKey` of the transaction.
+ * @returns The transaction, or `undefined` if the pool has no such key.
  */
 export const selectTxByKey = <T extends Transaction>(
   transactionsPool: TransactionPool<T>,
@@ -40,11 +43,12 @@ export const selectTxByKey = <T extends Transaction>(
 };
 
 /**
- * Selects all transactions initiated by a specific wallet address, sorted chronologically.
- * @template T - The transaction type.
- * @param {TransactionPool<T>} transactionsPool - The entire transaction pool from the store.
- * @param {string} from - The wallet address (`from` address) to filter transactions by.
- * @returns {T[]} An array of transactions associated with the given wallet.
+ * Returns the transactions sent by a wallet, oldest first. Addresses are compared case-insensitively.
+ *
+ * @template T - The application transaction type.
+ * @param transactionsPool - The transaction pool of the store.
+ * @param from - The wallet address to match against the `from` field.
+ * @returns A new array of the wallet's transactions, sorted chronologically.
  */
 export const selectAllTransactionsByActiveWallet = <T extends Transaction>(
   transactionsPool: TransactionPool<T>,
@@ -55,11 +59,12 @@ export const selectAllTransactionsByActiveWallet = <T extends Transaction>(
 };
 
 /**
- * Selects all pending transactions for a specific wallet address, sorted chronologically.
- * @template T - The transaction type.
- * @param {TransactionPool<T>} transactionsPool - The entire transaction pool from the store.
- * @param {string} from - The wallet address (`from` address) to filter transactions by.
- * @returns {T[]} An array of pending transactions for the given wallet.
+ * Returns the pending transactions sent by a wallet, oldest first. Addresses are compared case-insensitively.
+ *
+ * @template T - The application transaction type.
+ * @param transactionsPool - The transaction pool of the store.
+ * @param from - The wallet address to match against the `from` field.
+ * @returns A new array of the wallet's pending transactions, sorted chronologically.
  */
 export const selectPendingTransactionsByActiveWallet = <T extends Transaction>(
   transactionsPool: TransactionPool<T>,

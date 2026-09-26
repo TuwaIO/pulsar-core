@@ -1,17 +1,17 @@
 /**
- * @file This file contains a utility to verify the connected Solana chain.
+ * @file Compares the cluster of a transaction with the cluster of the connected wallet.
  */
 
 import { SolanaChainMismatchError } from '../errors';
 
 /**
- * Checks if the wallet's current chain matches the required chain for a transaction.
- * This function compares the `chain` property from the Wallet Standard account object
- * with the required chain identifier (e.g., 'solana:mainnet').
+ * Checks that two cluster identifiers are equal. The comparison is exact, so pass both in the same format: the Solana
+ * adapter removes a `solana:` prefix from `desiredChainID` and from the cluster saved for the connection before calling
+ * it, so `devnet` and `solana:devnet` match there.
  *
- * @param {string} requiredChain - The chain identifier that the transaction requires.
- * @param {string} currentChain - The chain identifier the wallet is currently connected to.
- * @throws {SolanaChainMismatchError} If the connected chain does not match the required chain.
+ * @param requiredChain - The cluster the transaction requires.
+ * @param currentChain - The cluster the wallet is connected to.
+ * @throws {@link SolanaChainMismatchError} when they differ.
  */
 export const checkSolanaChain = (requiredChain: string, currentChain: string): void => {
   if (currentChain !== requiredChain) {

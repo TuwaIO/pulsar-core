@@ -1,5 +1,5 @@
 /**
- * @file This file contains a utility function for canceling a pending EVM transaction.
+ * @file Cancels a pending EVM transaction by replacing it with a zero-value transaction.
  */
 
 import { OrbitAdapter } from '@tuwaio/orbit-core';
@@ -12,38 +12,25 @@ import { Hex } from 'viem';
 const GAS_INCREASE_PERCENTAGE = 1.15;
 
 /**
- * Cancels a pending EVM transaction by sending a new, zero-value transaction to oneself
- * with the same nonce but higher gas fees. This effectively replaces the original transaction.
+ * Cancels a pending EVM transaction: asks the connected wallet to send a zero-value transaction to its own address with
+ * the same nonce and both EIP-1559 fees raised by 15%. When it is mined, the tracker of the original transaction
+ * reports it as `Replaced`; the cancellation transaction itself is not added to the pool.
  *
- * @template T - The transaction type, which must be a valid EVM transaction.
+ * Side effects: opens a wallet prompt and broadcasts a transaction.
  *
- * @param {object} params - The parameters required to cancel the transaction.
- * @param {Config} params.config - The wagmi configuration object.
- * @param {T} params.tx - The original transaction object to be canceled. It must contain the nonce and gas fee fields.
- *
- * @returns {Promise<Hex>} A promise that resolves with the hash of the new cancellation transaction.
- *
- * @throws {Error} Throws an error if:
- * - The transaction is not an EVM transaction.
- * - The transaction is missing required fields (`nonce`, `maxFeePerGas`, etc.).
- * - The wagmi config is not provided.
- * - No connected account is found.
- * - The `sendTransaction` call fails.
+ * @template T - The application transaction type.
+ * @param params - The wagmi config and the transaction.
+ * @param params.config - The wagmi config of the app.
+ * @param params.tx - The pending transaction. It must be an EVM transaction with `nonce`, `maxFeePerGas` and
+ * `maxPriorityFeePerGas` (set by the EVM tracker once the transaction details are fetched).
+ * @returns The hash of the cancellation transaction.
+ * @throws `Error` when the transaction is not an EVM transaction or lacks the nonce and fee fields, and
+ * `Error('Failed to cancel transaction: …')` (with the original error as `cause`) when no account is connected or the
+ * wallet rejects or fails to send the transaction.
  *
  * @example
  * ```ts
- * const handleCancel = async (stuckTransaction) => {
- * try {
- * const cancelTxHash = await cancelTxAction({
- * config: wagmiConfig,
- * tx: stuckTransaction,
- * });
- * console.log('Cancellation transaction sent with hash:', cancelTxHash);
- * // You should now update your state to track this new transaction.
- * } catch (error) {
- * console.error('Failed to cancel transaction:', error);
- * }
- * };
+ * const hash = await cancelTxAction({ config: wagmiConfig, tx: pendingTx });
  * ```
  */
 export async function cancelTxAction<T extends Transaction>({ config, tx }: { config: Config; tx: T }): Promise<Hex> {

@@ -1,16 +1,16 @@
 /**
- * @file This file implements transaction tracking for ERC-4337 UserOperations.
- * It uses a polling mechanism against a Bundler RPC endpoint (e.g., Pimlico)
- * to check the status of a UserOperation via `eth_getUserOperationReceipt`.
+ * @file The tracker for ERC-4337 UserOperations. It polls `eth_getUserOperationReceipt` on a bundler RPC (a custom
+ * `bundlerUrl` or Pimlico) and, once the UserOperation is bundled, tracks the bundle transaction on-chain.
  */
 
 import { normalizeError } from '@tuwaio/orbit-core';
 import { createBundlerRpcClient } from '@tuwaio/orbit-evm';
 import {
+  createTxUpdater,
   EvmTransaction,
   initializePollingTracker,
   ITxTrackingStore,
-  PollingTrackerConfig,
+  PollingFetcherParams,
   TrackerCallbacks,
   Transaction,
   TransactionStatus,
@@ -24,39 +24,56 @@ import { getBlock } from 'viem/actions';
 import { evmTracker } from './evmTracker';
 
 /**
- * The receipt returned by `getUserOperationReceipt`.
+ * The UserOperation receipt returned by viem's `getUserOperationReceipt`.
  */
 export type Erc4337UserOpReceipt = GetUserOperationReceiptReturnType;
 
 /**
- * Result structure produced by `erc4337Fetcher` on each polling cycle.
+ * The result {@link erc4337Fetcher} reports on each polling tick.
  */
 export type Erc4337FetchResult = {
+  /** The UserOperation receipt, or `null` while it is not available. */
   receipt: Erc4337UserOpReceipt | null;
+  /** `pending` while the UserOperation is not bundled, then `success` or `failed`. */
   status: 'pending' | 'success' | 'failed';
+  /** The hash of the bundle transaction that included the UserOperation, once known. */
   hash?: Hex;
+  /** The failure reason: the revert reason of the receipt, or a validation message. */
   reason?: string;
 };
 
-type Erc4337FetcherParams<T extends Transaction> = Parameters<
-  PollingTrackerConfig<Erc4337FetchResult, T>['fetcher']
->[0];
+/**
+ * The transaction fields {@link erc4337Fetcher} reads: the `userOpHash` as `txKey`, the numeric `chainId`, and either a
+ * custom `bundlerUrl` or a `pimlicoApiKey` (without both, the public Pimlico endpoint is used).
+ */
+export type Erc4337FetcherTx = Pick<Transaction, 'txKey' | 'chainId'> &
+  Pick<EvmTransaction, 'pimlicoApiKey' | 'bundlerUrl'>;
 
 /**
- * Low-level fetcher for ERC-4337 UserOperation status.
- * Queries `eth_getUserOperationReceipt` on the configured Bundler client.
+ * A fetcher for `initializePollingTracker` from `@tuwaio/pulsar-core` that checks a UserOperation once through
+ * `eth_getUserOperationReceipt`.
  *
- * @param params - The fetcher parameters provided by the polling tracker.
+ * The bundler client comes from `createBundlerRpcClient` of `@tuwaio/orbit-evm`, which caches it in memory and
+ * contacts `tx.bundlerUrl`, else `api.pimlico.io` with `tx.pimlicoApiKey`, else the rate-limited `public.pimlico.io`.
+ *
+ * - Invalid `chainId`: stops polling (keeping the transaction) and calls `onFailure` with a reason.
+ * - Receipt not available yet: calls `onIntervalTick` with `status: 'pending'`.
+ * - Receipt with `success: true`: stops polling (keeping the transaction) and calls `onSuccess` with the bundle `hash`.
+ * - Receipt with `success: false`: stops polling (keeping the transaction) and calls `onFailure` with the revert reason.
+ * - Any other error is rethrown, so the polling tracker counts it as a failed attempt.
+ *
+ * @template T - The tracked transaction type.
+ * @param params - The fetcher parameters provided by `initializePollingTracker`.
+ * @returns A promise that resolves when the check is done.
  */
-export async function erc4337Fetcher<T extends Transaction>({
+export async function erc4337Fetcher<T extends Erc4337FetcherTx>({
   tx,
   stopPolling,
   onSuccess,
   onFailure,
   onIntervalTick,
-}: Erc4337FetcherParams<T>): Promise<void> {
-  const evmTx = tx as unknown as EvmTransaction;
-  const rawChainId = evmTx.chainId;
+}: PollingFetcherParams<Erc4337FetchResult, T>): Promise<void> {
+  const rawChainId = tx.chainId;
   const chainId = typeof rawChainId === 'number' ? rawChainId : parseInt(String(rawChainId), 10);
 
   if (!chainId || Number.isNaN(chainId)) {
@@ -71,15 +88,15 @@ export async function erc4337Fetcher<T extends Transaction>({
 
   const client = createBundlerRpcClient({
     chainId,
-    apiKey: evmTx.pimlicoApiKey,
-    bundlerUrl: evmTx.bundlerUrl,
+    apiKey: tx.pimlicoApiKey,
+    bundlerUrl: tx.bundlerUrl,
   });
 
   let receipt: Erc4337UserOpReceipt | null;
 
   try {
     receipt = await client.getUserOperationReceipt({
-      hash: evmTx.txKey as Hex,
+      hash: tx.txKey as Hex,
     });
   } catch (err: unknown) {
     const error = err as { name?: string; message?: string; shortMessage?: string; details?: string };
@@ -133,24 +150,60 @@ export async function erc4337Fetcher<T extends Transaction>({
 }
 
 /**
- * Configuration options for the low-level ERC-4337 tracker.
+ * The configuration of {@link erc4337Tracker}.
+ *
+ * @template T - The tracked transaction type.
  */
-export type Erc4337TrackerConfig<T extends Transaction> = {
-  tx: T & Pick<Transaction, 'txKey' | 'pending'>;
+export type Erc4337TrackerConfig<T extends Erc4337FetcherTx & Pick<Transaction, 'pending'>> = {
+  /** The UserOperation to track (see {@link Erc4337FetcherTx}); polling starts only if `pending` is `true`. */
+  tx: T;
+  /**
+   * Called when the UserOperation succeeded.
+   * @param result - The result; `hash` is the bundle transaction hash.
+   */
   onSuccess: (result: Erc4337FetchResult) => void;
+  /**
+   * Called when the UserOperation reverted or the chain ID is invalid, and without arguments after `maxRetries`
+   * consecutive failed attempts.
+   * @param result - The result with the failure `reason`, if any.
+   */
   onFailure: (result?: Erc4337FetchResult) => void;
+  /**
+   * Called on every tick while the UserOperation is not bundled.
+   * @param result - The pending result.
+   */
   onIntervalTick?: (result: Erc4337FetchResult) => void;
+  /**
+   * Called when polling stops after `maxRetries` consecutive failed attempts.
+   * @param txKey - The `userOpHash`.
+   */
   removeTxFromPool?: (txKey: string) => void;
+  /** The delay before each attempt, in milliseconds. Defaults to 2000. */
   pollingInterval?: number;
+  /** The number of consecutive failed attempts after which polling stops. Defaults to 60. */
   maxRetries?: number;
 };
 
 /**
- * Initializes a low-level polling tracker for ERC-4337 UserOperations.
+ * Starts polling a UserOperation in the background with {@link erc4337Fetcher}, without a store: every 2 s by default,
+ * giving up after 60 consecutive failed attempts. It only follows the bundler; it does not wait for block
+ * confirmations of the bundle transaction (pass `onSuccess`'s `hash` to {@link evmTracker} for that).
  *
- * @param config - The tracker configuration options.
+ * @template T - The tracked transaction type.
+ * @param config - The UserOperation and the callbacks.
+ *
+ * @example
+ * ```ts
+ * erc4337Tracker({
+ *   tx: { txKey: userOpHash, chainId: 11155111, pimlicoApiKey, pending: true },
+ *   onSuccess: ({ hash }) => console.log('Bundled in', hash),
+ *   onFailure: (result) => console.error('UserOperation failed', result?.reason),
+ * });
+ * ```
  */
-export function erc4337Tracker<T extends Transaction>(config: Erc4337TrackerConfig<T>) {
+export function erc4337Tracker<T extends Erc4337FetcherTx & Pick<Transaction, 'pending'>>(
+  config: Erc4337TrackerConfig<T>,
+) {
   return initializePollingTracker<Erc4337FetchResult, T>({
     ...config,
     fetcher: erc4337Fetcher,
@@ -160,29 +213,37 @@ export function erc4337Tracker<T extends Transaction>(config: Erc4337TrackerConf
 }
 
 /**
- * Parameters for the store-connected ERC-4337 tracker.
+ * The parameters of {@link erc4337TrackerForStore}: the transaction, an optional wagmi config, the store members used
+ * by trackers and the callbacks.
+ *
+ * @template T - The application transaction type.
  */
 export type Erc4337TrackerForStoreParams<T extends Transaction> = Pick<
   ITxTrackingStore<T>,
   'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
 > & {
+  /** The transaction to track; `txKey` is the `userOpHash`. */
   tx: T;
+  /** The wagmi config, used for the on-chain stage. Without it, the transaction succeeds as soon as it is bundled. */
   config?: Config;
 } & TrackerCallbacks<T>;
 
 /**
- * High-level two-stage tracker for ERC-4337 UserOperations integrated with the Pulsar store.
+ * Tracks an ERC-4337 UserOperation of the Pulsar store in two stages and writes the results to the store:
  *
- * - Stage 1 (Bundler Mempool): Polls `eth_getUserOperationReceipt` against the Bundler RPC.
- *   As soon as the UserOp is bundled on-chain, writes `tx.hash` to the store and stops Bundler polling
- *   without evicting the transaction from the pool.
- * - Stage 2 (EVM On-Chain Finality): Hands off tracking to `evmTracker` for on-chain block confirmations,
- *   block timestamp resolution, and final terminal status update.
+ * 1. Bundler: polls {@link erc4337Fetcher} every 2 s (up to 60 consecutive failed attempts). When the UserOperation
+ *    is bundled, writes the bundle transaction `hash`. A reverted UserOperation, or 60 failed attempts, marks the
+ *    transaction `Failed`.
+ * 2. On-chain: runs {@link evmTracker} for the bundle transaction and writes the details, confirmations and the final
+ *    `Success`, `Failed` or `Replaced` status. Without `config`, the transaction is marked `Success` as soon as it is
+ *    bundled.
  *
- * Supports seamless session restoration across page reloads: if `tx.hash` is already populated,
- * Stage 1 is bypassed and tracking resumes directly at Stage 2.
+ * If `tx.hash` is already set (tracking resumed after a reload), stage 1 is skipped. The transaction is never removed
+ * from the pool. The callbacks receive the transaction with every update written by the tracker.
  *
- * @param params - The store actions, Wagmi config, and transaction object to track.
+ * @template T - The application transaction type.
+ * @param params - The transaction, the wagmi config, the store members and the callbacks.
+ * @returns A promise that resolves once stage 1 has started, or when stage 2 has finished if it started directly.
  */
 export async function erc4337TrackerForStore<T extends Transaction>({
   tx,
@@ -193,6 +254,8 @@ export async function erc4337TrackerForStore<T extends Transaction>({
   onError,
   onReplaced,
 }: Erc4337TrackerForStoreParams<T>): Promise<void> {
+  const updateTx = createTxUpdater({ tx, transactionsPool, updateTxParams });
+
   // Helper to execute Stage 2 EVM on-chain tracking once the on-chain hash is known
   const runOnChainStage = async (txHash: Hex): Promise<void> => {
     if (config) {
@@ -204,7 +267,7 @@ export async function erc4337TrackerForStore<T extends Transaction>({
         },
         config,
         onTxDetailsFetched: (txDetails) => {
-          updateTxParams(tx.txKey, {
+          updateTx({
             to: txDetails.to ?? undefined,
             input: txDetails.input,
             value: txDetails.value?.toString(),
@@ -214,14 +277,14 @@ export async function erc4337TrackerForStore<T extends Transaction>({
           });
         },
         onConfirmationsUpdate: (confirmations) => {
-          updateTxParams(tx.txKey, { confirmations });
+          updateTx({ confirmations });
         },
         onSuccess: async (_txDetails, receipt, client) => {
           const block = await getBlock(client, { blockNumber: receipt.blockNumber });
           const timestamp = Number(block.timestamp);
           const isSuccess = receipt.status === 'success';
 
-          updateTxParams(tx.txKey, {
+          const updatedTx = updateTx({
             status: isSuccess ? TransactionStatus.Success : TransactionStatus.Failed,
             isError: !isSuccess,
             pending: false,
@@ -229,7 +292,6 @@ export async function erc4337TrackerForStore<T extends Transaction>({
             finishedTimestamp: timestamp,
           });
 
-          const updatedTx = transactionsPool[tx.txKey];
           if (isSuccess && onSuccess && updatedTx) {
             onSuccess(updatedTx);
           }
@@ -238,7 +300,7 @@ export async function erc4337TrackerForStore<T extends Transaction>({
           }
         },
         onFailure: (error) => {
-          updateTxParams(tx.txKey, {
+          const updatedTx = updateTx({
             status: TransactionStatus.Failed,
             pending: false,
             isError: true,
@@ -247,19 +309,17 @@ export async function erc4337TrackerForStore<T extends Transaction>({
             finishedTimestamp: dayjs().unix(),
           });
 
-          const updatedTx = transactionsPool[tx.txKey];
           if (onError && updatedTx) {
             onError(error, updatedTx);
           }
         },
         onReplaced: (replacement) => {
-          updateTxParams(tx.txKey, {
+          const updatedTx = updateTx({
             status: TransactionStatus.Replaced,
             replacedTxHash: replacement.transaction.hash,
             pending: false,
           });
 
-          const updatedTx = transactionsPool[tx.txKey];
           if (onReplaced && updatedTx) {
             onReplaced(updatedTx, tx);
           }
@@ -268,7 +328,7 @@ export async function erc4337TrackerForStore<T extends Transaction>({
     }
 
     // Fallback if no Wagmi config is provided (standalone mode)
-    updateTxParams(tx.txKey, {
+    const updatedTx = updateTx({
       status: TransactionStatus.Success,
       pending: false,
       isError: false,
@@ -276,7 +336,6 @@ export async function erc4337TrackerForStore<T extends Transaction>({
       finishedTimestamp: dayjs().unix(),
     });
 
-    const updatedTx = transactionsPool[tx.txKey];
     if (onSuccess && updatedTx) {
       onSuccess(updatedTx);
     }
@@ -300,14 +359,13 @@ export async function erc4337TrackerForStore<T extends Transaction>({
       const hash = response.hash;
 
       if (!hash) {
-        updateTxParams(tx.txKey, {
+        const updatedTx = updateTx({
           status: TransactionStatus.Success,
           pending: false,
           isError: false,
           finishedTimestamp: dayjs().unix(),
         });
 
-        const updatedTx = transactionsPool[tx.txKey];
         if (onSuccess && updatedTx) {
           onSuccess(updatedTx);
         }
@@ -315,14 +373,14 @@ export async function erc4337TrackerForStore<T extends Transaction>({
       }
 
       // Immediately commit the on-chain hash to the store so the UI displays it
-      updateTxParams(tx.txKey, { hash });
+      updateTx({ hash });
 
       // Hand off to Stage 2 (EVM On-Chain Confirmation & Finality)
       await runOnChainStage(hash);
     },
     onIntervalTick: (response) => {
       if (response.hash) {
-        updateTxParams(tx.txKey, {
+        updateTx({
           hash: response.hash,
         });
       }
@@ -332,7 +390,7 @@ export async function erc4337TrackerForStore<T extends Transaction>({
       const hash = response?.hash;
       const err = new Error(errorMessage);
 
-      updateTxParams(tx.txKey, {
+      const updatedTx = updateTx({
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
@@ -341,7 +399,6 @@ export async function erc4337TrackerForStore<T extends Transaction>({
         finishedTimestamp: dayjs().unix(),
       });
 
-      const updatedTx = transactionsPool[tx.txKey];
       if (onError && updatedTx) {
         onError(err, updatedTx);
       }

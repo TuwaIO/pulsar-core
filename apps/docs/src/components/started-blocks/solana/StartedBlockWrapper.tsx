@@ -16,8 +16,10 @@ export function StartedBlockWrapper({
       <div>
         <h3 className="mb-2 text-xl font-semibold text-[var(--tuwa-text-primary)]">Step 1: Wallet Connector Setup</h3>
         <p className="text-[var(--tuwa-text-secondary)]">
-          The <b>Pulsar</b> engine works with any @solana/kit setup. This guide uses{' '}
-          <StyledLink href={link}>{title}</StyledLink> as an example.
+          The <b>Pulsar</b> Solana adapter reads the wallet connection saved by Satellite Connect and signs with any
+          Wallet Standard wallet. This guide uses <StyledLink href={link}>{title}</StyledLink> (built on Satellite
+          Connect) to connect the wallet; set it up first. The code below expects your RPC URLs by cluster to be
+          exported as `solanaRPCUrls` from `@/configs/appConfig`.
         </p>
         <CombineSteps />
       </div>

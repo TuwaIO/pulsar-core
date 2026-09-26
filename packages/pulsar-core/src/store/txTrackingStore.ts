@@ -1,7 +1,6 @@
 /**
- * @file This file is the nucleus of the Pulsar store, orchestrating transaction handling, state management,
- * and communication with blockchain adapters. It utilizes Zustand for state management, Immer for safe,
- * immutable updates, and a persistence middleware to maintain state across user sessions.
+ * @file The Pulsar transaction store: the core slice, the orchestration of `executeTxAction` through chain adapters,
+ * and persistence to `localStorage`.
  */
 
 import { normalizeError, selectAdapterByKey, setChainId } from '@tuwaio/orbit-core';
@@ -15,18 +14,38 @@ import { validateInitialTransactionParams, validateTransaction } from '../utils/
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 
 /**
- * Creates the main Pulsar store for transaction tracking.
+ * Creates the Pulsar transaction store: a vanilla Zustand store (use it from any framework, or bind it to React with
+ * `createBoundedUseStore`) that runs transactions through chain adapters and tracks them in the background.
  *
- * This function configures a Zustand store enhanced with persistence. It combines the core transaction management
- * slice with a powerful orchestration logic that leverages chain-specific adapters to handle the entire
- * lifecycle of a transaction—from initiation and chain validation to execution and background status tracking.
+ * Side effects: the state is saved with Zustand's `persist` middleware under the key `name`, by default in
+ * `localStorage`, on every change: `transactionsPool`, `lastAddedTxKey` and `unsyncedTxKeys`. `initialTx` is neither
+ * saved nor restored (pass your own `partialize` and `merge` to change that). In the browser the saved state is
+ * restored synchronously when the store is created. Where
+ * `localStorage` is not available (server rendering), nothing is read or written and Zustand logs a warning on
+ * updates. Creating the store does not start any tracker: call `initializeTransactionsPool` once on the client.
  *
- * @template T The specific transaction type, extending the base `Transaction`.
+ * @template T - The application transaction type.
+ * @param params - The adapters, the store options and the options of Zustand's `persist` middleware.
+ * @param params.adapter - A chain adapter, or an array of adapters, such as `pulsarEvmAdapter` from
+ * `@tuwaio/pulsar-evm` or `pulsarSolanaAdapter` from `@tuwaio/pulsar-solana`.
+ * @param params.maxTransactions - Maximum number of transactions in the pool. Defaults to 50.
+ * @param params.onRemoteCreate - Remote sync callback (see `SyncCallbacks`).
+ * @param params.gelatoApiKey - Deprecated Gelato API key, passed to the trackers.
+ * @param params.beforeTxProcess - Global preflight callback (see `BeforeTxProcess`).
+ * @param params.abortOnTxError - Whether a `beforeTxProcess` error aborts the transaction. Defaults to `true`.
+ * @param params.name - The storage key. Required by `persist`; use a different key for every store.
+ * @returns The vanilla Zustand store. `store.persist` exposes the `persist` API (for example `clearStorage()`).
  *
- * @param config Configuration object for creating the store.
- * @param config.adapter Adapter or an array of adapters for different chains or transaction types.
- * @param options Configuration for the Zustand `persist` middleware.
- * @returns A fully configured Zustand store instance.
+ * @example
+ * ```ts
+ * import { createPulsarStore } from '@tuwaio/pulsar-core';
+ * import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
+ *
+ * export const pulsarStore = createPulsarStore({
+ *   name: 'transactions-tracking-storage',
+ *   adapter: pulsarEvmAdapter(wagmiConfig, appChains),
+ * });
+ * ```
  */
 export function createPulsarStore<T extends Transaction>({
   adapter,
@@ -45,10 +64,7 @@ export function createPulsarStore<T extends Transaction>({
 
         getAdapter: () => adapter,
 
-        /**
-         * Initializes trackers for all pending transactions upon store creation.
-         * This is crucial for resuming tracking after a page refresh or session restoration.
-         */
+        // Restarts the trackers of pending transactions, e.g. after a page reload.
         initializeTransactionsPool: async () => {
           const pendingTxs = Object.values(get().transactionsPool).filter((tx) => tx.pending);
           const validPendingTxs = pendingTxs.filter((tx) => {
@@ -141,11 +157,7 @@ export function createPulsarStore<T extends Transaction>({
           }
         },
 
-        /**
-         * The primary function to orchestrate sending and tracking a new transaction.
-         * It manages the entire lifecycle, from UI state updates and chain switching to
-         * signing, submission, and background tracker initialization.
-         */
+        // Runs a transaction from the chain check to the start of its tracker.
         executeTxAction: async ({
           defaultTracker,
           actionFunction,
@@ -290,6 +302,18 @@ export function createPulsarStore<T extends Transaction>({
         },
       }),
       {
+        // `initialTx` describes the flow running in this page (its `actionFunction` cannot be saved), so it is
+        // neither saved nor restored: after a reload there is no half-finished signing state.
+        partialize: (state) => {
+          const persistedState = { ...state };
+          delete persistedState.initialTx;
+          return persistedState;
+        },
+        merge: (persistedState, currentState) => ({
+          ...currentState,
+          ...(persistedState as Partial<ITxTrackingStore<T>>),
+          initialTx: currentState.initialTx,
+        }),
         ...options, // Merges user-provided persistence options.
       },
     ),

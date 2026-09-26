@@ -1,17 +1,16 @@
 /**
- * @file Defines the core types and enums specific to the @tuwaio/pulsar-solana package.
+ * @file Types of the Solana adapter.
  */
 
 import type { SolanaClusterMoniker } from '@tuwaio/orbit-solana';
 
 /**
- * Represents the simplified configuration object for the Solana adapter.
- *
- * This configuration enables both wallet-based (connected) and read-only (disconnected) modes,
- * supporting operations like transaction tracking, name/identity resolution, and more.
- *
- * @property {Partial<Record<SolanaClusterMoniker, string>>} rpcUrls - A mapping of cluster names to their respective RPC endpoints.
+ * The configuration of {@link pulsarSolanaAdapter}.
  */
 export interface SolanaAdapterConfig {
+  /**
+   * RPC URLs by cluster moniker (`mainnet`, `devnet`, `testnet`, `localnet`), used by `retryTxAction` when the
+   * transaction has no `rpcUrl`. Clusters without a URL fall back to the public mainnet-beta endpoint.
+   */
   rpcUrls: Partial<Record<SolanaClusterMoniker, string>>;
 }

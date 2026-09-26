@@ -327,7 +327,16 @@ describe('evmTrackerForStore Unit Tests - TrackerCallbacks', () => {
     });
 
     expect(onSuccess).toHaveBeenCalledTimes(1);
-    expect(onSuccess).toHaveBeenCalledWith(expect.objectContaining({ txKey: mockTxKey }));
+    // The callback receives the transaction after the terminal update, not the snapshot taken at start.
+    expect(onSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        txKey: mockTxKey,
+        status: TransactionStatus.Success,
+        pending: false,
+        isError: false,
+        nonce: mockTxDetails.nonce,
+      }),
+    );
     expect(onError).not.toHaveBeenCalled();
   });
 
@@ -382,7 +391,12 @@ describe('evmTrackerForStore Unit Tests - TrackerCallbacks', () => {
 
     expect(onReplaced).toHaveBeenCalledTimes(1);
     expect(onReplaced).toHaveBeenCalledWith(
-      expect.objectContaining({ txKey: mockTxKey }),
+      expect.objectContaining({
+        txKey: mockTxKey,
+        status: TransactionStatus.Replaced,
+        replacedTxHash: '0xnewHash',
+        pending: false,
+      }),
       expect.objectContaining({ txKey: mockTxKey }),
     );
     expect(onSuccess).not.toHaveBeenCalled();

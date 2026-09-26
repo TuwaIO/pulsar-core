@@ -2,16 +2,15 @@ import { StartedBlocks } from '../components/started-blocks/StartedBlocks';
 
 # Getting Started
 
-This guide will walk you through the essential steps to integrate the **Pulsar** engine into your existing React application.
+This guide adds **Pulsar** to a React app, step by step, for an EVM or a Solana wallet. At the end you have:
 
-By the end of this guide, you will have a fully functional system for tracking and displaying user transactions across multiple blockchain ecosystems, including:
+- a transaction store from **`@tuwaio/pulsar-core`**, saved to `localStorage`;
+- the chain adapter from **`@tuwaio/pulsar-evm`** or **`@tuwaio/pulsar-solana`**, which tracks each transaction in the background;
+- **`@tuwaio/pulsar-react`** restarting the trackers after a page reload;
+- a button that sends a contract (EVM) or program (Solana) call and tracks it until its final status.
 
-- A headless state management store powered by **`@tuwaio/pulsar-core`**.
-- EVM chain support via **`@tuwaio/pulsar-evm`**.
-- Solana support via **`@tuwaio/pulsar-solana`**.
+Pulsar validates the metadata of every transaction before anything else runs: each `title` string must be 100 characters or less, each `description` string 300 characters or less, and the JSON of `payload` 10 KB or less, without executable-like strings. Invalid metadata makes `executeTxAction` throw `PulsarTransactionValidationError`. To run your own checks before the wallet is asked to sign, pass `beforeTxProcess` to `createPulsarStore` (Step 4) or to a single `executeTxAction` call.
 
-Pulsar validates transaction metadata before wallet interaction or persistence. Transaction `title` strings are limited to 100 characters, `description` strings are limited to 300 characters, and serialized `payload` data is limited to 10KB. You can also add a `beforeTxProcess` callback in `createPulsarStore`, or override it per `executeTxAction`, to run project-specific preflight checks before any transaction starts.
-
-Let's begin.
+The guide uses Nova Connect to connect the wallet. Nova Transactions can render the tracked transactions as modals and toasts; see the [Nova UI Kit Storybook](https://stories.tuwa.io/).
 
 <StartedBlocks />

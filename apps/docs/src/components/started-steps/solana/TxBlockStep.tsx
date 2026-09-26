@@ -2,6 +2,8 @@ import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { CodeBlock, CodeHighlighter } from '@tuwaio/docs-ui';
 import { useTheme } from 'next-themes';
 
+import { PulsarInitializerStep } from '@/components/started-steps/PulsarInitializerStep';
+
 export interface TxBlockStepCodeGenerateParams {
   importLine: string;
   buttonLine: string;
@@ -10,74 +12,63 @@ export interface TxBlockStepCodeGenerateParams {
 const txBlockStepCodeGenerate = ({ importLine, buttonLine }: TxBlockStepCodeGenerateParams) => {
   return `'use client';
 
-${importLine}
-import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
 import { useWalletAccountTransactionSendingSigner } from '@solana/react';
+${importLine}
 import { useSatelliteConnectStore } from '@tuwaio/nova-connect/satellite';
 import { OrbitAdapter } from '@tuwaio/orbit-core';
 import { createSolanaClientWithCache } from '@tuwaio/orbit-solana';
-import { SolanaConnection } from '@tuwaio/satellite-solana';
-import { UiWalletAccount } from '@wallet-standard/react';
+import type { SolanaConnection } from '@tuwaio/satellite-solana';
+import type { UiWalletAccount } from '@wallet-standard/ui-core';
 
-import { TxType, usePulsarStore } from '@/hooks/txTrackingHooks';
+import { usePulsarStore } from '@/hooks/txTrackingHooks';
 import { increment } from '@/transactions/actions/increment';
 
-export const TxActionButtonIncrement = () => {
-  const initializeTransactionsPool = usePulsarStore((state) => state.initializeTransactionsPool);
+function IncrementButton({ account, cluster, rpcUrl }: { account: UiWalletAccount; cluster: string; rpcUrl: string }) {
   const executeTxAction = usePulsarStore((state) => state.executeTxAction);
-  const activeConnection = useSatelliteConnectStore((store) => store.activeConnection);
-
-  // This hook ensures that transaction tracking continues even after a page reload.
-  useInitializeTransactionsPool({ initializeTransactionsPool });
-
-  const activeWalletSolana = activeConnection as SolanaConnection;
-  const activeWalletCluster = \`\${OrbitAdapter.SOLANA}:\${activeConnection?.chainId ?? 'devnet'}\`;
-
-  const signer = useWalletAccountTransactionSendingSigner(
-    activeWalletSolana.connectedAccount as UiWalletAccount,
-    activeWalletCluster
-  );
+  const signer = useWalletAccountTransactionSendingSigner(account, \`solana:\${cluster}\`);
 
   const handleIncrement = async () => {
-    await executeTxAction({
-      actionFunction: () =>
-        increment({
-          client: createSolanaClientWithCache({ rpcUrlOrMoniker: 'devnet' }),
-          signer
-        }),
-      onSuccess: async () => {
-        console.log('Incremented');
-      },
-      beforeTxProcess: async () => {
-        await assertIncrementIsEnabled();
-      },
-      params: {
-        type: TxType.increment,
-        adapter: OrbitAdapter.SOLANA,
-        // The RPC URL must be provided for the tracker to work after a page reload
-        rpcUrl: activeConnection?.rpcURL,
-        desiredChainID: 'devnet', // The cluster name for the pre-flight check
-        title: 'Increment',
-        description: 'Incremented the counter by 1.',
-        payload: {
-          value: 0, // This would typically be dynamic data
-        }
-      },
-    });
+    try {
+      await executeTxAction({
+        actionFunction: () => increment({ client: createSolanaClientWithCache({ rpcUrlOrMoniker: rpcUrl }), signer }),
+        params: {
+          type: 'increment',
+          adapter: OrbitAdapter.SOLANA,
+          desiredChainID: cluster, // the cluster moniker of the connection, e.g. 'devnet'
+          rpcUrl, // saved with the transaction, so tracking resumes on the same RPC after a reload
+          title: ['Incrementing', 'Incremented', 'Increment failed', 'Increment replaced'],
+          description: 'Increment the counter by 1.',
+          payload: { value: 1 },
+          withTrackedModal: true, // opens the tracking modal of Nova Transactions
+        },
+        onSuccess: (tx) => console.log('Finalized in slot', tx.slot),
+      });
+    } catch (error) {
+      // Rejected signature, wrong cluster, failed preflight... Also saved in \`initialTx.error\`.
+      console.error(error);
+    }
   };
 
   return (
-    <div className="flex flex-col items-start">
+    <button type="button" onClick={handleIncrement}>
+      Increment
+    </button>
+  );
+}
+
+export const Increment = () => {
+  const activeConnection = useSatelliteConnectStore((state) => state.activeConnection) as SolanaConnection | undefined;
+
+  return (
+    <div className="flex flex-col items-start gap-4">
       ${buttonLine}
-      <div className="mt-4">
-        <button
-          type="button"
-          onClick={handleIncrement}
-          className="rounded-[var(--tuwa-rounded-corners)] bg-[var(--tuwa-bg-accent)] px-4 py-2 font-semibold text-white hover:bg-[var(--tuwa-bg-accent-hover)]"
-        >
-          Increment
-        </button>
-      </div>
+      {activeConnection?.isConnected && activeConnection.connectedAccount && (
+        <IncrementButton
+          account={activeConnection.connectedAccount}
+          cluster={String(activeConnection.chainId)}
+          rpcUrl={activeConnection.rpcURL}
+        />
+      )}
     </div>
   );
 };
@@ -89,17 +80,22 @@ export function TxBlockStep({ importLine, buttonLine }: TxBlockStepCodeGenerateP
   const codeBlock = txBlockStepCodeGenerate({ importLine, buttonLine });
 
   return (
-    <div className="mt-4">
-      <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 5: Trigger the Transaction</h3>
-      <p className="mb-2 text-[var(--tuwa-text-secondary)]">
-        Finally, create a component to trigger the transaction. When a user clicks 'Increment,' the `handleTransaction`
-        function orchestrates the entire process. It dispatches the transaction, adds it to the pool, and from this
-        point on, the <b>Pulsar</b> engine automatically handles all status updates. Metadata is validated before the
-        action starts, and a local `beforeTxProcess` overrides the global store callback for this transaction.
-      </p>
-      <CodeBlock title="Increment.tsx" titleIcons={<DocumentTextIcon />} textToCopy={codeBlock}>
-        <CodeHighlighter children={codeBlock} language="tsx" resolvedTheme={resolvedTheme ?? 'light'} />
-      </CodeBlock>
-    </div>
+    <>
+      <PulsarInitializerStep />
+      <div className="mt-4">
+        <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 6: Trigger the Transaction</h3>
+        <p className="mb-2 text-[var(--tuwa-text-secondary)]">
+          Call `executeTxAction` with the action and the metadata of the transaction. Pulsar validates the title,
+          description and payload, checks that the wallet is on the cluster in `desiredChainID` (it does not switch
+          clusters), runs `beforeTxProcess`, calls the action, adds the transaction to the pool and polls its signature
+          until it is finalized. The signer comes from `@solana/react`, for the Wallet Standard account of the Satellite
+          Connect connection. A `beforeTxProcess` passed to `executeTxAction` replaces the global one for that
+          transaction.
+        </p>
+        <CodeBlock title="Increment.tsx" titleIcons={<DocumentTextIcon />} textToCopy={codeBlock}>
+          <CodeHighlighter children={codeBlock} language="tsx" resolvedTheme={resolvedTheme ?? 'light'} />
+        </CodeBlock>
+      </div>
+    </>
   );
 }

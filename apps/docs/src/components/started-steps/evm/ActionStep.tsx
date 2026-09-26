@@ -2,64 +2,54 @@ import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { CodeBlock, CodeHighlighter } from '@tuwaio/docs-ui';
 import { useTheme } from 'next-themes';
 
-const codeBlock = `import { Config, writeContract } from '@wagmi/core';
+const codeBlock = `import { type Config, writeContract } from '@wagmi/core';
 import { sepolia } from 'viem/chains';
-import { CounterAbi, COUNTER_ADDRESS } from './';
 
-export async function increment({ wagmiConfig }: { wagmiConfig?: Config }) {
-  if (wagmiConfig) {
-    return writeContract(wagmiConfig, {
-      abi: CounterAbi, // ABI from previous step
-      address: COUNTER_ADDRESS, // Contract address (0xAe7f46914De82028eCB7E2bF97Feb3D3dDCc2BAB: sepolia testenet for example)
-      functionName: 'increment',
-      args: [],
-      chainId: sepolia.id,
-    });
-  }
-  return undefined;
+import { COUNTER_ADDRESS, CounterAbi } from '@/abis/CounterAbi';
+
+// Returns the transaction hash, which Pulsar uses as the txKey.
+export function increment({ wagmiConfig }: { wagmiConfig: Config }) {
+  return writeContract(wagmiConfig, {
+    abi: CounterAbi,
+    address: COUNTER_ADDRESS,
+    functionName: 'increment',
+    chainId: sepolia.id,
+  });
 }
 `;
 
 const smartAccountCodeBlock = `import { createPimlicoSmartAccountClient } from '@tuwaio/orbit-evm';
+import type { Config } from '@wagmi/core';
 import { encodeFunctionData } from 'viem';
 import { sepolia } from 'viem/chains';
-import { CounterAbi, COUNTER_ADDRESS } from './';
-import type { Config } from '@wagmi/core';
 
+import { COUNTER_ADDRESS, CounterAbi } from '@/abis/CounterAbi';
+
+// Returns the userOpHash, which Pulsar uses as the txKey.
 export async function incrementWithSmartAccount({
   wagmiConfig,
-  apiKey,
+  pimlicoApiKey,
 }: {
-  wagmiConfig?: Config;
-  apiKey?: string;
+  wagmiConfig: Config;
+  pimlicoApiKey?: string;
 }) {
-  if (!wagmiConfig) return undefined;
-
-  // 1. Initialize Solady smart account with Pimlico paymaster sponsorship via Orbit
+  // A Solady smart account owned by the connected wallet, sent through the Pimlico bundler.
+  // With an API key, gas is sponsored by the Pimlico paymaster by default.
   const { account, bundlerClient } = await createPimlicoSmartAccountClient({
     chain: sepolia,
     wagmiConfig,
-    apiKey: apiKey ?? process.env.NEXT_PUBLIC_PIMLICO_API_KEY,
-    sponsor: true,
+    apiKey: pimlicoApiKey,
   });
 
-  // 2. Dispatch UserOperation via Pimlico Bundler
-  const userOpHash = await bundlerClient.sendUserOperation({
+  return bundlerClient.sendUserOperation({
     account,
     calls: [
       {
         to: COUNTER_ADDRESS,
-        data: encodeFunctionData({
-          abi: CounterAbi,
-          functionName: 'increment',
-          args: [],
-        }),
+        data: encodeFunctionData({ abi: CounterAbi, functionName: 'increment' }),
       },
     ],
   });
-
-  // 3. Return userOpHash; Pulsar automatically tracks it via Two-Stage ERC-4337 pipeline
-  return userOpHash;
 }
 `;
 
@@ -69,22 +59,23 @@ export function ActionStep() {
     <div className="mt-4">
       <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 3: Create a Contract Action</h3>
       <p className="mb-2 text-[var(--tuwa-text-secondary)]">
-        The next step involves wrapping a smart contract function into a reusable 'action'. This approach makes the
-        function compatible with the <b>Pulsar</b> engine. While this step isn't strictly necessary, creating actions is
-        a powerful pattern for simplifying code and avoiding repetition, especially in larger applications. This example
-        demonstrates creating a standard baseline action for the `increment` function:
+        An action is a function that asks the wallet to sign and submit the transaction and returns its key. Pulsar
+        calls it inside `executeTxAction` and tracks the transaction under the returned key. Keeping actions in their
+        own files lets you reuse them from several components:
       </p>
       <CodeBlock title="increment.ts" titleIcons={<DocumentTextIcon />} textToCopy={codeBlock}>
         <CodeHighlighter children={codeBlock} language="ts" resolvedTheme={resolvedTheme ?? 'light'} />
       </CodeBlock>
 
-      <h4 className="mb-2 mt-4 text-base font-semibold text-[var(--tuwa-text-primary)]">
-        Alternative: ERC-4337 Smart Account Action via Pimlico
+      <h4 className="mt-4 mb-2 text-base font-semibold text-[var(--tuwa-text-primary)]">
+        Optional: ERC-4337 Smart Account Action via Pimlico
       </h4>
       <p className="mb-2 text-[var(--tuwa-text-secondary)]">
-        As an optional companion pattern for Account Abstraction, you can dispatch actions through a Solady smart
-        account orchestrated by Pimlico. Pulsar automatically detects the returned `userOpHash` and runs the Two-Stage
-        tracking pipeline:
+        With `@tuwaio/orbit-evm` you can send the same call as a UserOperation from a Solady smart account. The action
+        returns the `userOpHash`. Pulsar does not detect UserOperations on its own: pass `tracker:
+        TransactionTracker.ERC4337` and your `pimlicoApiKey` (or `bundlerUrl`) in the transaction params, as shown in
+        Step 5. Pulsar then tracks it in two stages: the bundler until the UserOperation is included, then the bundle
+        transaction on-chain.
       </p>
       <CodeBlock
         title="incrementWithSmartAccount.ts"

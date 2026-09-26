@@ -1,49 +1,55 @@
 /**
- * @file React hook for bootstrapping the Pulsar transaction lifecycle on app start.
- * It rehydrates pending transaction trackers and can optionally perform an initial
- * remote history fetch right after tracker initialization.
+ * @file React hook that restarts the trackers of pending Pulsar transactions when the app mounts.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 
 /**
- * Configuration for {@link useInitializeTransactionsPool}.
+ * The parameters of {@link useInitializeTransactionsPool}.
  */
 export type UseInitializeTransactionsPoolParams = {
   /**
-   * Re-initializes background trackers for all pending transactions stored in the Pulsar store.
+   * The store's `initializeTransactionsPool` action (`createPulsarStore` from `@tuwaio/pulsar-core`). Pass a stable
+   * reference: the hook runs it again whenever it changes.
    */
   initializeTransactionsPool: () => Promise<void>;
   /**
-   * Optional error handler called when initialization or the optional initial fetch fails.
+   * Called when `initializeTransactionsPool` rejects. The latest function is used, so an inline callback does not run
+   * the initialization again.
    *
-   * @defaultValue `console.error`
+   * @defaultValue Logs the error with `console.error`.
+   * @param error - The rejection reason of `initializeTransactionsPool`.
    */
   onError?: (error: Error) => void;
 };
 
 /**
- * Re-initializes pending transaction trackers when the component mounts.
+ * Calls `initializeTransactionsPool` in an effect after the component mounts, so the trackers of transactions that
+ * were pending before a page reload start again. It runs on the client only, after the store has restored its state
+ * from `localStorage`.
  *
- * Use this hook once in your application's root layout or top-level provider.
- * It restores tracker activity after reloads and can optionally fetch the initial
- * remote transaction history right after restoration.
+ * Use it once, in a component that stays mounted (a root layout or provider): every run starts new trackers. The
+ * effect runs again only when `initializeTransactionsPool` changes. In development, React Strict Mode runs effects
+ * twice, so pending transactions get two trackers there.
  *
- * @param params Hook configuration.
- * @param params.initializeTransactionsPool Function that restores trackers for pending transactions.
- * @param params.onError Optional custom error handler.
+ * @param params - The hook parameters.
+ * @param params.initializeTransactionsPool - The store's `initializeTransactionsPool` action.
+ * @param params.onError - Called when the initialization rejects; defaults to `console.error`. Not called after
+ * unmount.
  *
  * @example
  * ```tsx
  * import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
  *
- * function AppLayout() {
+ * import { pulsarStore } from './pulsarStore';
+ *
+ * export function PulsarInitializer() {
  *   useInitializeTransactionsPool({
- *     initializeTransactionsPool: store.getState().initializeTransactionsPool,
+ *     initializeTransactionsPool: pulsarStore.getState().initializeTransactionsPool,
  *     onError: (error) => console.warn('Failed to restore transactions:', error),
  *   });
  *
- *   return <div>...</div>;
+ *   return null;
  * }
  * ```
  */
@@ -51,22 +57,26 @@ export const useInitializeTransactionsPool = ({
   initializeTransactionsPool,
   onError,
 }: UseInitializeTransactionsPoolParams) => {
+  // Reads the latest `onError` without being an effect dependency, so an inline callback
+  // does not restart the trackers on every render.
+  const handleError = useEffectEvent((error: Error) => {
+    const fallbackErrorHandler = (e: Error) => {
+      console.error('[Pulsar] Failed to initialize transactions pool:', e);
+    };
+
+    (onError ?? fallbackErrorHandler)(error);
+  });
+
   useEffect(() => {
     let isActive = true;
 
     const runInitialization = async () => {
       try {
         await initializeTransactionsPool();
-
-        if (!isActive) return;
       } catch (error) {
         if (!isActive) return;
 
-        const fallbackErrorHandler = (e: Error) => {
-          console.error('[Pulsar] Failed to initialize transactions pool:', e);
-        };
-
-        (onError ?? fallbackErrorHandler)(error as Error);
+        handleError(error as Error);
       }
     };
 
@@ -75,5 +85,5 @@ export const useInitializeTransactionsPool = ({
     return () => {
       isActive = false;
     };
-  }, [initializeTransactionsPool, onError]);
+  }, [initializeTransactionsPool]);
 };

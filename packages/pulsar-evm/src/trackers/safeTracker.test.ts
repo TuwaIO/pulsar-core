@@ -77,6 +77,21 @@ describe('safeTrackerForStore', () => {
 
     expect(initializePollingTracker).toHaveBeenCalledTimes(1);
     expect(vi.mocked(initializePollingTracker).mock.calls[0][0].fetcher).toBe(safeFetcher);
+    // Failed transactions stay in the pool.
+    expect(vi.mocked(initializePollingTracker).mock.calls[0][0].removeTxFromPool).toBeUndefined();
+  });
+
+  test('should explain a stale transaction in the error', () => {
+    safeTrackerForStore(mockParams);
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    config.onFailure(createMockSafeResponse({ isExecuted: false }));
+
+    expect(mockParams.onError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Safe transaction was not executed within a day.' }),
+      expect.objectContaining({ status: TransactionStatus.Failed, pending: false }),
+    );
+    expect(mockParams.removeTxFromPool).not.toHaveBeenCalled();
   });
 
   test('should call user onSuccess callback when transaction succeeds', () => {
@@ -218,7 +233,7 @@ describe('safeFetcher', () => {
     expect(pollingCallbacks.onReplaced).not.toHaveBeenCalled();
   });
 
-  test('should call stopPolling for a stale pending transaction', async () => {
+  test('should fail and stop, keeping the transaction, for a stale pending transaction', async () => {
     const oldDate = dayjs().subtract(2, 'days').toISOString();
     const primaryResponse = createMockSafeResponse({ isExecuted: false, submissionDate: oldDate });
 
@@ -228,7 +243,17 @@ describe('safeFetcher', () => {
 
     await safeFetcher({ tx: mockTx, ...pollingCallbacks });
 
-    expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith();
+    expect(pollingCallbacks.onFailure).toHaveBeenCalledWith(primaryResponse);
+    expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
+  });
+
+  test('should fail and stop, keeping the transaction, when the service returns 404', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 404 } as Response);
+
+    await safeFetcher({ tx: mockTx, ...pollingCallbacks });
+
+    expect(pollingCallbacks.onFailure).toHaveBeenCalledWith();
+    expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
   });
 
   test('should throw an error if the primary fetch fails', async () => {

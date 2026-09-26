@@ -1,17 +1,21 @@
 {
-  "name": "TUWA Pulsar Documentation",
-  "short_name": "Pulsar Docs",
-  "description": "Technical documentation hub for TUWA Pulsar: The headless client-side transaction lifecycle tracking engine.",
-  "iconPath": "https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/icon0.svg",
-  "icons": [
-    {
-      "iconPath": "https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/icon0.svg",
-      "sizes": "32x32",
-      "type": "image/svg"
-    }
-  ],
-  "start_url": "./index.html",
+  "name": "Pulsar Documentation",
+  "short_name": "Pulsar",
+  "description": "Documentation for Pulsar, the Stage 2 transaction tracking layer of the TUWA ecosystem: headless, framework-agnostic tracking of EVM and Solana transactions with persistence and resume after reload.",
+  "start_url": "/",
   "display": "standalone",
   "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/icon0.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }

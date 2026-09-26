@@ -2,20 +2,17 @@ import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { CodeBlock, CodeHighlighter } from '@tuwaio/docs-ui';
 import { useTheme } from 'next-themes';
 
-const codeBlockCreateHook = `
-import { createBoundedUseStore, createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
+const codeBlockCreateHook = `'use client';
+
+import { createBoundedUseStore, createPulsarStore, type SolanaTransaction } from '@tuwaio/pulsar-core';
 import { pulsarSolanaAdapter } from '@tuwaio/pulsar-solana';
 
+// Your RPC URLs by cluster, for example { devnet: 'https://api.devnet.solana.com' }
 import { solanaRPCUrls } from '@/configs/appConfig';
 
-const storageName = 'transactions-tracking-storage';
-
-export enum TxType {
-  increment = 'increment',
-}
-
-type IncrementTx = Transaction & {
-  type: TxType.increment;
+// Typed transactions of your app
+type IncrementTx = SolanaTransaction & {
+  type: 'increment';
   payload: {
     value: number;
   };
@@ -23,18 +20,16 @@ type IncrementTx = Transaction & {
 
 export type TransactionUnion = IncrementTx;
 
-export const usePulsarStore = createBoundedUseStore(
-  createPulsarStore<TransactionUnion>({
-    name: storageName,
-    adapter: pulsarSolanaAdapter({
-      rpcUrls: solanaRPCUrls,
-    }),
-    beforeTxProcess: async () => {
-      // Optional global preflight. Throw here to block before wallet interaction.
-      await assertUserCanSubmitTransactions();
-    },
-  }),
-);
+export const pulsarStore = createPulsarStore<TransactionUnion>({
+  name: 'transactions-tracking-storage', // localStorage key
+  adapter: pulsarSolanaAdapter({ rpcUrls: solanaRPCUrls }),
+  // Optional preflight, run before the wallet is asked to sign. Throw to block the transaction.
+  beforeTxProcess: () => {
+    if (!navigator.onLine) throw new Error('You are offline.');
+  },
+});
+
+export const usePulsarStore = createBoundedUseStore(pulsarStore);
 `;
 
 export function TxTrackingStoreStep() {
@@ -43,10 +38,9 @@ export function TxTrackingStoreStep() {
     <div className="mt-4">
       <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 4: Create the Transaction Store</h3>
       <p className="mb-2 text-[var(--tuwa-text-secondary)]">
-        Next, create the central Zustand store that will manage the state of all transactions. This is where the{' '}
-        <strong>Pulsar</strong> engine is initialized. The `createPulsarStore` function takes your configuration. The
-        adapter is configured by passing it your `solanaRPCUrls` config, linking Pulsar to your app's solana rpc urls
-        config. You can also add `beforeTxProcess` for app-level preflight checks before wallet interaction.
+        Create the store once, in a client module. `createPulsarStore` connects Pulsar to your Solana setup through
+        `pulsarSolanaAdapter` and saves the transactions to `localStorage` under `name`. `createBoundedUseStore` turns
+        the vanilla store into a React hook.
       </p>
       <CodeBlock title="txTrackingHooks.ts" titleIcons={<DocumentTextIcon />} textToCopy={codeBlockCreateHook}>
         <CodeHighlighter children={codeBlockCreateHook} language="ts" resolvedTheme={resolvedTheme ?? 'light'} />

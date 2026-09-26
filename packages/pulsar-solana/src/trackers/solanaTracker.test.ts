@@ -133,7 +133,16 @@ describe('solanaTrackerForStore', () => {
     };
     config.onSuccess(mockSuccessResponse);
 
-    expect(mockParams.onSuccess).toHaveBeenCalledWith(expect.objectContaining({ txKey: mockTx.txKey }));
+    // The callback receives the transaction after the terminal update, not the snapshot taken at start.
+    expect(mockParams.onSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        txKey: mockTx.txKey,
+        status: TransactionStatus.Success,
+        pending: false,
+        confirmations: 'MAX',
+        slot: 12345,
+      }),
+    );
   });
 
   test('should call updateTxParams with FAILED on onFailure callback (on-chain error)', () => {
@@ -177,7 +186,10 @@ describe('solanaTrackerForStore', () => {
     config.onFailure(mockFailureResponse);
 
     // The error passed to onError should be the raw TransactionError
-    expect(mockParams.onError).toHaveBeenCalledWith(txError, expect.objectContaining({ txKey: mockTx.txKey }));
+    expect(mockParams.onError).toHaveBeenCalledWith(
+      txError,
+      expect.objectContaining({ txKey: mockTx.txKey, status: TransactionStatus.Failed, pending: false }),
+    );
   });
 
   test('should call updateTxParams with FAILED on onFailure callback (timeout)', () => {
@@ -234,15 +246,14 @@ describe('solanaTrackerForStore', () => {
     });
   });
 
-  test('should remove transaction from pool on stopPolling when configured to do so', () => {
+  test('should keep failed transactions in the pool', () => {
     solanaTrackerForStore(mockParams);
     const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
-    // Simulate calling `stopPolling`.
-    config.removeTxFromPool?.(mockTx.txKey);
-
-    // Verify that the transaction is removed from the pool.
-    expect(mockParams.removeTxFromPool).toHaveBeenCalledWith(mockTx.txKey);
+    // Without `removeTxFromPool`, the polling tracker never removes the transaction when it gives up.
+    expect(config.removeTxFromPool).toBeUndefined();
+    config.onFailure(undefined);
+    expect(mockParams.removeTxFromPool).not.toHaveBeenCalled();
   });
 
   test('should handle non-finalized transaction states (e.g., pending)', () => {

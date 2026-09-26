@@ -1,5 +1,5 @@
 /**
- * @file This file contains the factory function for creating the Solana adapter for Pulsar.
+ * @file The Solana adapter that plugs Wallet Standard wallets and `@solana/kit` into the Pulsar store.
  */
 
 import { getConnectorTypeFromName, lastConnectedConnectorHelpers, OrbitAdapter } from '@tuwaio/orbit-core';
@@ -20,16 +20,50 @@ import { checkAndInitializeTrackerInStore } from '../utils/checkAndInitializeTra
 import { checkSolanaChain } from '../utils/checkSolanaChain';
 
 /**
- * Creates a Solana adapter for the Pulsar transaction tracking engine.
- * This factory function produces a wallet-library-agnostic adapter that can be
- * configured for multiple Solana clusters (e.g., mainnet-beta, devnet) and
- * can operate even without a connected wallet for read-only tasks.
+ * Removes the `solana:` prefix of a chain ID, so `solana:devnet` and `devnet` compare as the same cluster.
  *
- * @template T - The application-specific transaction type.
- * @param {SolanaAdapterConfig} config - The configuration object for the adapter.
- * @returns {TxAdapter<T>} The configured Solana transaction adapter.
+ * @param chainId - A cluster moniker or a `solana:` chain ID.
+ * @returns The cluster moniker.
+ */
+const toClusterMoniker = (chainId: string) =>
+  chainId.startsWith('solana:') ? chainId.slice('solana:'.length) : chainId;
+
+/**
+ * Creates the Solana adapter for `createPulsarStore` from `@tuwaio/pulsar-core`. Pass it alone or in the adapter array.
  *
- * @throws {Error} Throws an error if the wagmi `config` is not provided.
+ * The adapter reads the connected wallet from the last connection saved in `localStorage` by `@tuwaio/orbit-core`
+ * (Satellite Connect writes it) and finds the matching Wallet Standard wallet with `getConnectedSolanaConnector` from
+ * `@tuwaio/orbit-solana`. It implements `TxAdapter` from `@tuwaio/pulsar-core`:
+ * - `getConnectorInfo` returns the saved address and the connector type, e.g. `solana:phantom`. It throws when no
+ *   installed wallet holds the saved address.
+ * - `checkChainForTx` compares `desiredChainID` with the saved chain of the connection, ignoring a `solana:` prefix
+ *   (`devnet` and `solana:devnet` are the same cluster), and throws {@link SolanaChainMismatchError} when they differ.
+ *   It does not switch the wallet.
+ * - `checkTransactionsTracker` keeps the returned signature as `txKey` and uses `TransactionTracker.Solana` unless
+ *   another tracker is requested.
+ * - `checkAndInitializeTrackerInStore` is {@link checkAndInitializeTrackerInStore}.
+ * - `getExplorerUrl` and `getExplorerTxUrl` build Solana Explorer links with `getSolanaExplorerLink` from
+ *   `@tuwaio/orbit-solana`.
+ * - `retryTxAction` closes the modal and runs `executeTxAction` again with `tx.actionFunction({ client, ...tx.payload })`,
+ *   where `client` is a cached RPC client for `tx.rpcUrl` or the cluster of `desiredChainID`. It throws when no wallet
+ *   is connected or `executeTxAction` is missing.
+ *
+ * There is no `cancelTxAction` or `speedUpTxAction` for Solana.
+ *
+ * @template T - The application transaction type.
+ * @param config - The RPC URLs by cluster.
+ * @returns The Solana adapter.
+ *
+ * @example
+ * ```ts
+ * import { createPulsarStore } from '@tuwaio/pulsar-core';
+ * import { pulsarSolanaAdapter } from '@tuwaio/pulsar-solana';
+ *
+ * const pulsarStore = createPulsarStore({
+ *   name: 'transactions-tracking-storage',
+ *   adapter: pulsarSolanaAdapter({ rpcUrls: { devnet: 'https://api.devnet.solana.com' } }),
+ * });
+ * ```
  */
 export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapterConfig): TxAdapter<T> {
   const { rpcUrls } = config;
@@ -53,8 +87,8 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
       }
       try {
         checkSolanaChain(
-          txChain as string,
-          (lastConnectedConnectorHelpers.getLastConnectedConnector()?.chainId as string) ?? '',
+          toClusterMoniker(String(txChain)),
+          toClusterMoniker(String(lastConnectedConnectorHelpers.getLastConnectedConnector()?.chainId ?? '')),
         );
       } catch (e) {
         if (e instanceof SolanaChainMismatchError) throw e;

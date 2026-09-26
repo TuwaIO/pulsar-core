@@ -1,12 +1,17 @@
+/**
+ * @file Safety limits for the user-facing metadata of transactions (title, description, payload), checked before a
+ * transaction is executed, stored, restored or synchronized.
+ */
+
 import { InitialTransactionParams, Transaction } from '../types';
 
-/** Maximum allowed length for each transaction title string. */
+/** Maximum length, in characters, of each `title` string. */
 export const MAX_TRANSACTION_TITLE_LENGTH = 100;
 
-/** Maximum allowed length for each transaction description string. */
+/** Maximum length, in characters, of each `description` string. */
 export const MAX_TRANSACTION_DESCRIPTION_LENGTH = 300;
 
-/** Maximum allowed serialized UTF-8 payload size in bytes. */
+/** Maximum size, in bytes, of the UTF-8 JSON of `payload`. */
 export const MAX_TRANSACTION_PAYLOAD_BYTES = 10 * 1024;
 
 const EXECUTABLE_STRING_PATTERNS = [
@@ -17,12 +22,16 @@ const EXECUTABLE_STRING_PATTERNS = [
 ];
 
 /**
- * Error thrown when transaction metadata fails Pulsar's safety limits.
+ * Thrown when the title, description or payload of a transaction breaks Pulsar's safety limits.
  */
 export class PulsarTransactionValidationError extends Error {
-  /** The transaction field that failed validation. */
+  /** The field that failed, for example `title`, `description[1]` or `payload.amount`. */
   public readonly field: string;
 
+  /**
+   * @param field - The field that failed.
+   * @param message - The error message.
+   */
   constructor(field: string, message: string) {
     super(message);
     this.name = 'PulsarTransactionValidationError';
@@ -31,8 +40,16 @@ export class PulsarTransactionValidationError extends Error {
 }
 
 /**
- * Validates metadata used before a transaction action is executed.
- * Throws when title, description, or payload violates Pulsar safety limits.
+ * Validates the metadata passed to `executeTxAction` before anything else runs.
+ *
+ * Each `title` string must be at most {@link MAX_TRANSACTION_TITLE_LENGTH} characters and each `description` string at
+ * most {@link MAX_TRANSACTION_DESCRIPTION_LENGTH}. `payload` must be JSON-serializable and at most
+ * {@link MAX_TRANSACTION_PAYLOAD_BYTES} bytes as UTF-8 JSON. Strings (including payload keys) must not match
+ * executable-like patterns: `eval(`, `Function(`, `setTimeout`/`setInterval` with a string argument, and `javascript:`.
+ * This is a defensive gate, not a replacement for escaping output in the UI.
+ *
+ * @param params - The transaction metadata.
+ * @throws {@link PulsarTransactionValidationError} for the first field that breaks a rule.
  */
 export function validateInitialTransactionParams(params: Omit<InitialTransactionParams, 'actionFunction'>): void {
   validateTextField({
@@ -49,8 +66,13 @@ export function validateInitialTransactionParams(params: Omit<InitialTransaction
 }
 
 /**
- * Validates a complete transaction before it is persisted or synchronized.
- * Throws when title, description, or payload violates Pulsar safety limits.
+ * Validates the title, description and payload of a complete transaction with the rules of
+ * {@link validateInitialTransactionParams}. Used by `addTxToPool`, `initializeTransactionsPool` and
+ * `injectExternalPendingTxs`.
+ *
+ * @template T - The application transaction type.
+ * @param tx - The transaction.
+ * @throws {@link PulsarTransactionValidationError} for the first field that breaks a rule.
  */
 export function validateTransaction<T extends Transaction>(tx: T): void {
   validateTextField({

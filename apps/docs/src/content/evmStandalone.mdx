@@ -1,187 +1,146 @@
-# Using EVM Trackers Standalone
+# EVM Trackers Standalone
 
-While the Pulsar suite offers a full stack solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture remains modular and flexible. This allows utilizing the low-level **trackers** (`evmTracker`, `erc4337Fetcher`, `safeFetcher`, `gelatoFetcher`) from `@tuwaio/pulsar-evm` directly, bypassing the complete state management store.
+The trackers of `@tuwaio/pulsar-evm` also work without the Pulsar store. Use them when you:
 
-This flexibility is ideal if:
+- keep transactions in your own state (Redux, MobX, another Zustand store, a database);
+- track transactions on a server, where there is no `localStorage` and no wallet;
+- need a callback for each stage of the lifecycle instead of store updates.
 
-- Integrating transaction tracking logic into your own state management solution (Zustand, Redux, MobX, etc.).
-- Requiring tracking on the server-side, where client-centric store persistence is unnecessary.
-- Granular control over each stage of a transaction’s lifecycle is required for custom workflows.
-
-> [!WARNING]
-> Use of legacy `web3.js` and `ethers.js` libraries is strictly prohibited. All tracking pipelines are built strictly upon `viem` and `wagmi` primitives to ensure deterministic transaction status reconciliation and application sovereignty.
+Without the store nothing is persisted and nothing is resumed after a restart: you decide what to save and when to start tracking again. The trackers use only `viem`, `@wagmi/core` and HTTP APIs, so they run in the browser and in Node.js.
 
 ---
 
-## Why Use `evmTracker`?
+## Why `evmTracker` Instead of `waitForTransactionReceipt`
 
-Using `evmTracker` provides client-side state persistence, mempool retry logic, and multi-chain indexing helpers that standard RPC calls lack.
+| Situation                            | `waitForTransactionReceipt` (viem)                                        | `evmTracker` (Pulsar)                                                                                               |
+| ------------------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **The node has not indexed the tx**  | Waits for the receipt; the transaction details are not fetched.           | Retries `getTransaction` (10 times, 3 s apart by default) and passes the details (nonce, fees, `to`) to a callback. |
+| **Transient RPC errors**             | The call rejects once its timeout or its own retries are exhausted.       | Retries waiting for the receipt up to 5 times with a growing delay, then calls `onFailure`.                         |
+| **Speed-up or cancel in the wallet** | Reported through `onReplaced`; the promise resolves with the new receipt. | Calls `onReplaced` and stops, so the replaced transaction is never reported as successful.                          |
+| **Several confirmations**            | `confirmations` option of the single call.                                | Polls confirmations every 5 s and reports each count through `onConfirmationsUpdate`.                               |
 
-| Feature                     | `waitForTransactionReceipt` (viem)                                                                                      | `evmTracker` (Pulsar)                                                                                             |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Handles RPC Lags**        | ❌ No. If called immediately after submission, the RPC node might not have indexed the transaction yet, causing errors. | ✅ **Yes.** Built-in retry mechanism to wait for the transaction to appear in the mempool, mitigating RPC delays. |
-| **Full Lifecycle Support**  | 🤷‍♂️ Limited. Mainly reacts once the transaction is confirmed or replaced.                                                | ✅ **Yes.** Provides callbacks for each stage: initialization, details fetched, mined, replaced, failed, etc.     |
-| **Fetches Full Tx Details** | ❌ No. Doesn't return complete info such as nonce, value, etc.                                                          | ✅ **Yes.** Calls `getTransaction` internally, passing all transaction details to callbacks.                      |
-| **Abstraction Level**       | Low. You must manage the tracking states manually.                                                                      | High. Encapsulates the entire process into a single, convenient async function, simplifying implementation.       |
-
-In essence, `evmTracker` is a reliable tracking pipeline wrapper around `viem` functions, addressing common edge cases and ensuring robust transaction lifecycle tracking.
+`evmTracker` calls `onSuccess` for every mined transaction, including reverted ones: check `receipt.status`.
 
 ---
 
-## Trackers Overview
+## Standard Transactions: `evmTracker`
 
-### 1. EVM Tracker
+`evmTracker` follows a transaction by its hash through the wagmi client of its chain, and resolves when tracking has finished:
 
-This is the primary tracker for monitoring standard transactions on EVM-compatible chains, identified via transaction hash.
-
-#### How It Works
-
-`evmTracker` initially fetches transaction details using `getTransaction`. If unavailable (due to RPC indexing delay), it retries. Once details are resolved, it actively waits for the transaction receipt using `waitForTransactionReceipt`.
-
-#### Example Usage
-
-```tsx
+```typescript
 import { evmTracker } from '@tuwaio/pulsar-evm';
-import { config } from './wagmi'; // Your wagmi config
+import { createConfig, http } from '@wagmi/core';
+import { sepolia } from 'viem/chains';
 
-async function trackMyTransaction(txHash: string, chainId: number) {
-  console.log(`Starting to track transaction: ${txHash}`);
+const wagmiConfig = createConfig({ chains: [sepolia], transports: { [sepolia.id]: http() } });
 
+export async function trackTransaction(hash: `0x${string}`) {
   await evmTracker({
-    config, // Wagmi config for internal client creation
-    tx: {
-      txKey: txHash, // Transaction hash
-      chainId, // Chain ID (e.g., 1 for Ethereum Mainnet)
+    config: wagmiConfig,
+    tx: { txKey: hash, chainId: sepolia.id, requiredConfirmations: 2 },
+    onTxDetailsFetched: (details) => console.log('Nonce', details.nonce),
+    onConfirmationsUpdate: (confirmations) => console.log(`${confirmations}/2 confirmations`),
+    onSuccess: async (_details, receipt) => {
+      console.log(receipt.status === 'success' ? 'Confirmed' : 'Reverted', receipt.blockNumber);
     },
-    onTxDetailsFetched: (txDetails) => {
-      console.log('Transaction details received:', txDetails);
-      // Update your UI/state with nonce, gas, etc.
-    },
-    onSuccess: async (txDetails, receipt, client) => {
-      console.log('Transaction mined!', receipt);
-      if (receipt.status === 'success') {
-        // Update status as successful
-      } else {
-        // Update status as failed
-      }
-    },
-    onReplaced: (replacement) => {
-      console.log('Transaction was replaced:', replacement);
-      // Handle replacement logic
-    },
-    onFailure: (error) => {
-      console.error('Tracking failed:', error);
-      // Handle errors
-    },
+    onReplaced: (replacement) => console.log(`Replaced (${replacement.reason}) by`, replacement.transaction.hash),
+    onFailure: (error) => console.error('Tracking failed', error),
   });
 }
 ```
 
+The chain must be configured in the wagmi config. Tracking fails at once for the zero hash or an unknown chain.
+
 ---
 
-### 2. ERC-4337 UserOperation Tracker (Pimlico / Native Bundler)
+## ERC-4337 UserOperations: `erc4337Tracker`
 
-For Account Abstraction and ERC-4337 UserOperations, `@tuwaio/pulsar-evm` natively integrates with Pimlico and standard ERC-4337 bundlers via `@tuwaio/orbit-evm`.
+`erc4337Tracker` polls `eth_getUserOperationReceipt` every 2 s until the UserOperation is included in a bundle, and gives up after 60 consecutive failed requests. It calls `onSuccess` with the hash of the bundle transaction; pass that hash to `evmTracker` if you also need block confirmations:
 
-The `erc4337Fetcher` polls `eth_getUserOperationByHash` and `eth_getUserOperationReceipt`, automatically reconciling the underlying on-chain transaction receipt once executed.
+```typescript
+import { erc4337Tracker, evmTracker } from '@tuwaio/pulsar-evm';
+import { type Config } from '@wagmi/core';
+import { sepolia } from 'viem/chains';
 
-#### Example Usage
+declare const wagmiConfig: Config;
 
-```tsx
-import { initializePollingTracker } from '@tuwaio/pulsar-core';
-import { erc4337Fetcher } from '@tuwaio/pulsar-evm';
-
-// Tracking an ERC-4337 UserOperation hash
-async function trackUserOp(userOpHash: string, chainId: number, pimlicoApiKey?: string) {
-  await initializePollingTracker({
-    tx: {
-      txKey: userOpHash,
-      chainId,
-      pimlicoApiKey, // or pass custom bundlerUrl
-      pending: true,
+export function trackUserOperation(userOpHash: `0x${string}`, pimlicoApiKey?: string) {
+  erc4337Tracker({
+    // Uses bundlerUrl if set, else api.pimlico.io with the API key, else the rate-limited public Pimlico endpoint.
+    tx: { txKey: userOpHash, chainId: sepolia.id, pimlicoApiKey, pending: true },
+    onSuccess: ({ hash }) => {
+      if (!hash) return;
+      void evmTracker({
+        config: wagmiConfig,
+        tx: { txKey: hash, chainId: sepolia.id },
+        onTxDetailsFetched: () => {},
+        onSuccess: async (_details, receipt) => console.log('Bundle transaction', receipt.status),
+        onReplaced: () => {},
+        onFailure: (error) => console.error(error),
+      });
     },
-    fetcher: erc4337Fetcher,
-    onSuccess: (response) => {
-      console.log('UserOperation confirmed on-chain:', response);
-      // response.receipt contains the underlying transaction receipt
-    },
-    onFailure: (error) => {
-      console.error('UserOperation failed:', error);
-    },
+    onFailure: (result) => console.error('UserOperation failed:', result?.reason ?? 'too many failed requests'),
   });
 }
 ```
 
+`erc4337Tracker` returns immediately; polling runs in the background. A reverted UserOperation calls `onFailure` with its revert reason.
+
 ---
 
-### 3. Safe Multisig Fetcher & Gelato Relay
+## Safe Multisig and Gelato: Polling Fetchers
 
-For Safe multisig transactions and legacy Gelato relay tasks, fetcher functions are available.
+Safe and Gelato are tracked by polling an API. Pass their fetcher to `initializePollingTracker` from `@tuwaio/pulsar-core`, which calls it every 5 s by default and gives up after 10 consecutive failed requests (it then calls `onFailure()` without arguments).
 
 > [!NOTE]
-> **Gelato Deprecation:** Gelato Network tracking is deprecated in favor of native ERC-4337 UserOperations via `@tuwaio/orbit-evm` and `erc4337Fetcher`.
+> Gelato relay is deprecated. Use ERC-4337 UserOperations with `@tuwaio/orbit-evm` and `erc4337Tracker` instead.
 
-#### Example for Handling Safe & Gelato Transactions
-
-```tsx
+```typescript
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
-import { safeFetcher, gelatoFetcher, createGelatoClient } from '@tuwaio/pulsar-evm';
+import { createGelatoClient, gelatoFetcher, safeFetcher } from '@tuwaio/pulsar-evm';
 
-// Tracking a Safe multisig transaction
-async function trackSafeTx(safeTxHash: string, chainId: number, fromAddress: string) {
-  await initializePollingTracker({
-    tx: {
-      txKey: safeTxHash,
-      chainId,
-      from: fromAddress,
-      pending: true, // Crucial: must be true to start polling loop
-    },
+// Safe: txKey is the safeTxHash, from is the Safe address.
+export function trackSafeTransaction(safeTxHash: `0x${string}`, safeAddress: `0x${string}`, chainId: number) {
+  initializePollingTracker({
+    tx: { txKey: safeTxHash, chainId, from: safeAddress, pending: true },
     fetcher: safeFetcher,
-    onSuccess: (status) => {
-      console.log('Safe transaction succeeded:', status);
-    },
-    onFailure: (status) => {
-      console.error('Safe transaction failed:', status);
-    },
-    onReplaced: (replacement) => {
-      console.warn('Transaction was replaced:', replacement);
-    },
+    onSuccess: (status) => console.log('Executed in', status.transactionHash),
+    onFailure: (status) => console.error(status ? 'Execution failed' : 'Not found or too many failed requests'),
+    onReplaced: (executed) =>
+      console.warn('Another transaction with the same nonce was executed:', executed.safeTxHash),
   });
 }
 
-// Tracking a Gelato relay task (deprecated)
-const gelatoClient = createGelatoClient({ apiKey: 'YOUR_GELATO_API_KEY' });
-async function trackGelatoTask(taskId: string) {
-  await initializePollingTracker({
-    tx: {
-      txKey: taskId,
-      pending: true,
-    },
-    fetcher: gelatoFetcher(gelatoClient),
-    onSuccess: (status) => {
-      console.log('Gelato task succeeded:', status);
-    },
-    onFailure: (status) => {
-      console.error('Gelato task failed:', status);
-    },
+// Gelato (deprecated): txKey is the task ID.
+export function trackGelatoTask(taskId: string, apiKey: string) {
+  initializePollingTracker({
+    tx: { txKey: taskId, pending: true },
+    fetcher: gelatoFetcher(createGelatoClient({ apiKey })),
+    onSuccess: (status) => console.log('Task succeeded', status),
+    onFailure: (status) => console.error('Task failed', status),
   });
 }
 ```
+
+- **Safe:** the fetcher calls the Safe Transaction Service of the chain (see `SafeTransactionServiceUrls` for the supported chains). A 404 response calls `onFailure()` without a response and stops. A transaction still pending one day after it was proposed calls `onFailure` with its status and stops.
+- **Gelato:** a task still pending one hour after it was created calls `onFailure` with its status and stops.
+
+These fetchers stop with `withoutRemoving: true`, so a `removeTxFromPool` you pass to `initializePollingTracker` is called only when polling gives up after `maxRetries` consecutive errors.
 
 ---
 
-## Helper Functions
+## Helpers
 
-Additionally, the package provides several utilities for managing transaction states and chain interactions:
+- `checkTransactionsTracker({ actionTxKey, connectorType, tracker })` returns the tracker Pulsar would use for a key: `ERC4337` or `Gelato` only when requested, `Safe` for Safe connectors (`evm:safe`), `Ethereum` otherwise.
+- `speedUpTxAction` and `cancelTxAction` resend a pending EIP-1559 transaction with the same nonce and fees raised by 15%. They need the `nonce` and fee fields the tracker fetched; `evmTracker` then reports the original transaction as replaced.
+- `selectEvmTxExplorerLink` builds the block explorer (or Safe app) link of a transaction.
 
-### `checkTransactionsTracker`
-
-Determines which tracker is suitable based on a transaction key.
-
-```tsx
+```typescript
+import { TransactionTracker } from '@tuwaio/pulsar-core';
 import { checkTransactionsTracker } from '@tuwaio/pulsar-evm';
 
-const { tracker, txKey } = checkTransactionsTracker('0xabc...', 'injected');
-// tracker -> 'ethereum' or relevant tracker type
-// txKey -> same as input or derived key
+const { tracker, txKey } = checkTransactionsTracker({ actionTxKey: '0xabc123', connectorType: 'evm:metamask' });
+console.log(tracker === TransactionTracker.Ethereum, txKey); // true '0xabc123'
 ```
+
+The full list of exports is in the **[`@tuwaio/pulsar-evm` reference](/packages/pulsar-evm)**.

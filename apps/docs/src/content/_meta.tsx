@@ -3,13 +3,16 @@ export default {
   '--': {
     type: 'separator',
   },
-  gettingStarted: 'Getting started',
+  gettingStarted: 'Getting Started',
   quickStart: 'Quick Start',
-  evmStandalone: 'Pulsar EVM Standalone',
-  solanaStandalone: 'Pulsar Solana Standalone',
-  quasarIntegration: 'Quasar SaaS Integration',
-  apiReference: 'API reference',
+  evmStandalone: 'EVM Trackers Standalone',
+  solanaStandalone: 'Solana Trackers Standalone',
   '---': {
     type: 'separator',
+  },
+  packages: 'Packages',
+  guides: {
+    title: 'Guides',
+    href: 'https://docs.tuwa.io/guides',
   },
 };

@@ -4,7 +4,7 @@
   "private": false,
   "author": "Oleksandr Tkach",
   "license": "Apache-2.0",
-  "description": "Layer 4 (L4) of the TUWA Ecosystem. Global React context bindings, hooks, and transaction pool initializers for orchestrating framework-agnostic Pulsar stores.",
+  "description": "L4 React package of Pulsar (TUWA): useInitializeTransactionsPool hook that resumes tracking of pending transactions after a page reload.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -21,12 +21,13 @@
     "test": "vitest run"
   },
   "keywords": [
+    "tuwa",
+    "pulsar",
+    "transaction-tracking",
+    "web3",
     "react",
     "hooks",
-    "web3",
-    "transaction",
-    "tracking",
-    "pulsar"
+    "typescript"
   ],
   "repository": {
     "type": "git",
@@ -47,8 +48,8 @@
     "react": ">=19.2.3"
   },
   "devDependencies": {
-    "@types/react": "^19.2.18",
-    "react": "^19.2.8",
+    "@types/react": "^19.3.0",
+    "react": "^19.3.0",
     "tsup": "^8.5.1",
     "typescript": "6.0.3"
   }

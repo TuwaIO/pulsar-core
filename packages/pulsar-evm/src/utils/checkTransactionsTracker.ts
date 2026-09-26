@@ -1,31 +1,39 @@
 /**
- * @file This file contains a utility function to determine the correct tracker for a transaction
- * based on the key returned by the submission function and the connector type.
+ * @file Picks the EVM tracker for the key returned by an `actionFunction`.
  */
 
 import { CheckTxTracker, TransactionTracker } from '@tuwaio/pulsar-core';
 import { isHex } from 'viem';
 
 /**
- * Determines which transaction tracker to use based on the format of the transaction key and the connector type.
+ * Picks the tracker for the key returned by an `actionFunction`. The key is always used as `txKey`. Rules, in order:
+ * 1. `tracker` is `Gelato` and `gelatoApiKey` is set: `Gelato` (the key is a task ID).
+ * 2. The key must be a hex string; otherwise it throws.
+ * 3. `tracker` is `ERC4337`: `ERC4337` (the key is a `userOpHash`). ERC-4337 is never detected automatically.
+ * 4. The connector type ends with `safe` or `safewallet` (for example `evm:safe`): `Safe` (the key is a `safeTxHash`).
+ * 5. Otherwise: `Ethereum`.
  *
- * This function is a critical routing step after a transaction is submitted. It inspects
- * the key returned by the `actionFunction` and the connector type to decide the tracking strategy.
- * The logic follows a specific priority:
- * 1. Checks for a Gelato Task ID structure.
- * 2. Checks if the connector type indicates a Safe transaction.
- * 3. Defaults to the standard on-chain EVM hash tracker.
+ * `bundlerUrl` and `pimlicoApiKey` are not used here. `pulsarEvmAdapter` uses this function as
+ * `checkTransactionsTracker`.
  *
- * @param {ActionTxKey} actionTxKey - The key returned from the transaction submission function (e.g., a hash or a Gelato task object).
- * @param {string} connectorType - The type of the connector that initiated the action (e.g., 'safe', 'injected').
- * @param {TransactionTracker} tracker - The type of transaction tracker to use.
- * @param {string} gelatoApiKey - Gelato API key for Gelato relayer integration.
- * @returns {{ tracker: TransactionTracker; txKey: string }} An object containing the determined tracker type and the final string-based transaction key.
+ * @param params - The returned key and its context (`CheckTxTracker` from `@tuwaio/pulsar-core`).
+ * @param params.actionTxKey - The key returned by `actionFunction`.
+ * @param params.connectorType - The connector that signed the transaction.
+ * @param params.tracker - The tracker requested in the transaction params, if any.
+ * @param params.gelatoApiKey - Deprecated Gelato API key.
+ * @returns The tracker and the `txKey`.
+ * @throws `Error` when the key is not a hex string and the Gelato rule does not apply.
  *
- * @throws {Error} Throws an error if the `actionTxKey` is not a valid Hex string after failing the Gelato check.
+ * @example
+ * ```ts
+ * checkTransactionsTracker({ actionTxKey: '0xabc123', connectorType: 'evm:metamask' });
+ * // { tracker: TransactionTracker.Ethereum, txKey: '0xabc123' }
+ * ```
  */
 export function checkTransactionsTracker({ actionTxKey, connectorType, tracker, gelatoApiKey }: CheckTxTracker): {
+  /** The tracker to use. */
   tracker: TransactionTracker;
+  /** The key to store the transaction under: always `actionTxKey`. */
   txKey: string;
 } {
   // 1. Highest priority: Check if the key matches the Gelato task structure.

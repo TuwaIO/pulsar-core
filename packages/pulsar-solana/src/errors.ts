@@ -1,21 +1,23 @@
 /**
- * @file This file defines custom error classes for the @tuwaio/pulsar-solana package.
+ * @file Errors thrown by the Solana adapter.
  */
 
 /**
- * Thrown when the connected Solana chain does not match the required chain for a transaction.
- *
- * This allows consuming applications to `catch` this specific error and
- * implement custom logic, such as prompting the user to switch networks.
+ * Thrown by {@link checkSolanaChain} (and so by `executeTxAction` through the Solana adapter) when the wallet is
+ * connected to another cluster than the transaction requires. Catch it to ask the user to switch networks.
  */
 export class SolanaChainMismatchError extends Error {
-  /** The name identifier of the error class. */
+  /** Always `'SolanaChainMismatchError'`. */
   name = 'SolanaChainMismatchError';
-  /** The chain that the transaction requires (e.g., 'solana:mainnet'). */
+  /** The cluster the transaction requires, for example `devnet`. */
   requiredChain: string;
-  /** The chain the wallet is currently connected to. */
+  /** The cluster the wallet is connected to. */
   currentChain: string;
 
+  /**
+   * @param requiredChain - The cluster the transaction requires.
+   * @param currentChain - The cluster the wallet is connected to.
+   */
   constructor(requiredChain: string, currentChain: string) {
     const message = `Wrong chain. The transaction requires ${requiredChain}, but you are connected to ${currentChain}.`;
     super(message);

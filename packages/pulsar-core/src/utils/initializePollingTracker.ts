@@ -1,56 +1,97 @@
 /**
- * @file This file provides a generic utility for creating a polling mechanism to track
- * asynchronous tasks, such as API-based transaction status checks (e.g., for Gelato or Safe).
+ * @file A generic polling loop for trackers that check a transaction through an API or RPC method (Safe, Gelato,
+ * ERC-4337 bundlers, Solana).
  */
 
 import { Transaction } from '../types';
 
 /**
- * Defines the parameters for the fetcher function used within the polling tracker.
- * The fetcher is the core logic that performs the actual API call.
- * @template R The expected type of the successful API response.
- * @template T The type of the transaction object being tracked.
+ * The argument passed to a polling fetcher on every tick. The fetcher checks the transaction once and reports the result
+ * through the callbacks.
+ *
+ * @template R - The response type the fetcher reports.
+ * @template T - The tracked transaction type.
  */
 export type PollingFetcherParams<R, T> = {
-  /** The transaction object being tracked. */
+  /** The tracked transaction, as passed to `initializePollingTracker`. */
   tx: T;
-  /** A callback to stop the polling mechanism, typically called on success or terminal failure. */
-  stopPolling: (options?: { withoutRemoving?: boolean }) => void;
-  /** Callback to be invoked when the fetcher determines the transaction has succeeded. */
+  /**
+   * Stops polling. Unless `withoutRemoving` is `true`, it also calls `removeTxFromPool` (if configured) with the
+   * transaction key.
+   * @param options - Stop options.
+   */
+  stopPolling: (options?: {
+    /** Keep the transaction in the pool. Defaults to `false`. */
+    withoutRemoving?: boolean;
+  }) => void;
+  /**
+   * The `onSuccess` callback of the tracker configuration.
+   * @param response - The result of the check.
+   */
   onSuccess: (response: R) => void;
-  /** Callback to be invoked when the fetcher determines the transaction has failed. */
+  /**
+   * The `onFailure` callback of the tracker configuration.
+   * @param response - The result of the check, if any.
+   */
   onFailure: (response?: R) => void;
-  /** Optional callback for each successful poll, useful for updating UI with intermediate states. */
+  /**
+   * The `onIntervalTick` callback of the tracker configuration, if any.
+   * @param response - The intermediate result.
+   */
   onIntervalTick?: (response: R) => void;
-  /** Optional callback for when a transaction is replaced (e.g., speed-up). */
+  /**
+   * The `onReplaced` callback of the tracker configuration, if any.
+   * @param response - The result describing the replacement.
+   */
   onReplaced?: (response: R) => void;
 };
 
 /**
- * Defines the configuration object for the `initializePollingTracker` function.
- * @template R The expected type of the successful API response.
- * @template T The type of the transaction object.
+ * The configuration of `initializePollingTracker`.
+ *
+ * @template R - The response type the fetcher reports.
+ * @template T - The tracked transaction type; only `txKey` and `pending` are required.
  */
-export type PollingTrackerConfig<R, T extends Transaction> = {
-  /** The transaction object to be tracked. It must include `txKey` and `pending` status. */
-  tx: T & Pick<Transaction, 'txKey' | 'pending'>;
-  /** The function that performs the data fetching (e.g., an API call) on each interval. */
+export type PollingTrackerConfig<R, T extends Pick<Transaction, 'txKey' | 'pending'>> = {
+  /** The transaction to track. Polling starts only if `pending` is `true`. */
+  tx: T;
+  /**
+   * Checks the transaction once per tick and reports through the callbacks it receives. It must call `stopPolling` on a
+   * terminal result. A thrown error counts as a failed attempt.
+   * @param params - The transaction, `stopPolling` and the callbacks.
+   */
   fetcher: (params: PollingFetcherParams<R, T>) => Promise<void>;
-  /** Callback to be invoked when the transaction successfully completes. */
+  /**
+   * Called by the fetcher when the transaction succeeded.
+   * @param response - The result reported by the fetcher.
+   */
   onSuccess: (response: R) => void;
-  /** Callback to be invoked when the transaction fails. */
+  /**
+   * Called by the fetcher when the transaction failed, and without arguments by the tracker after `maxRetries`
+   * consecutive failed attempts.
+   * @param response - The result reported by the fetcher, if any.
+   */
   onFailure: (response?: R) => void;
-  /** Optional callback executed once when the tracker is initialized. */
+  /** Called once, synchronously, when polling starts. */
   onInitialize?: () => void;
-  /** Optional callback for each successful poll. */
+  /**
+   * Called by the fetcher with intermediate results.
+   * @param response - The intermediate result.
+   */
   onIntervalTick?: (response: R) => void;
-  /** Optional callback for when a transaction is replaced. */
+  /**
+   * Called by the fetcher when the transaction was replaced.
+   * @param response - The result describing the replacement.
+   */
   onReplaced?: (response: R) => void;
-  /** Optional function to remove the transaction from the main pool, typically after polling stops. */
+  /**
+   * Called when polling stops, unless it was stopped with `withoutRemoving: true`.
+   * @param txKey - The `txKey` of the tracked transaction.
+   */
   removeTxFromPool?: (txKey: string) => void;
-  /** The interval (in milliseconds) between polling attempts. Defaults to 5000ms. */
+  /** The delay before each attempt, in milliseconds. Defaults to 5000. */
   pollingInterval?: number;
-  /** The number of consecutive failed fetches before stopping the tracker. Defaults to 10. */
+  /** The number of consecutive failed attempts (thrown errors) after which polling stops. Defaults to 10. */
   maxRetries?: number;
 };
 
@@ -58,17 +99,37 @@ const DEFAULT_POLLING_INTERVAL = 5000;
 const DEFAULT_MAX_RETRIES = 10;
 
 /**
- * Initializes a generic polling tracker that repeatedly calls a fetcher function
- * to monitor the status of an asynchronous task.
+ * Starts polling a transaction in the background and returns immediately. Does nothing if `tx.pending` is `false`.
  *
- * This function handles the lifecycle of polling, including starting, stopping,
- * and automatic termination after a certain number of failed attempts.
+ * Every `pollingInterval` milliseconds (the first attempt also waits) it calls `fetcher`. Polling continues until the
+ * fetcher calls `stopPolling`. A fetcher that throws counts as a failed attempt; after `maxRetries` consecutive failed
+ * attempts the tracker calls `onFailure()` without arguments, logs a warning and stops (which calls
+ * `removeTxFromPool`, if configured). A successful attempt resets the count.
  *
- * @template R The expected type of the API response.
- * @template T The type of the transaction object.
- * @param {PollingTrackerConfig<R, T>} config - The configuration for the tracker.
+ * Side effects: runs a timer loop until it is stopped; there is no way to cancel it from the outside.
+ *
+ * @template R - The response type the fetcher reports.
+ * @template T - The tracked transaction type.
+ * @param config - The transaction, the fetcher and the callbacks.
+ *
+ * @example
+ * ```ts
+ * initializePollingTracker<string, { txKey: string; pending: boolean }>({
+ *   tx: { txKey: taskId, pending: true },
+ *   fetcher: async ({ tx, stopPolling, onSuccess, onFailure }) => {
+ *     const status = await getTaskStatus(tx.txKey); // your API call; throw on network errors
+ *     if (status === 'done') onSuccess(status);
+ *     if (status === 'failed') onFailure(status);
+ *     if (status !== 'pending') stopPolling({ withoutRemoving: true });
+ *   },
+ *   onSuccess: () => console.log('Done'),
+ *   onFailure: () => console.log('Failed'),
+ * });
+ * ```
  */
-export function initializePollingTracker<R, T extends Transaction>(config: PollingTrackerConfig<R, T>): void {
+export function initializePollingTracker<R, T extends Pick<Transaction, 'txKey' | 'pending'>>(
+  config: PollingTrackerConfig<R, T>,
+): void {
   const {
     tx,
     fetcher,
@@ -122,6 +183,8 @@ export function initializePollingTracker<R, T extends Transaction>(config: Polli
           onIntervalTick,
           onReplaced,
         });
+        // Only consecutive failures count towards `maxRetries`.
+        retriesLeft = maxRetries;
       } catch (error) {
         console.error(`Polling fetcher for txKey ${tx.txKey} threw an error:`, error);
         retriesLeft--;

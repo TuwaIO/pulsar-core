@@ -233,3 +233,122 @@ describe('txTrackingStore validation', () => {
     consoleWarn.mockRestore();
   });
 });
+
+describe('txTrackingStore remote sync', () => {
+  it('adds the transaction and starts its tracker without waiting for onRemoteCreate', async () => {
+    let resolveSync!: () => void;
+    const onRemoteCreate = vi.fn(() => new Promise<void>((resolve) => (resolveSync = resolve)));
+    const checkAndInitializeTrackerInStore = vi.fn();
+    const store = createStore({ onRemoteCreate, adapter: createAdapter({ checkAndInitializeTrackerInStore }) });
+
+    await store.getState().executeTxAction({
+      actionFunction: vi.fn().mockResolvedValue(txHash),
+      params: createValidParams(),
+    });
+
+    // The sync is still in flight, but the transaction is tracked already.
+    expect(checkAndInitializeTrackerInStore).toHaveBeenCalledTimes(1);
+    expect(store.getState().transactionsPool[txHash].syncStatus).toBe('pending-sync');
+    expect(store.getState().unsyncedTxKeys?.[txHash]).toBe(true);
+
+    resolveSync();
+    await vi.waitFor(() => expect(store.getState().transactionsPool[txHash].syncStatus).toBe('synced'));
+    expect(store.getState().unsyncedTxKeys?.[txHash]).toBeUndefined();
+  });
+
+  it('never sends pimlicoApiKey or gelatoApiKey to onRemoteCreate', async () => {
+    const onRemoteCreate = vi.fn().mockResolvedValue(undefined);
+    const store = createStore({ onRemoteCreate });
+
+    await store.getState().addTxToPool({
+      ...createTransaction(),
+      pimlicoApiKey: 'pim_secret',
+      bundlerUrl: 'https://bundler.example',
+      gelatoApiKey: 'gelato_secret',
+    } as EvmTransaction);
+
+    await vi.waitFor(() => expect(onRemoteCreate).toHaveBeenCalledTimes(1));
+    const sentTx = onRemoteCreate.mock.calls[0][0] as Record<string, unknown>;
+    expect(sentTx).not.toHaveProperty('pimlicoApiKey');
+    expect(sentTx).not.toHaveProperty('gelatoApiKey');
+    expect(sentTx.bundlerUrl).toBe('https://bundler.example');
+    // The local copy keeps the key, so tracking can resume after a reload.
+    expect(store.getState().transactionsPool[txHash].pimlicoApiKey).toBe('pim_secret');
+  });
+
+  it('does not send a transaction twice while its first sync is in flight', async () => {
+    let resolveSync!: () => void;
+    const onRemoteCreate = vi.fn(() => new Promise<void>((resolve) => (resolveSync = resolve)));
+    const store = createStore({ onRemoteCreate });
+
+    await store.getState().addTxToPool(createTransaction());
+    await store.getState().reconcileUnsyncedTransactions();
+
+    expect(onRemoteCreate).toHaveBeenCalledTimes(1);
+    resolveSync();
+    await vi.waitFor(() => expect(store.getState().unsyncedTxKeys?.[txHash]).toBeUndefined());
+  });
+
+  it('retries a failed sync on reconciliation', async () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const onRemoteCreate = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(undefined);
+    const store = createStore({ onRemoteCreate });
+
+    await store.getState().addTxToPool(createTransaction());
+    await vi.waitFor(() => expect(consoleWarn).toHaveBeenCalledTimes(1));
+    expect(store.getState().unsyncedTxKeys?.[txHash]).toBe(true);
+
+    await store.getState().reconcileUnsyncedTransactions();
+
+    expect(onRemoteCreate).toHaveBeenCalledTimes(2);
+    expect(store.getState().transactionsPool[txHash].syncStatus).toBe('synced');
+    expect(store.getState().unsyncedTxKeys?.[txHash]).toBeUndefined();
+    consoleWarn.mockRestore();
+  });
+
+  it('does not set syncStatus without onRemoteCreate', async () => {
+    const store = createStore();
+
+    await store.getState().addTxToPool(createTransaction());
+
+    expect(store.getState().transactionsPool[txHash].syncStatus).toBeUndefined();
+    expect(store.getState().unsyncedTxKeys?.[txHash]).toBeUndefined();
+  });
+});
+
+describe('txTrackingStore persistence', () => {
+  it('does not save initialTx', async () => {
+    const storage = createMemoryStorage();
+    const store = createStore({ name: 'persist-test', storage: createJSONStorage(() => storage) });
+
+    // The action never settles, so initialTx stays in the "signing" state.
+    void store.getState().executeTxAction({
+      actionFunction: () => new Promise<undefined>(() => undefined),
+      params: createValidParams(),
+    });
+    await vi.waitFor(() => expect(store.getState().initialTx?.isInitializing).toBe(true));
+
+    const saved = JSON.parse(storage.getItem('persist-test') as string) as { state: Record<string, unknown> };
+    expect(saved.state).not.toHaveProperty('initialTx');
+    expect(saved.state).toHaveProperty('transactionsPool');
+  });
+
+  it('does not restore an initialTx saved by an older version', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(
+      'legacy-state',
+      JSON.stringify({
+        state: {
+          transactionsPool: { [txHash]: createTransaction() },
+          initialTx: { ...createValidParams(), isInitializing: true, localTimestamp: 1 },
+        },
+        version: 0,
+      }),
+    );
+
+    const store = createStore({ name: 'legacy-state', storage: createJSONStorage(() => storage) });
+
+    expect(store.getState().transactionsPool[txHash]).toBeDefined();
+    expect(store.getState().initialTx).toBeUndefined();
+  });
+});

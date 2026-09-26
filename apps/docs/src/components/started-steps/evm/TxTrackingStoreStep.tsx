@@ -4,37 +4,32 @@ import { useTheme } from 'next-themes';
 
 const codeBlock = `'use client';
 
-import { createBoundedUseStore, createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
-import { evmAdapter } from '@tuwaio/pulsar-evm';
+import { createBoundedUseStore, createPulsarStore, type EvmTransaction } from '@tuwaio/pulsar-core';
+import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
 
-// 1. Import your wagmi config and chains
-import { appChains, config } from '@/configs/wagmiConfig';
+// Your wagmi config and viem chains, from the wallet connector setup
+import { appChains, wagmiConfig } from '@/configs/wagmiConfig';
 
-const storageName = 'transactions-tracking-storage';
-
-// 2. Define a typed transaction for the 'increment' action
-type IncrementTx = Transaction & {
+// Typed transactions of your app
+type IncrementTx = EvmTransaction & {
   type: 'increment';
   payload: {
-    value: number; // Example payload: the new value of the counter
+    value: number;
   };
 };
 
-// Create a union of all possible transaction types
 export type TransactionUnion = IncrementTx;
 
-// 3. Create and export the store
-export const usePulsarStore = createBoundedUseStore(
-  createPulsarStore<TransactionUnion>({
-    name: storageName,
-    // 4. Pass the wagmi config to the evmAdapter
-    adapter: evmAdapter(config, appChains),
-    beforeTxProcess: async () => {
-      // Optional global preflight. Throw here to block before wallet interaction.
-      await assertUserCanSubmitTransactions();
-    },
-  }),
-);
+export const pulsarStore = createPulsarStore<TransactionUnion>({
+  name: 'transactions-tracking-storage', // localStorage key
+  adapter: pulsarEvmAdapter(wagmiConfig, appChains),
+  // Optional preflight, run before the wallet is asked to sign. Throw to block the transaction.
+  beforeTxProcess: () => {
+    if (!navigator.onLine) throw new Error('You are offline.');
+  },
+});
+
+export const usePulsarStore = createBoundedUseStore(pulsarStore);
 `;
 
 export function TxTrackingStoreStep() {
@@ -43,10 +38,9 @@ export function TxTrackingStoreStep() {
     <div className="mt-4">
       <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 4: Create the Transaction Store</h3>
       <p className="mb-2 text-[var(--tuwa-text-secondary)]">
-        Next, create the central Zustand store that will manage the state of all transactions. This is where the{' '}
-        <strong>Pulsar</strong> engine is initialized. The `createPulsarStore` function takes your configuration. The
-        adapter is configured by passing it your `wagmi` config, linking Pulsar to your app's wallet connection. You can
-        also add `beforeTxProcess` for app-level preflight checks before wallet interaction.
+        Create the store once, in a client module. `createPulsarStore` connects Pulsar to your wagmi config through
+        `pulsarEvmAdapter` and saves the transactions to `localStorage` under `name`. `createBoundedUseStore` turns the
+        vanilla store into a React hook.
       </p>
       <CodeBlock title="txTrackingHooks.ts" titleIcons={<DocumentTextIcon />} textToCopy={codeBlock}>
         <CodeHighlighter children={codeBlock} language="ts" resolvedTheme={resolvedTheme ?? 'light'} />

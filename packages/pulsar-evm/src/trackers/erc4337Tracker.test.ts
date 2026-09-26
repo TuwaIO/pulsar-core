@@ -286,7 +286,22 @@ describe('erc4337Tracker', () => {
         finishedTimestamp: 1700000042,
       });
 
-      expect(mockParams.onSuccess).toHaveBeenCalledWith(mockParams.transactionsPool[mockTx.txKey]);
+      // The callback receives the transaction with every update written by the tracker, not the stale snapshot.
+      expect(mockParams.onSuccess).toHaveBeenCalledWith({
+        ...mockTx,
+        hash: onChainTxHash,
+        to: '0x1234567890123456789012345678901234567890',
+        input: '0xabcdef',
+        value: undefined,
+        nonce: 5,
+        maxFeePerGas: '2000000000',
+        maxPriorityFeePerGas: '1000000000',
+        confirmations: 2,
+        status: TransactionStatus.Success,
+        pending: false,
+        isError: false,
+        finishedTimestamp: 1700000042,
+      });
     });
 
     test('should resume directly at Stage 2 if tx.hash is already populated (session restoration)', async () => {

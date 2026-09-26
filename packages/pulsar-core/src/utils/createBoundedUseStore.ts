@@ -1,35 +1,35 @@
 /**
- * @file This file provides a utility for creating a type-safe, bounded Zustand hook from a vanilla store.
- * This pattern is recommended by the official Zustand documentation to ensure full type
- * safety when integrating vanilla stores with React.
+ * @file Binds a vanilla Zustand store (such as the Pulsar stores) to React with a typed hook.
  *
- * @see https://docs.pmnd.rs/zustand/guides/typescript#bounded-usestore-hook-for-vanilla-stores
+ * @see {@link https://zustand.docs.pmnd.rs/guides/typescript#bounded-usestore-hook-for-vanilla-stores Zustand: bounded useStore hook}
  */
 
 import { StoreApi, useStore } from 'zustand';
 
 /**
- * A utility type that infers the state shape from a Zustand `StoreApi`.
- * It extracts the return type of the `getState` method.
- * @template S - The type of the Zustand store (`StoreApi`).
+ * The state type of a Zustand store: the return type of its `getState` method.
+ *
+ * @template S - The store type.
  */
-type ExtractState<S> = S extends { getState: () => infer T } ? T : never;
+export type ExtractState<S> = S extends { getState: () => infer T } ? T : never;
 
 /**
- * Creates a bounded `useStore` hook from a vanilla Zustand store.
+ * Creates a React hook bound to a vanilla Zustand store, so components do not pass the store on every call.
  *
- * This function takes a vanilla Zustand store instance and returns a React hook
- * that is pre-bound to that store. This approach provides a cleaner API and
- * enhances type inference, eliminating the need to pass the store instance
- * on every use.
+ * The hook calls `useStore` from `zustand`, so it follows the rules of React hooks and needs `react` in the app. Call it
+ * without arguments to subscribe to the whole state, or with a selector to subscribe to a slice. A selector that
+ * returns a new object or array on every call (such as the transaction selectors) re-renders on every store update;
+ * select stable values or memoize.
  *
- * The returned hook supports two signatures:
- * 1. `useBoundedStore()`: Selects the entire state.
- * 2. `useBoundedStore(selector)`: Selects a slice of the state, returning only what the selector function specifies.
+ * @template S - The store type.
+ * @param store - The vanilla Zustand store, for example the result of `createPulsarStore`.
+ * @returns A hook: `useBoundedStore()` returns the whole state, `useBoundedStore(selector)` returns the selected value.
  *
- * @template S - The type of the Zustand store (`StoreApi`).
- * @param {S} store - The vanilla Zustand store instance to bind the hook to.
- * @returns {function} A fully typed React hook for accessing the store's state.
+ * @example
+ * ```ts
+ * const usePulsarStore = createBoundedUseStore(pulsarStore);
+ * const executeTxAction = usePulsarStore((state) => state.executeTxAction);
+ * ```
  */
 export const createBoundedUseStore = ((store) => (selector) => useStore(store, selector)) as <
   S extends StoreApi<unknown>,

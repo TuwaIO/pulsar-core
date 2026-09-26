@@ -1,11 +1,16 @@
 /**
- * @file This file contains the tracker implementation for standard EVM transactions.
- * It uses viem's public actions (`getTransaction`, `waitForTransactionReceipt`) to monitor
- * a transaction's lifecycle from submission to finality with robust timeout handling.
+ * @file The tracker for standard EVM transactions. It uses viem actions (`getTransaction`,
+ * `waitForTransactionReceipt`, `getTransactionConfirmations`, `getBlock`) through the wagmi client of the chain.
  */
 
 import { normalizeError } from '@tuwaio/orbit-core';
-import { ITxTrackingStore, TrackerCallbacks, Transaction, TransactionStatus } from '@tuwaio/pulsar-core';
+import {
+  createTxUpdater,
+  ITxTrackingStore,
+  TrackerCallbacks,
+  Transaction,
+  TransactionStatus,
+} from '@tuwaio/pulsar-core';
 import { Config, getClient } from '@wagmi/core';
 import {
   Client,
@@ -30,11 +35,12 @@ const CONFIRMATIONS_POLLING_INTERVAL = 5000; // 5s between confirmation checks
 const SINGLE_ATTEMPT_TIMEOUT = 60_000; // 60s timeout per single RPC call
 
 /**
- * Checks whether an error during receipt polling is transient (RPC network glitch, timeout, or unindexed tx).
- * Recursively inspects nested error causes to handle wrapped Viem transport errors.
+ * Checks whether an error thrown while waiting for a receipt is transient: a receipt timeout or "not found" error, an
+ * HTTP or WebSocket transport error, or a message about a timeout, rate limit, connection reset or a 502/503/504
+ * status. Nested `cause` errors are checked too.
  *
- * @param error - The caught error object.
- * @returns `true` if the error is considered transient and retryable; otherwise `false`.
+ * @param error - The caught error.
+ * @returns `true` if waiting for the receipt should be retried.
  */
 export function isRetryableReceiptError(error: unknown): boolean {
   if (!error) return false;
@@ -88,40 +94,86 @@ export function isRetryableReceiptError(error: unknown): boolean {
 }
 
 /**
- * Defines the parameters for the low-level EVM transaction tracker.
+ * The configuration of {@link evmTracker}.
  */
 export type EVMTrackerParams = {
-  /** The transaction identity parameters (chainId, txKey, requiredConfirmations). */
+  /**
+   * The transaction: its hash (`txKey`), its numeric `chainId` (which must be configured in `config`) and, optionally,
+   * the number of confirmations to wait for.
+   */
   tx: Pick<Transaction, 'chainId' | 'txKey' | 'requiredConfirmations'>;
-  /** The `@wagmi/core` configuration instance used to resolve network clients. */
+  /** The wagmi config; the tracker uses its client for `tx.chainId`. */
   config: Config;
-  /** Callback fired once transaction details (nonce, input, values) are successfully fetched. */
+  /**
+   * Called once with the result of `getTransaction`.
+   * @param txDetails - The transaction: nonce, fees, `to`, `value`, `input`.
+   */
   onTxDetailsFetched: (txDetails: GetTransactionReturnType) => void;
-  /** Callback fired when the transaction is mined successfully (or reverted on-chain). */
+  /**
+   * Called and awaited once the receipt is available and the required confirmations are reached. Also called for
+   * reverted transactions: check `receipt.status`.
+   * @param txDetails - The result of `getTransaction`.
+   * @param receipt - The transaction receipt.
+   * @param client - The viem client of the chain, for further RPC calls.
+   */
   onSuccess: (txDetails: GetTransactionReturnType, receipt: TransactionReceipt, client: Client) => Promise<void>;
-  /** Callback fired when the transaction has been replaced (repriced or cancelled). */
+  /**
+   * Called when viem detects that another transaction with the same nonce replaced this one (speed-up or cancel).
+   * @param replacement - viem's replacement data: the `reason` and the replacing `transaction`.
+   */
   onReplaced: (replacement: ReplacementReturnType) => void;
-  /** Callback fired when tracking fails fatally or exceeds all retry attempts. */
+  /**
+   * Called once when tracking gives up (see {@link evmTracker}).
+   * @param error - The last error.
+   */
   onFailure: (error?: unknown) => void;
-  /** Optional callback fired when tracker initialization starts. */
+  /** Called once, before anything else. */
   onInitialize?: () => void;
-  /** Number of retries for the initial `getTransaction` fetch step. Defaults to 10. */
+  /** Number of `getTransaction` attempts. Defaults to 10. */
   retryCount?: number;
-  /** Timeout in milliseconds between `getTransaction` retry attempts. Defaults to 3000ms. */
+  /** Delay between `getTransaction` attempts, in milliseconds. Defaults to 3000. */
   retryTimeout?: number;
-  /** Optional callback fired whenever required block confirmation count updates. */
+  /**
+   * Called while waiting for `requiredConfirmations` (only when it is above 1).
+   * @param confirmations - The current number of confirmations.
+   */
   onConfirmationsUpdate?: (confirmations: number) => void;
-  /** Optional custom parameters passed directly to viem's `waitForTransactionReceipt`. */
+  /**
+   * Options for viem's `waitForTransactionReceipt`, merged over the defaults (`retryCount: 10`, `retryDelay: 3000`,
+   * `timeout: 60000`).
+   */
   waitForTransactionReceiptParams?: WaitForTransactionReceiptParameters;
 };
 
 /**
- * A low-level tracker for monitoring a standard EVM transaction by its hash.
- * Retries fetching transaction details and gracefully polls for transaction receipt,
- * recovering automatically from RPC network glitches and timeout errors.
+ * Tracks a standard EVM transaction by its hash, without a store. Use it to track transactions in your own state or on
+ * a server.
  *
- * @param params - The configuration parameters and lifecycle callbacks for the EVM tracker.
- * @returns A promise that resolves when tracking completes or fails fatally.
+ * Steps (all RPC calls go through the wagmi client of `tx.chainId`):
+ * 1. Calls `onInitialize`. Fails at once for the zero hash or when there is no client for the chain.
+ * 2. Calls `getTransaction` up to `retryCount` times, `retryTimeout` ms apart, so a transaction the node has not
+ *    indexed yet is still found; then calls `onTxDetailsFetched`.
+ * 3. Waits for the receipt with `waitForTransactionReceipt`, retrying up to 5 times (5, 10, 15, 20 and 25 s apart) when
+ *    {@link isRetryableReceiptError} matches. If viem reports a replacement, calls `onReplaced` and stops.
+ * 4. If `requiredConfirmations` is above 1, polls `getTransactionConfirmations` every 5 s until it is reached.
+ * 5. Awaits `onSuccess`, also for reverted transactions.
+ *
+ * Any other error, including one thrown by `onSuccess`, is passed to `onFailure`.
+ *
+ * @param params - The transaction, the wagmi config and the callbacks.
+ * @returns A promise that resolves when tracking has finished.
+ *
+ * @example
+ * ```ts
+ * await evmTracker({
+ *   config: wagmiConfig,
+ *   tx: { txKey: hash, chainId: 1, requiredConfirmations: 2 },
+ *   onTxDetailsFetched: (details) => console.log('Nonce', details.nonce),
+ *   onSuccess: async (_details, receipt) => console.log('Mined with status', receipt.status),
+ *   onReplaced: (replacement) => console.log('Replaced by', replacement.transaction.hash),
+ *   onFailure: (error) => console.error('Tracking failed', error),
+ * });
+ * ```
  */
 export async function evmTracker(params: EVMTrackerParams): Promise<void> {
   const {
@@ -233,12 +285,17 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
 }
 
 /**
- * A higher-level wrapper for `evmTracker` that integrates directly with the Pulsar store.
- * Updates transaction lifecycle states (pending, success, failed, replaced) in the Zustand store.
+ * Runs {@link evmTracker} for a transaction of the Pulsar store and writes the results to it through
+ * `updateTxParams`: `hash` at start, the transaction details, `confirmations`, and finally `status` `Success`/`Failed`
+ * with `pending: false` and the block timestamp, `Replaced` with `replacedTxHash`, or `Failed` with the normalized
+ * error. The transaction is never removed from the pool.
  *
- * @template T - The application-specific transaction state structure extending `Transaction`.
- * @param params - Configuration connecting `@wagmi/core`, store mutation methods, target transaction, and callbacks.
- * @returns A promise that resolves when transaction tracking finishes and store state is committed.
+ * The callbacks receive the transaction with every update written by the tracker (`createTxUpdater` from
+ * `@tuwaio/pulsar-core`). A reverted transaction calls `onError` with `Error('Transaction reverted')`.
+ *
+ * @template T - The application transaction type.
+ * @param params - The transaction, the wagmi config, the store members and the callbacks.
+ * @returns A promise that resolves when tracking has finished.
  */
 export async function evmTrackerForStore<T extends Transaction>(
   params: Pick<EVMTrackerParams, 'config'> &
@@ -247,15 +304,16 @@ export async function evmTrackerForStore<T extends Transaction>(
     } & TrackerCallbacks<T>,
 ) {
   const { tx, config, updateTxParams, transactionsPool, onSuccess, onError, onReplaced } = params;
+  const updateTx = createTxUpdater({ tx, transactionsPool, updateTxParams });
 
   return evmTracker({
     tx,
     config,
     onInitialize: () => {
-      updateTxParams(tx.txKey, { hash: tx.txKey as Hex });
+      updateTx({ hash: tx.txKey as Hex });
     },
     onTxDetailsFetched: (txDetails) => {
-      updateTxParams(tx.txKey, {
+      updateTx({
         to: txDetails.to ?? undefined,
         input: txDetails.input,
         value: txDetails.value?.toString(),
@@ -265,21 +323,20 @@ export async function evmTrackerForStore<T extends Transaction>(
       });
     },
     onConfirmationsUpdate: (confirmations) => {
-      updateTxParams(tx.txKey, { confirmations });
+      updateTx({ confirmations });
     },
     onSuccess: async (txDetails, receipt, client) => {
       const block = await getBlock(client, { blockNumber: receipt.blockNumber });
       const timestamp = Number(block.timestamp);
       const isSuccess = receipt.status === 'success';
 
-      updateTxParams(tx.txKey, {
+      const updatedTx = updateTx({
         status: isSuccess ? TransactionStatus.Success : TransactionStatus.Failed,
         isError: !isSuccess,
         pending: false,
         finishedTimestamp: timestamp,
       });
 
-      const updatedTx = transactionsPool[tx.txKey];
       if (isSuccess && onSuccess && updatedTx) {
         onSuccess(updatedTx);
       }
@@ -288,26 +345,24 @@ export async function evmTrackerForStore<T extends Transaction>(
       }
     },
     onReplaced: (replacement) => {
-      updateTxParams(tx.txKey, {
+      const updatedTx = updateTx({
         status: TransactionStatus.Replaced,
         replacedTxHash: replacement.transaction.hash,
         pending: false,
       });
 
-      const updatedTx = transactionsPool[tx.txKey];
       if (onReplaced && updatedTx) {
         onReplaced(updatedTx, tx);
       }
     },
     onFailure: (error) => {
-      updateTxParams(tx.txKey, {
+      const updatedTx = updateTx({
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
         error: normalizeError(error),
       });
 
-      const updatedTx = transactionsPool[tx.txKey];
       if (onError && updatedTx) {
         onError(error, updatedTx);
       }

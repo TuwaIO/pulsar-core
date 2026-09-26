@@ -1,16 +1,14 @@
 /**
- * @file This file implements the transaction tracking logic for meta-transactions relayed via the Gelato Network.
- * It uses a polling mechanism to check the status of a Gelato task via the authenticated Gelato RPC client.
- *
- * The fetcher calls `relayer_getStatus` on the Gelato RPC endpoint and interprets the numeric
- * status codes to determine whether a task is still pending, succeeded, was rejected, or reverted.
+ * @file The deprecated tracker for Gelato relay tasks. It polls `relayer_getStatus` on the Gelato RPC endpoint and maps
+ * the numeric status codes to Pulsar statuses.
  */
 
 import { normalizeError } from '@tuwaio/orbit-core';
 import {
+  createTxUpdater,
   initializePollingTracker,
   ITxTrackingStore,
-  PollingTrackerConfig,
+  PollingFetcherParams,
   TrackerCallbacks,
   Transaction,
   TransactionStatus,
@@ -27,7 +25,8 @@ import { createGelatoClient } from '../utils/createGelatoClient';
 /**
  * Numeric status codes returned by the Gelato `relayer_getStatus` RPC method.
  *
- * @see https://docs.gelato.cloud/
+ * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` instead.
+ * @see {@link https://docs.gelato.cloud/ Gelato documentation}
  */
 export enum GelatoStatusCode {
   /** The task has been received and is awaiting execution. */
@@ -43,9 +42,11 @@ export enum GelatoStatusCode {
 }
 
 /**
- * Common fields shared by all Gelato task status responses.
+ * Fields shared by every Gelato task status response.
+ *
+ * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` instead.
  */
-type GelatoBaseStatus = {
+export type GelatoBaseStatus = {
   /** The chain ID on which the task was submitted. */
   chainId: number;
   /** Unix timestamp (in seconds) when the task was created. */
@@ -55,8 +56,9 @@ type GelatoBaseStatus = {
 };
 
 /**
- * Discriminated union representing all possible Gelato task status responses.
- * Each variant corresponds to a specific {@link GelatoStatusCode}.
+ * A Gelato task status response, discriminated by `status` ({@link GelatoStatusCode}).
+ *
+ * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` instead.
  */
 export type GelatoTaskStatus =
   | (GelatoBaseStatus & { status: GelatoStatusCode.Pending })
@@ -96,21 +98,21 @@ function isGelatoTxPending(status: GelatoStatusCode): boolean {
 // =================================================================================================
 
 /**
- * Creates a reusable fetcher function for `initializePollingTracker` that queries the
- * Gelato RPC endpoint (`relayer_getStatus`) for a task's status using an authenticated client.
+ * Creates a fetcher for `initializePollingTracker` from `@tuwaio/pulsar-core` that checks a Gelato task (`tx.txKey`)
+ * once through `relayer_getStatus`.
  *
- * The fetcher interprets the numeric status codes and calls the appropriate polling callbacks:
- * - {@link GelatoStatusCode.Success} → `onSuccess`
- * - {@link GelatoStatusCode.Rejected} / {@link GelatoStatusCode.Reverted} → `onFailure`
- * - {@link GelatoStatusCode.Submitted} → `onIntervalTick` (to update the tx hash)
+ * On every tick it calls `onIntervalTick` with the status. {@link GelatoStatusCode.Success} calls `onSuccess`;
+ * {@link GelatoStatusCode.Rejected} and {@link GelatoStatusCode.Reverted} call `onFailure`; both stop polling and keep
+ * the transaction. A task still pending one hour after `createdAt` calls `onFailure` with its status and stops polling,
+ * keeping the transaction. Request errors are thrown, so the polling tracker counts them as failed attempts.
  *
- * @deprecated Gelato relay is deprecated. Use TransactionTracker.ERC4337 and erc4337Fetcher instead.
- * @param {ReturnType<Transport>} client - A viem transport client configured for the Gelato API.
- * @returns {PollingTrackerConfig<GelatoTaskStatus, Transaction>['fetcher']} The fetcher function.
+ * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` and {@link erc4337Fetcher} instead.
+ * @param client - A transport created by {@link createGelatoClient}.
+ * @returns The fetcher.
  */
 export function gelatoFetcher(
   client: ReturnType<Transport>,
-): PollingTrackerConfig<GelatoTaskStatus, Transaction>['fetcher'] {
+): (params: PollingFetcherParams<GelatoTaskStatus, Pick<Transaction, 'txKey'>>) => Promise<void> {
   return async ({ tx, stopPolling, onSuccess, onFailure, onIntervalTick }) => {
     const result = (await client.request({
       method: 'relayer_getStatus',
@@ -121,10 +123,11 @@ export function gelatoFetcher(
 
     const { status, createdAt } = result;
 
-    // Safeguard: Stop polling for tasks that have been pending for over an hour.
+    // Safeguard: give up on tasks that have been pending for over an hour.
     // `createdAt` is a Unix timestamp in seconds.
     if (createdAt && dayjs().diff(dayjs.unix(createdAt), 'hour') >= 1 && isGelatoTxPending(status)) {
-      stopPolling();
+      onFailure(result);
+      stopPolling({ withoutRemoving: true });
       return;
     }
 
@@ -144,26 +147,31 @@ export function gelatoFetcher(
 // =================================================================================================
 
 /**
- * @deprecated Gelato relay is deprecated. Use TransactionTracker.ERC4337 and erc4337TrackerForStore instead.
- * A higher-level wrapper that integrates the Gelato polling logic with the Pulsar store.
- * It creates an authenticated Gelato RPC client and uses {@link gelatoFetcher} to
- * build the fetcher, then delegates to `initializePollingTracker` with store-specific callbacks.
+ * Tracks a Gelato task of the Pulsar store with {@link gelatoFetcher} (every 5 s, up to 10 consecutive failed
+ * attempts) and writes the results to the store: the transaction `hash` once the task is submitted, then `Success` or
+ * `Failed` with the local time as `finishedTimestamp`.
  *
- * @template T - The application-specific transaction type.
+ * When tracking gives up (10 consecutive failed attempts, or the task still pending after one hour), the transaction
+ * is marked `Failed` and stays in the pool.
  *
- * @param params.tx - The transaction to track.
- * @param params.gelatoApiKey - The Gelato API key for authenticating RPC requests.
- * @param params.updateTxParams - Store action to update transaction fields.
- * @param params.removeTxFromPool - Store action to remove a transaction from the pool.
- * @param params.transactionsPool - The current pool of tracked transactions.
- * @param params.onSuccess - Optional callback invoked when the transaction succeeds.
- * @param params.onError - Optional callback invoked when the transaction fails.
+ * Side effects: sends requests to the Gelato API with `gelatoApiKey` (see {@link createGelatoClient}). The callbacks
+ * receive the transaction with every update written by the tracker.
+ *
+ * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` and {@link erc4337TrackerForStore} instead.
+ * @template T - The application transaction type.
+ * @param params - The transaction, the Gelato API key, the store members and the callbacks.
+ * @param params.tx - The transaction to track; `txKey` is the Gelato task ID.
+ * @param params.gelatoApiKey - The Gelato API key.
+ * @param params.updateTxParams - The store's `updateTxParams`.
+ * @param params.removeTxFromPool - Not used: failed transactions stay in the pool.
+ * @param params.transactionsPool - The store's pool when tracking starts.
+ * @param params.onSuccess - Called when the task succeeded.
+ * @param params.onError - Called when the task failed or tracking gave up.
  */
 export function gelatoTrackerForStore<T extends Transaction>({
   tx,
   gelatoApiKey,
   updateTxParams,
-  removeTxFromPool,
   transactionsPool,
   onSuccess,
   onError,
@@ -173,15 +181,16 @@ export function gelatoTrackerForStore<T extends Transaction>({
 } & TrackerCallbacks<T>) {
   const client = createGelatoClient({ apiKey: gelatoApiKey });
   const fetcher = gelatoFetcher(client);
+  const updateTx = createTxUpdater({ tx, transactionsPool, updateTxParams });
 
   return initializePollingTracker<GelatoTaskStatus, T>({
     tx,
     fetcher,
-    removeTxFromPool,
+    // `removeTxFromPool` is not passed: failed transactions stay in the pool as `Failed`.
     onSuccess: (response) => {
       const hash = response.status === GelatoStatusCode.Success ? response.receipt.transactionHash : undefined;
 
-      updateTxParams(tx.txKey, {
+      const updatedTx = updateTx({
         status: TransactionStatus.Success,
         pending: false,
         isError: false,
@@ -189,7 +198,6 @@ export function gelatoTrackerForStore<T extends Transaction>({
         finishedTimestamp: dayjs().unix(),
       });
 
-      const updatedTx = transactionsPool[tx.txKey];
       if (onSuccess && updatedTx) {
         onSuccess(updatedTx);
       }
@@ -197,7 +205,7 @@ export function gelatoTrackerForStore<T extends Transaction>({
     onIntervalTick: (response) => {
       // Update the on-chain hash as soon as the task is submitted to the mempool.
       if (response.status === GelatoStatusCode.Submitted) {
-        updateTxParams(tx.txKey, {
+        updateTx({
           hash: response.hash,
         });
       }
@@ -212,12 +220,14 @@ export function gelatoTrackerForStore<T extends Transaction>({
         } else if (response.status === GelatoStatusCode.Reverted) {
           errorMessage = response.message || 'Transaction reverted on-chain.';
           hash = response.receipt.transactionHash;
+        } else {
+          errorMessage = 'Gelato task was not executed within an hour.';
         }
       }
 
       const err = new Error(errorMessage);
 
-      updateTxParams(tx.txKey, {
+      const updatedTx = updateTx({
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
@@ -226,7 +236,6 @@ export function gelatoTrackerForStore<T extends Transaction>({
         finishedTimestamp: dayjs().unix(),
       });
 
-      const updatedTx = transactionsPool[tx.txKey];
       if (onError && updatedTx) {
         onError(err, updatedTx);
       }
@@ -235,6 +244,8 @@ export function gelatoTrackerForStore<T extends Transaction>({
 }
 
 /**
- * @deprecated Gelato relay is deprecated. Use TransactionTracker.ERC4337 and erc4337Tracker instead.
+ * Alias of {@link gelatoTrackerForStore}.
+ *
+ * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` and {@link erc4337TrackerForStore} instead.
  */
 export const gelatoTracker = gelatoTrackerForStore;

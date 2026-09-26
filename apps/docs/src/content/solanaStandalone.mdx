@@ -1,121 +1,105 @@
-# Using Solana Trackers Standalone
+# Solana Trackers Standalone
 
-While the Pulsar suite offers a full stack solution with a UI (`@tuwaio/nova-transactions`) and a Zustand-based state store (`@tuwaio/pulsar-core`), its architecture remains modular and flexible. This allows utilizing the low-level **trackers** (`solanaFetcher`) from `@tuwaio/pulsar-solana` directly, bypassing the complete state management store.
+The Solana tracker of `@tuwaio/pulsar-solana` also works without the Pulsar store. Use it when you:
 
-This flexibility is ideal if:
+- keep transactions in your own state (Redux, MobX, another Zustand store, a database);
+- track transactions on a server, where there is no `localStorage` and no wallet;
+- need a callback for each check instead of store updates.
 
-- Integrating transaction tracking logic into your own state management solution (Zustand, Redux, MobX, etc.).
-- Requiring tracking on the server-side, where client-centric store persistence is unnecessary.
-- Granular control over each stage of a transaction’s lifecycle is required for custom workflows.
-
----
-
-## Why Use `solanaFetcher`?
-
-Using `solanaFetcher` provides fast-block monitoring and signature status checking at the RPC node level, handling network lags and transaction signature swaps natively.
-
-| Feature                     | Solana RPC (manual polling)                                                                                             | `solanaFetcher` (Pulsar)                                                                                      |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| **Handles RPC Lags**        | ❌ No. If called immediately after submission, the RPC node might not have indexed the transaction yet, causing errors. | ✅ **Yes.** Built-in retry mechanism to wait for the transaction to appear on-chain, mitigating RPC delays.   |
-| **Full Lifecycle Support**  | 🤷‍♂️ Limited. You must manually implement logic for different states (sent, confirmed, failed).                           | ✅ **Yes.** Provides callbacks for each stage: initialization, details fetched, mined, replaced, failed, etc. |
-| **Fetches Full Tx Details** | ❌ No. Requires additional RPC calls to get full transaction info after confirmation.                                   | ✅ **Yes.** Calls for `getTransaction` internally, providing parsed transaction details to callbacks.         |
-| **Abstraction Level**       | Low. You must manage the tracking states and polling manually.                                                          | High. Encapsulates the entire process into a single, convenient async function, simplifying implementation.   |
-
-In essence, `solanaFetcher` is a reliable tracking pipeline wrapper around Solana RPC functions, resolving common edge cases and ensuring robust signature status monitoring.
+Without the store nothing is persisted and nothing is resumed after a restart: you decide what to save and when to start tracking again. The tracker uses only `@solana/kit` RPC calls, so it runs in the browser and in Node.js.
 
 ---
 
-## Trackers Overview
+## Why `solanaFetcher` Instead of Manual Polling
 
-### 1. Solana Tracker
+| Situation                              | Manual `getSignatureStatuses` polling                             | `solanaFetcher` with `initializePollingTracker`                                                                           |
+| -------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **The RPC has not seen the signature** | You decide how long to wait.                                      | Keeps polling; fails one hour after `localTimestamp` if the signature never appears (for example, the blockhash expired). |
+| **Transient RPC errors**               | You write the retry logic.                                        | Errors are retried on the next tick; tracking gives up after `maxRetries` consecutive errors.                             |
+| **Tracking resumed later**             | Recent statuses only, unless you pass `searchTransactionHistory`. | Always searches the transaction history, so transactions that finished while you were away are found.                     |
+| **Transaction details**                | A separate `getTransaction` call.                                 | Fetches `fee`, `recentBlockhash` and `instructions` once and adds them to every reported status.                          |
+| **Final status**                       | You compare commitment levels yourself.                           | `onSuccess` at `finalized`, `onFailure` for an on-chain error; both stop polling.                                         |
 
-This is the primary tracker for monitoring standard transactions on Solana, identified via a transaction signature. It is designed to be used with `initializePollingTracker` from `@tuwaio/pulsar-core`.
+---
 
-#### How It Works
+## Tracking a Signature: `solanaFetcher`
 
-`solanaFetcher` initially attempts to fetch the transaction signature status. If the transaction is not found (due to RPC indexing lag), it retries. Once resolved, it continues to poll until the transaction is finalized. It also fetches full transaction details once they become available.
+Pass `solanaFetcher` to `initializePollingTracker` from `@tuwaio/pulsar-core`. It starts polling in the background and returns immediately:
 
-#### Example Usage
-
-```tsx
+```typescript
+import { OrbitAdapter } from '@tuwaio/orbit-core';
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
 import { solanaFetcher } from '@tuwaio/pulsar-solana';
-import { OrbitAdapter } from '@tuwaio/orbit-core';
 
-async function trackMySolanaTransaction(txSignature: string, rpcUrl: string, chainId: string) {
-  await initializePollingTracker({
+export function trackSignature(signature: string) {
+  initializePollingTracker({
     tx: {
-      txKey: txSignature,
-      rpcUrl: rpcUrl,
-      chainId: chainId, // e.g., 'solana:mainnet' or 'solana:devnet'
       adapter: OrbitAdapter.SOLANA,
-      localTimestamp: Math.floor(Date.now() / 1000),
-      pending: true, // Crucial: must be true to start polling loop
+      txKey: signature,
+      chainId: 'solana:devnet', // used to pick the public endpoint when rpcUrl is not set
+      rpcUrl: 'https://api.devnet.solana.com', // prefer your own RPC provider
+      localTimestamp: Math.floor(Date.now() / 1000), // when the transaction was sent, in seconds
+      pending: true, // polling starts only for pending transactions
     },
     fetcher: solanaFetcher,
-    onIntervalTick: (response) => {
-      console.log('Transaction status update:', response);
-      // response includes slot, confirmations, confirmationStatus, etc.
-    },
-    onSuccess: (response) => {
-      console.log('Transaction finalized!', response);
-    },
-    onFailure: (response) => {
-      console.error('Tracking failed or transaction error:', response?.err);
-    },
+    pollingInterval: 2500,
+    onIntervalTick: (status) => console.log(status.confirmationStatus, status.confirmations),
+    onSuccess: (status) => console.log('Finalized in slot', status.slot, 'fee', status.fee),
+    onFailure: (status) =>
+      console.error(status ? 'Failed on-chain' : 'Not finalized in time or too many RPC errors', status?.err),
   });
 }
 ```
 
+How each check works:
+
+1. `getSignatureStatuses` with `searchTransactionHistory: true`. If the signature is unknown, the fetcher reports nothing and waits for the next tick, until one hour after `localTimestamp`.
+2. `getTransaction` (commitment `confirmed`) for the fee, blockhash and instructions, only until it has returned them once for this `tx` object: the details are cached in memory for the tracking run, or taken from `tx` if it already has them. Until they are known, nothing is reported.
+3. `onIntervalTick` with the status; then `onFailure` with the status if it has an `err`, or `onSuccess` when it is `finalized`. A transaction that is not finalized one hour after `localTimestamp` calls `onFailure`.
+
+RPC errors are thrown to `initializePollingTracker`, which retries on the next tick and calls `onFailure()` without arguments after `maxRetries` (default 10) consecutive errors.
+
 ---
 
-## Helper Functions
+## Helpers
 
 ### `signAndSendSolanaTx`
 
-This utility function simplifies the process of creating, signing, and broadcasting a Solana transaction to the network. It fetches the latest blockhash, creates a versioned transaction (v0), signs it with the provided signer, and sends it.
+Builds a version 0 transaction from one or more instructions, with the signer as fee payer and the latest blockhash, and has the signer sign and send it. It returns the base58 signature, ready for `solanaFetcher`:
 
-#### Example Usage
-
-```tsx
+```typescript
 import type { Instruction, TransactionSendingSigner } from '@solana/kit';
 import type { SolanaClient } from '@tuwaio/orbit-solana';
 import { signAndSendSolanaTx } from '@tuwaio/pulsar-solana';
 
-async function sendTransaction(
-  client: SolanaClient,
-  signer: TransactionSendingSigner,
-  instruction: Instruction | Instruction[],
-) {
-  try {
-    const signature = await signAndSendSolanaTx({
-      client,
-      signer,
-      instruction,
-    });
-    console.log('Transaction sent with signature:', signature);
-    return signature;
-  } catch (error) {
-    console.error('Failed to send transaction:', error);
-  }
+export async function send(client: SolanaClient, signer: TransactionSendingSigner, instructions: Instruction[]) {
+  const signature = await signAndSendSolanaTx({ client, signer, instruction: instructions });
+  console.log('Sent', signature);
+  return signature;
 }
 ```
+
+It rejects with the RPC or signer error, for example when the user rejects the transaction in the wallet.
 
 ### `checkSolanaChain`
 
-This function verifies if the user is connected to the correct Solana network. It compares the required chain identifier with the current one and throws a `SolanaChainMismatchError` if they don't match.
+Compares two cluster identifiers exactly and throws `SolanaChainMismatchError` when they differ. The Solana adapter uses it to compare `desiredChainID` with the cluster saved for the wallet connection after removing a `solana:` prefix from both, so `devnet` and `solana:devnet` match:
 
-#### Example Usage
+```typescript
+import { checkSolanaChain, SolanaChainMismatchError } from '@tuwaio/pulsar-solana';
 
-```tsx
-import { checkSolanaChain } from '@tuwaio/pulsar-solana';
-
-async function ensureCorrectNetwork(requiredChain: string, currentChain: string) {
+export function isOnCluster(requiredCluster: string, walletCluster: string): boolean {
   try {
-    checkSolanaChain(requiredChain, currentChain);
-    console.log('Network is correct, proceeding...');
+    checkSolanaChain(requiredCluster, walletCluster);
+    return true;
   } catch (error) {
-    console.error('Network mismatch:', error.message);
+    if (error instanceof SolanaChainMismatchError) {
+      console.warn(`Switch the wallet from ${error.currentChain} to ${error.requiredChain}.`);
+      return false;
+    }
+    throw error;
   }
 }
 ```
+
+The full list of exports is in the **[`@tuwaio/pulsar-solana` reference](/packages/pulsar-solana)**.

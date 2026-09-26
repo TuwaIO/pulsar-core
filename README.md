@@ -1,90 +1,141 @@
-# Pulsar Engine
+# Pulsar
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-core.svg)](./LICENSE)
-[![Contributors](https://img.shields.io/github/contributors/TuwaIO/pulsar-core)](https://github.com/TuwaIO/pulsar-core/graphs/contributors)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-<img src="https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/preview/repos/pulsar_core.png" alt="Pulsar Core" width="400" style="border-radius: 10px; text-align: center; margin-bottom: 20px; margin-top: 20px; margin-left: auto; margin-right: auto; display: block;" />
+<img src="https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/preview/repos/pulsar_core.png" alt="Pulsar" width="400" style="border-radius: 10px; text-align: center; margin-bottom: 20px; margin-top: 20px; margin-left: auto; margin-right: auto; display: block;" />
 
-Welcome to the official monorepo for **Pulsar**, a headless, local-first transaction lifecycle tracking engine for the TUWA Ecosystem.
+**Pulsar** is the transaction tracking project of TUWA Stage 2: a headless, framework-agnostic engine that follows EVM and Solana transactions from the wallet prompt to their final status. It keeps transactions in a store outside your components, persists them to `localStorage`, resumes tracking after a page reload and detects EVM speed-ups and cancels made in the wallet, with no UI components and no required backend.
 
----
+Pulsar is built only on modern Web3 libraries: `viem` and `@wagmi/core` for EVM, `@solana/kit` and the Wallet Standard for Solana, on top of [Orbit Utils](https://orbit.docs.tuwa.io/). It does not use `ethers.js`, `web3.js`, `@solana/web3.js` or `gill`.
 
-## 🏛️ Architecture Philosophy
-
-Pulsar is "The Tracker" within the ecosystem, occupying Layer 3 (L3) (Headless Core Store) and Layer 4 (L4) (Network State Adapters & Framework Bindings). Its single purpose is asynchronous multi-chain transaction lifecycle indexing and client-side reconciliation.
-
-It is designed to be consumed by any UI layer, with our official implementation being the **[Nova UI Kit](https://github.com/TuwaIO/nova-uikit)**.
-
-The architecture is modular and layered:
-
-- 🧠 **Core (`@tuwaio/pulsar-core`):** A framework-agnostic state machine that knows _how_ to manage state but nothing about specific blockchains.
-- 🔌 **Adapters (`@tuwaio/pulsar-evm`, `@tuwaio/pulsar-solana`):** Platform-specific modules that plug into the core. They teach Pulsar _how_ to interact with specific ecosystems like EVM or Solana.
-- ⚛️ **Bindings (`@tuwaio/pulsar-react`):** Framework-specific packages that provide hooks and utilities to easily connect Pulsar to a UI framework's lifecycle.
+📖 **Documentation:** [pulsar.docs.tuwa.io](https://pulsar.docs.tuwa.io)
 
 ---
 
-## ✨ Key Features
+## 🏛️ Ecosystem Layer Architecture
 
-- **Framework-Agnostic Core:** Framework-agnostic headless core store providing append-only localStorage transaction history ledgers.
-- **Multi-Chain by Design:** The adapter pattern allows for extending support to any blockchain.
-- **Persistent State:** Automatically resumes tracking pending transactions after a page reload.
-- **Rich Ecosystem Support:**
-  - **EVM Adapter:** Supports standard transactions, ERC-4337 UserOperations (Two-Stage Pimlico Smart Account tracking), Safe multisigs, and Gelato relay.
-  - **Solana Adapter:** Supports Wallet Standard, cluster management, and transaction tracking.
-- **Type-Safe:** Written entirely in TypeScript to ensure a robust developer experience.
+TUWA is built in stages. Pulsar sits in **Stage 2 (State & Connection)** next to [Satellite Connect](https://satellite.docs.tuwa.io/), above [SIWX](https://siwx.docs.tuwa.io/) and [Orbit Utils](https://orbit.docs.tuwa.io/) (Stage 1) and below [Quasar](https://sdk.docs.tuwa.io/quasar-cloud/overview) (Stage 3) and [Nova UI Kit](https://stories.tuwa.io/) (Stage 4). Nova Transactions renders Pulsar's state, and Quasar can index and sync its transactions across devices; both are optional.
 
----
+Inside the monorepo, packages are split into two layers:
 
-## 📦 Packages
+### Layer 3: Core (L3)
 
-This repository is a monorepo managed using `pnpm` workspaces.
+- **[`@tuwaio/pulsar-core`](./packages/pulsar-core)**: the transaction store (Zustand with `persist`), the adapter contract, metadata validation, remote sync hooks, selectors and building blocks for trackers. Peer dependencies: `@tuwaio/orbit-core`, `zustand`, `immer`, `dayjs`.
 
-| Package                        | Version                                                                                                                       | Description                                                                                                                                                            |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🧠 **`@tuwaio/pulsar-core`**   | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-core.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-core)     | Layer 3 (L3) of the TUWA Ecosystem. Framework-agnostic headless core store providing append-only localStorage transaction history ledgers.                             |
-| 🔌 **`@tuwaio/pulsar-evm`**    | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)       | Layer 4 (L4) of the TUWA Ecosystem. Low-level EVM state trackers and lifecycle indexers powered strictly by viem and wagmi primitives.                                 |
-| 🔌 **`@tuwaio/pulsar-solana`** | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-solana.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-solana) | Layer 4 (L4) of the TUWA Ecosystem. Low-level Solana block state monitors and RPC cluster lifecycle indexers powered strictly by @solana/kit and @tuwaio/orbit-solana. |
-| ⚛️ **`@tuwaio/pulsar-react`**  | [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react)   | Layer 4 (L4) of the TUWA Ecosystem. Global React context bindings, hooks, and transaction pool initializers for orchestrating framework-agnostic Pulsar stores.        |
+### Layer 4: Chains and React (L4)
+
+- **[`@tuwaio/pulsar-evm`](./packages/pulsar-evm)**: the EVM adapter and trackers for standard transactions, ERC-4337 UserOperations, Safe multisig transactions and Gelato relay tasks (deprecated), plus speed-up and cancel actions. Peer dependencies: `@tuwaio/orbit-evm`, `@wagmi/core`, `viem`.
+- **[`@tuwaio/pulsar-solana`](./packages/pulsar-solana)**: the Solana adapter, the signature tracker and `signAndSendSolanaTx`. Peer dependencies: `@tuwaio/orbit-solana`, `@solana/kit` (plus the `@wallet-standard` peers of `@tuwaio/orbit-solana`).
+- **[`@tuwaio/pulsar-react`](./packages/pulsar-react)**: the `useInitializeTransactionsPool` hook that resumes tracking after a reload. Peer dependency: `react`.
+
+The EVM and Solana packages have `@tuwaio/pulsar-core` as a peer dependency.
 
 ---
 
-## 🚀 Getting Started (for Contributors)
+## 🔧 Monorepo Structure
 
-Follow these steps to set up the development environment on your local machine.
-
-### 1. Clone the Repository
-
-```bash
- git clone [https://github.com/TuwaIO/pulsar-core.git](https://github.com/TuwaIO/pulsar-core.git) cd pulsar-core
 ```
-
-### 2. Install Dependencies
-
-This project uses `pnpm` as its package manager.
-
-```bash
- pnpm install
-```
-
-### 3. Build All Packages
-
-After installation, build all packages to ensure the monorepo is correctly linked.
-
-```bash
- pnpm build
+pulsar-core/
+├── apps/
+│   └── docs/                   # pulsar.docs.tuwa.io (Next.js 16 + Nextra 4)
+│       ├── src/content/        # Hand-written MDX pages + generated `packages/` reference
+│       ├── src/components/     # Interactive blocks of the Getting Started and Quick Start pages
+│       └── typedoc/            # TypeDoc plugins, Packages overview page and sidebar template
+├── packages/
+│   ├── pulsar-core/            # L3: transaction store, adapter contract, validation, selectors
+│   ├── pulsar-evm/             # L4: EVM adapter and trackers (viem, @wagmi/core)
+│   ├── pulsar-solana/          # L4: Solana adapter and tracker (@solana/kit)
+│   └── pulsar-react/           # L4: React hook
+└── typedoc.json                # Reference generation (TypeDoc "packages" strategy)
 ```
 
 ---
 
-## 🤝 Contributing & Support
+## 💾 Installation
 
-Contributions are welcome! Please read our main **[Contribution Guidelines](https://github.com/TuwaIO/workflows/blob/main/CONTRIBUTING.md)**.
+Install the L3 core and the L4 packages your app needs:
 
-If you find this library useful, please consider supporting its development. Every contribution helps!
+```bash
+# L3 Core
+pnpm add @tuwaio/pulsar-core @tuwaio/orbit-core zustand immer dayjs
 
-[**➡️ View Support Options**](https://github.com/TuwaIO/workflows/blob/main/Donation.md)
+# L4 EVM
+pnpm add @tuwaio/pulsar-evm @tuwaio/orbit-evm @wagmi/core viem
+
+# L4 Solana
+pnpm add @tuwaio/pulsar-solana @tuwaio/orbit-solana @solana/kit @wallet-standard/app @wallet-standard/ui-core @wallet-standard/ui-registry
+
+# L4 React
+pnpm add @tuwaio/pulsar-react react
+```
+
+---
+
+## 🚀 Architectural Usage Example
+
+A React app that tracks EVM and Solana transactions in one store. The store is created once, the initializer resumes tracking after a reload, and components read the pool with a selector:
+
+```tsx
+// store/pulsar.ts
+'use client';
+
+import { createBoundedUseStore, createPulsarStore, type Transaction } from '@tuwaio/pulsar-core';
+import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
+import { useInitializeTransactionsPool } from '@tuwaio/pulsar-react';
+import { pulsarSolanaAdapter } from '@tuwaio/pulsar-solana';
+import { type Config } from '@wagmi/core';
+import { mainnet } from 'viem/chains';
+
+declare const wagmiConfig: Config; // your wagmi config
+
+export const pulsarStore = createPulsarStore<Transaction>({
+  name: 'pulsar-transactions',
+  adapter: [
+    pulsarEvmAdapter(wagmiConfig, [mainnet]),
+    pulsarSolanaAdapter({ rpcUrls: { mainnet: 'https://api.mainnet-beta.solana.com' } }),
+  ],
+});
+
+export const usePulsarStore = createBoundedUseStore(pulsarStore);
+
+// Render once, next to your providers.
+export function PulsarInitializer() {
+  useInitializeTransactionsPool({ initializeTransactionsPool: pulsarStore.getState().initializeTransactionsPool });
+  return null;
+}
+
+export function PendingBadge() {
+  const pendingCount = usePulsarStore(
+    (state) => Object.values(state.transactionsPool).filter((tx) => tx.pending).length,
+  );
+  return pendingCount > 0 ? <span>{pendingCount} pending</span> : null;
+}
+```
+
+Send transactions with `usePulsarStore((state) => state.executeTxAction)`: see [Getting Started](https://pulsar.docs.tuwa.io/gettingStarted) for the complete EVM and Solana flows.
+
+---
+
+## 🛠️ Development
+
+```bash
+pnpm install                                  # installs dependencies and builds all packages
+pnpm build                                    # builds packages with tsup (ESM, CJS, types)
+pnpm test                                     # runs vitest in every package
+pnpm lint                                     # runs ESLint
+pnpm docs:gen                                 # regenerates the Packages reference in apps/docs
+pnpm --filter @tuwaio/pulsar-core-docs dev    # runs the docs site locally
+```
+
+The Packages reference is generated from each package's `src/index.ts`, JSDoc and README, and is regenerated by the pre-commit hook. Source links point to `main`, so a regeneration only changes the pages whose source actually changed. The tests of the L4 packages use the built `@tuwaio/pulsar-core`: run `pnpm build` after changing it.
+
+---
+
+## 🤝 Contribution & Auditing
+
+Please review our ecosystem **[Contribution Guidelines](https://github.com/TuwaIO/workflows/blob/main/CONTRIBUTING.md)**.
 
 ## 📄 License
 
-This project is licensed under the **Apache-2.0 License** - see the [LICENSE](./LICENSE) file for details.
+Licensed under the **Apache-2.0 License**. See the [LICENSE](./LICENSE) file for details.

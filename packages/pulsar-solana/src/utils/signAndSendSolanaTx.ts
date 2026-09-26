@@ -1,6 +1,5 @@
 /**
- * @file This file contains a utility function for signing and sending Solana transactions.
- * It simplifies the process of creating, signing, and broadcasting a transaction to the network.
+ * @file Builds, signs and sends a Solana transaction with `@solana/kit`.
  */
 
 import type { Instruction, TransactionSendingSigner } from '@solana/kit';
@@ -16,29 +15,25 @@ import {
 import type { SolanaClient } from '@tuwaio/orbit-solana';
 
 /**
- * Creates, signs, and sends a Solana transaction with one or more instructions.
+ * Builds a version 0 transaction with the given instructions, the signer as fee payer and the latest blockhash, then
+ * has the signer sign and send it. Use it inside an `actionFunction`: the returned signature is the `txKey` the Solana
+ * tracker follows.
  *
- * This async function orchestrates the common flow for broadcasting a transaction:
- * 1. Fetches the latest blockhash from the RPC.
- * 2. Creates a versioned transaction message (`v0`).
- * 3. Signs the transaction with the provided signer.
- * 4. Sends the transaction to the network.
- * 5. Decodes and returns the resulting transaction signature.
+ * Side effects: calls `getLatestBlockhash` through `client.rpc` and asks the wallet behind `signer` to sign and send
+ * the transaction.
  *
- * @param {object} params - The parameters for signing and sending the transaction.
- * @param {SolanaClient} params.client - The Solana client instance for RPC communication.
- * @param {TransactionSendingSigner} params.signer - The signer (e.g., a wallet) responsible for signing the transaction.
- * @param {Instruction | Instruction[]} params.instruction - A single instruction or an array of instructions to include in the transaction.
- * @returns A promise that resolves to the transaction signature.
- * @throws Will throw an error if any of the async operations (fetching blockhash, signing, sending) fail.
+ * @param params - The client, the signer and the instructions.
+ * @param params.client - A Solana client, for example from `createSolanaClientWithCache` of `@tuwaio/orbit-solana`.
+ * @param params.signer - A `TransactionSendingSigner`, such as the one from `useWalletAccountTransactionSendingSigner`
+ * of `@solana/react`; it pays the fee.
+ * @param params.instruction - One instruction or an array of instructions.
+ * @returns The transaction signature, base58-encoded.
+ * @throws The error of the RPC call or of the signer (for example when the user rejects the transaction).
  *
  * @example
- * const signature = await signAndSendSolanaTx({
- *   client: mySolanaClient,
- *   signer: wallet,
- *   instruction: myTransferInstruction,
- * });
- * console.log('Transaction sent with signature:', signature);
+ * ```ts
+ * const signature = await signAndSendSolanaTx({ client, signer, instruction: transferInstruction });
+ * ```
  */
 export async function signAndSendSolanaTx({
   client,

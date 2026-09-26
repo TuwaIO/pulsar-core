@@ -1,6 +1,5 @@
 /**
- * @file This file contains the factory function for creating the EVM (Ethereum Virtual Machine) transaction adapter.
- * This adapter encapsulates all the logic required to interact with EVM-based chains using wagmi.
+ * @file The EVM adapter that plugs `@wagmi/core` and `viem` into the Pulsar store.
  */
 
 import { getConnectorTypeFromName, lastConnectedConnectorHelpers, OrbitAdapter } from '@tuwaio/orbit-core';
@@ -16,19 +15,40 @@ import { selectEvmTxExplorerLink } from '../utils/selectEvmTxExplorerLink';
 import { speedUpTxAction } from '../utils/speedUpTxAction';
 
 /**
- * Creates an EVM-specific transaction adapter.
+ * Creates the EVM adapter for `createPulsarStore` from `@tuwaio/pulsar-core`. Pass it alone or in the adapter array.
  *
- * This function acts as a constructor for the EVM adapter, bundling all the necessary
- * chain-specific utilities (like checking chain, ENS resolution, speeding up transactions, etc.)
- * into a single object that conforms to the `TxAdapter` interface.
+ * The adapter implements `TxAdapter` from `@tuwaio/pulsar-core`:
+ * - `getConnectorInfo` returns the address of the active wagmi connection (or, without one, the last connected address
+ *   saved in `localStorage` by `@tuwaio/orbit-core`, then the zero address) and the connector type, e.g. `evm:metamask`.
+ * - `checkChainForTx` runs `checkAndSwitchChain` from `@tuwaio/orbit-evm`: when the wallet is on another chain, it asks
+ *   the wallet to switch and rejects if the user declines.
+ * - `checkTransactionsTracker` and `checkAndInitializeTrackerInStore` are {@link checkTransactionsTracker} and
+ *   {@link checkAndInitializeTrackerInStore}.
+ * - `getExplorerUrl(path, chainId)` appends a path to the default block explorer of `chainId` (looked up in
+ *   `appChains`), or of the chain the wallet is connected to when `chainId` is omitted. It returns `undefined` when that
+ *   chain has no block explorer. `getExplorerTxUrl` is {@link selectEvmTxExplorerLink} with `appChains`.
+ * - `cancelTxAction` and `speedUpTxAction` are {@link cancelTxAction} and {@link speedUpTxAction}; both open a wallet
+ *   prompt.
+ * - `retryTxAction` closes the modal and runs `executeTxAction` again with
+ *   `tx.actionFunction({ config, ...tx.payload })`; it logs an error and does nothing without `executeTxAction`.
  *
- * @template T - The application-specific transaction type.
- * @param {Config} config - The wagmi configuration object.
- * @param {Chain[]} appChains - An array of viem `Chain` objects supported by the application.
+ * @template T - The application transaction type.
+ * @param config - The wagmi config of the app.
+ * @param appChains - The viem chains of the app, used to build explorer links.
+ * @returns The EVM adapter.
+ * @throws `Error` when `config` is not provided.
  *
- * @returns {TxAdapter<T>} The configured EVM transaction adapter.
+ * @example
+ * ```ts
+ * import { createPulsarStore } from '@tuwaio/pulsar-core';
+ * import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
+ * import { mainnet, sepolia } from 'viem/chains';
  *
- * @throws {Error} Throws an error if the wagmi `config` is not provided.
+ * const pulsarStore = createPulsarStore({
+ *   name: 'transactions-tracking-storage',
+ *   adapter: pulsarEvmAdapter(wagmiConfig, [mainnet, sepolia]),
+ * });
+ * ```
  */
 export function pulsarEvmAdapter<T extends Transaction>(
   config: Config,
@@ -60,10 +80,12 @@ export function pulsarEvmAdapter<T extends Transaction>(
       checkAndInitializeTrackerInStore({ tracker: tx.tracker, tx, config, ...rest }),
 
     // --- UI & Explorer Methods ---
-    getExplorerUrl: (url) => {
-      const { chain } = getConnection(config);
+    getExplorerUrl: (url, chainId) => {
+      const chain =
+        chainId === undefined ? getConnection(config).chain : appChains.find((c) => c.id === Number(chainId));
       const baseExplorerLink = chain?.blockExplorers?.default.url;
-      return url ? `${baseExplorerLink}/${url}` : baseExplorerLink;
+      if (!baseExplorerLink) return undefined;
+      return url ? `${baseExplorerLink.replace(/\/+$/, '')}/${url.replace(/^\/+/, '')}` : baseExplorerLink;
     },
     getExplorerTxUrl: (tx) =>
       selectEvmTxExplorerLink({

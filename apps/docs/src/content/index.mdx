@@ -3,99 +3,101 @@
 <p align="center">
   <img
     src="https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/preview/repos/pulsar_core.png"
-    alt="TUWA Pulsar Core"
+    alt="Pulsar"
     width="450"
     style={{ borderRadius: '12px', margin: '24px auto', display: 'block' }}
   />
 </p>
 
-Welcome to **Pulsar** — the headless-first, local-first transaction lifecycle tracking engine engineered for absolute application sovereignty.
-
-Pulsar is **The Tracker** of the TUWA Ecosystem. It completely decouples transaction execution tracking from your interface, replacing fragile UI hooks with a robust, deterministic client-side state machine.
+**Pulsar** is the transaction tracking project of TUWA Stage 2: a headless, framework-agnostic engine that follows EVM and Solana transactions from the wallet prompt to their final status. It keeps transactions in a store outside your components, persists them to `localStorage`, resumes tracking after a page reload and detects EVM speed-ups and cancels made in the wallet, with no UI components and no required backend.
 
 ---
 
-## The Broken Web3 UX Standard
+## 🏛️ Where Pulsar Fits in TUWA
 
-Most dApps look completely broken when the network is congested. Standard developer workflows rely on basic RPC broadcasts and blind polling, failing completely under production stress. If you are building tracking manually, you are likely trapped in a maze of edge cases:
+TUWA is built in stages. Each stage builds on the ones below it:
 
-- **Dropped Context on Reload:** If a user refreshes the page while a transaction is pending, your client-side tracking state is wiped out.
+| Stage                          | Projects                                                                                                                                     | Role                                                     |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **1 — Core Auth & Primitives** | [SIWX](https://siwx.docs.tuwa.io/), [Orbit Utils](https://orbit.docs.tuwa.io/)                                                               | CAIP-122 authentication and multi-chain primitives       |
+| **2 — State & Connection**     | [Satellite Connect](https://satellite.docs.tuwa.io/), **Pulsar**                                                                             | Wallet connection state machine and transaction tracking |
+| **3 — Backend & Sync**         | [Quasar Cloud](https://sdk.docs.tuwa.io/quasar-cloud/overview) or self-hosted [Quasar Community](https://github.com/TuwaIO/quasar-community) | Transaction indexing and cross-device sync               |
+| **4 — User Interface**         | [Nova UI Kit](https://stories.tuwa.io/)                                                                                                      | React design system and components                       |
 
-- **Blind Replacement Invalidation:** When a user speeds up or cancels a transaction via their wallet, your dApp loses track of the transaction signature, throwing false errors or freezing loaders.
+Pulsar builds on Orbit Utils (chain helpers, RPC and bundler clients). Nova Transactions renders its state as modals and toasts, and Quasar can index and sync its transactions across devices; both are optional. The adapters read the wallet connection that Satellite Connect saves, but you can use Pulsar with any wagmi or Wallet Standard setup.
 
-- **Tight UI Coupling:** Forcing local React `useState` hooks to manage complex tx states (`isLoading`, `isSuccess`) creates messy, fragmented, and non-persistent transaction pipelines.
+---
 
-Building this infra yourself takes months and distracts from your primary logic.
+## 🧭 Principles
 
-## The Solution: Pulsar Engine
+1. **Transactions are state, not component logic:** a transaction lives in a store, not in a button's `useState`. It survives navigation, unmounts and reloads, and every component reads the same status.
+2. **Headless and framework-agnostic:** the store is a vanilla Zustand store with no UI. React bindings live in their own package, and UI in Nova Transactions.
+3. **One store, many chains:** chain logic lives in adapters that implement one contract. The EVM adapter tracks standard transactions, ERC-4337 UserOperations and Safe multisig transactions; the Solana adapter tracks signatures.
+4. **Modern Web3 libraries only:** `viem` and `@wagmi/core` for EVM, `@solana/kit` and the Wallet Standard for Solana. No `ethers.js`, `web3.js`, `@solana/web3.js` or `gill`.
+5. **Local-first, backend optional:** tracking runs in the browser against your RPC endpoints. Remote sync is an optional callback that never blocks a transaction.
+6. **Transparent side effects:** the package pages list what is saved to `localStorage`, which hosts are contacted, and when trackers give up.
 
-Pulsar provides the complete transactional "brain" locally on the client. It indexes and reconciles transaction states from the mempool (`pending`) to ultimate finality (`replaced`, `confirmed`, `failed`) entirely in the background, checkpointing everything directly to `localStorage`.
+---
 
-Pulsar handles the core state engineering, sitting firmly below your visual components and perfectly integrating into cloud persistence layers like the Quasar SDK.
+## 🔄 How a Transaction Is Tracked
 
-> [!NOTE]
-> Pulsar does not ship pre-bundled visual nodes natively; layout rendering is strictly delegated to the Nova UI Kit layer, while cloud state sync mapping is handled by the Quasar SDK.
-
-```text
-                      (The Baseline Core Foundation)
-┌───────────────────────────────────────────┐
-│          @tuwaio/pulsar-core (L3)         │
-│  • Framework-Agnostic Headless Store      │
-│  • Local Storage Append-Only Ledger       │
-└───────────────────┬───────────────────────┘
-                    │ (Isolated Network Adapters)
-┌───────────────────▼───────────────────────┐
-│     @tuwaio/pulsar-evm / pulsar-solana    │
-│  • EVM (Viem/Wagmi) & Solana (@solana/kit)│
-│  • Standard, Safe, ERC-4337 Account Abstr.│
-└───────────────────┬───────────────────────┘
-                    │ (React Hook Bindings)
-┌───────────────────▼───────────────────────┐
-│       @tuwaio/pulsar-react (L4)           │
-│  • `usePulsarStore` & `executeTxAction`   │
-└───────────────────┬───────────────────────┘
-                    │ (Visual Logic Execution Layer)
-┌───────────────────▼───────────────────────┐
-│     @tuwaio/nova-transactions (UI Kit)    │
-│  • Pure Visual Rendering: Modals & Toasts │
-└───────────────────┬───────────────────────┘
-                    │
-┌───────────────────▼───────────────────────┐
-│       Your Application (React, Next.js)   │
-└───────────────────────────────────────────┘
+```
+executeTxAction({ actionFunction, params })
+  │ validate title, description and payload
+  │ initialTx = { isInitializing: true }          → UI shows the signing state
+  │ adapter.checkChainForTx                       → EVM: the wallet is asked to switch networks
+  │ beforeTxProcess()                             → your preflight check (optional)
+  │ actionFunction()                              → the wallet signs; returns a hash, userOpHash, safeTxHash or signature
+  │ adapter.checkTransactionsTracker              → picks the tracker
+  │ addTxToPool                                   → onRemoteCreate (optional), saved to localStorage
+  ▼
+tracker (background)                              → updateTxParams(...) until pending: false
+                                                    status: Success | Failed | Replaced
 ```
 
-### ✨ Core Engineering Features
-
-- **🧠 Headless Purist Architecture:** Controlled via an ultra-fast, framework-agnostic Zustand store. Zero rendering overhead, zero forced UI design lock-in.
-
-- **⛓️ Pure Multi-Chain Adapters:**
-- **EVM Adapter:** Built strictly on `viem` and `wagmi`. Includes specialized tracking logic for contract wallets, Safe multi-sigs, and ERC-4337 UserOperations via Pimlico/native bundlers. Legacy `ethers.js` or `web3.js` is strictly prohibited.
-
-- **Solana Adapter:** Built strictly on `@solana/kit` and `@tuwaio/orbit-solana` helpers to monitor fast-block lifecycles at the RPC level.
-
-- **🔄 Local-First Resilience:** Your transaction pool automatically checkpoints to `localStorage`. Pending trackers instantly resume execution lifecycle monitoring immediately upon client reboots or network reconnects.
-
-- **🛠️ Strict Type Integrity:** Built with zero-compromise strict TypeScript. Every payload, error state, and lifecycle swap is explicitly typed — absolutely no `any` parameters are allowed.
-
-### 📦 Package Map
-
-| Package                                                                                                    | Purpose           | Key Features                                        |
-| ---------------------------------------------------------------------------------------------------------- | ----------------- | --------------------------------------------------- |
-| **[@tuwaio/pulsar-core](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-core)**            | The Core Engine   | Headless store, types, persistence logic            |
-| **[@tuwaio/pulsar-evm](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-evm)**              | EVM Support       | EVM adapter, trackers for Ethereum, Gelato, Safe    |
-| **[@tuwaio/pulsar-solana](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-solana)**        | Solana Support    | Solana adapter, cluster management, trackers        |
-| **[@tuwaio/pulsar-react](https://github.com/TuwaIO/pulsar-core/tree/main/packages/pulsar-react)**          | React Integration | Hooks for connecting the store to React's lifecycle |
-| **[@tuwaio/nova-transactions](https://github.com/TuwaIO/nova-uikit/tree/main/packages/nova-transactions)** | UI Components     | Pre-built React components, themes, widgets         |
+After a reload, `initializeTransactionsPool` starts the trackers of every transaction that is still `pending`.
 
 ---
 
-## What's Next?
+## 🧩 Packages
 
-1.  **[Getting Started](./gettingStarted)** - Set up Pulsar in your project.
-2.  **[Quick Start](./quickStart)** - Implement your first tracked transaction in minutes.
-3.  **[API Reference](./apiReference/README)** - Dive deep into customization and advanced features.
+| Package                                            | Layer | Provides                                                                                                  | Peer dependencies                                                                     |
+| -------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [`@tuwaio/pulsar-core`](/packages/pulsar-core)     | L3    | Transaction store with persistence, adapter contract, metadata validation, remote sync hooks, selectors   | `@tuwaio/orbit-core` ≥ 0.3, `zustand` 5.x, `immer` 11.x, `dayjs` 1.x                  |
+| [`@tuwaio/pulsar-evm`](/packages/pulsar-evm)       | L4    | EVM adapter; trackers for standard, ERC-4337, Safe and Gelato (deprecated) transactions; speed up, cancel | `@tuwaio/pulsar-core` ≥ 0.8, `@tuwaio/orbit-evm` ≥ 0.3, `@wagmi/core` 3.x, `viem` 2.x |
+| [`@tuwaio/pulsar-solana`](/packages/pulsar-solana) | L4    | Solana adapter, signature tracker, `signAndSendSolanaTx`                                                  | `@tuwaio/pulsar-core` ≥ 0.8, `@tuwaio/orbit-solana` ≥ 0.3, `@solana/kit` ≥ 8.2        |
+| [`@tuwaio/pulsar-react`](/packages/pulsar-react)   | L4    | `useInitializeTransactionsPool` hook                                                                      | `react` ≥ 19.2.3                                                                      |
+
+Each package page shows the package README followed by a reference of every export, generated from the TypeScript source. The L4 chain packages also need the peers of `@tuwaio/pulsar-core` and of the Orbit packages they use (for Solana, the `@wallet-standard` packages of `@tuwaio/orbit-solana`); the commands below install them.
 
 ---
 
-**Built with ❤️ by the [TUWA Team](https://github.com/TuwaIO)**
+## 💾 Installation
+
+Install the core package and the L4 packages your app needs:
+
+```bash
+# L3 core
+pnpm add @tuwaio/pulsar-core @tuwaio/orbit-core zustand immer dayjs
+
+# L4 EVM
+pnpm add @tuwaio/pulsar-evm @tuwaio/orbit-evm @wagmi/core viem
+
+# L4 Solana
+pnpm add @tuwaio/pulsar-solana @tuwaio/orbit-solana @solana/kit @wallet-standard/app @wallet-standard/ui-core @wallet-standard/ui-registry
+
+# L4 React
+pnpm add @tuwaio/pulsar-react react
+```
+
+---
+
+## 📚 Next Steps
+
+- Follow **[Getting Started](/gettingStarted)** to add Pulsar to a React app with an EVM or Solana wallet, step by step.
+- Start from a template in **[Quick Start](/quickStart)**.
+- Track transactions without the store, in your own state or on a server: **[EVM Trackers Standalone](/evmStandalone)** and **[Solana Trackers Standalone](/solanaStandalone)**.
+- Browse the **[Packages](/packages)** section for the full reference of each package.
+- Read **[Why Web3 Transaction State is Broken](https://docs.tuwa.io/guides/why-web3-transaction-state-is-broken)** for the failure modes of component-bound transaction state that Pulsar is built around, and the **[ERC-4337 guide](https://docs.tuwa.io/guides/erc-4337-sovereign-account-abstraction)** for smart accounts with Orbit EVM and Pulsar's two-stage UserOperation tracking.
+- Sync transactions across devices with Quasar: see the **[TUWA SDK documentation](https://sdk.docs.tuwa.io/full-stack)**.
+- Read the source on **[GitHub](https://github.com/TuwaIO/pulsar-core)**.

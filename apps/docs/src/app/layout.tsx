@@ -28,41 +28,46 @@ const logo = (
 // --- Metadata Configuration ---
 export const metadata: Metadata = {
   title: {
-    default: 'Pulsar Engine Documentation',
-    template: '%s – Pulsar Engine',
+    default: 'Pulsar Documentation',
+    template: '%s – Pulsar',
   },
   description:
-    'Official documentation for the Pulsar Engine. The modular, headless-first Web3 infrastructure for building self-custodial applications with zero vendor lock-in.',
-
+    'Documentation for Pulsar, the Stage 2 transaction tracking layer of the TUWA ecosystem: headless, framework-agnostic tracking of EVM and Solana transactions with persistence and resume after reload.',
+  manifest: '/manifest.json',
   icons: {
     icon: 'https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/icon0.svg',
     shortcut: 'https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/web-app-manifest-512x512.png',
     apple: 'https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/web-app-manifest-512x512.png',
   },
-
   keywords: [
-    'Pulsar',
-    'headless',
-    'state management',
+    'pulsar',
+    'tuwa',
     'transaction tracking',
-    'web3 transactions tracking',
-    'web3',
-    'zustand',
-    'wagmi',
+    'web3 transactions',
+    'transaction lifecycle',
+    'headless',
+    'framework-agnostic',
+    'multi-chain',
+    'evm',
     'viem',
-    'typescript',
+    'wagmi',
+    'erc-4337',
+    'account abstraction',
+    'safe multisig',
     'solana',
     '@solana/kit',
-    'solanakit',
+    'zustand',
+    'react',
+    'typescript',
   ],
   authors: [{ name: 'TUWA', url: 'https://github.com/TuwaIO' }],
 
   openGraph: {
-    title: 'Pulsar Engine Documentation',
+    title: 'Pulsar Documentation',
     description:
-      'The modular, headless-first Web3 infrastructure. Build self-custodial applications with zero vendor lock-in.',
-    url: 'https://docs.tuwa.io/',
-    siteName: 'Pulsar Engine Docs',
+      'Documentation for Pulsar, the Stage 2 transaction tracking layer of the TUWA ecosystem: headless, framework-agnostic tracking of EVM and Solana transactions with persistence and resume after reload.',
+    url: 'https://pulsar.docs.tuwa.io/',
+    siteName: 'Pulsar Docs',
     images: [
       {
         url: 'https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/preview/preview-logo.png',
@@ -76,9 +81,9 @@ export const metadata: Metadata = {
 
   twitter: {
     card: 'summary_large_image',
-    title: 'Pulsar Engine Documentation',
+    title: 'Pulsar Documentation',
     description:
-      'The modular, headless-first Web3 infrastructure. Build self-custodial applications with zero vendor lock-in.',
+      'Documentation for Pulsar, the Stage 2 transaction tracking layer of the TUWA ecosystem: headless, framework-agnostic tracking of EVM and Solana transactions with persistence and resume after reload.',
     images: ['https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/preview/preview-logo.png'],
   },
 };

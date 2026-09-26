@@ -1,4 +1,8 @@
-import { produce, setAutoFreeze } from 'immer';
+/**
+ * @file An in-memory store that merges a paginated remote transaction history with the local transaction pool.
+ */
+
+import { Immer } from 'immer';
 import { createStore } from 'zustand/vanilla';
 
 import {
@@ -8,6 +12,30 @@ import {
   TransactionPool,
   TransactionStatus,
 } from '../types';
+import { validateTransaction } from '../utils/transactionValidation';
+
+/**
+ * Immer instance of the in-memory store. Auto-freeze is off because the store is updated often and its pool holds
+ * objects shared with the persistent store; unlike `setAutoFreeze(false)`, it leaves the global Immer config alone.
+ */
+const { produce } = new Immer({ autoFreeze: false });
+
+/**
+ * Drops remote transactions whose title, description or payload break Pulsar's safety limits.
+ *
+ * @param remoteTxs - Transactions returned by `getHistory`.
+ * @returns The valid transactions.
+ */
+const filterValidTransactions = <T extends Transaction>(remoteTxs: T[]): T[] =>
+  remoteTxs.filter((remoteTx) => {
+    try {
+      validateTransaction(remoteTx);
+      return true;
+    } catch (error) {
+      console.warn('[Pulsar] Skipped invalid transaction from history:', error);
+      return false;
+    }
+  });
 
 /**
  * Returns `true` when a transaction has already reached its final on-chain state.
@@ -66,18 +94,27 @@ const mergeTransactionIntoPool = <T extends Transaction>(pool: TransactionPool<T
 };
 
 /**
- * Creates an in-memory transaction store with synchronized local and remote sources.
+ * Creates an in-memory store that shows the remote transaction history of a wallet (for example from Quasar) together
+ * with the local pool of the persistent store. Nothing in it is persisted. Keep it in sync with the persistent store by
+ * calling `syncWithLocalPool` from that store's `subscribe` listener.
  *
- * The store is designed to:
- * - keep a local transaction pool in sync with remote history
- * - preserve terminal transaction states
- * - support paginated history loading
- * - avoid duplicated merge logic across store actions
+ * Merge rules: a transaction that is `Success` or `Replaced` in memory is never overwritten; a pending one is
+ * overwritten only by a terminal transaction or by one with more confirmations; any other one is overwritten.
  *
- * @template T The transaction type.
- * @param params Store configuration parameters.
- * @param params.getHistory Optional remote history fetcher.
- * @returns A Zustand vanilla store instance for in-memory transaction management.
+ * History pages are validated like `injectExternalPendingTxs` does: transactions whose title, description or payload
+ * break the safety limits are skipped with a warning and are not passed to `onHistoryFetched`.
+ *
+ * Side effects: `fetchInitial` and `fetchNextPage` call `getHistory`, usually a network request. The store uses its
+ * own Immer instance without auto-freeze and does not change the global Immer configuration.
+ *
+ * @template T - The application transaction type.
+ * @param params - The store configuration.
+ * @param params.localTransactionsPool - The initial pool.
+ * @param params.reconcileUnsyncedTransactions - Called by `fetchInitial` before the first page is loaded.
+ * @param params.getHistory - Loads one page of the remote history. A `null` result stops loading without changing the
+ * pool; a thrown error sets `isError`.
+ * @param params.onHistoryFetched - Called in a microtask with the valid transactions of every loaded page.
+ * @returns A vanilla Zustand store; bind it to React with `createBoundedUseStore`.
  */
 export function createTxInMemoryStore<T extends Transaction>({
   localTransactionsPool,
@@ -85,12 +122,6 @@ export function createTxInMemoryStore<T extends Transaction>({
   getHistory,
   onHistoryFetched,
 }: ITxInMemoryStoreParameters<T>) {
-  /**
-   * Disable Immer auto-freeze because Zustand store updates are performed frequently,
-   * and freezing can introduce avoidable overhead and integration issues in runtime code.
-   */
-  setAutoFreeze(false);
-
   /**
    * Normalizes loading/error flags before any async request.
    *
@@ -106,19 +137,21 @@ export function createTxInMemoryStore<T extends Transaction>({
    * @param response The paginated response returned by `getHistory`.
    */
   const applyHistoryResponse = (response: Awaited<ReturnType<NonNullable<typeof getHistory>>>) => {
-    if (!response) return (state: ITxInMemoryStore<T>) => state;
+    if (!response) return { isLoading: false };
+
+    const validDocs = filterValidTransactions(response.docs);
 
     // TRIGGER THE BRIDGE: Pass the fetched documents to the external callback
     if (onHistoryFetched) {
       // Use setTimeout or queueMicrotask to avoid blocking the state update render cycle
-      queueMicrotask(() => onHistoryFetched!(response.docs));
+      queueMicrotask(() => onHistoryFetched!(validDocs));
     }
 
     return (state: ITxInMemoryStore<T>) =>
       produce(state, (draft) => {
         const pool = draft.transactionsPool as TransactionPool<T>;
 
-        for (const remoteTx of response.docs) {
+        for (const remoteTx of validDocs) {
           mergeTransactionIntoPool(pool, remoteTx);
         }
 

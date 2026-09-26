@@ -1,6 +1,6 @@
 /**
- * @file This file defines the core Zustand slice for managing the state of transactions. It includes the state,
- * actions, and types necessary for initializing the store and performing CRUD operations on the transaction pool.
+ * @file The core Zustand slice of the transaction store: the transaction pool and the actions that add, update and
+ * remove transactions and synchronize them with a remote backend.
  */
 
 import { produce } from 'immer';
@@ -9,102 +9,127 @@ import { IInitializeTxTrackingStore, PulsarAdapter, StoreSlice, Transaction, Tra
 import { validateTransaction } from '../utils/transactionValidation';
 
 /**
- * Creates a Zustand store slice with the core logic for transaction state management.
- * This function is a slice creator intended for use with Zustand's `create` function.
+ * Returns a copy of a transaction without the API keys that the client needs to resume tracking but a backend must
+ * not receive (`pimlicoApiKey`, `gelatoApiKey`).
  *
- * @template T The specific transaction type.
- * @param options Configuration for the store slice.
- * @returns A Zustand store slice implementing `IInitializeTxTrackingStore`.
+ * @param tx - The transaction.
+ * @returns A shallow copy without the API keys.
+ */
+function omitClientSecrets<T extends Transaction>(tx: T): T {
+  const remoteTx: T & { pimlicoApiKey?: string; gelatoApiKey?: string } = { ...tx };
+  delete remoteTx.pimlicoApiKey;
+  delete remoteTx.gelatoApiKey;
+  return remoteTx;
+}
+
+/**
+ * Creates the core slice of the transaction store: `transactionsPool`, `initialTx`, `unsyncedTxKeys` and the actions
+ * that change them. `createPulsarStore` uses it; call it directly only to compose a custom Zustand store.
+ *
+ * The slice keeps its state in memory; persistence is added by the store that uses it.
+ *
+ * @template T - The application transaction type.
+ * @param params - The slice options.
+ * @param params.maxTransactions - Maximum number of transactions in the pool; `addTxToPool` evicts the oldest one
+ * (by `localTimestamp`) when the pool is full.
+ * @param params.onRemoteCreate - Optional remote sync callback, called in the background by `addTxToPool` (see
+ * `SyncCallbacks`).
+ * @returns A slice creator for Zustand's `create` / `createStore`.
  */
 export function initializeTxTrackingStore<T extends Transaction>({
   maxTransactions,
   onRemoteCreate,
 }: Pick<PulsarAdapter<T>, 'onRemoteCreate'> & { maxTransactions: number }): StoreSlice<IInitializeTxTrackingStore<T>> {
   let isReconciling = false;
+  // Keys whose `onRemoteCreate` call is in flight, so a reconciliation run does not send them twice.
+  const syncingTxKeys = new Set<string>();
 
-  return (set, get) => ({
-    transactionsPool: {},
-    lastAddedTxKey: undefined,
-    initialTx: undefined,
-    unsyncedTxKeys: {},
+  return (set, get) => {
+    /**
+     * Sends a pooled transaction to `onRemoteCreate` and marks it synced on success. Failures are logged and the
+     * key stays in `unsyncedTxKeys`. Does nothing if the transaction is not in the pool or is already being sent.
+     */
+    const syncTransaction = async (txKey: string, failureMessage: string) => {
+      const tx = get().transactionsPool[txKey];
+      if (!onRemoteCreate || !tx || syncingTxKeys.has(txKey)) return;
 
-    reconcileUnsyncedTransactions: async () => {
-      if (!onRemoteCreate || isReconciling) return;
-
-      const unsyncedKeys = Object.keys(get().unsyncedTxKeys || {});
-      if (unsyncedKeys.length === 0) return;
-
-      isReconciling = true;
-
+      syncingTxKeys.add(txKey);
       try {
-        for (const key of unsyncedKeys) {
-          const tx = get().transactionsPool[key];
-          if (!tx) {
-            // If tx is no longer in pool, clear it from unsynced
-            set((s) =>
-              produce(s, (draft) => {
-                if (draft.unsyncedTxKeys) delete draft.unsyncedTxKeys[key];
-              }),
-            );
-            continue;
-          }
-
-          try {
-            await onRemoteCreate(tx);
-            set((s) =>
-              produce(s, (draft) => {
-                const draftTx = draft.transactionsPool[key];
-                if (draftTx) {
-                  draftTx.syncStatus = 'synced';
-                }
-                if (draft.unsyncedTxKeys) {
-                  delete draft.unsyncedTxKeys[key];
-                }
-              }),
-            );
-          } catch (e) {
-            console.warn(`[Pulsar] Failed to reconcile tx ${key}:`, e);
-          }
-        }
+        await onRemoteCreate(omitClientSecrets(tx));
+        set((s) =>
+          produce(s, (draft) => {
+            const draftTx = draft.transactionsPool[txKey];
+            if (draftTx) {
+              draftTx.syncStatus = 'synced';
+            }
+            if (draft.unsyncedTxKeys) {
+              delete draft.unsyncedTxKeys[txKey];
+            }
+          }),
+        );
+      } catch (e) {
+        console.warn(failureMessage, e);
       } finally {
-        isReconciling = false;
+        syncingTxKeys.delete(txKey);
       }
-    },
+    };
 
-    addTxToPool: (tx) => {
-      validateTransaction(tx);
+    return {
+      transactionsPool: {},
+      lastAddedTxKey: undefined,
+      initialTx: undefined,
+      unsyncedTxKeys: {},
 
-      const newTx = {
-        ...tx,
-        pending: true, // Ensure all new transactions start as pending.
-      };
+      reconcileUnsyncedTransactions: async () => {
+        if (!onRemoteCreate || isReconciling) return;
 
-      const runOnRemoteCreateAndCommit = async () => {
-        let isSyncFailed = false;
+        const unsyncedKeys = Object.keys(get().unsyncedTxKeys || {});
+        if (unsyncedKeys.length === 0) return;
 
-        if (onRemoteCreate) {
-          try {
-            await onRemoteCreate(newTx);
-            newTx.syncStatus = 'synced';
-          } catch (error) {
-            console.warn('[Pulsar] onRemoteCreate failed, transaction queued for background sync:', error);
-            newTx.syncStatus = 'pending-sync';
-            isSyncFailed = true;
+        isReconciling = true;
+
+        try {
+          for (const key of unsyncedKeys) {
+            if (!get().transactionsPool[key]) {
+              // If tx is no longer in pool, clear it from unsynced
+              set((s) =>
+                produce(s, (draft) => {
+                  if (draft.unsyncedTxKeys) delete draft.unsyncedTxKeys[key];
+                }),
+              );
+              continue;
+            }
+
+            await syncTransaction(key, `[Pulsar] Failed to reconcile tx ${key}:`);
           }
+        } finally {
+          isReconciling = false;
         }
+      },
+
+      addTxToPool: (tx) => {
+        validateTransaction(tx);
+
+        const newTx = {
+          ...tx,
+          pending: true, // Ensure all new transactions start as pending.
+          // Synced only once `onRemoteCreate` resolves; until then the key is listed in `unsyncedTxKeys`, so an
+          // interrupted sync (for example a closed tab) is retried later.
+          ...(onRemoteCreate && { syncStatus: 'pending-sync' as const }),
+        };
 
         set((state) =>
           produce(state, (draft) => {
             draft.lastAddedTxKey = tx.txKey;
 
-            if (isSyncFailed) {
-              if (!draft.unsyncedTxKeys) {
-                draft.unsyncedTxKeys = {};
-              }
-              draft.unsyncedTxKeys[tx.txKey] = true;
-            }
-
             if (tx.txKey) {
+              if (onRemoteCreate) {
+                if (!draft.unsyncedTxKeys) {
+                  draft.unsyncedTxKeys = {};
+                }
+                draft.unsyncedTxKeys[tx.txKey] = true;
+              }
+
               const currentCount = Object.keys(draft.transactionsPool).length;
 
               // FIFO Eviction Policy
@@ -123,64 +148,69 @@ export function initializeTxTrackingStore<T extends Transaction>({
             }
           }),
         );
-      };
 
-      return runOnRemoteCreateAndCommit();
-    },
-
-    updateTxParams: (txKey, fields) => {
-      set((state) =>
-        produce(state, (draft) => {
-          const tx = draft.transactionsPool[txKey];
-          // Ensure the transaction exists before attempting to update.
-          if (tx) {
-            Object.assign(tx, fields);
-          }
-        }),
-      );
-
-      // Trigger reconciliation if transitioning to a terminal state and it's unsynced
-      const isTerminalStatus =
-        fields.status === TransactionStatus.Success ||
-        fields.status === TransactionStatus.Failed ||
-        fields.status === TransactionStatus.Replaced;
-
-      if (isTerminalStatus) {
-        if (get().reconcileUnsyncedTransactions && get().unsyncedTxKeys?.[txKey]) {
-          // Fire and forget asynchronous reconciliation
-          get()
-            .reconcileUnsyncedTransactions()
-            .catch((err: unknown) => {
-              console.error('[Pulsar] Terminal reconciliation failed:', err);
-            });
+        // The remote sync runs in the background, so a slow or unreachable backend never delays tracking.
+        if (onRemoteCreate && tx.txKey) {
+          void syncTransaction(tx.txKey, '[Pulsar] onRemoteCreate failed, transaction queued for background sync:');
         }
-      }
-    },
 
-    removeTxFromPool: (txKey) => {
-      set((state) =>
-        produce(state, (draft) => {
-          delete draft.transactionsPool[txKey];
-        }),
-      );
-    },
+        return Promise.resolve();
+      },
 
-    closeTxTrackedModal: (txKey) => {
-      set((state) =>
-        produce(state, (draft) => {
-          if (txKey && draft.transactionsPool[txKey]) {
+      updateTxParams: (txKey, fields) => {
+        set((state) =>
+          produce(state, (draft) => {
             const tx = draft.transactionsPool[txKey];
-            draft.transactionsPool[txKey] = {
-              ...tx,
-              isTrackedModalOpen: false,
-            } as (typeof draft.transactionsPool)[string];
-          }
-          // Always clear the initial transaction state when a modal is closed
-          draft.initialTx = undefined;
-        }),
-      );
-    },
+            // Ensure the transaction exists before attempting to update.
+            if (tx) {
+              Object.assign(tx, fields);
+            }
+          }),
+        );
 
-    getLastTxKey: () => get().lastAddedTxKey,
-  });
+        // Trigger reconciliation if transitioning to a terminal state and it's unsynced
+        const isTerminalStatus =
+          fields.status === TransactionStatus.Success ||
+          fields.status === TransactionStatus.Failed ||
+          fields.status === TransactionStatus.Replaced;
+
+        if (isTerminalStatus) {
+          if (get().reconcileUnsyncedTransactions && get().unsyncedTxKeys?.[txKey]) {
+            // Fire and forget asynchronous reconciliation
+            get()
+              .reconcileUnsyncedTransactions()
+              .catch((err: unknown) => {
+                console.error('[Pulsar] Terminal reconciliation failed:', err);
+              });
+          }
+        }
+      },
+
+      removeTxFromPool: (txKey) => {
+        set((state) =>
+          produce(state, (draft) => {
+            delete draft.transactionsPool[txKey];
+          }),
+        );
+      },
+
+      closeTxTrackedModal: (txKey) => {
+        set((state) =>
+          produce(state, (draft) => {
+            if (txKey && draft.transactionsPool[txKey]) {
+              const tx = draft.transactionsPool[txKey];
+              draft.transactionsPool[txKey] = {
+                ...tx,
+                isTrackedModalOpen: false,
+              } as (typeof draft.transactionsPool)[string];
+            }
+            // Always clear the initial transaction state when a modal is closed
+            draft.initialTx = undefined;
+          }),
+        );
+      },
+
+      getLastTxKey: () => get().lastAddedTxKey,
+    };
+  };
 }

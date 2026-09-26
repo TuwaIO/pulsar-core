@@ -1,228 +1,103 @@
-# Pulsar EVM Adapter & Toolkit
+# @tuwaio/pulsar-evm
 
 [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)
-[![License](https://img.shields.io/npm/l/@tuwaio/pulsar-evm.svg)](./LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
+[![License](https://img.shields.io/npm/l/@tuwaio/pulsar-evm.svg)](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/LICENSE)
 
-Layer 4 (L4) of the TUWA Ecosystem. Low-level EVM state trackers and lifecycle indexers powered strictly by viem and wagmi primitives.
-
-> [!WARNING]
-> Use of legacy `web3.js` and `ethers.js` libraries is strictly prohibited. All interactions must proceed via `viem` and `wagmi` primitives to ensure deterministic transaction status reconciliation and application sovereignty.
+`@tuwaio/pulsar-evm` is the EVM Layer 4 (L4) package of **Pulsar**, the transaction tracking project of TUWA Stage 2 ("State & Connection", next to Satellite Connect). Built on **`@wagmi/core`**, **`viem`** and **`@tuwaio/orbit-evm`**, it provides the EVM adapter for [`@tuwaio/pulsar-core`](https://pulsar.docs.tuwa.io/packages/pulsar-core) and trackers for standard transactions, ERC-4337 UserOperations, Safe multisig transactions and Gelato relay tasks (deprecated). It does not use `ethers.js` or `web3.js`.
 
 ---
 
-## 🏛️ What is `@tuwaio/pulsar-evm`?
+## 🏛️ Core Capabilities
 
-This package is the low-level EVM state tracking and indexing adapter for `@tuwaio/pulsar-core`. It provides specialized tracking pipelines for standard transactions, contract wallets, Safe multisignature wallets, and Gelato transaction relayers utilizing `viem` clients.
+- **Adapter:** `pulsarEvmAdapter(wagmiConfig, appChains)` reads the wallet from the active wagmi connection, asks the wallet to switch to `desiredChainID` before signing, picks the tracker, builds explorer links, and adds speed-up, cancel and retry actions for UI kits such as Nova Transactions.
+- **Tracker routing:** the key returned by your `actionFunction` is tracked as a Safe transaction when the connector is a Safe wallet, and as a standard transaction otherwise. ERC-4337 and Gelato are never detected automatically: pass `tracker: TransactionTracker.ERC4337` (or `Gelato`) in the transaction params.
+- **Standard transactions:** `evmTracker` retries `getTransaction` while the node has not indexed the transaction yet, retries the receipt on transient RPC errors (timeouts, rate limits, 5xx), detects speed-ups and cancels made in the wallet (`Replaced` with `replacedTxHash`), waits for `requiredConfirmations` and records the block timestamp.
+- **ERC-4337 UserOperations:** a two-stage tracker polls `eth_getUserOperationReceipt` on your bundler (`bundlerUrl`, or Pimlico with `pimlicoApiKey`), then follows the bundle transaction on-chain like a standard transaction. After a reload it resumes at the stage it reached.
+- **Safe multisig:** polls the Safe Transaction Service until the `safeTxHash` is executed, and reports it as replaced when another transaction with the same nonce was executed.
+- **Speed up and cancel:** `speedUpTxAction` and `cancelTxAction` resend a pending EIP-1559 transaction with the same nonce and fees raised by 15%; the original tracker then reports it as `Replaced`.
+- **Standalone use:** the trackers and fetchers work without the store, in your own state or on a server. See [EVM Trackers Standalone](https://pulsar.docs.tuwa.io/evmStandalone).
 
-While its main export is the `pulsarEvmAdapter`, it also includes a suite of standalone trackers, actions, and utilities that can be used for advanced or custom implementations.
-
----
-
-## ✨ Core Features
-
-- **🔌 Seamless Integration:** A single `pulsarEvmAdapter` factory function to integrate full EVM tracking capabilities into `@tuwaio/pulsar-core`.
-- **🎯 Specialized Pipelines:** Distinct, optimized trackers for:
-  - **Standard EVM Transactions** (via `evmTracker` and `viem`).
-  - **Safe (formerly Gnosis Safe) Multi-Sigs** (via `safeFetcher` and the Safe Transaction Service API).
-  - **Gelato Relayer Pipes** (via `gelatoFetcher` and the Gelato API).
-- **🤖 Automatic Routing:** Automatically resolves the correct pipeline (Safe, Gelato, or standard EVM) based on the transaction context and wallet type.
-- **⚡ Built-in Actions:** Ready-to-use actions for managing transaction state, including `speedUpTxAction` and `cancelTxAction`.
+Trackers write their results to the store with `updateTxParams`, and the `onSuccess`, `onError` and `onReplaced` callbacks of `executeTxAction` receive the updated transaction. No tracker removes a transaction from the pool: when a tracker gives up (for example a Safe transaction still not executed a day after it was proposed), the transaction is marked `Failed` with the reason in `error` and stays in the pool.
 
 ---
 
 ## 💾 Installation
 
-This package is designed to be used as part of the Pulsar stack and requires `@wagmi/core` and `viem`. Install all necessary packages together:
-
 ```bash
-# Using pnpm (recommended), but you can use npm, yarn or bun as well
 pnpm add @tuwaio/pulsar-evm @tuwaio/pulsar-core @tuwaio/orbit-core @tuwaio/orbit-evm @wagmi/core viem zustand immer dayjs
 ```
+
+> [!IMPORTANT]
+> `@tuwaio/pulsar-core` (>=0.8), `@tuwaio/orbit-core` (>=0.3), `@tuwaio/orbit-evm` (>=0.3), `@wagmi/core` (3.x), `viem` (2.x) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-evm`. `zustand` and `immer` are the peer dependencies of `@tuwaio/pulsar-core`.
 
 ---
 
 ## 🚀 Usage
 
-### 1. Primary Usage: The `pulsarEvmAdapter`
+Add the adapter to the store and pass `tracker` for UserOperations:
 
-For most applications, you'll only need to import the `pulsarEvmAdapter` and pass it to your `createPulsarStore` configuration.
-
-```ts
-// src/hooks/txTrackingHooks.ts
-import { createBoundedUseStore, createPulsarStore, Transaction } from '@tuwaio/pulsar-core';
+```typescript
+import { OrbitAdapter } from '@tuwaio/orbit-core';
+import { createPimlicoSmartAccountClient } from '@tuwaio/orbit-evm';
+import { createPulsarStore, type EvmTransaction, TransactionTracker } from '@tuwaio/pulsar-core';
 import { pulsarEvmAdapter } from '@tuwaio/pulsar-evm';
+import { type Config } from '@wagmi/core';
+import { mainnet, sepolia } from 'viem/chains';
 
-import { appChains, config } from '@/configs/wagmiConfig';
+declare const wagmiConfig: Config;
+const pimlicoApiKey = process.env.NEXT_PUBLIC_PIMLICO_API_KEY;
 
-const storageName = 'transactions-tracking-storage';
+export const pulsarStore = createPulsarStore<EvmTransaction>({
+  name: 'pulsar-transactions',
+  adapter: pulsarEvmAdapter(wagmiConfig, [mainnet, sepolia]),
+});
 
-export enum TxType {
-  example = 'example',
-}
-
-type ExampleTx = Transaction & {
-  type: TxType.example;
-  payload: {
-    value: number;
-  };
-};
-
-export type TransactionUnion = ExampleTx;
-
-export const usePulsarStore = createBoundedUseStore(
-  createPulsarStore<TransactionUnion>({
-    name: storageName,
-    adapter: pulsarEvmAdapter(config, appChains),
-    beforeTxProcess: async () => {
-      // Optional global preflight. Throw here to block before wallet interaction.
-      await assertUserCanSubmitTransactions();
+export async function pingWithSmartAccount() {
+  await pulsarStore.getState().executeTxAction({
+    actionFunction: async () => {
+      const { account, bundlerClient } = await createPimlicoSmartAccountClient({
+        chain: sepolia,
+        wagmiConfig,
+        apiKey: pimlicoApiKey,
+      });
+      // Returns the userOpHash, which becomes the txKey.
+      return bundlerClient.sendUserOperation({ account, calls: [{ to: account.address, value: 0n }] });
     },
-  }),
-);
-```
-
-`@tuwaio/pulsar-core` validates EVM transaction metadata before any wallet interaction or persistence. `title` strings are limited to 100 characters, `description` strings to 300 characters, and the serialized `payload` to 10KB. A local `beforeTxProcess` passed to `executeTxAction` overrides the global callback from `createPulsarStore`.
-
-### 2. Using Standalone Trackers
-
-You can use `evmTracker` for standard transactions or `initializePollingTracker` with `gelatoFetcher`/`safeFetcher` for polling-based tracking.
-
-#### Standard EVM Tracker
-
-```tsx
-import { evmTracker } from '@tuwaio/pulsar-evm';
-import { config } from './wagmi'; // Your wagmi config
-
-async function trackMyTransaction(txHash: string, chainId: number) {
-  await evmTracker({
-    config,
-    tx: {
-      txKey: txHash,
-      chainId,
-      requiredConfirmations: 3,
-    },
-    onTxDetailsFetched: (txDetails) => {
-      console.log('Transaction details:', txDetails);
-    },
-    onSuccess: async (txDetails, receipt, client) => {
-      console.log('Transaction mined!', receipt);
-    },
-    onReplaced: (replacement) => {
-      console.log('Transaction replaced:', replacement);
-    },
-    onFailure: (error) => {
-      console.error('Tracking failed:', error);
-    },
-    onConfirmationsUpdate: (confirmations) => {
-      console.log(`Current confirmations: ${confirmations}/3`);
+    params: {
+      adapter: OrbitAdapter.EVM,
+      desiredChainID: sepolia.id,
+      type: 'ping',
+      title: 'Smart account ping',
+      tracker: TransactionTracker.ERC4337, // required for UserOperations
+      pimlicoApiKey, // or bundlerUrl; saved locally to resume tracking after a reload, never sent to onRemoteCreate
     },
   });
 }
 ```
 
-#### Two-Stage ERC-4337 UserOperation Architecture (Pimlico / Account Abstraction)
-
-For ERC-4337 smart accounts (e.g. Solady smart accounts orchestrated with Pimlico via `@tuwaio/orbit-evm`), `@tuwaio/pulsar-evm` provides a resilient **Two-Stage tracking pipeline**:
-
-1. **Stage 1: Bundler Mempool (`erc4337Fetcher`)**:
-   - The initial `userOpHash` is submitted to the Pimlico / Bundler RPC endpoint.
-   - `erc4337Fetcher` polls `eth_getUserOperationReceipt` until the UserOp is bundled into an on-chain transaction.
-   - Updates the store record with `tx.hash` (the mined transaction hash) and extracted parameters (`to`, `nonce`, `input`, `maxFeePerGas`).
-2. **Stage 2: On-Chain Block Settlement (`evmTracker`)**:
-   - Transitions to `evmTracker` with `{ withoutRemoving: true }` so the store entry is never deleted prematurely.
-   - Waits for full on-chain block confirmations (`requiredConfirmations`), resolves the native transaction receipt, and queries the block header timestamp (`getBlock`).
-3. **Session Restoration Resilience**:
-   - If the user refreshes or reloads the browser, `initializeTransactionsPool()` inspects the stored transaction.
-   - If `tx.hash` is already present, it bypasses Stage 1 completely and resumes directly in Stage 2 (`evmTracker`).
-4. **Native Explorer Linking**:
-   - Links directly to standard block explorers (e.g. Etherscan `/tx/${hash}`) with zero reliance on third-party indexers.
-
-### 3. Using Standalone Actions
-
-This package also exports utility actions that you can wire up to your UI for features like speeding up or canceling transactions.
-
-**Example: A button to speed up a stuck transaction**
-
-```tsx
-// src/components/SpeedUpButton.tsx
-import { speedUpTxAction } from '@tuwaio/pulsar-evm';
-import { usePulsarStore } from '../hooks/txTrackingHooks'; // Or your custom hook
-import { wagmiConfig } from '../configs/wagmi'; // Your wagmi config
-
-function SpeedUpButton({ txKey }) {
-  const transactionsPool = usePulsarStore((state) => state.transactionsPool);
-  const stuckTransaction = transactionsPool[txKey];
-
-  // Only show the button if the transaction is pending and is a standard EVM tx
-  if (!stuckTransaction?.pending || stuckTransaction.tracker !== 'ethereum') {
-    return null;
-  }
-
-  const handleSpeedUp = async () => {
-    try {
-      const newTxHash = await speedUpTxAction({
-        config: wagmiConfig,
-        tx: stuckTransaction,
-      });
-      console.log('Transaction sped up with new hash:', newTxHash);
-      // Pulsar's `executeTxAction` will automatically add and track this new transaction
-      // if you integrate it with the action that calls this.
-    } catch (error) {
-      console.error('Failed to speed up transaction:', error);
-    }
-  };
-
-  return <button onClick={handleSpeedUp}>Speed Up</button>;
-}
-```
-
-### 4. Using Standalone Utilities
-
-You can use exported utilities, like selectors or routing functions, to get derived data for your UI.
-
-**Example: Determining the correct tracker**
-
-```tsx
-import { checkTransactionsTracker } from '@tuwaio/pulsar-evm';
-import { TransactionTracker } from '@tuwaio/pulsar-core';
-
-// Automatically routes to 'gelato', 'safe', or 'ethereum'
-const { tracker, txKey } = checkTransactionsTracker('0xabc...', 'injected');
-// tracker -> TransactionTracker.Ethereum
-```
-
-**Example: Getting a block explorer link for a transaction**
-
-```tsx
-// src/components/ExplorerLink.tsx
-import { selectEvmTxExplorerLink } from '@tuwaio/pulsar-evm';
-import { appChains } from '../configs/wagmi'; // Your wagmi chains
-
-function ExplorerLink({ tx }) {
-  // The selector needs your app's chains, and the transaction.
-  const explorerLink = selectEvmTxExplorerLink({ chains: appChains, tx });
-
-  if (!explorerLink) return null;
-
-  return (
-    <a href={explorerLink} target="_blank" rel="noopener noreferrer">
-      View on Explorer
-    </a>
-  );
-}
-```
+The step-by-step React setup is on the **[Getting Started](https://pulsar.docs.tuwa.io/gettingStarted)** page, and tracking without the store on **[EVM Trackers Standalone](https://pulsar.docs.tuwa.io/evmStandalone)**.
 
 ---
 
-## 🤝 Contributing & Support
+## 🌐 External Services
 
-Contributions are welcome! Please read our main **[Contribution Guidelines](https://github.com/TuwaIO/workflows/blob/main/CONTRIBUTING.md)**.
+The trackers send requests to these hosts. The transaction hash, `userOpHash` or `safeTxHash` (and for Safe, the Safe address) is sent to them:
 
-If you find this library useful, please consider supporting its development. Every contribution helps!
+| Tracker                    | Host                                                                                                                    | Purpose                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Standard, ERC-4337 stage 2 | The RPC transports of your wagmi config                                                                                 | `getTransaction`, receipts, confirmations and block timestamps              |
+| ERC-4337 stage 1           | `bundlerUrl`, else `api.pimlico.io` (with `pimlicoApiKey` in the URL), else the rate-limited public `public.pimlico.io` | `eth_getUserOperationReceipt`                                               |
+| Safe                       | `safe-transaction-<network>.safe.global` (see `SafeTransactionServiceUrls`)                                             | Status of the multisig transaction and of other transactions with its nonce |
+| Gelato (deprecated)        | `api.gelato.cloud`, with the Gelato API key as a `Bearer` token                                                         | `relayer_getStatus` and `relayer_getCapabilities`                           |
 
-[**➡️ View Support Options**](https://github.com/TuwaIO/workflows/blob/main/Donation.md)
+Explorer links point to the block explorer configured in your viem chains, or to `app.safe.global` for Safe transactions; they are not requested by the package.
+
+---
+
+## 📚 API Reference
+
+Every export, with signatures and types generated from the source, is documented at **[pulsar.docs.tuwa.io/packages/pulsar-evm](https://pulsar.docs.tuwa.io/packages/pulsar-evm)**.
 
 ## 📄 License
 
-This project is licensed under the **Apache-2.0 License** - see the [LICENSE](./LICENSE) file for details.
+Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/LICENSE) file for details.

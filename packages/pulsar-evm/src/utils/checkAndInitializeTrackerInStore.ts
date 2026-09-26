@@ -1,6 +1,5 @@
 /**
- * @file This file contains a utility function that acts as a router to initialize the correct transaction tracker.
- * Based on a transaction's `tracker` property, it delegates the tracking task to the appropriate implementation.
+ * @file Routes an EVM transaction of the Pulsar store to the tracker named by its `tracker` field.
  */
 
 import { ITxTrackingStore, TrackerCallbacks, Transaction, TransactionTracker } from '@tuwaio/pulsar-core';
@@ -12,27 +11,34 @@ import { gelatoTrackerForStore } from '../trackers/gelatoTracker';
 import { safeTrackerForStore } from '../trackers/safeTracker';
 
 /**
- * The parameters required to initialize a tracker.
- * @template T - The application-specific transaction type.
+ * The parameters of {@link checkAndInitializeTrackerInStore}.
+ *
+ * @template T - The application transaction type.
  */
-type InitializeTrackerParams<T extends Transaction> = Pick<
+export type InitializeTrackerParams<T extends Transaction> = Pick<
   ITxTrackingStore<T>,
   'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
 > & {
+  /** The wagmi config of the app. */
   config: Config;
+  /** The transaction to track. */
   tx: T;
+  /** The tracker to run, usually `tx.tracker`. */
   tracker: TransactionTracker;
+  /** @deprecated Gelato API key; required to run the Gelato tracker. */
   gelatoApiKey?: string;
 } & TrackerCallbacks<T>;
 
 /**
- * Initializes the appropriate tracker for a given transaction based on its `tracker` type.
- * This function acts as a central router, delegating to the specific tracker implementation
- * (e.g., standard EVM, Gelato, Safe, or ERC-4337).
+ * Starts the tracker named by `tracker` for a transaction of the Pulsar store: {@link evmTrackerForStore},
+ * {@link erc4337TrackerForStore}, {@link safeTrackerForStore} or {@link gelatoTrackerForStore}. A Gelato transaction
+ * without `gelatoApiKey`, or an unknown tracker, falls back to the standard EVM tracker with a console warning.
+ * `pulsarEvmAdapter` uses it as `checkAndInitializeTrackerInStore`.
  *
- * @template T - The application-specific transaction type, extending the base `Transaction`.
- * @param {InitializeTrackerParams<T>} params - The parameters for initializing the tracker.
- * @returns {Promise<void>} A promise that resolves once the tracking process has been successfully initiated.
+ * @template T - The application transaction type.
+ * @param params - The tracker, the transaction, the wagmi config, the store members and the callbacks.
+ * @returns The promise of the started tracker. For the standard EVM tracker it resolves only when tracking has
+ * finished; polling trackers resolve once polling has started.
  */
 export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   tracker,

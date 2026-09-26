@@ -1,10 +1,16 @@
+/**
+ * @file Core types of Pulsar: transaction shapes, the adapter contract that chain packages implement, and the state
+ * and actions of the transaction stores.
+ */
+
 import { BaseAdapter, OrbitAdapter, OrbitGenericAdapter, TuwaErrorState } from '@tuwaio/orbit-core';
 import { StoreApi } from 'zustand';
 
 /**
- * A utility type for creating modular Zustand store slices, enabling composable state management.
- * @template T The state slice being defined.
- * @template S The full store state that includes the slice `T`.
+ * A Zustand slice creator: receives the store's `set` and `get` and returns the slice state and actions.
+ *
+ * @template T - The state slice being defined.
+ * @template S - The full store state that includes the slice `T`.
  */
 export type StoreSlice<T extends object, S extends object = T> = (
   set: StoreApi<S extends T ? S : S & T>['setState'],
@@ -12,115 +18,131 @@ export type StoreSlice<T extends object, S extends object = T> = (
 ) => T;
 
 /**
- * Enum representing the different tracking strategies available for transactions.
- * Each tracker corresponds to a specific method of monitoring a transaction's lifecycle.
+ * Tracking strategy of a transaction. The chain adapter picks it after the action returns (see
+ * `TxAdapter.checkTransactionsTracker`) and routes the transaction to the matching tracker.
  */
 export enum TransactionTracker {
-  /** For standard on-chain EVM transactions tracked by their hash. */
+  /** A standard EVM transaction, tracked by its hash through RPC (`@tuwaio/pulsar-evm`). */
   Ethereum = 'ethereum',
-  /** For multi-signature transactions managed and executed via a Safe contract. */
+  /** A Safe multisig transaction, tracked by its `safeTxHash` through the Safe Transaction Service API. */
   Safe = 'safe',
   /**
-   * For meta-transactions relayed and executed by the Gelato Network.
-   * @deprecated Gelato gasless relay is deprecated. Use TransactionTracker.ERC4337 instead.
+   * A meta-transaction relayed by Gelato, tracked by its task ID through the Gelato API.
+   * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` instead.
    */
   Gelato = 'gelato',
-  /** The tracker for monitoring standard Solana transaction signatures. */
+  /** A Solana transaction, tracked by its signature through RPC (`@tuwaio/pulsar-solana`). */
   Solana = 'solana',
-  /** For native ERC-4337 UserOperation transactions tracked via bundler RPC. */
+  /** An ERC-4337 UserOperation, tracked by its `userOpHash` through a bundler RPC and then on-chain. */
   ERC4337 = 'erc4337',
 }
 
 /**
- * Represents the terminal status of a transaction after it has been processed.
+ * Terminal status of a transaction. Trackers set it together with `pending: false`.
  */
 export enum TransactionStatus {
-  /** The transaction failed to execute due to an on-chain error or rejection. */
+  /** The transaction reverted, was rejected, or tracking failed (for example, it was not found in time). */
   Failed = 'Failed',
-  /** The transaction was successfully mined and included in a block. */
+  /** The transaction was included on-chain and executed successfully. */
   Success = 'Success',
-  /** The transaction was replaced by another with the same nonce (e.g., a speed-up or cancel). */
+  /** Another transaction with the same nonce was mined instead (a wallet speed-up or cancel). */
   Replaced = 'Replaced',
 }
 
 /**
- * A union type representing the unique identifier returned by an `actionFunction`
- * after a transaction is submitted to the network or a relay service.
- *
- * This key is crucial for the adapter to determine which tracker should
- * monitor the transaction.
- *
- * It can be one of the following:
- * - A standard `0x...` transaction hash (`Hex`).
- * - A Solana transaction signature (string).
+ * The identifier returned by an `actionFunction` once the transaction is submitted: an EVM transaction hash, an
+ * ERC-4337 `userOpHash`, a Safe `safeTxHash`, a Gelato task ID or a Solana signature. The adapter uses it to pick the
+ * tracker and the `txKey` of the transaction.
  */
 export type ActionTxKey = `0x${string}` | string;
 
 /**
- * The fundamental structure for any transaction being tracked by Pulsar.
- * This serves as the base upon which chain-specific transaction types are built.
+ * Fields shared by every tracked transaction. Chain-specific transaction types extend it.
  */
 export type BaseTransaction = {
-  /** The chain identifier (e.g., 1 for Ethereum Mainnet, 'SN_MAIN' for Starknet). */
+  /**
+   * The chain of the transaction: the numeric chain ID for EVM (for example `1`), or `solana:<cluster>` for Solana
+   * (for example `solana:devnet`). `executeTxAction` derives it from `desiredChainID`.
+   */
   chainId: number | string;
   /**
-   * User-facing description. Can be a single string for all states, or a tuple for specific states.
-   * Each string is validated before execution and persistence. It must be 300 characters or less and must not contain
-   * executable-like patterns such as `eval(` or `javascript:`.
+   * User-facing description: one string for every state, or a tuple for the `[pending, success, error, replaced]`
+   * states. Each string must be 300 characters or less and must not contain executable-like patterns such as `eval(`
+   * or `javascript:`; `executeTxAction`, `addTxToPool` and the pool restore functions reject or drop transactions that
+   * break these rules.
    * @example
-   * // A single description for all states
-   * description: 'Swap 1 ETH for 1,500 USDC'
-   * // Specific descriptions for each state in order: [pending, success, error, replaced]
-   * description: ['Swapping...', 'Swapped Successfully', 'Swap Failed', 'Swap Replaced']
+   * ```ts
+   * description: 'Swap 1 ETH for 1,500 USDC';
+   * description: ['Swapping...', 'Swapped successfully', 'Swap failed', 'Swap replaced'];
+   * ```
    */
   description?: string | [string, string, string, string];
-  /** The error state if the transaction failed, containing message and raw error details. */
+  /** The normalized error of a failed transaction (`normalizeError` from `@tuwaio/orbit-core`). */
   error?: TuwaErrorState;
-  /** The on-chain timestamp (in seconds) when the transaction was finalized. */
+  /**
+   * Unix timestamp (seconds) of the terminal state: the block timestamp for EVM and ERC-4337 transactions confirmed
+   * on-chain, the execution date for Safe, and the local time otherwise.
+   */
   finishedTimestamp?: number;
-  /** The sender's wallet address. */
+  /** The address of the wallet that sent the transaction, as reported by the adapter's `getConnectorInfo`. */
   from: string;
-  /** A flag indicating if the transaction is in a failed state. */
+  /** `true` when the transaction failed; set by trackers together with `status: Failed`. */
   isError?: boolean;
-  /** A UI flag to control the visibility of a detailed tracking modal for this transaction. */
+  /** UI flag for a detailed tracking modal. Set from `withTrackedModal`; `closeTxTrackedModal` sets it to `false`. */
   isTrackedModalOpen?: boolean;
-  /** The local timestamp (in seconds) when the transaction was initiated by the user. */
+  /** Unix timestamp (seconds) when `executeTxAction` started. The pool is ordered and evicted by this value. */
   localTimestamp: number;
   /**
-   * Custom JSON-serializable data (strings or numbers) to associate with the transaction.
-   * The serialized UTF-8 payload must be 10KB or less and string values must not contain executable-like patterns.
+   * Custom JSON data of the application. The UTF-8 JSON must be 10 KB or less, and string keys and values must not
+   * contain executable-like patterns.
    */
   payload?: Record<string, string | number>;
-  /** A flag indicating if the transaction is still awaiting on-chain confirmation. */
+  /** `true` while the transaction is tracked; trackers set it to `false` when it reaches a terminal status. */
   pending: boolean;
-  /** The final on-chain status of the transaction. */
+  /** The terminal status, set together with `pending: false`. */
   status?: TransactionStatus;
   /**
-   * User-facing title. Can be a single string for all states, or a tuple for specific states.
-   * Each string is validated before execution and persistence. It must be 100 characters or less and must not contain
-   * executable-like patterns such as `eval(` or `javascript:`.
+   * User-facing title: one string for every state, or a tuple for the `[pending, success, error, replaced]` states.
+   * Each string must be 100 characters or less and must not contain executable-like patterns such as `eval(` or
+   * `javascript:`.
    * @example
-   * // A single title for all states
-   * title: 'ETH/USDC Swap'
-   * // Specific titles for each state in order: [pending, success, error, replaced]
-   * title: ['Processing Swap', 'Swap Complete', 'Swap Error', 'Swap Replaced']
+   * ```ts
+   * title: 'ETH/USDC swap';
+   * title: ['Processing swap', 'Swap complete', 'Swap error', 'Swap replaced'];
+   * ```
    */
   title?: string | [string, string, string, string];
-  /** The specific tracker responsible for monitoring this transaction's status. */
+  /** The tracker that monitors the transaction. */
   tracker: TransactionTracker;
-  /** The unique identifier for the transaction (e.g., EVM hash, Solana signature, or Gelato task ID). */
+  /**
+   * The key of the transaction in the pool: the transaction hash, `userOpHash` (ERC-4337), `safeTxHash` (Safe), Gelato
+   * task ID or Solana signature.
+   */
   txKey: string;
-  /** The application-specific type or category of the transaction (e.g., 'SWAP', 'APPROVE'). */
+  /** Application-specific type of the transaction, for example `'SWAP'` or `'APPROVE'`. */
   type: string;
-  /** The type of connector used to sign the transaction (e.g., 'injected', 'walletConnect'). */
+  /** The connector that signed the transaction, for example `evm:metamask` or `solana:phantom`. */
   connectorType: string;
-  /** The number of confirmations required for the transaction to be considered confirmed. */
+  /**
+   * Number of block confirmations the EVM trackers wait for before marking the transaction successful. Defaults to 1.
+   * The Solana tracker always waits for the `finalized` commitment instead.
+   */
   requiredConfirmations?: number;
-  /** The number of confirmations received. A string value indicates a confirmed transaction, while `null` means it's pending. */
+  /**
+   * Confirmations reported by the tracker while the transaction is pending. The Solana tracker sets it to `'MAX'` when
+   * the transaction is finalized.
+   */
   confirmations?: number | string | null;
-  /** The RPC URL to use for the transaction. Required for Solana transactions. */
+  /**
+   * RPC endpoint used by the Solana tracker, also after a page reload. Without it, the tracker uses the public
+   * endpoint of the cluster in `chainId`.
+   */
   rpcUrl?: string;
-  /** Indicates the synchronization status of the transaction with the remote backend (Quasar). */
+  /**
+   * Remote sync state, set only when the store has an `onRemoteCreate` callback: `'pending-sync'` from the moment the
+   * transaction is added until `onRemoteCreate` resolves (the key is listed in `unsyncedTxKeys` meanwhile and retried
+   * if the call fails), then `'synced'`.
+   */
   syncStatus?: 'synced' | 'pending-sync';
 };
 
@@ -129,62 +151,81 @@ export type BaseTransaction = {
 // =================================================================================================
 
 /**
- * Represents an EVM-specific transaction, extending the base properties with EVM fields.
+ * An EVM transaction. Trackers fill the on-chain fields (`hash`, `nonce`, fees, `to`, `value`, `input`) once the
+ * transaction details are available.
  */
 export type EvmTransaction = BaseTransaction & {
-  /** The adapter type for EVM transactions. */
+  /** Always `OrbitAdapter.EVM`. */
   adapter: OrbitAdapter.EVM;
-  /** The on-chain transaction hash, available after submission. */
+  /**
+   * The on-chain transaction hash: the `txKey` for standard transactions, and the hash of the mined transaction for
+   * ERC-4337, Safe and Gelato once it is known.
+   */
   hash?: `0x${string}`;
-  /** The data payload for the transaction, typically for smart contract interactions. */
+  /** The calldata of the transaction. */
   input?: `0x${string}`;
-  /** The maximum fee per gas for an EIP-1559 transaction (in wei). */
+  /** EIP-1559 max fee per gas, in wei, as a decimal string. */
   maxFeePerGas?: string;
-  /** The maximum priority fee per gas for an EIP-1559 transaction (in wei). */
+  /** EIP-1559 max priority fee per gas, in wei, as a decimal string. */
   maxPriorityFeePerGas?: string;
-  /** The transaction nonce, a sequential number for the sender's account. */
+  /** The nonce of the sender account. */
   nonce?: number;
-  /** The hash of a transaction that this one replaced. */
+  /**
+   * The hash of the transaction that replaced this one (set with `status: Replaced`). For Safe transactions it is the
+   * `safeTxHash` of the transaction executed instead.
+   */
   replacedTxHash?: `0x${string}`;
-  /** The recipient's address or contract address. */
+  /** The recipient or contract address. */
   to?: `0x${string}`;
-  /** The amount of native currency (in wei) being sent. */
+  /** The native value sent, in wei, as a decimal string. */
   value?: string;
-  /** Optional custom bundler RPC URL for ERC-4337 UserOperation tracking. */
+  /**
+   * Custom bundler RPC URL used to track an ERC-4337 UserOperation. Stored with the transaction, so it is persisted to
+   * `localStorage` and passed to `onRemoteCreate` (a backend can track through the same bundler). Keep API keys out of
+   * this URL; pass them as `pimlicoApiKey`.
+   */
   bundlerUrl?: string;
-  /** Optional Pimlico API key for ERC-4337 UserOperation tracking. */
+  /**
+   * Pimlico API key used to track an ERC-4337 UserOperation when no `bundlerUrl` is set. Persisted to `localStorage`
+   * with the transaction, so tracking can resume after a reload, but never passed to `onRemoteCreate`.
+   */
   pimlicoApiKey?: string;
 };
 
 /**
- * Represents a Solana-specific transaction, extending the base properties.
+ * A Solana transaction. The Solana tracker fills the on-chain fields once the transaction is found.
  */
 export type SolanaTransaction = BaseTransaction & {
-  /** The adapter type for Solana transactions. */
+  /** Always `OrbitAdapter.SOLANA`. */
   adapter: OrbitAdapter.SOLANA;
-  /** The transaction fee in lamports. */
+  /** The transaction fee, in lamports. */
   fee?: number;
-  /** The instructions included in the transaction. */
+  /** The instructions of the transaction, as returned by the `getTransaction` RPC method. */
   instructions?: unknown[];
-  /** The recent blockhash used for the transaction. */
+  /** The blockhash the transaction was signed with. */
   recentBlockhash?: string;
   /** The slot in which the transaction was processed. */
   slot?: number;
 };
 
 /**
- * Represents a Starknet-specific transaction, extending the base properties.
+ * A Starknet transaction. Reserved for a Starknet adapter; Pulsar does not ship one.
  */
 export type StarknetTransaction = BaseTransaction & {
-  /** The adapter type for Starknet transactions. */
+  /** Always `OrbitAdapter.Starknet`. */
   adapter: OrbitAdapter.Starknet;
   /** The actual fee paid for the transaction. */
-  actualFee?: { amount: string; unit: string };
+  actualFee?: {
+    /** The fee amount. */
+    amount: string;
+    /** The fee unit. */
+    unit: string;
+  };
   /** The address of the contract being interacted with. */
   contractAddress?: string;
 };
 
-/** A union type representing any possible transaction structure that Pulsar can handle. */
+/** Any transaction Pulsar can track. Application transaction types extend one of its members. */
 export type Transaction = EvmTransaction | SolanaTransaction | StarknetTransaction;
 
 // =================================================================================================
@@ -192,40 +233,54 @@ export type Transaction = EvmTransaction | SolanaTransaction | StarknetTransacti
 // =================================================================================================
 
 /**
- * Represents the parameters required to initiate a new transaction tracking flow.
+ * The metadata of a transaction passed to `executeTxAction` (as `params`, without `actionFunction`) and kept in
+ * `initialTx`.
  */
 export type InitialTransactionParams = Pick<
   BaseTransaction,
   'description' | 'title' | 'type' | 'requiredConfirmations' | 'rpcUrl' | 'payload'
 > &
   Pick<EvmTransaction, 'bundlerUrl' | 'pimlicoApiKey'> & {
-    /** The specific blockchain adapter for this transaction. */
+    /** The adapter that handles the transaction. When no configured adapter has this key, the first one is used. */
     adapter: OrbitAdapter;
-    /** The function that executes the on-chain action (e.g., sending a transaction) and returns a preliminary identifier like a hash. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    actionFunction: (...args: any[]) => Promise<ActionTxKey | undefined>;
-    /** The target chain ID for the transaction. */
+    /**
+     * Signs and submits the transaction and returns its `ActionTxKey`, or `undefined` when the user cancelled.
+     * `executeTxAction` calls it without arguments. The adapters' `retryTxAction` call it with
+     * `{ config, ...payload }` (EVM) or `{ client, ...payload }` (Solana).
+     * @param args - No arguments from `executeTxAction`; one object from `retryTxAction`.
+     */
+    actionFunction: (...args: unknown[]) => Promise<ActionTxKey | undefined>;
+    /**
+     * The chain the transaction must be sent on: a numeric chain ID for EVM (the wallet is asked to switch if needed),
+     * or a cluster moniker such as `'devnet'` for Solana (compared with the cluster of the connected wallet).
+     */
     desiredChainID: number | string;
-    /** If true, the detailed tracking modal will open automatically upon initiation. */
+    /** When `true`, the transaction is created with `isTrackedModalOpen: true`. */
     withTrackedModal?: boolean;
-    /** The specific tracker responsible for monitoring this transaction's status. Required for Gelato / ERC-4337 tracker. */
+    /**
+     * Forces a tracker. Required for ERC-4337 (`TransactionTracker.ERC4337`) and Gelato; otherwise the adapter picks
+     * one from the returned key and the connector.
+     */
     tracker?: TransactionTracker;
-    /** @deprecated Gelato relay is deprecated. */
+    /**
+     * Stored with the transaction and persisted to `localStorage`, but never passed to `onRemoteCreate`.
+     * @deprecated Gelato relay is deprecated. Use ERC-4337 with `bundlerUrl` or `pimlicoApiKey` instead.
+     */
     gelatoApiKey?: string;
   };
 
 /**
- * Represents a transaction in its temporary, pre-submission state.
- * This is used for UI feedback while the transaction is being signed and sent.
+ * The state of a transaction while `executeTxAction` runs, before it is added to the pool. UI layers use it for
+ * immediate feedback (signature prompts, preflight errors).
  */
 export type InitialTransaction = InitialTransactionParams & {
-  /** Normalized error if the initialization fails (e.g., user rejects signature). */
+  /** The normalized error when the flow failed before tracking started, for example a rejected signature. */
   error?: TuwaErrorState;
-  /** A flag indicating if the transaction is being processed (e.g., waiting for signature). */
+  /** `true` from the start of `executeTxAction` until the transaction is added to the pool or the flow fails. */
   isInitializing: boolean;
-  /** The `txKey` of the on-chain transaction that this action produced, used for linking the states. */
+  /** The `txKey` of the transaction this action added to the pool. */
   lastTxKey?: string;
-  /** The local timestamp when the user initiated the action. */
+  /** Unix timestamp (seconds) when `executeTxAction` started. */
   localTimestamp: number;
 };
 
@@ -234,127 +289,159 @@ export type InitialTransaction = InitialTransactionParams & {
 // =================================================================================================
 
 /**
- * Defines the standard callback structure for transaction events.
- * @template T The specific transaction type, extending `Transaction`.
+ * Callbacks passed to `executeTxAction` and forwarded to the tracker of that transaction. They are not stored:
+ * trackers restarted by `initializeTransactionsPool` or `injectExternalPendingTxs` (for example after a page reload)
+ * run without them. Their return values are not awaited.
+ *
+ * @template T - The application transaction type.
  */
 export interface TrackerCallbacks<T extends Transaction> {
+  /**
+   * Called when the tracker marks the transaction `Success`.
+   * @param tx - The transaction after the update.
+   */
   onSuccess?: (tx: T) => Promise<void> | void;
+  /**
+   * Called when the transaction fails: it reverted, was rejected, or tracking gave up.
+   * @param error - The raw error, or a generated `Error`.
+   * @param tx - The transaction after the update.
+   */
   onError?: (error: unknown, tx?: T) => Promise<void> | void;
+  /**
+   * Called when the transaction is replaced by another one with the same nonce.
+   * @param newTx - The tracked transaction after the update (`status: Replaced`, `replacedTxHash` set).
+   * @param oldTx - The transaction as tracking started.
+   */
   onReplaced?: (newTx: T, oldTx: T) => Promise<void> | void;
 }
 
 /**
- * Callbacks for synchronizing local transaction state with a remote backend.
- * These are injected into the store at creation time.
+ * Callbacks that synchronize the local pool with a remote backend (for example Quasar). Passed to
+ * `createPulsarStore`.
+ *
+ * @template T - The application transaction type.
  */
 export interface SyncCallbacks<T extends Transaction> {
   /**
-   * Called immediately after a transaction is created locally (added to pool).
-   * Use this to POST the active pending transaction to the backend.
+   * Called in the background with every new transaction, right after `addTxToPool` has written it to the pool with
+   * `syncStatus: 'pending-sync'` and listed its key in `unsyncedTxKeys`. It never delays or blocks tracking. Resolving
+   * marks the transaction `'synced'` and removes the key; rejecting logs a warning and leaves the key for
+   * `reconcileUnsyncedTransactions`, also across reloads. Reject (throw) on failure: a resolved promise counts as
+   * synced. A transaction is never sent twice at the same time.
+   * @param tx - A copy of the pooled transaction without `pimlicoApiKey` and `gelatoApiKey`.
    */
   onRemoteCreate?: (tx: T) => Promise<void>;
 }
 
 /**
- * Callback executed before Pulsar initializes or submits a transaction.
+ * Preflight callback run by `executeTxAction` after metadata validation and the chain check (which can ask the wallet
+ * to switch networks), before `actionFunction` asks the wallet to sign. It receives no transaction data.
  *
- * Throw an error from this function to block the transaction before `initialTx`, wallet interaction,
- * persistence, or remote synchronization starts.
+ * Throw to block the transaction: with `abortOnTxError` (default `true`), `initialTx.error` is set and
+ * `executeTxAction` rejects with the thrown error. With `abortOnTxError: false`, the error is logged and the flow
+ * continues.
  */
 export type BeforeTxProcess = () => Promise<void> | void;
 
 /**
- * The configuration object containing one or more transaction adapters.
- * @template T The specific transaction type.
+ * The configuration of `createPulsarStore`: one or more chain adapters and the store options.
+ *
+ * @template T - The application transaction type.
  */
 export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter<T>> & {
-  /** Optional global preflight callback executed before every transaction unless locally overridden. */
+  /** Global preflight callback run before every transaction. A `beforeTxProcess` passed to `executeTxAction` replaces it. */
   beforeTxProcess?: BeforeTxProcess;
+  /** Maximum number of transactions in the pool. When it is full, the oldest one (by `localTimestamp`) is evicted. Defaults to 50. */
   maxTransactions?: number;
-  gelatoApiKey?: string; // https://docs.gelato.cloud/
-  /** Optional setting to abort the transaction if the beforeTxProcess hook or remote creation fails. Defaults to true. */
+  /** @deprecated Gelato relay is deprecated. Gelato API key used to track `TransactionTracker.Gelato` transactions. */
+  gelatoApiKey?: string;
+  /**
+   * Whether an error thrown by `beforeTxProcess` aborts the transaction. Defaults to `true`. It does not apply to
+   * `onRemoteCreate`, whose errors never abort the transaction.
+   */
   abortOnTxError?: boolean;
 } & SyncCallbacks<T>;
 
 /**
- * Represents a tracker for a specific transaction tied to an action and a connector.
- *
- * @typedef {Object} CheckTxTracker
- * @property {ActionTxKey} actionTxKey - The key identifying the specific action related to the transaction.
- * @property {string} connectorType - The type of connector used for the transaction (e.g., wallet provider, blockchain interface).
- * @property {TransactionTracker} [tracker] - An optional tracker object that monitors the status and progress of the transaction.
- * @property {string} [gelatoApiKey] - @deprecated Gelato API key for Gelato relayer integration.
- * @property {string} [bundlerUrl] - Optional custom bundler RPC URL for ERC-4337 UserOperation tracking.
- * @property {string} [pimlicoApiKey] - Optional Pimlico API key for ERC-4337 UserOperation tracking.
+ * The input of `TxAdapter.checkTransactionsTracker`: the key returned by the action and the context needed to pick a
+ * tracker.
  */
 export type CheckTxTracker = {
+  /** The key returned by `actionFunction`. */
   actionTxKey: ActionTxKey;
+  /** The connector that signed the transaction, for example `evm:safe` for a Safe wallet. */
   connectorType: string;
+  /** The tracker requested in `executeTxAction` params, if any. */
   tracker?: TransactionTracker;
-  /** @deprecated Gelato relay is deprecated. Use bundlerUrl / pimlicoApiKey with ERC-4337 instead. */
+  /** @deprecated Gelato relay is deprecated. Use `bundlerUrl` / `pimlicoApiKey` with ERC-4337 instead. */
   gelatoApiKey?: string;
-  /** Optional custom bundler RPC URL for ERC-4337 UserOperation tracking. */
+  /** Custom bundler RPC URL for ERC-4337 UserOperation tracking. */
   bundlerUrl?: string;
-  /** Optional Pimlico API key for ERC-4337 UserOperation tracking. */
+  /** Pimlico API key for ERC-4337 UserOperation tracking. */
   pimlicoApiKey?: string;
 };
 
 /**
- * Defines the interface for a transaction adapter, which provides chain-specific logic and utilities.
- * @template T The specific transaction type, extending `Transaction`.
+ * The contract a chain adapter implements to plug into the Pulsar store. `@tuwaio/pulsar-evm` and
+ * `@tuwaio/pulsar-solana` provide implementations.
+ *
+ * @template T - The application transaction type.
  */
 export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl'> & {
-  /** The unique key identifying this adapter. */
+  /** The chain family handled by the adapter. */
   key: OrbitAdapter;
-  /** Returns information about the currently connected connector. */
+  /** Returns the connected wallet. Called by `executeTxAction` before the chain check. */
   getConnectorInfo: () => {
-    /** The currently connected wallet address. */
+    /** The address of the connected wallet. */
     walletAddress: string;
-    /** The type of the connector (e.g., 'metamask', 'phantom'). */
+    /** The connector type, for example `evm:metamask`. */
     connectorType: string;
   };
   /**
-   * Ensures the connected wallet is on the correct network for the transaction.
-   *
-   * This method should throw an error if the chain is mismatched.
-   * @param chainId The desired chain ID for the transaction.
-   * @param walletChainId The connected wallet chain ID.
+   * Ensures the wallet is on the chain of the transaction, switching it if the adapter can. Rejects when the chain
+   * does not match, which aborts `executeTxAction`.
+   * @param chainId - The `desiredChainID` of the transaction.
    */
   checkChainForTx: (chainId: string | number) => Promise<void>;
   /**
-   * Determines the appropriate tracker and final `txKey` from the result of an action.
-   * @returns An object containing the final `txKey` and the `TransactionTracker` to be used.
+   * Picks the tracker and the final `txKey` for the key returned by `actionFunction`.
+   * @param params - The returned key, the connector type and the requested tracker.
+   * @returns The `txKey` to store the transaction under and the tracker to use.
    */
-  checkTransactionsTracker: ({ actionTxKey, connectorType, tracker }: CheckTxTracker) => {
+  checkTransactionsTracker: (params: CheckTxTracker) => {
+    /** The key the transaction is stored under. */
     txKey: string;
+    /** The tracker that monitors the transaction. */
     tracker: TransactionTracker;
   };
   /**
-   * Selects and initializes the correct background tracker for a given transaction.
-   * @param params The parameters for initializing the tracker, including the transaction and store callbacks.
+   * Starts the background tracker of a transaction. Trackers update the transaction through `updateTxParams`. The
+   * built-in trackers keep failed transactions in the pool; `removeTxFromPool` is available to custom trackers.
+   * @param params - The transaction, the Gelato API key, the callbacks and the store members used by trackers.
    */
   checkAndInitializeTrackerInStore: (
     params: { tx: T; gelatoApiKey?: string } & TrackerCallbacks<T> &
       Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>,
   ) => Promise<void> | void;
   /**
-   * Optional: Logic to cancel a pending EVM transaction.
-   * @param tx The transaction to cancel.
-   * @returns The new transaction hash for the cancellation.
+   * Optional: cancels a pending transaction by sending a replacement with the same nonce.
+   * @param tx - The transaction to cancel.
+   * @returns The hash of the cancellation transaction.
    */
   cancelTxAction?: (tx: T) => Promise<string>;
   /**
-   * Optional: Logic to speed up a pending EVM transaction.
-   * @param tx The transaction to speed up.
-   * @returns The new transaction hash for the sped-up transaction.
+   * Optional: speeds up a pending transaction by resending it with the same nonce and higher fees.
+   * @param tx - The transaction to speed up.
+   * @returns The hash of the replacement transaction.
    */
   speedUpTxAction?: (tx: T) => Promise<string>;
   /**
-   * Optional: Logic to retry a failed transaction.
-   * @param params The parameters for retrying the transaction.
-   * @param params.txKey The unique key of the transaction to retry.
-   * @param params.tx The initial parameters of the transaction.
-   * @param params.onClose Callback function to close the tracking modal.
+   * Optional: closes the tracking modal and runs a failed transaction again through `executeTxAction`.
+   * @param params - The retry parameters.
+   * @param params.txKey - The key of the failed transaction, passed to `onClose`.
+   * @param params.tx - The parameters of the transaction, including its `actionFunction`.
+   * @param params.onClose - Closes the tracking modal.
+   * @param params.executeTxAction - The store's `executeTxAction`.
    */
   retryTxAction?: (
     params: {
@@ -364,24 +451,22 @@ export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl
     } & Partial<Pick<ITxTrackingStore<T>, 'executeTxAction'>>,
   ) => Promise<void>;
   /**
-   * Optional: Constructs a full explorer URL for a specific transaction.
-   * May require the full transaction pool to resolve details for replaced transactions.
-   * @param tx The transaction object.
-   * @returns The full URL to the transaction on the explorer.
+   * Optional: builds the explorer URL of a transaction.
+   * @param tx - The transaction.
+   * @returns The URL, or an empty string when it cannot be built.
    */
   getExplorerTxUrl?: (tx: T) => string;
 };
 
 /**
- * Defines the structure of the transaction pool, a key-value store of transactions indexed by their unique keys.
- * @template T The type of the transaction object being tracked.
+ * The transaction pool: transactions indexed by `txKey`.
+ *
+ * @template T - The application transaction type.
  */
 export type TransactionPool<T extends Transaction> = Record<string, T>;
 
 /**
- * A utility type that creates a union of all fields that can be safely updated
- * on a transaction object via the `updateTxParams` action. This ensures type safety
- * and prevents accidental modification of immutable properties.
+ * The fields `updateTxParams` accepts: the fields trackers change while a transaction is tracked.
  */
 export type UpdatableTransactionFields = Partial<
   Pick<
@@ -408,74 +493,102 @@ export type UpdatableTransactionFields = Partial<
   Partial<Pick<SolanaTransaction, 'slot' | 'confirmations' | 'fee' | 'instructions' | 'recentBlockhash' | 'rpcUrl'>>;
 
 /**
- * The interface for the base transaction tracking store slice.
- * It includes the state and actions for managing the transaction lifecycle.
- * @template T The specific transaction type.
+ * The state and actions of the core store slice created by `initializeTxTrackingStore`.
+ *
+ * @template T - The application transaction type.
  */
 export interface IInitializeTxTrackingStore<T extends Transaction> {
-  /** A pool of all transactions currently being tracked, indexed by `txKey`. */
+  /** Every tracked transaction, indexed by `txKey`. Persisted to `localStorage` by `createPulsarStore`. */
   transactionsPool: TransactionPool<T>;
-  /** The `txKey` of the most recently added transaction. */
+  /** The `txKey` of the transaction added last. */
   lastAddedTxKey?: string;
-  /** The state for a transaction being initiated, used for verify feedback before it's submitted to the chain. */
+  /**
+   * The transaction `executeTxAction` is processing, before it is added to the pool. Not persisted by
+   * `createPulsarStore`: after a reload it is `undefined`.
+   */
   initialTx?: InitialTransaction;
   /**
-   * Adds a new transaction to the tracking pool and marks it as pending.
-   * @param tx The transaction object to add.
+   * Validates a transaction and adds it to the pool with `pending: true`. When the pool already holds
+   * `maxTransactions` transactions, the oldest one is evicted. If `onRemoteCreate` is configured, the transaction gets
+   * `syncStatus: 'pending-sync'`, its key is listed in `unsyncedTxKeys`, and `onRemoteCreate` runs in the background
+   * (see `SyncCallbacks`). Does not start a tracker.
+   * @param tx - The transaction to add.
+   * @returns A promise that resolves once the transaction is in the pool, without waiting for `onRemoteCreate`.
+   * @throws `PulsarTransactionValidationError` synchronously, before anything is written, when the title, description
+   * or payload is invalid.
    */
   addTxToPool: (tx: T) => Promise<void>;
   /**
-   * Updates one or more properties of an existing transaction in the pool.
-   * @param txKey The key of the transaction to update.
-   * @param fields The partial object containing the fields to update.
+   * Merges fields into a transaction of the pool; does nothing if the key is unknown. When `fields.status` is terminal
+   * and the transaction is in `unsyncedTxKeys`, it starts `reconcileUnsyncedTransactions` in the background.
+   * @param txKey - The key of the transaction.
+   * @param fields - The fields to merge.
    */
   updateTxParams: (txKey: string, fields: UpdatableTransactionFields) => void;
   /**
-   * Removes a transaction from the tracking pool by its key.
-   * @param txKey The key of the transaction to remove.
+   * Removes a transaction from the pool. Does not stop its tracker.
+   * @param txKey - The key of the transaction.
    */
   removeTxFromPool: (txKey: string) => void;
   /**
-   * Closes the tracking modal for a transaction and clears any initial transaction state.
-   * @param txKey The optional key of the transaction modal to close.
+   * Sets `isTrackedModalOpen: false` on a transaction and always clears `initialTx`.
+   * @param txKey - The key of the transaction whose modal is closed, if any.
    */
   closeTxTrackedModal: (txKey?: string) => void;
   /**
-   * A selector function to retrieve the key of the last transaction added to the pool.
-   * @returns The key of the last added transaction, or undefined if none exists.
+   * Returns `lastAddedTxKey`.
+   * @returns The key of the transaction added last, or `undefined`.
    */
   getLastTxKey: () => string | undefined;
   /**
-   * A record of transaction keys that failed to sync with the remote backend (Quasar)
-   * when `onRemoteCreate` was called. They will be retried automatically.
+   * Keys of transactions that `onRemoteCreate` has not confirmed yet: in flight, failed, or interrupted by a reload.
+   * `reconcileUnsyncedTransactions` retries them. Persisted to `localStorage`.
    */
   unsyncedTxKeys?: Record<string, boolean>;
   /**
-   * Attempts to synchronize any transactions in `unsyncedTxKeys` that have reached a terminal
-   * status but failed their initial `onRemoteCreate` call.
+   * Calls `onRemoteCreate` again for every key in `unsyncedTxKeys`, one after another, skipping keys whose call is still
+   * in flight. Successful transactions are marked `'synced'` and removed from the list; failures are logged and stay
+   * listed; keys of transactions no longer in the pool are removed. Does nothing without `onRemoteCreate` or while a
+   * previous run is in progress. Runs at the start of every `executeTxAction`, when an
+   * unsynced transaction reaches a terminal status, and when `createTxInMemoryStore` loads the first history page.
+   * @returns A promise that resolves when the run is finished. It does not reject.
    */
   reconcileUnsyncedTransactions: () => Promise<void>;
 }
 
 /**
- * The complete interface for the Pulsar transaction tracking store.
- * @template T The transaction type.
+ * The state and actions of the store created by `createPulsarStore`.
+ *
+ * @template T - The application transaction type.
  */
 export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore<T> & {
-  /** A getter function that returns the configured transaction adapter(s). */
+  /**
+   * Returns the adapter configuration passed to `createPulsarStore`.
+   * @returns The adapter, or the array of adapters.
+   */
   getAdapter: () => TxAdapter<T> | TxAdapter<T>[];
   /**
-   * The primary method for initiating and tracking a new transaction from start to finish.
-   * It manages UI state, executes the on-chain action, and initiates background tracking.
+   * Runs a transaction from start to tracking: validates `params`, sets `initialTx`, checks the chain (the EVM adapter
+   * may ask the wallet to switch), runs `beforeTxProcess`, calls `actionFunction`, adds the transaction to the pool
+   * (see `addTxToPool`) and starts its tracker. When `actionFunction` returns `undefined`, `initialTx` is cleared and
+   * nothing is tracked. Also starts `reconcileUnsyncedTransactions` in the background.
    *
-   * @param params The parameters for handling the transaction.
-   * @param params.actionFunction The async function to execute (e.g., a smart contract write call). Must return a unique key or undefined.
-   * @param params.params The metadata for the transaction. Title, description, and payload are validated before execution.
-   * @param params.defaultTracker The default tracker to use if it cannot be determined automatically.
-   * @param params.beforeTxProcess Optional local preflight callback. When provided, it overrides the global callback from `createPulsarStore`.
-   * @param params.onSuccess Callback to execute when the transaction is successfully submitted.
-   * @param params.onError Callback to execute when the transaction fails.
-   * @param params.onReplaced Callback to execute when the transaction is replaced.
+   * @param params - The action, its metadata and the callbacks.
+   * @param params.actionFunction - Signs and submits the transaction; returns its key, or `undefined` if cancelled.
+   * @param params.params - The transaction metadata. `title`, `description` and `payload` are validated before
+   * anything else runs.
+   * @param params.defaultTracker - Tracker used when the adapter does not return one.
+   * @param params.beforeTxProcess - Preflight callback for this transaction; replaces the global one.
+   * @param params.abortOnTxError - Overrides the global `abortOnTxError` for this transaction.
+   * @param params.onSuccess - Called when the transaction succeeds (see `TrackerCallbacks`).
+   * @param params.onError - Called when the transaction fails after it was submitted (see `TrackerCallbacks`).
+   * @param params.onReplaced - Called when the transaction is replaced (see `TrackerCallbacks`).
+   * @returns A promise that resolves when the adapter's `checkAndInitializeTrackerInStore` resolves: once polling has
+   * started for polling trackers (Solana, Safe, ERC-4337, Gelato), but only when tracking has finished for standard
+   * EVM transactions (`TransactionTracker.Ethereum`). Read the state from the store instead of awaiting the result.
+   * @throws `PulsarTransactionValidationError` when the metadata is invalid (before `initialTx` is set). Rejects with
+   * the underlying error when no adapter is configured, or when the chain check, `beforeTxProcess` (with
+   * `abortOnTxError`), `actionFunction` or the tracker start fails; `initialTx.error` is set first.
    */
   executeTxAction: (
     params: {
@@ -488,67 +601,86 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
   ) => Promise<void>;
 
   /**
-   * Initializes trackers for all pending transactions in the pool.
-   * This is essential for resuming tracking after a page reload or application restart.
+   * Restarts the trackers of all pending transactions in the pool, for example after a page reload. Pending
+   * transactions that fail validation are removed from the pool. Call it once per page load: every call starts new
+   * trackers, and trackers started here have no `TrackerCallbacks`.
+   * @returns A promise that resolves when all trackers have started.
    */
   initializeTransactionsPool: () => Promise<void>;
   /**
-   * Cross-device synchronization bridge.
-   * Injects remote pending transactions into the local pool and starts their lifecycle trackers.
-   * Also self-heals local pending transactions if the remote DB knows they are terminal.
+   * Merges transactions from a remote backend into the pool (cross-device sync). Invalid transactions are skipped
+   * with a warning. Pending remote transactions that are not in the pool are added and tracked. Local pending
+   * transactions that are terminal remotely take the remote `status`, `txKey` and `finishedTimestamp` and are marked
+   * not pending.
+   * @param remoteTxs - Transactions returned by the backend.
+   * @returns A promise that resolves when the trackers of the added transactions have started.
    */
   injectExternalPendingTxs: (remoteTxs: T[]) => Promise<void>;
 };
 
 /**
- * Represents the structure and behavior of an in-memory pagination system
- * for managing transaction history.
+ * The pagination state and action of the in-memory history store, as consumed by UI components.
  */
 export type TxInMemoryPagination = {
-  /** Indicates whether the store is currently loading transaction history. */
+  /** `true` while a history page is loading. */
   isLoading: boolean;
-  /** Indicates whether the last loading request ended with an error. */
+  /** `true` when the last history request failed. */
   isError: boolean;
-  /** Indicates whether more history pages are available. */
+  /** `true` when the last loaded page reported a next page. */
   hasMore: boolean;
-  /** The current page number in the paginated history. */
+  /** The last loaded page number. */
   currentPage: number;
-  /** Loads the next page of transaction history and appends it to the pool. */
+  /**
+   * Loads the page after `currentPage` and merges it into the pool. Does nothing while loading, when `hasMore` is
+   * `false`, or without `getHistory`.
+   * @param walletAddress - The wallet whose history is loaded.
+   */
   fetchNextPage: (walletAddress: string) => Promise<void>;
 };
 
 /**
- * The complete interface for the Pulsar transaction in-memory store.
- * It keeps a paginated remote history in sync with a local transaction pool.
+ * The state and actions of the store created by `createTxInMemoryStore`: a paginated remote history merged with the
+ * local pool. Nothing in it is persisted.
  *
- * @template T The transaction type.
+ * @template T - The application transaction type.
  */
 export type ITxInMemoryStore<T extends Transaction> = {
-  /** A pool of all transactions currently being tracked and loaded from history, indexed by `txKey`. */
+  /** The local and remote transactions, indexed by `txKey`. */
   transactionsPool: TransactionPool<T>;
-  /** Loads the first page of transaction history. */
+  /**
+   * Runs `reconcileUnsyncedTransactions` (if provided), then loads the first history page and merges it into the
+   * pool. Does nothing without `getHistory` or an empty `walletAddress`.
+   * @param walletAddress - The wallet whose history is loaded.
+   */
   fetchInitial: (walletAddress: string) => Promise<void>;
-  /** Merges a local transaction pool into the in-memory store. */
+  /**
+   * Merges a local pool into the in-memory pool. Transactions that are `Success` or `Replaced` in memory are kept;
+   * pending ones are overwritten only by a terminal transaction or one with more confirmations.
+   * @param localPool - The pool of the persistent store, usually from its `subscribe` listener.
+   */
   syncWithLocalPool: (localPool: TransactionPool<T>) => void;
 } & TxInMemoryPagination;
 
 /**
- * Parameters used to configure and manage an in-memory transaction store.
+ * The configuration of `createTxInMemoryStore`.
  *
- * @template T The transaction type.
+ * @template T - The application transaction type.
  */
 export type ITxInMemoryStoreParameters<T extends Transaction> = {
-  /** A localTransactionsPool. */
+  /** The initial pool, usually `transactionsPool` of the persistent store. */
   localTransactionsPool: TransactionPool<T>;
-  /**
-   * Attempts to synchronize any transactions in `unsyncedTxKeys` that have reached a terminal
-   * status but failed their initial `onRemoteCreate` call.
-   */
+  /** Called by `fetchInitial` before the first page is loaded, usually the store's `reconcileUnsyncedTransactions`. */
   reconcileUnsyncedTransactions?: () => Promise<void>;
-  /** * Callback fired when remote history is successfully fetched.
-   * Used to inject remote pending transactions into the persistent tracking store.
+  /**
+   * Called in a microtask with the valid transactions of every loaded page, usually to pass them to the store's
+   * `injectExternalPendingTxs`.
+   * @param remoteTxs - The transactions of the loaded page.
    */
   onHistoryFetched?: (remoteTxs: T[]) => void;
+  /**
+   * Loads one page of the remote history of a wallet. Return `null` when there is no history to show (for example,
+   * the user is not signed in); throw on errors to set `isError`.
+   */
   getHistory?: ({
     page,
     walletAddress,
@@ -560,6 +692,7 @@ export type ITxInMemoryStoreParameters<T extends Transaction> = {
      */
     page?: number;
 
+    /** The wallet whose history is requested. */
     walletAddress: string;
   }) => Promise<{
     /** Array of transactions for the current page. */

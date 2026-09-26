@@ -180,7 +180,7 @@ describe('gelatoFetcher', () => {
     expect(pollingCallbacks.stopPolling).not.toHaveBeenCalled();
   });
 
-  test('should call stopPolling if a task is stale (older than 1 hour)', async () => {
+  test('should fail and stop, keeping the transaction, if a task is stale (older than 1 hour)', async () => {
     const oldCreatedAt = dayjs().subtract(2, 'hours').unix();
     const mockResponse = createMockStatus(GelatoStatusCode.Pending, { createdAt: oldCreatedAt });
     mockRequest.mockResolvedValue(mockResponse);
@@ -194,7 +194,8 @@ describe('gelatoFetcher', () => {
 
     await fetcher({ tx: mockTx, ...pollingCallbacks });
 
-    expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith();
+    expect(pollingCallbacks.onFailure).toHaveBeenCalledWith(mockResponse);
+    expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
   });
 
   test('should propagate errors from the RPC client for retry handling', async () => {
@@ -233,6 +234,20 @@ describe('gelatoTrackerForStore', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  test('should keep failed transactions in the pool', () => {
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    expect(config.removeTxFromPool).toBeUndefined();
+
+    config.onFailure(createMockStatus(GelatoStatusCode.Pending));
+
+    expect(mockParams.onError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Gelato task was not executed within an hour.' }),
+      expect.objectContaining({ status: TransactionStatus.Failed, pending: false }),
+    );
+    expect(mockParams.removeTxFromPool).not.toHaveBeenCalled();
   });
 
   test('should call user onSuccess callback when transaction succeeds', () => {

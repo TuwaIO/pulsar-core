@@ -3,32 +3,32 @@ import { CodeBlock, CodeHighlighter } from '@tuwaio/docs-ui';
 import { useTheme } from 'next-themes';
 
 const idlContent = `{
-  "address": "...your contract address...",
+  "address": "<your program address>",
   "version": "0.1.0",
-  "name": "...your contract name...",
+  "name": "solanatest",
   "instructions": [
     {
       "name": "increment",
       "accounts": [
         {
-          "name": "...your contract name...",
+          "name": "solanatest",
           "isMut": true,
           "isSigner": false
         }
       ],
       "args": []
-    },
-  ],
+    }
+  ]
 }
 `;
 
 const configContent = `{
-  "idl": "src/targets/...your contract name.../idl/...your contract name...json",
+  "idl": "src/targets/solanatest/idl/solanatest.json",
   "scripts": {
     "js": {
       "from": "@codama/renderers-js",
       "args": [
-        "src/programs/...your contract name.../generated",
+        "src/programs/solanatest/generated",
         {
           "generatedFolder": "",
           "syncPackageJson": false,
@@ -47,9 +47,9 @@ export function IDLStep() {
     <div>
       <h3 className="mb-2 text-lg font-bold text-[var(--tuwa-text-primary)]">Step 2: Program IDL</h3>
       <p className="mb-2 text-[var(--tuwa-text-secondary)]">
-        For Solana, you'll need the Program IDL (Interface Definition Language) for the on-chain program you want to
-        interact with. The IDL defines the program's instructions, accounts, and data structures. It serves a similar
-        purpose to an EVM ABI.
+        You need the IDL (Interface Definition Language file) of the program you want to call: it describes the
+        program's instructions and accounts, like an ABI on EVM. This guide uses a counter program named `solanatest`
+        whose `increment` instruction takes the counter account.
       </p>
       <CodeBlock title="solanatest.json" titleIcons={<DocumentTextIcon />} textToCopy={idlContent}>
         <CodeHighlighter children={idlContent} language="json" resolvedTheme={resolvedTheme ?? 'light'} />
@@ -80,8 +80,8 @@ export function IDLStep() {
         <CodeHighlighter children={configContent} language="json" resolvedTheme={resolvedTheme ?? 'light'} />
       </CodeBlock>
       <p className="mb-2 mt-4 text-[var(--tuwa-text-secondary)]">
-        Now run the generation command. It will create a `src/programs/.../generated` directory with typed instructions
-        fully compatible with `@solana/kit`:
+        Now run the generation command. It creates `src/programs/solanatest/generated` with typed instruction builders
+        for `@solana/kit`; re-export them from `src/programs/index.ts` to import them as `@/programs`:
       </p>
       <CodeBlock title="bash" textToCopy="pnpm exec codama run js" titleIcons={<DocumentTextIcon />}>
         <CodeHighlighter children="pnpm exec codama run js" language="bash" resolvedTheme={resolvedTheme ?? 'light'} />

@@ -1,5 +1,5 @@
 /**
- * @file This file contains a utility function for speeding up a pending EVM transaction.
+ * @file Speeds up a pending EVM transaction by resending it with higher fees.
  */
 
 import { OrbitAdapter } from '@tuwaio/orbit-core';
@@ -12,38 +12,25 @@ import { Hex } from 'viem';
 const GAS_INCREASE_PERCENTAGE = 1.15;
 
 /**
- * Speeds up a pending EVM transaction by resubmitting it with the same nonce but higher gas fees.
- * This function is designed to work with wagmi's configuration and actions.
+ * Speeds up a pending EVM transaction: asks the connected wallet to resend it (same `to`, `value`, `input` and nonce)
+ * with both EIP-1559 fees raised by 15%. When it is mined, the tracker of the original transaction reports it as
+ * `Replaced`; the new transaction itself is not added to the pool.
  *
- * @template T - The transaction type, which must be a valid EVM transaction.
+ * Side effects: opens a wallet prompt and broadcasts a transaction.
  *
- * @param {object} params - The parameters required to speed up the transaction.
- * @param {Config} params.config - The wagmi configuration object.
- * @param {T} params.tx - The original transaction object that needs to be sped up. It must contain all necessary EVM fields.
- *
- * @returns {Promise<Hex>} A promise that resolves with the hash of the new, speed-up transaction.
- *
- * @throws {Error} Throws an error if:
- * - The transaction is not an EVM transaction.
- * - The transaction is missing required fields (`nonce`, `from`, `to`, `value`, `maxFeePerGas`, etc.).
- * - The wagmi config is not provided.
- * - No connected account is found.
- * - The `sendTransaction` call fails for any reason.
+ * @template T - The application transaction type.
+ * @param params - The wagmi config and the transaction.
+ * @param params.config - The wagmi config of the app.
+ * @param params.tx - The pending transaction. It must be an EVM transaction with `nonce`, `from`, `to`, `value`,
+ * `maxFeePerGas` and `maxPriorityFeePerGas` (set by the EVM tracker once the transaction details are fetched).
+ * @returns The hash of the replacement transaction.
+ * @throws `Error` when the transaction is not an EVM transaction or lacks the required fields, and
+ * `Error('Failed to speed up transaction: …')` (with the original error as `cause`) when no account is connected or
+ * the wallet rejects or fails to send the transaction.
  *
  * @example
  * ```ts
- * const handleSpeedUp = async (stuckTransaction) => {
- * try {
- * const newTxHash = await speedUpTxAction({
- * config: wagmiConfig,
- * tx: stuckTransaction,
- * });
- * console.log('Transaction sped up with new hash:', newTxHash);
- * // You should now update your state to track this new transaction hash.
- * } catch (error) {
- * console.error('Failed to speed up transaction:', error);
- * }
- * };
+ * const hash = await speedUpTxAction({ config: wagmiConfig, tx: pendingTx });
  * ```
  */
 export async function speedUpTxAction<T extends Transaction>({ config, tx }: { config: Config; tx: T }): Promise<Hex> {

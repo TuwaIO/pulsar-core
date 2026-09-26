@@ -1,5 +1,5 @@
 /**
- * @file This file contains the primary router for initializing transaction trackers.
+ * @file Routes a Solana transaction of the Pulsar store to its tracker.
  */
 
 import { normalizeError } from '@tuwaio/orbit-core';
@@ -14,15 +14,20 @@ import {
 import { solanaTrackerForStore } from '../trackers/solanaTracker';
 
 /**
- * Initializes the correct background tracker for a given Solana transaction.
- * This function acts as a router, selecting the appropriate tracker based on the `tx.tracker` property.
+ * Starts {@link solanaTrackerForStore} when `tracker` is `TransactionTracker.Solana`. Any other tracker logs an error
+ * and marks the transaction `Failed` (without calling `onError`). `pulsarSolanaAdapter` uses it as
+ * `checkAndInitializeTrackerInStore`.
  *
- * @template T - The transaction type.
- * @param {object} params - The parameters for initializing the tracker.
- * @param {T} params.tx - The transaction object to be tracked.
- * @param {TransactionTracker} params.tracker - The specific tracker to use.
- * @param {object} params.rest - The rest of the store's methods and state needed by the tracker.
- * @returns {Promise<void>} A promise that resolves when the tracker has been initialized.
+ * @template T - The application transaction type.
+ * @param params - The tracker, the transaction, the store members and the callbacks.
+ * @param params.tx - The transaction to track.
+ * @param params.tracker - The tracker to run, usually `tx.tracker`.
+ * @param params.onSuccess - Called when the transaction is finalized.
+ * @param params.onError - Called when the transaction failed or tracking gave up.
+ * @param params.updateTxParams - The store's `updateTxParams`.
+ * @param params.removeTxFromPool - The store's `removeTxFromPool`.
+ * @param params.transactionsPool - The store's pool when tracking starts.
+ * @returns A promise that resolves once polling has started.
  */
 export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   tx,

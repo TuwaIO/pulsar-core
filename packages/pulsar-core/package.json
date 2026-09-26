@@ -4,7 +4,7 @@
   "private": false,
   "author": "Oleksandr Tkach",
   "license": "Apache-2.0",
-  "description": "Layer 3 (L3) of the TUWA Ecosystem. Framework-agnostic headless core store providing append-only localStorage transaction history ledgers.",
+  "description": "L3 core of Pulsar (TUWA): headless, framework-agnostic transaction store with localStorage persistence, a chain adapter contract, metadata validation and remote sync hooks for tracking EVM and Solana transactions.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -21,13 +21,17 @@
     "test": "vitest run"
   },
   "keywords": [
+    "tuwa",
+    "pulsar",
+    "transaction-tracking",
     "web3",
-    "transaction",
-    "tracking",
+    "multi-chain",
+    "evm",
+    "solana",
     "zustand",
     "immer",
     "typescript",
-    "core",
+    "framework-agnostic",
     "headless"
   ],
   "repository": {
@@ -52,12 +56,12 @@
     "zustand": "5.x.x"
   },
   "devDependencies": {
-    "@tuwaio/orbit-core": "^0.3.0",
+    "@tuwaio/orbit-core": "^0.3.1",
     "dayjs": "^1.11.23",
     "immer": "^11.1.18",
     "tsup": "^8.5.1",
     "typescript": "6.0.3",
-    "vitest": "^5.0.0",
+    "vitest": "^5.0.2",
     "zustand": "^5.0.15"
   }
 }
