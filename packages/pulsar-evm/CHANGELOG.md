@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.6.0...pulsar-evm-v0.7.0) (2026-09-26)
+
+
+### Features
+
+* packages docs layout and security fixes ([0341a65](https://github.com/TuwaIO/pulsar-core/commit/0341a65150d2ef2de112046cc22f9d137d1a48c8))
+
 ## [0.6.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.5.10...pulsar-evm-v0.6.0) (2026-09-08)
 
 
