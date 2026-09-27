@@ -56,7 +56,7 @@
   "devDependencies": {
     "@tuwaio/pulsar-core": "workspace:^",
     "@tuwaio/orbit-core": "^0.3.1",
-    "@tuwaio/orbit-solana": "^0.3.1",
+    "@tuwaio/orbit-solana": "^0.3.2",
     "@wallet-standard/app": "^1.1.1",
     "@wallet-standard/ui-core": "^1.0.1",
     "@wallet-standard/ui-registry": "^1.1.1",
