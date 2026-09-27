@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.8.0...pulsar-solana-v0.8.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* updated orbit solana package ([4d87c6b](https://github.com/TuwaIO/pulsar-core/commit/4d87c6b23e705364e3ccf73713e0d596174ba8f3))
+
 ## [0.8.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.7.0...pulsar-solana-v0.8.0) (2026-09-26)
 
 
