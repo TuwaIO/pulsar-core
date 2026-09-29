@@ -75,7 +75,7 @@ export async function pingWithSmartAccount() {
 }
 ```
 
-The step-by-step React setup is on the **[Getting Started](https://pulsar.docs.tuwa.io/gettingStarted)** page, and tracking without the store on **[EVM Trackers Standalone](https://pulsar.docs.tuwa.io/evmStandalone)**.
+The step-by-step React setup is in the **[React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking)**, and tracking without the store on **[EVM Trackers Standalone](https://pulsar.docs.tuwa.io/evmStandalone)**.
 
 ---
 

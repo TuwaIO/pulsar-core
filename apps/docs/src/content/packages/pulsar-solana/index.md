@@ -61,7 +61,7 @@ export async function send(signer: TransactionSendingSigner, instruction: Instru
 }
 ```
 
-The step-by-step React setup, with Nova Connect and a Codama-generated program client, is on the **[Getting Started](https://pulsar.docs.tuwa.io/gettingStarted)** page, and tracking without the store on **[Solana Trackers Standalone](https://pulsar.docs.tuwa.io/solanaStandalone)**.
+The step-by-step React setup, with Nova Connect and a Codama-generated program client, is in the **[React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking)**, and tracking without the store on **[Solana Trackers Standalone](https://pulsar.docs.tuwa.io/solanaStandalone)**.
 
 ---
 

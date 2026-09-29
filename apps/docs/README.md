@@ -43,8 +43,6 @@ apps/docs/
 ├── src/content/
 │   ├── _meta.tsx              # Sidebar: hand-written pages, Packages, Guides (link to docs.tuwa.io/guides)
 │   ├── index.mdx              # Introduction
-│   ├── gettingStarted.mdx     # Step-by-step React setup for EVM and Solana (renders <StartedBlocks />)
-│   ├── quickStart.mdx         # Cosmos Playground templates (renders <ReadmeCards />) and the CLI
 │   ├── evmStandalone.mdx      # EVM trackers without the store
 │   ├── solanaStandalone.mdx   # Solana tracker without the store
 │   └── packages/              # GENERATED — do not edit by hand
@@ -56,13 +54,6 @@ apps/docs/
 │           ├── classes/
 │           ├── interfaces/
 │           └── type-aliases/
-├── src/components/
-│   ├── started-blocks/        # StartedBlocks.tsx (EVM / Solana tabs) and, per chain, the connector tabs and step wrapper
-│   ├── started-steps/         # The steps; code examples are template strings in these files
-│   │   ├── PulsarInitializerStep.tsx  # Step 5, shared by both chains
-│   │   ├── evm/               # Install, ABI, action (incl. ERC-4337), store, transaction button
-│   │   └── solana/            # Install, IDL + Codama, action, store, transaction button
-│   └── ReadmeCards.tsx        # Template cards of the Quick Start page (links to TuwaIO/cosmos-playground)
 └── typedoc/
     ├── packages-meta.tsx          # Sidebar labels for the Packages section
     ├── packages-overview.md       # Intro text of the /packages page
@@ -75,11 +66,9 @@ Hand-written pages are MDX files in `src/content`; the folder structure maps to 
 ### Hand-Written Pages
 
 - **Introduction** (`index.mdx`): what Pulsar is, where it fits in TUWA, principles, the tracking flow, packages and installation. No code beyond installation commands.
-- **Getting Started** (`gettingStarted.mdx`): the complete scenario for a React app. The page text is in MDX; the steps and their code examples live in `src/components/started-steps/**` as template strings, so they must be checked like any other example.
-- **Quick Start** (`quickStart.mdx`): the Cosmos Playground templates and `npx @tuwaio/create-cosmos-playground`. The cards in `ReadmeCards.tsx` must match the folders in `examples/` of `TuwaIO/cosmos-playground`.
 - **EVM Trackers Standalone** / **Solana Trackers Standalone**: using the trackers without the store.
 
-Each topic has one home: a package README keeps a short usage example and links to the page with the full scenario; the Introduction links to pages instead of repeating code. Quasar integration is documented in the [TUWA SDK docs](https://sdk.docs.tuwa.io/full-stack).
+Each topic has one home: a package README keeps a short usage example and links to the page with the full scenario; the Introduction links to pages instead of repeating code. Scenarios that combine several TUWA projects live in the [docs hub guides](https://docs.tuwa.io/guides): the React setup with a wallet connector is the [React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking), the Cosmos Playground templates are on [Starter Templates](https://docs.tuwa.io/guides/starter-templates). Quasar integration is documented in the [TUWA SDK docs](https://sdk.docs.tuwa.io/full-stack).
 
 ---
 

@@ -3,8 +3,6 @@ export default {
   '--': {
     type: 'separator',
   },
-  gettingStarted: 'Getting Started',
-  quickStart: 'Quick Start',
   evmStandalone: 'EVM Trackers Standalone',
   solanaStandalone: 'Solana Trackers Standalone',
   '---': {

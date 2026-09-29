@@ -40,7 +40,6 @@ pulsar-core/
 ├── apps/
 │   └── docs/                   # pulsar.docs.tuwa.io (Next.js 16 + Nextra 4)
 │       ├── src/content/        # Hand-written MDX pages + generated `packages/` reference
-│       ├── src/components/     # Interactive blocks of the Getting Started and Quick Start pages
 │       └── typedoc/            # TypeDoc plugins, Packages overview page and sidebar template
 ├── packages/
 │   ├── pulsar-core/            # L3: transaction store, adapter contract, validation, selectors
@@ -113,7 +112,7 @@ export function PendingBadge() {
 }
 ```
 
-Send transactions with `usePulsarStore((state) => state.executeTxAction)`: see [Getting Started](https://pulsar.docs.tuwa.io/gettingStarted) for the complete EVM and Solana flows.
+Send transactions with `usePulsarStore((state) => state.executeTxAction)`: see the [React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking) for the complete EVM and Solana flows.
 
 ---
 

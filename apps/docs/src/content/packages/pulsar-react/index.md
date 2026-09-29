@@ -50,7 +50,7 @@ export function PulsarInitializer() {
 }
 ```
 
-Every call of `initializeTransactionsPool` starts new trackers, so do not render the initializer more than once. In development, React Strict Mode runs effects twice. The complete setup is on the **[Getting Started](https://pulsar.docs.tuwa.io/gettingStarted)** page.
+Every call of `initializeTransactionsPool` starts new trackers, so do not render the initializer more than once. In development, React Strict Mode runs effects twice. The complete setup is in the **[React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking)**.
 
 ---
 
