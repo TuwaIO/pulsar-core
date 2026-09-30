@@ -115,7 +115,7 @@ With `abortOnTxError: false` (globally or per call), a `beforeTxProcess` error i
 
 ### Remote sync and recovery
 
-Pass `onRemoteCreate` to send every new transaction to your backend, for example a server action that forwards it to [Quasar](https://sdk.docs.tuwa.io/quasar-cloud/overview). Pulsar keeps working when the backend is slow or down:
+Pass `onRemoteCreate` to send every new transaction to your backend, for example a server action that forwards it to [Quasar](https://docs.tuwa.io/quasar). Pulsar keeps working when the backend is slow or down:
 
 1. `addTxToPool` writes the transaction to the pool (and to `localStorage`) first, with `syncStatus: 'pending-sync'` and its key in `unsyncedTxKeys`, and the tracker starts right away. `onRemoteCreate` runs in the background: when it resolves, the transaction becomes `'synced'` and the key is removed; when it rejects, the error is logged and the key stays. Reject (throw) on failure: a resolved promise counts as synced.
 2. The trackers keep following the transaction in the browser, so its status stays correct without the backend. A slow backend never delays tracking, and a sync interrupted by a closed tab is still listed after the reload.
@@ -123,7 +123,7 @@ Pass `onRemoteCreate` to send every new transaction to your backend, for example
 
 `onRemoteCreate` receives a copy of the transaction without `pimlicoApiKey` and `gelatoApiKey`: configure provider keys on the backend instead (for Quasar, in the app settings). `bundlerUrl` is sent, so do not put API keys in it.
 
-To show the remote history, `createTxInMemoryStore` merges the pages returned by your `getHistory` with the local pool (terminal transactions are never overwritten by stale data, and transactions that fail validation are skipped), and `injectExternalPendingTxs` adds pending transactions from other devices to the local pool and tracks them. The complete Next.js + Quasar integration, with server actions and SIWX sessions, is in the **[TUWA SDK documentation](https://sdk.docs.tuwa.io/full-stack)**.
+To show the remote history, `createTxInMemoryStore` merges the pages returned by your `getHistory` with the local pool (terminal transactions are never overwritten by stale data, and transactions that fail validation are skipped), and `injectExternalPendingTxs` adds pending transactions from other devices to the local pool and tracks them. The complete Next.js + Quasar integration, with server actions and SIWX sessions, is in the **[Quasar transaction sync guide](https://docs.tuwa.io/guides/quasar-transaction-sync)**.
 
 ---
 

@@ -15,7 +15,7 @@ Pulsar is built only on modern Web3 libraries: `viem` and `@wagmi/core` for EVM,
 
 ## 🏛️ Ecosystem Layer Architecture
 
-TUWA is built in stages. Pulsar sits in **Stage 2 (State & Connection)** next to [Satellite Connect](https://satellite.docs.tuwa.io/), above [SIWX](https://siwx.docs.tuwa.io/) and [Orbit Utils](https://orbit.docs.tuwa.io/) (Stage 1) and below [Quasar](https://sdk.docs.tuwa.io/quasar-cloud/overview) (Stage 3) and [Nova UI Kit](https://stories.tuwa.io/) (Stage 4). Nova Transactions renders Pulsar's state, and Quasar can index and sync its transactions across devices; both are optional.
+TUWA is built in stages. Pulsar sits in **Stage 2 (State & Connection)** next to [Satellite Connect](https://satellite.docs.tuwa.io/), above [SIWX](https://siwx.docs.tuwa.io/) and [Orbit Utils](https://orbit.docs.tuwa.io/) (Stage 1) and below [Quasar](https://docs.tuwa.io/quasar) (Stage 3) and [Nova UI Kit](https://stories.tuwa.io/) (Stage 4). Nova Transactions renders Pulsar's state, and Quasar can index and sync its transactions across devices; both are optional.
 
 Inside the monorepo, packages are split into two layers:
 

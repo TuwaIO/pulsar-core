@@ -68,7 +68,7 @@ Hand-written pages are MDX files in `src/content`; the folder structure maps to 
 - **Introduction** (`index.mdx`): what Pulsar is, where it fits in TUWA, principles, the tracking flow, packages and installation. No code beyond installation commands.
 - **EVM Trackers Standalone** / **Solana Trackers Standalone**: using the trackers without the store.
 
-Each topic has one home: a package README keeps a short usage example and links to the page with the full scenario; the Introduction links to pages instead of repeating code. Scenarios that combine several TUWA projects live in the [docs hub guides](https://docs.tuwa.io/guides): the React setup with a wallet connector is the [React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking), the Cosmos Playground templates are on [Starter Templates](https://docs.tuwa.io/guides/starter-templates). Quasar integration is documented in the [TUWA SDK docs](https://sdk.docs.tuwa.io/full-stack).
+Each topic has one home: a package README keeps a short usage example and links to the page with the full scenario; the Introduction links to pages instead of repeating code. Scenarios that combine several TUWA projects live in the [docs hub guides](https://docs.tuwa.io/guides): the React setup with a wallet connector is the [React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking), the Cosmos Playground templates are on [Starter Templates](https://docs.tuwa.io/guides/starter-templates). Quasar integration is documented in the [Quasar transaction sync guide](https://docs.tuwa.io/guides/quasar-transaction-sync).
 
 ---
 
