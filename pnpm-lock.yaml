@@ -242,7 +242,7 @@ importers:
         specifier: workspace:^
         version: link:../../packages/pulsar-core
       next:
-        specifier: ^16.3.7
+        specifier: 16.3.7
         version: 16.3.7(@babel/core@7.28.6(supports-color@8.1.1))(@types/node@26.0.1)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       next-images:
         specifier: ^1.8.5
