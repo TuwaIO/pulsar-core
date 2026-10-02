@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.8.2...pulsar-core-v0.8.3) (2026-10-02)
+
+
+### Bug Fixes
+
+* txInMemoryStore ([2ab38cb](https://github.com/TuwaIO/pulsar-core/commit/2ab38cbd595fa72a63d2c7821dfd016563ce388f))
+
 ## [0.8.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.8.1...pulsar-core-v0.8.2) (2026-09-30)
 
 
