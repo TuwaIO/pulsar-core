@@ -8,8 +8,8 @@ Creates an in-memory store that shows the remote transaction history of a wallet
 with the local pool of the persistent store. Nothing in it is persisted. Keep it in sync with the persistent store by
 calling `syncWithLocalPool` from that store's `subscribe` listener.
 
-Merge rules: a transaction that is `Success` or `Replaced` in memory is never overwritten; a pending one is
-overwritten only by a terminal transaction or by one with more confirmations; any other one is overwritten.
+Merge rules: a transaction that is `Success`, `Failed` or `Replaced` in memory is never overwritten; a pending one
+is overwritten only by a terminal transaction or by one with more confirmations; any other one is overwritten.
 
 History pages are validated like `injectExternalPendingTxs` does: transactions whose title, description or payload
 break the safety limits are skipped with a warning and are not passed to `onHistoryFetched`.

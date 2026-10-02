@@ -47,7 +47,7 @@ const filterValidTransactions = <T extends Transaction>(remoteTxs: T[]): T[] =>
  * @returns `true` if the status is terminal; otherwise, `false`.
  */
 const isTerminalStatus = (status?: TransactionStatus): boolean =>
-  status === TransactionStatus.Success || status === TransactionStatus.Replaced;
+  status === TransactionStatus.Success || status === TransactionStatus.Failed || status === TransactionStatus.Replaced;
 
 /**
  * Safely merges a transaction into the in-memory pool.
@@ -70,7 +70,7 @@ const mergeTransactionIntoPool = <T extends Transaction>(pool: TransactionPool<T
     }
 
     if (existingTx.pending) {
-      // If the incoming tx is terminal (Success/Replaced), it wins.
+      // If the incoming tx is terminal (Success/Failed/Replaced), it wins.
       if (isTerminalStatus(tx.status)) {
         pool[tx.txKey] = { ...existingTx, ...tx };
         return true;
@@ -98,8 +98,8 @@ const mergeTransactionIntoPool = <T extends Transaction>(pool: TransactionPool<T
  * with the local pool of the persistent store. Nothing in it is persisted. Keep it in sync with the persistent store by
  * calling `syncWithLocalPool` from that store's `subscribe` listener.
  *
- * Merge rules: a transaction that is `Success` or `Replaced` in memory is never overwritten; a pending one is
- * overwritten only by a terminal transaction or by one with more confirmations; any other one is overwritten.
+ * Merge rules: a transaction that is `Success`, `Failed` or `Replaced` in memory is never overwritten; a pending one
+ * is overwritten only by a terminal transaction or by one with more confirmations; any other one is overwritten.
  *
  * History pages are validated like `injectExternalPendingTxs` does: transactions whose title, description or payload
  * break the safety limits are skipped with a warning and are not passed to `onHistoryFetched`.

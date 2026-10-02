@@ -92,6 +92,30 @@ describe('createTxInMemoryStore', () => {
     expect(store.getState().transactionsPool['0x1']).toEqual(terminal);
   });
 
+  it('moves a pending transaction to Failed when the local pool reports the failure', () => {
+    const pending = createTransaction({ txKey: '0x1', status: undefined, pending: true });
+    const store = createTxInMemoryStore<EvmTransaction>({ localTransactionsPool: { '0x1': pending } });
+
+    store.getState().syncWithLocalPool({
+      '0x1': createTransaction({ txKey: '0x1', status: TransactionStatus.Failed, pending: false, isError: true }),
+    });
+
+    expect(store.getState().transactionsPool['0x1']).toEqual(
+      expect.objectContaining({ status: TransactionStatus.Failed, pending: false, isError: true }),
+    );
+  });
+
+  it('keeps a failed transaction when a stale pending copy arrives', () => {
+    const failed = createTransaction({ txKey: '0x1', status: TransactionStatus.Failed, pending: false, isError: true });
+    const store = createTxInMemoryStore<EvmTransaction>({ localTransactionsPool: { '0x1': failed } });
+
+    store.getState().syncWithLocalPool({
+      '0x1': createTransaction({ txKey: '0x1', status: undefined, pending: true }),
+    });
+
+    expect(store.getState().transactionsPool['0x1']).toEqual(failed);
+  });
+
   it('skips invalid history transactions and does not pass them to onHistoryFetched', async () => {
     const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const onHistoryFetched = vi.fn();

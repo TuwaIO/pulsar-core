@@ -32,8 +32,8 @@ The wallet whose history is loaded.
 
 > **syncWithLocalPool**: (`localPool`) => `void`
 
-Merges a local pool into the in-memory pool. Transactions that are `Success` or `Replaced` in memory are kept;
-pending ones are overwritten only by a terminal transaction or one with more confirmations.
+Merges a local pool into the in-memory pool. Transactions that are `Success`, `Failed` or `Replaced` in memory are
+kept; pending ones are overwritten only by a terminal transaction or one with more confirmations.
 
 #### Parameters
 
