@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.7.2...pulsar-evm-v0.8.0) (2026-10-03)
+
+
+### Features
+
+* save Solana transactions under genesis-hash chain IDs ([1c9b568](https://github.com/TuwaIO/pulsar-core/commit/1c9b56880e9d0e46b894f6049e949efd2dd0316f))
+
 ## [0.7.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.7.1...pulsar-evm-v0.7.2) (2026-09-30)
 
 
