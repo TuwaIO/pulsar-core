@@ -82,12 +82,12 @@ const transactionDetailsCache = new WeakMap<
  *
  * @example
  * ```ts
- * import { OrbitAdapter } from '@tuwaio/orbit-core';
+ * import { OrbitAdapter, SOLANA_CHAIN_IDS } from '@tuwaio/orbit-core';
  * import { initializePollingTracker } from '@tuwaio/pulsar-core';
  * import { solanaFetcher } from '@tuwaio/pulsar-solana';
  *
  * initializePollingTracker({
- *   tx: { adapter: OrbitAdapter.SOLANA, txKey: signature, chainId: 'solana:devnet', localTimestamp: now, pending: true },
+ *   tx: { adapter: OrbitAdapter.SOLANA, txKey: signature, chainId: SOLANA_CHAIN_IDS.devnet, localTimestamp: now, pending: true },
  *   fetcher: solanaFetcher,
  *   onSuccess: (status) => console.log('Finalized in slot', status.slot),
  *   onFailure: (status) => console.error('Failed', status?.err),

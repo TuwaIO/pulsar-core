@@ -61,8 +61,10 @@ export type ActionTxKey = `0x${string}` | string;
  */
 export type BaseTransaction = {
   /**
-   * The chain of the transaction: the numeric chain ID for EVM (for example `1`), or `solana:<cluster>` for Solana
-   * (for example `solana:devnet`). `executeTxAction` derives it from `desiredChainID`.
+   * The chain of the transaction: the numeric chain ID for EVM (for example `1`), or the CAIP-2 chain ID with the
+   * genesis hash for Solana (for example `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` for devnet). `executeTxAction` derives
+   * it from `desiredChainID` with `setChainId` from `@tuwaio/orbit-core`. Transactions saved by Pulsar 0.8.3 and earlier
+   * keep `solana:<cluster>` (for example `solana:devnet`); the trackers and explorer links read both forms.
    */
   chainId: number | string;
   /**
@@ -252,7 +254,8 @@ export type InitialTransactionParams = Pick<
     actionFunction: (...args: unknown[]) => Promise<ActionTxKey | undefined>;
     /**
      * The chain the transaction must be sent on: a numeric chain ID for EVM (the wallet is asked to switch if needed),
-     * or a cluster moniker such as `'devnet'` for Solana (compared with the cluster of the connected wallet).
+     * or a Solana cluster (compared with the cluster of the connected wallet) as a moniker such as `'devnet'`, a Wallet
+     * Standard chain such as `'solana:devnet'` or a CAIP-2 chain ID with the genesis hash.
      */
     desiredChainID: number | string;
     /** When `true`, the transaction is created with `isTrackedModalOpen: true`. */

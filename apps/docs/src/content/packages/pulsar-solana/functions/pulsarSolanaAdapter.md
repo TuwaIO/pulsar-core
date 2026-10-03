@@ -2,7 +2,7 @@
 
 > **pulsarSolanaAdapter**\<`T`\>(`config`): [`TxAdapter`](/packages/pulsar-core/type-aliases/TxAdapter.md)\<`T`\>
 
-Defined in: [adapters/solanaAdapter.ts:68](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/adapters/solanaAdapter.ts#L68)
+Defined in: [adapters/solanaAdapter.ts:69](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/adapters/solanaAdapter.ts#L69)
 
 Creates the Solana adapter for `createPulsarStore` from `@tuwaio/pulsar-core`. Pass it alone or in the adapter array.
 
@@ -11,8 +11,9 @@ The adapter reads the connected wallet from the last connection saved in `localS
 `@tuwaio/orbit-solana`. It implements `TxAdapter` from `@tuwaio/pulsar-core`:
 - `getConnectorInfo` returns the saved address and the connector type, e.g. `solana:phantom`. It throws when no
   installed wallet holds the saved address.
-- `checkChainForTx` compares `desiredChainID` with the saved chain of the connection, ignoring a `solana:` prefix
-  (`devnet` and `solana:devnet` are the same cluster), and throws [SolanaChainMismatchError](/packages/pulsar-solana/classes/SolanaChainMismatchError.md) when they differ.
+- `checkChainForTx` compares the cluster of `desiredChainID` with the saved chain of the connection (`devnet`,
+  `solana:devnet` and the genesis-hash chain ID `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` are the same cluster), and
+  throws [SolanaChainMismatchError](/packages/pulsar-solana/classes/SolanaChainMismatchError.md) with both cluster monikers when they differ.
   It does not switch the wallet.
 - `checkTransactionsTracker` keeps the returned signature as `txKey` and uses `TransactionTracker.Solana` unless
   another tracker is requested.

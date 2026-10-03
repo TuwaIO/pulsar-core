@@ -20,13 +20,13 @@ import { checkAndInitializeTrackerInStore } from '../utils/checkAndInitializeTra
 import { checkSolanaChain } from '../utils/checkSolanaChain';
 
 /**
- * Removes the `solana:` prefix of a chain ID, so `solana:devnet` and `devnet` compare as the same cluster.
+ * Reads the cluster of a chain ID with `getCluster`, so `devnet`, `solana:devnet` and the genesis-hash chain ID
+ * `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` compare as the same cluster.
  *
- * @param chainId - A cluster moniker or a `solana:` chain ID.
- * @returns The cluster moniker.
+ * @param chainId - A cluster moniker, a Wallet Standard chain or a CAIP-2 chain ID.
+ * @returns The cluster moniker; an empty string stays empty (no saved chain), instead of defaulting to mainnet.
  */
-const toClusterMoniker = (chainId: string) =>
-  chainId.startsWith('solana:') ? chainId.slice('solana:'.length) : chainId;
+const toClusterMoniker = (chainId: string) => (chainId ? getCluster({ cluster: chainId }) : chainId);
 
 /**
  * Creates the Solana adapter for `createPulsarStore` from `@tuwaio/pulsar-core`. Pass it alone or in the adapter array.
@@ -36,8 +36,9 @@ const toClusterMoniker = (chainId: string) =>
  * `@tuwaio/orbit-solana`. It implements `TxAdapter` from `@tuwaio/pulsar-core`:
  * - `getConnectorInfo` returns the saved address and the connector type, e.g. `solana:phantom`. It throws when no
  *   installed wallet holds the saved address.
- * - `checkChainForTx` compares `desiredChainID` with the saved chain of the connection, ignoring a `solana:` prefix
- *   (`devnet` and `solana:devnet` are the same cluster), and throws {@link SolanaChainMismatchError} when they differ.
+ * - `checkChainForTx` compares the cluster of `desiredChainID` with the saved chain of the connection (`devnet`,
+ *   `solana:devnet` and the genesis-hash chain ID `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` are the same cluster), and
+ *   throws {@link SolanaChainMismatchError} with both cluster monikers when they differ.
  *   It does not switch the wallet.
  * - `checkTransactionsTracker` keeps the returned signature as `txKey` and uses `TransactionTracker.Solana` unless
  *   another tracker is requested.

@@ -62,6 +62,28 @@ describe('pulsarSolanaAdapter', () => {
       await expect(adapter.checkChainForTx('devnet')).resolves.toBeUndefined();
     });
 
+    test('accepts the genesis-hash chain ID and mainnet-beta of the connected cluster', async () => {
+      connectTo('devnet');
+      await expect(adapter.checkChainForTx('solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1')).resolves.toBeUndefined();
+
+      connectTo('mainnet');
+      await expect(adapter.checkChainForTx('solana:mainnet-beta')).resolves.toBeUndefined();
+      await expect(adapter.checkChainForTx('solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp')).resolves.toBeUndefined();
+    });
+
+    test('rejects the genesis-hash chain ID of another cluster', async () => {
+      connectTo('mainnet');
+      await expect(adapter.checkChainForTx('solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1')).rejects.toMatchObject({
+        requiredChain: 'devnet',
+        currentChain: 'mainnet',
+      });
+    });
+
+    test('rejects when the connection has no saved chain instead of assuming mainnet', async () => {
+      connectTo('');
+      await expect(adapter.checkChainForTx('mainnet')).rejects.toBeInstanceOf(SolanaChainMismatchError);
+    });
+
     test('rejects another cluster with SolanaChainMismatchError', async () => {
       connectTo('mainnet');
       await expect(adapter.checkChainForTx('solana:devnet')).rejects.toBeInstanceOf(SolanaChainMismatchError);

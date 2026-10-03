@@ -2,7 +2,7 @@
 
 > **PulsarAdapter**\<`T`\> = `OrbitGenericAdapter`\<[`TxAdapter`](/packages/pulsar-core/type-aliases/TxAdapter.md)\<`T`\>\> & `object` & [`SyncCallbacks`](/packages/pulsar-core/interfaces/SyncCallbacks.md)\<`T`\>
 
-Defined in: [types.ts:351](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L351)
+Defined in: [types.ts:354](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L354)
 
 The configuration of `createPulsarStore`: one or more chain adapters and the store options.
 

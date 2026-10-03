@@ -28,7 +28,7 @@ pnpm add @tuwaio/pulsar-evm @tuwaio/pulsar-core @tuwaio/orbit-core @tuwaio/orbit
 ```
 
 > [!IMPORTANT]
-> `@tuwaio/pulsar-core` (>=0.8), `@tuwaio/orbit-core` (>=0.3), `@tuwaio/orbit-evm` (>=0.3), `@wagmi/core` (3.x), `viem` (2.x) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-evm`. `zustand` and `immer` are the peer dependencies of `@tuwaio/pulsar-core`.
+> `@tuwaio/pulsar-core` (>=0.9), `@tuwaio/orbit-core` (>=0.4), `@tuwaio/orbit-evm` (>=0.3), `@wagmi/core` (3.x), `viem` (2.x) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-evm`. `zustand` and `immer` are the peer dependencies of `@tuwaio/pulsar-core`.
 
 ---
 

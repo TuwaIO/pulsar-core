@@ -26,7 +26,7 @@ pnpm add @tuwaio/pulsar-core @tuwaio/orbit-core zustand immer dayjs
 ```
 
 > [!IMPORTANT]
-> `@tuwaio/orbit-core` (>=0.3), `zustand` (5.x), `immer` (11.x) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-core`. Add [`@tuwaio/pulsar-evm`](https://pulsar.docs.tuwa.io/packages/pulsar-evm) and/or [`@tuwaio/pulsar-solana`](https://pulsar.docs.tuwa.io/packages/pulsar-solana) for the chain adapters, and [`@tuwaio/pulsar-react`](https://pulsar.docs.tuwa.io/packages/pulsar-react) for React apps.
+> `@tuwaio/orbit-core` (>=0.4), `zustand` (5.x), `immer` (11.x) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-core`. Add [`@tuwaio/pulsar-evm`](https://pulsar.docs.tuwa.io/packages/pulsar-evm) and/or [`@tuwaio/pulsar-solana`](https://pulsar.docs.tuwa.io/packages/pulsar-solana) for the chain adapters, and [`@tuwaio/pulsar-react`](https://pulsar.docs.tuwa.io/packages/pulsar-react) for React apps.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > **InitialTransactionParams** = `Pick`\<[`BaseTransaction`](/packages/pulsar-core/type-aliases/BaseTransaction.md), `"description"` \| `"title"` \| `"type"` \| `"requiredConfirmations"` \| `"rpcUrl"` \| `"payload"`\> & `Pick`\<[`EvmTransaction`](/packages/pulsar-core/type-aliases/EvmTransaction.md), `"bundlerUrl"` \| `"pimlicoApiKey"`\> & `object`
 
-Defined in: [types.ts:239](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L239)
+Defined in: [types.ts:241](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L241)
 
 The metadata of a transaction passed to `executeTxAction` (as `params`, without `actionFunction`) and kept in
 `initialTx`.
@@ -40,7 +40,8 @@ The adapter that handles the transaction. When no configured adapter has this ke
 > **desiredChainID**: `number` \| `string`
 
 The chain the transaction must be sent on: a numeric chain ID for EVM (the wallet is asked to switch if needed),
-or a cluster moniker such as `'devnet'` for Solana (compared with the cluster of the connected wallet).
+or a Solana cluster (compared with the cluster of the connected wallet) as a moniker such as `'devnet'`, a Wallet
+Standard chain such as `'solana:devnet'` or a CAIP-2 chain ID with the genesis hash.
 
 ### ~~gelatoApiKey?~~
 

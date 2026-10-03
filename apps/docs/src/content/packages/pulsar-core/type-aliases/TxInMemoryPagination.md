@@ -2,7 +2,7 @@
 
 > **TxInMemoryPagination** = `object`
 
-Defined in: [types.ts:624](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L624)
+Defined in: [types.ts:627](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L627)
 
 The pagination state and action of the in-memory history store, as consumed by UI components.
 
@@ -12,7 +12,7 @@ The pagination state and action of the in-memory history store, as consumed by U
 
 > **currentPage**: `number`
 
-Defined in: [types.ts:632](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L632)
+Defined in: [types.ts:635](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L635)
 
 The last loaded page number.
 
@@ -22,7 +22,7 @@ The last loaded page number.
 
 > **fetchNextPage**: (`walletAddress`) => `Promise`\<`void`\>
 
-Defined in: [types.ts:638](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L638)
+Defined in: [types.ts:641](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L641)
 
 Loads the page after `currentPage` and merges it into the pool. Does nothing while loading, when `hasMore` is
 `false`, or without `getHistory`.
@@ -45,7 +45,7 @@ The wallet whose history is loaded.
 
 > **hasMore**: `boolean`
 
-Defined in: [types.ts:630](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L630)
+Defined in: [types.ts:633](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L633)
 
 `true` when the last loaded page reported a next page.
 
@@ -55,7 +55,7 @@ Defined in: [types.ts:630](https://github.com/TuwaIO/pulsar-core/blob/main/packa
 
 > **isError**: `boolean`
 
-Defined in: [types.ts:628](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L628)
+Defined in: [types.ts:631](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L631)
 
 `true` when the last history request failed.
 
@@ -65,6 +65,6 @@ Defined in: [types.ts:628](https://github.com/TuwaIO/pulsar-core/blob/main/packa
 
 > **isLoading**: `boolean`
 
-Defined in: [types.ts:626](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L626)
+Defined in: [types.ts:629](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L629)
 
 `true` while a history page is loading.

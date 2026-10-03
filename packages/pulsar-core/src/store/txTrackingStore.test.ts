@@ -234,6 +234,30 @@ describe('txTrackingStore validation', () => {
   });
 });
 
+describe('txTrackingStore chain IDs', () => {
+  it('saves a Solana transaction under the genesis-hash chain ID of its cluster', async () => {
+    const store = createStore({ adapter: createAdapter({ key: OrbitAdapter.SOLANA }) });
+
+    await store.getState().executeTxAction({
+      actionFunction: vi.fn().mockResolvedValue(txHash),
+      params: createValidParams({ adapter: OrbitAdapter.SOLANA, desiredChainID: 'devnet' }),
+    });
+
+    expect(store.getState().transactionsPool[txHash].chainId).toBe('solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1');
+  });
+
+  it('keeps numeric EVM chain IDs', async () => {
+    const store = createStore();
+
+    await store.getState().executeTxAction({
+      actionFunction: vi.fn().mockResolvedValue(txHash),
+      params: createValidParams({ desiredChainID: 11155111 }),
+    });
+
+    expect(store.getState().transactionsPool[txHash].chainId).toBe(11155111);
+  });
+});
+
 describe('txTrackingStore remote sync', () => {
   it('adds the transaction and starts its tracker without waiting for onRemoteCreate', async () => {
     let resolveSync!: () => void;

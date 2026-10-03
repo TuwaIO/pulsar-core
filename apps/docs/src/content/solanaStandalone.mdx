@@ -27,7 +27,7 @@ Without the store nothing is persisted and nothing is resumed after a restart: y
 Pass `solanaFetcher` to `initializePollingTracker` from `@tuwaio/pulsar-core`. It starts polling in the background and returns immediately:
 
 ```typescript
-import { OrbitAdapter } from '@tuwaio/orbit-core';
+import { OrbitAdapter, SOLANA_CHAIN_IDS } from '@tuwaio/orbit-core';
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
 import { solanaFetcher } from '@tuwaio/pulsar-solana';
 
@@ -36,7 +36,7 @@ export function trackSignature(signature: string) {
     tx: {
       adapter: OrbitAdapter.SOLANA,
       txKey: signature,
-      chainId: 'solana:devnet', // used to pick the public endpoint when rpcUrl is not set
+      chainId: SOLANA_CHAIN_IDS.devnet, // the CAIP-2 chain ID; picks the public endpoint when rpcUrl is not set
       rpcUrl: 'https://api.devnet.solana.com', // prefer your own RPC provider
       localTimestamp: Math.floor(Date.now() / 1000), // when the transaction was sent, in seconds
       pending: true, // polling starts only for pending transactions
@@ -83,7 +83,7 @@ It rejects with the RPC or signer error, for example when the user rejects the t
 
 ### `checkSolanaChain`
 
-Compares two cluster identifiers exactly and throws `SolanaChainMismatchError` when they differ. The Solana adapter uses it to compare `desiredChainID` with the cluster saved for the wallet connection after removing a `solana:` prefix from both, so `devnet` and `solana:devnet` match:
+Compares two cluster identifiers exactly and throws `SolanaChainMismatchError` when they differ. The Solana adapter uses it to compare `desiredChainID` with the cluster saved for the wallet connection after turning both into cluster monikers with `getCluster` from `@tuwaio/orbit-solana`, so `devnet`, `solana:devnet` and the genesis-hash chain ID `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` match:
 
 ```typescript
 import { checkSolanaChain, SolanaChainMismatchError } from '@tuwaio/pulsar-solana';

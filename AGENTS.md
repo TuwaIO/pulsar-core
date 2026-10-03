@@ -12,9 +12,9 @@
 - **State:** `zustand` v5 (peer `5.x.x`) with the `persist` middleware and `immer` v11 (peer `11.x.x`), `dayjs` (peer `1.x.x`) — peers of `pulsar-core`.
 - **Testing:** `vitest` v5 (run per package via `pnpm test`); `jsdom` for `pulsar-evm` and `pulsar-solana`.
 - **Web3 (EVM):** `viem` (peer `2.x.x`), `@wagmi/core` (peer `3.x.x`) and `@tuwaio/orbit-evm` (peer `>=0.3`) — peers of `pulsar-evm`.
-- **Web3 (Solana):** `@solana/kit` (peer `>=8.2`) and `@tuwaio/orbit-solana` (peer `>=0.3`) — peers of `pulsar-solana`. The `@wallet-standard/*` packages are peers of `@tuwaio/orbit-solana`, not of Pulsar.
+- **Web3 (Solana):** `@solana/kit` (peer `>=8.2`) and `@tuwaio/orbit-solana` (peer `>=0.4`, reads genesis-hash chain IDs) — peers of `pulsar-solana`. The `@wallet-standard/*` packages are peers of `@tuwaio/orbit-solana`, not of Pulsar.
 - **Peer rule:** a package declares as peers only what it imports; `zustand`/`immer` belong to `pulsar-core` and reach the chain packages through it.
-- **Shared:** `@tuwaio/orbit-core` (peer `>=0.3`) in all chain packages; `pulsar-evm` and `pulsar-solana` need `@tuwaio/pulsar-core` `>=0.8`.
+- **Shared:** `@tuwaio/orbit-core` (peer `>=0.4`: `setChainId` returns the CAIP-2 chain ID with the genesis hash for Solana) in all chain packages; `pulsar-evm` and `pulsar-solana` need `@tuwaio/pulsar-core` `>=0.9`. Peers between the packages of this repo start at the version released together with them.
 - **React:** `react` (peer `>=19.2.3`; `useEffectEvent` is used) — the only peer of `pulsar-react`.
 - **Frameworks:**
   - `apps/docs`: Next.js v16, Nextra v4, Tailwind CSS v4, `@tuwaio/docs-ui`, Pagefind.
@@ -106,6 +106,7 @@ pulsar-core/
   - Do **NOT** import `ethers.js` (We use `viem`).
   - Do **NOT** import `gill` (Eradicated; we use `@solana/kit` and `@tuwaio/orbit-solana`).
   - Do **NOT** import legacy `@solana/web3.js` classes.
+  - Do **NOT** compare or parse Solana chain IDs by hand (`startsWith('solana:')`, `split(':')`): `tx.chainId` is the genesis-hash CAIP-2 ID for new transactions and `solana:devnet` for persisted old ones. Use `getCluster` from `@tuwaio/orbit-solana` or `getSolanaCluster` / `setChainId` from `@tuwaio/orbit-core`.
   - Do **NOT** assume UI components exist in any package (UI lives in `nova-uikit`).
   - Do **NOT** assume ERC-4337 is detected automatically: it needs `tracker: TransactionTracker.ERC4337`.
   - Do **NOT** read `transactionsPool` after `updateTxParams` inside a tracker (it is a snapshot); use `createTxUpdater`.
