@@ -50,26 +50,26 @@
     }
   ],
   "peerDependencies": {
-    "@tuwaio/pulsar-core": ">=0.9",
     "@tuwaio/orbit-core": ">=0.4",
     "@tuwaio/orbit-evm": ">=0.3",
+    "@tuwaio/pulsar-core": ">=0.9",
     "@wagmi/core": "3.x.x",
     "dayjs": "1.x.x",
     "viem": "2.x.x"
   },
   "devDependencies": {
-    "@tuwaio/pulsar-core": "workspace:^",
-    "@tuwaio/orbit-core": "^0.4.0",
+    "@tuwaio/orbit-core": "^0.5.0",
     "@tuwaio/orbit-evm": "^0.3.2",
+    "@tuwaio/pulsar-core": "workspace:^",
     "@wagmi/core": "^3.6.5",
     "dayjs": "^1.11.23",
-    "immer": "^11.1.18",
-    "jsdom": "^30.1.1",
+    "dotenv": "^18.0.5",
+    "immer": "^11.1.21",
+    "jsdom": "^30.1.2",
     "tsup": "^8.5.1",
     "typescript": "6.0.3",
-    "viem": "^2.57.1",
-    "vitest": "^5.0.2",
-    "zustand": "^5.0.15",
-    "dotenv": "^18.0.4"
+    "viem": "^2.57.3",
+    "vitest": "^5.0.3",
+    "zustand": "^5.0.15"
   }
 }

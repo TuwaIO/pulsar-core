@@ -47,26 +47,26 @@
     }
   ],
   "peerDependencies": {
+    "@solana/kit": ">=8.2",
     "@tuwaio/orbit-core": ">=0.4",
     "@tuwaio/orbit-solana": ">=0.4",
     "@tuwaio/pulsar-core": ">=0.9",
-    "@solana/kit": ">=8.2",
     "dayjs": "1.x.x"
   },
   "devDependencies": {
-    "@tuwaio/pulsar-core": "workspace:^",
-    "@tuwaio/orbit-core": "^0.4.0",
+    "@solana/kit": "^8.4.0",
+    "@tuwaio/orbit-core": "^0.5.0",
     "@tuwaio/orbit-solana": "^0.4.0",
+    "@tuwaio/pulsar-core": "workspace:^",
     "@wallet-standard/app": "^1.1.1",
     "@wallet-standard/ui-core": "^1.0.1",
     "@wallet-standard/ui-registry": "^1.1.1",
     "dayjs": "^1.11.23",
-    "@solana/kit": "^8.4.0",
-    "immer": "^11.1.18",
-    "jsdom": "^30.1.1",
+    "immer": "^11.1.21",
+    "jsdom": "^30.1.2",
     "tsup": "^8.5.1",
     "typescript": "6.0.3",
-    "vitest": "^5.0.2",
+    "vitest": "^5.0.3",
     "zustand": "^5.0.15"
   }
 }
