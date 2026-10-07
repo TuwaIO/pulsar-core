@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.9.0...pulsar-solana-v0.9.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* update dependencies and @tuwaio/orbit-core 0.5 ([7f58032](https://github.com/TuwaIO/pulsar-core/commit/7f58032ba57bd6d68509a24a5c2675418f7472cb))
+
 ## [0.9.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.8.3...pulsar-solana-v0.9.0) (2026-10-03)
 
 

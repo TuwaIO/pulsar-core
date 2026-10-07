@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.8.0...pulsar-evm-v0.8.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* update dependencies and @tuwaio/orbit-core 0.5 ([7f58032](https://github.com/TuwaIO/pulsar-core/commit/7f58032ba57bd6d68509a24a5c2675418f7472cb))
+
 ## [0.8.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.7.2...pulsar-evm-v0.8.0) (2026-10-03)
 
 
