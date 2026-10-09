@@ -7,6 +7,17 @@ Tracking strategy of a transaction. The chain adapter picks it after the action 
 
 ## Enumeration Members
 
+### EIP5792
+
+> **EIP5792**: `"eip5792"`
+
+Defined in: [types.ts:42](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L42)
+
+A batch of calls sent with EIP-5792 `wallet_sendCalls`, tracked by its batch ID through the wallet's
+`wallet_getCallsStatus` and then on-chain (`@tuwaio/pulsar-evm`).
+
+***
+
 ### ERC4337
 
 > **ERC4337**: `"erc4337"`

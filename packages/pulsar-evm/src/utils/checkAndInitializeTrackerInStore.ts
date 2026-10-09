@@ -5,6 +5,7 @@
 import { ITxTrackingStore, TrackerCallbacks, Transaction, TransactionTracker } from '@tuwaio/pulsar-core';
 import { Config } from '@wagmi/core';
 
+import { eip5792TrackerForStore } from '../trackers/eip5792Tracker';
 import { erc4337TrackerForStore } from '../trackers/erc4337Tracker';
 import { evmTrackerForStore } from '../trackers/evmTracker';
 import { gelatoTrackerForStore } from '../trackers/gelatoTracker';
@@ -31,7 +32,8 @@ export type InitializeTrackerParams<T extends Transaction> = Pick<
 
 /**
  * Starts the tracker named by `tracker` for a transaction of the Pulsar store: {@link evmTrackerForStore},
- * {@link erc4337TrackerForStore}, {@link safeTrackerForStore} or {@link gelatoTrackerForStore}. A Gelato transaction
+ * {@link erc4337TrackerForStore}, {@link eip5792TrackerForStore}, {@link safeTrackerForStore} or
+ * {@link gelatoTrackerForStore}. A Gelato transaction
  * without `gelatoApiKey`, or an unknown tracker, falls back to the standard EVM tracker with a console warning.
  * `pulsarEvmAdapter` uses it as `checkAndInitializeTrackerInStore`.
  *
@@ -57,6 +59,9 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
 
     case TransactionTracker.ERC4337:
       return erc4337TrackerForStore({ tx, config, transactionsPool, onSuccess, onError, onReplaced, ...rest });
+
+    case TransactionTracker.EIP5792:
+      return eip5792TrackerForStore({ tx, config, transactionsPool, onSuccess, onError, onReplaced, ...rest });
 
     case TransactionTracker.Gelato:
       // If no Gelato API key is provided, fall back to the default EVM tracker.

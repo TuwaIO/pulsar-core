@@ -35,6 +35,11 @@ export enum TransactionTracker {
   Solana = 'solana',
   /** An ERC-4337 UserOperation, tracked by its `userOpHash` through a bundler RPC and then on-chain. */
   ERC4337 = 'erc4337',
+  /**
+   * A batch of calls sent with EIP-5792 `wallet_sendCalls`, tracked by its batch ID through the wallet's
+   * `wallet_getCallsStatus` and then on-chain (`@tuwaio/pulsar-evm`).
+   */
+  EIP5792 = 'eip5792',
 }
 
 /**
@@ -208,6 +213,19 @@ export type SolanaTransaction = BaseTransaction & {
   recentBlockhash?: string;
   /** The slot in which the transaction was processed. */
   slot?: number;
+  /**
+   * The commitment the transaction has reached, updated by the Solana tracker while it is pending: `processed`,
+   * `confirmed` (voted on by a supermajority, usually within a second; UIs can show the transaction as confirmed), then
+   * `finalized`, when the tracker marks it `Success`.
+   */
+  confirmationStatus?: 'processed' | 'confirmed' | 'finalized';
+  /**
+   * The last block height at which the blockhash of the transaction is valid. When the chain passes it and the
+   * signature is still unknown, the transaction can no longer land and the Solana tracker marks it `Failed`. Saved
+   * automatically for transactions sent with `signAndSendSolanaTx` of `@tuwaio/pulsar-solana`; for transactions sent
+   * otherwise, set it with `updateTxParams`. Without it, an unknown signature fails one hour after `localTimestamp`.
+   */
+  lastValidBlockHeight?: number;
 };
 
 /**
@@ -261,8 +279,9 @@ export type InitialTransactionParams = Pick<
     /** When `true`, the transaction is created with `isTrackedModalOpen: true`. */
     withTrackedModal?: boolean;
     /**
-     * Forces a tracker. Required for ERC-4337 (`TransactionTracker.ERC4337`) and Gelato; otherwise the adapter picks
-     * one from the returned key and the connector.
+     * Forces a tracker. Required for ERC-4337 (`TransactionTracker.ERC4337`), EIP-5792 batches
+     * (`TransactionTracker.EIP5792`, the action returns the batch ID) and Gelato; otherwise the adapter picks one from
+     * the returned key and the connector.
      */
     tracker?: TransactionTracker;
     /**
@@ -493,7 +512,19 @@ export type UpdatableTransactionFields = Partial<
     | 'requiredConfirmations'
   >
 > &
-  Partial<Pick<SolanaTransaction, 'slot' | 'confirmations' | 'fee' | 'instructions' | 'recentBlockhash' | 'rpcUrl'>>;
+  Partial<
+    Pick<
+      SolanaTransaction,
+      | 'slot'
+      | 'confirmations'
+      | 'fee'
+      | 'instructions'
+      | 'recentBlockhash'
+      | 'rpcUrl'
+      | 'confirmationStatus'
+      | 'lastValidBlockHeight'
+    >
+  >;
 
 /**
  * The state and actions of the core store slice created by `initializeTxTrackingStore`.

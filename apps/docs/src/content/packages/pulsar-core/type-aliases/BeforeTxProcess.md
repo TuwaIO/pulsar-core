@@ -2,7 +2,7 @@
 
 > **BeforeTxProcess** = () => `Promise`\<`void`\> \| `void`
 
-Defined in: [types.ts:347](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L347)
+Defined in: [types.ts:366](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L366)
 
 Preflight callback run by `executeTxAction` after metadata validation and the chain check (which can ask the wallet
 to switch networks), before `actionFunction` asks the wallet to sign. It receives no transaction data.

@@ -2,7 +2,7 @@
 
 > **solanaFetcher**(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/solanaTracker.ts:97](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L97)
+Defined in: [trackers/solanaTracker.ts:117](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L117)
 
 A fetcher for `initializePollingTracker` from `@tuwaio/pulsar-core` that checks a Solana transaction once.
 
@@ -12,10 +12,16 @@ through a client cached by `createSolanaRPC` from `@tuwaio/orbit-solana`. Until 
 instructions (from `tx`, or fetched on an earlier tick of the same tracking run and cached in memory for the `tx`
 object), it also sends `getTransaction` (commitment `confirmed`).
 
-- Signature not found: keeps polling; one hour after `localTimestamp` calls `onFailure()` and stops polling.
-- Found but `getTransaction` returns nothing yet: reports nothing this tick.
-- Otherwise calls `onIntervalTick` with the status, then: an on-chain error calls `onFailure` with it; `finalized`
-  calls `onSuccess`. A transaction not finalized one hour after `localTimestamp` calls `onFailure` with its status.
+- Signature not found, with `tx.lastValidBlockHeight` (or the one `signAndSendSolanaTx` recorded for the signature
+  in this page): sends `getBlockHeight` (commitment `confirmed`); once the
+  height is above it, checks the signature once more and, still not found, calls `onFailure` with `expired: true`
+  and stops polling (the blockhash expired, so the transaction can never land).
+- Signature not found otherwise: keeps polling; one hour after `localTimestamp` calls `onFailure()` and stops
+  polling.
+- Found: calls `onIntervalTick` with the status (`confirmationStatus` `processed`, `confirmed` or `finalized`, plus
+  the details once `getTransaction` returns them), then: an on-chain error calls `onFailure` with it right away;
+  `finalized` with the details calls `onSuccess`. A transaction not finalized one hour after `localTimestamp` calls
+  `onFailure` with its status.
 
 Every terminal outcome stops polling with `withoutRemoving: true`, so the transaction is never removed.
 - RPC errors are thrown, so the polling tracker retries and gives up after `maxRetries` consecutive errors.

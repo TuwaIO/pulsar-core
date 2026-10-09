@@ -19,9 +19,8 @@ import { Config } from '@wagmi/core';
 import dayjs from 'dayjs';
 import { Hex } from 'viem';
 import type { GetUserOperationReceiptReturnType } from 'viem/account-abstraction';
-import { getBlock } from 'viem/actions';
 
-import { evmTracker } from './evmTracker';
+import { trackOnChainStage } from './onChainStage';
 
 /**
  * The UserOperation receipt returned by viem's `getUserOperationReceipt`.
@@ -256,90 +255,8 @@ export async function erc4337TrackerForStore<T extends Transaction>({
 }: Erc4337TrackerForStoreParams<T>): Promise<void> {
   const updateTx = createTxUpdater({ tx, transactionsPool, updateTxParams });
 
-  // Helper to execute Stage 2 EVM on-chain tracking once the on-chain hash is known
-  const runOnChainStage = async (txHash: Hex): Promise<void> => {
-    if (config) {
-      return evmTracker({
-        tx: {
-          chainId: tx.chainId,
-          txKey: txHash,
-          requiredConfirmations: tx.requiredConfirmations,
-        },
-        config,
-        onTxDetailsFetched: (txDetails) => {
-          updateTx({
-            to: txDetails.to ?? undefined,
-            input: txDetails.input,
-            value: txDetails.value?.toString(),
-            nonce: txDetails.nonce,
-            maxFeePerGas: txDetails.maxFeePerGas?.toString(),
-            maxPriorityFeePerGas: txDetails.maxPriorityFeePerGas?.toString(),
-          });
-        },
-        onConfirmationsUpdate: (confirmations) => {
-          updateTx({ confirmations });
-        },
-        onSuccess: async (_txDetails, receipt, client) => {
-          const block = await getBlock(client, { blockNumber: receipt.blockNumber });
-          const timestamp = Number(block.timestamp);
-          const isSuccess = receipt.status === 'success';
-
-          const updatedTx = updateTx({
-            status: isSuccess ? TransactionStatus.Success : TransactionStatus.Failed,
-            isError: !isSuccess,
-            pending: false,
-            hash: txHash,
-            finishedTimestamp: timestamp,
-          });
-
-          if (isSuccess && onSuccess && updatedTx) {
-            onSuccess(updatedTx);
-          }
-          if (!isSuccess && onError && updatedTx) {
-            onError(new Error('Transaction reverted on-chain.'), updatedTx);
-          }
-        },
-        onFailure: (error) => {
-          const updatedTx = updateTx({
-            status: TransactionStatus.Failed,
-            pending: false,
-            isError: true,
-            hash: txHash,
-            error: normalizeError(error),
-            finishedTimestamp: dayjs().unix(),
-          });
-
-          if (onError && updatedTx) {
-            onError(error, updatedTx);
-          }
-        },
-        onReplaced: (replacement) => {
-          const updatedTx = updateTx({
-            status: TransactionStatus.Replaced,
-            replacedTxHash: replacement.transaction.hash,
-            pending: false,
-          });
-
-          if (onReplaced && updatedTx) {
-            onReplaced(updatedTx, tx);
-          }
-        },
-      });
-    }
-
-    // Fallback if no Wagmi config is provided (standalone mode)
-    const updatedTx = updateTx({
-      status: TransactionStatus.Success,
-      pending: false,
-      isError: false,
-      hash: txHash,
-      finishedTimestamp: dayjs().unix(),
-    });
-
-    if (onSuccess && updatedTx) {
-      onSuccess(updatedTx);
-    }
-  };
+  const runOnChainStage = (txHash: Hex) =>
+    trackOnChainStage({ tx, hash: txHash, config, updateTx, onSuccess, onError, onReplaced });
 
   const evmTx = tx as unknown as EvmTransaction;
 

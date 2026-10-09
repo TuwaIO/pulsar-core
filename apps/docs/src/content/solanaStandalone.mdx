@@ -12,13 +12,13 @@ Without the store nothing is persisted and nothing is resumed after a restart: y
 
 ## Why `solanaFetcher` Instead of Manual Polling
 
-| Situation                              | Manual `getSignatureStatuses` polling                             | `solanaFetcher` with `initializePollingTracker`                                                                           |
-| -------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **The RPC has not seen the signature** | You decide how long to wait.                                      | Keeps polling; fails one hour after `localTimestamp` if the signature never appears (for example, the blockhash expired). |
-| **Transient RPC errors**               | You write the retry logic.                                        | Errors are retried on the next tick; tracking gives up after `maxRetries` consecutive errors.                             |
-| **Tracking resumed later**             | Recent statuses only, unless you pass `searchTransactionHistory`. | Always searches the transaction history, so transactions that finished while you were away are found.                     |
-| **Transaction details**                | A separate `getTransaction` call.                                 | Fetches `fee`, `recentBlockhash` and `instructions` once and adds them to every reported status.                          |
-| **Final status**                       | You compare commitment levels yourself.                           | `onSuccess` at `finalized`, `onFailure` for an on-chain error; both stop polling.                                         |
+| Situation                              | Manual `getSignatureStatuses` polling                             | `solanaFetcher` with `initializePollingTracker`                                                                            |
+| -------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **The RPC has not seen the signature** | You decide how long to wait.                                      | With `lastValidBlockHeight`, fails as "expired" as soon as the chain passes it; otherwise one hour after `localTimestamp`. |
+| **Transient RPC errors**               | You write the retry logic.                                        | Errors are retried on the next tick; tracking gives up after `maxRetries` consecutive errors.                              |
+| **Tracking resumed later**             | Recent statuses only, unless you pass `searchTransactionHistory`. | Always searches the transaction history, so transactions that finished while you were away are found.                      |
+| **Transaction details**                | A separate `getTransaction` call.                                 | Fetches `fee`, `recentBlockhash` and `instructions` once and adds them to every reported status.                           |
+| **Progress and final status**          | You compare commitment levels yourself.                           | `onIntervalTick` with `processed` and `confirmed`, `onSuccess` at `finalized`, `onFailure` as soon as there is an error.   |
 
 ---
 
@@ -31,7 +31,7 @@ import { OrbitAdapter, SOLANA_CHAIN_IDS } from '@tuwaio/orbit-core';
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
 import { solanaFetcher } from '@tuwaio/pulsar-solana';
 
-export function trackSignature(signature: string) {
+export function trackSignature(signature: string, lastValidBlockHeight?: number) {
   initializePollingTracker({
     tx: {
       adapter: OrbitAdapter.SOLANA,
@@ -39,23 +39,28 @@ export function trackSignature(signature: string) {
       chainId: SOLANA_CHAIN_IDS.devnet, // the CAIP-2 chain ID; picks the public endpoint when rpcUrl is not set
       rpcUrl: 'https://api.devnet.solana.com', // prefer your own RPC provider
       localTimestamp: Math.floor(Date.now() / 1000), // when the transaction was sent, in seconds
+      lastValidBlockHeight, // from the blockhash the transaction was signed with; optional (see below)
       pending: true, // polling starts only for pending transactions
     },
     fetcher: solanaFetcher,
-    pollingInterval: 2500,
-    onIntervalTick: (status) => console.log(status.confirmationStatus, status.confirmations),
+    pollingInterval: 1000,
+    onIntervalTick: (status) => console.log(status.confirmationStatus, status.confirmations), // 'confirmed' within about a second
     onSuccess: (status) => console.log('Finalized in slot', status.slot, 'fee', status.fee),
-    onFailure: (status) =>
-      console.error(status ? 'Failed on-chain' : 'Not finalized in time or too many RPC errors', status?.err),
+    onFailure: (status) => {
+      if (status?.expired) console.error('Expired: the blockhash is no longer valid, send the transaction again');
+      else console.error(status ? 'Failed on-chain' : 'Not finalized in time or too many RPC errors', status?.err);
+    },
   });
 }
 ```
 
 How each check works:
 
-1. `getSignatureStatuses` with `searchTransactionHistory: true`. If the signature is unknown, the fetcher reports nothing and waits for the next tick, until one hour after `localTimestamp`.
-2. `getTransaction` (commitment `confirmed`) for the fee, blockhash and instructions, only until it has returned them once for this `tx` object: the details are cached in memory for the tracking run, or taken from `tx` if it already has them. Until they are known, nothing is reported.
-3. `onIntervalTick` with the status; then `onFailure` with the status if it has an `err`, or `onSuccess` when it is `finalized`. A transaction that is not finalized one hour after `localTimestamp` calls `onFailure`.
+1. `getSignatureStatuses` with `searchTransactionHistory: true`. If the signature is unknown and the transaction has a `lastValidBlockHeight` (or `signAndSendSolanaTx` sent it in this page, which records the height), the fetcher sends `getBlockHeight` (commitment `confirmed`): once the chain is past that height, it checks the signature once more and, still unknown, calls `onFailure` with `expired: true`, because the blockhash expired and the transaction can never land. Otherwise it waits for the next tick, until one hour after `localTimestamp`.
+2. `getTransaction` (commitment `confirmed`) for the fee, blockhash and instructions, only until it has returned them once for this `tx` object: the details are cached in memory for the tracking run, or taken from `tx` if it already has them.
+3. `onIntervalTick` with the status (and the details once known); then `onFailure` with the status if it has an `err`, right away, or `onSuccess` when it is `finalized` and the details are known. A transaction that is not finalized one hour after `localTimestamp` calls `onFailure`.
+
+`lastValidBlockHeight` comes from the blockhash you signed with (`getLatestBlockhash` returns both). Durable-nonce transactions have no such limit: leave it out for them.
 
 RPC errors are thrown to `initializePollingTracker`, which retries on the next tick and calls `onFailure()` without arguments after `maxRetries` (default 10) consecutive errors.
 

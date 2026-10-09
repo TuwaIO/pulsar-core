@@ -2,7 +2,7 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](/packages/pulsar-core/interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [types.ts:567](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L567)
+Defined in: [types.ts:598](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L598)
 
 The state and actions of the store created by `createPulsarStore`.
 

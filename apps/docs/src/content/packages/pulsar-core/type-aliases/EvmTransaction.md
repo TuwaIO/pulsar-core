@@ -2,7 +2,7 @@
 
 > **EvmTransaction** = [`BaseTransaction`](/packages/pulsar-core/type-aliases/BaseTransaction.md) & `object`
 
-Defined in: [types.ts:159](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L159)
+Defined in: [types.ts:164](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L164)
 
 An EVM transaction. Trackers fill the on-chain fields (`hash`, `nonce`, fees, `to`, `value`, `input`) once the
 transaction details are available.

@@ -1,6 +1,6 @@
 # TrackerCallbacks\<T\>
 
-Defined in: [types.ts:301](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L301)
+Defined in: [types.ts:320](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L320)
 
 Callbacks passed to `executeTxAction` and forwarded to the tracker of that transaction. They are not stored:
 trackers restarted by `initializeTransactionsPool` or `injectExternalPendingTxs` (for example after a page reload)
@@ -20,7 +20,7 @@ The application transaction type.
 
 > `optional` **onError?**: (`error`, `tx?`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [types.ts:312](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L312)
+Defined in: [types.ts:331](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L331)
 
 Called when the transaction fails: it reverted, was rejected, or tracking gave up.
 
@@ -48,7 +48,7 @@ The transaction after the update.
 
 > `optional` **onReplaced?**: (`newTx`, `oldTx`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [types.ts:318](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L318)
+Defined in: [types.ts:337](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L337)
 
 Called when the transaction is replaced by another one with the same nonce.
 
@@ -76,7 +76,7 @@ The transaction as tracking started.
 
 > `optional` **onSuccess?**: (`tx`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [types.ts:306](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L306)
+Defined in: [types.ts:325](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L325)
 
 Called when the tracker marks the transaction `Success`.
 

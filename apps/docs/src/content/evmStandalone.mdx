@@ -88,6 +88,34 @@ export function trackUserOperation(userOpHash: `0x${string}`, pimlicoApiKey?: st
 
 ---
 
+## EIP-5792 Call Batches: `eip5792Tracker`
+
+`eip5792Tracker` asks the wallet that sent a batch with `wallet_sendCalls` for its status every 2 s, through the wagmi connector, and gives up after 60 consecutive failed requests (for example while no wallet is connected). It calls `onSuccess` with the hash of the transaction that executed the batch; pass that hash to `evmTracker` if you also need block confirmations:
+
+```typescript
+import { eip5792Tracker } from '@tuwaio/pulsar-evm';
+import { type Config, sendCalls } from '@wagmi/core';
+import { type Address, encodeFunctionData, erc20Abi } from 'viem';
+
+declare const wagmiConfig: Config;
+
+export async function payInOneBatch(token: Address, to: Address, amount: bigint) {
+  const { id } = await sendCalls(wagmiConfig, {
+    calls: [{ to: token, data: encodeFunctionData({ abi: erc20Abi, functionName: 'transfer', args: [to, amount] }) }],
+  });
+  eip5792Tracker({
+    tx: { txKey: id, pending: true },
+    config: wagmiConfig,
+    onSuccess: ({ hash }) => console.log('Executed in', hash),
+    onFailure: (result) => console.error('Batch failed:', result?.reason ?? 'too many failed requests'),
+  });
+}
+```
+
+In the store, return the batch ID from `actionFunction` and pass `tracker: TransactionTracker.EIP5792`: the store tracker writes the executing transaction's `hash` and then follows it on-chain, and after a reload resumes at the stage it reached.
+
+---
+
 ## Safe Multisig and Gelato: Polling Fetchers
 
 Safe and Gelato are tracked by polling an API. Pass their fetcher to `initializePollingTracker` from `@tuwaio/pulsar-core`, which calls it every 5 s by default and gives up after 10 consecutive failed requests (it then calls `onFailure()` without arguments).

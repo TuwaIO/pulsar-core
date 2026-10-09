@@ -7,6 +7,7 @@ import { EvmTransaction, TransactionTracker } from '@tuwaio/pulsar-core';
 import { Config } from '@wagmi/core';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { eip5792TrackerForStore } from '../trackers/eip5792Tracker';
 import { erc4337TrackerForStore } from '../trackers/erc4337Tracker';
 import { evmTrackerForStore } from '../trackers/evmTracker';
 import { gelatoTrackerForStore } from '../trackers/gelatoTracker';
@@ -22,6 +23,7 @@ vi.mock('../trackers/gelatoTracker', () => ({
 vi.mock('../trackers/safeTracker', () => ({
   safeTrackerForStore: vi.fn(),
 }));
+vi.mock('../trackers/eip5792Tracker', () => ({ eip5792TrackerForStore: vi.fn() }));
 vi.mock('../trackers/erc4337Tracker', () => ({
   erc4337TrackerForStore: vi.fn(),
 }));
@@ -69,6 +71,19 @@ describe('checkAndInitializeTrackerInStore', () => {
     });
 
     expect(erc4337TrackerForStore).toHaveBeenCalled();
+  });
+
+  test('should delegate to eip5792TrackerForStore with the wagmi config for EIP5792 tracker', async () => {
+    await checkAndInitializeTrackerInStore({
+      tracker: TransactionTracker.EIP5792,
+      tx: { ...mockTx, tracker: TransactionTracker.EIP5792 },
+      config: mockConfig,
+      transactionsPool: {},
+      updateTxParams: vi.fn(),
+      removeTxFromPool: vi.fn(),
+    });
+
+    expect(eip5792TrackerForStore).toHaveBeenCalledWith(expect.objectContaining({ config: mockConfig }));
   });
 
   test('should delegate to gelatoTrackerForStore for Gelato tracker when apiKey is present', async () => {

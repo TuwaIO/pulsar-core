@@ -3,16 +3,17 @@
 [![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-evm.svg)](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/LICENSE)
 
-`@tuwaio/pulsar-evm` is the EVM Layer 4 (L4) package of **Pulsar**, the transaction tracking project of TUWA Stage 2 ("State & Connection", next to Satellite Connect). Built on **`@wagmi/core`**, **`viem`** and **`@tuwaio/orbit-evm`**, it provides the EVM adapter for [`@tuwaio/pulsar-core`](https://pulsar.docs.tuwa.io/packages/pulsar-core) and trackers for standard transactions, ERC-4337 UserOperations, Safe multisig transactions and Gelato relay tasks (deprecated). It does not use `ethers.js` or `web3.js`.
+`@tuwaio/pulsar-evm` is the EVM Layer 4 (L4) package of **Pulsar**, the transaction tracking project of TUWA Stage 2 ("State & Connection", next to Satellite Connect). Built on **`@wagmi/core`**, **`viem`** and **`@tuwaio/orbit-evm`**, it provides the EVM adapter for [`@tuwaio/pulsar-core`](https://pulsar.docs.tuwa.io/packages/pulsar-core) and trackers for standard transactions, ERC-4337 UserOperations, EIP-5792 call batches, Safe multisig transactions and Gelato relay tasks (deprecated). It does not use `ethers.js` or `web3.js`.
 
 ---
 
 ## 🏛️ Core Capabilities
 
 - **Adapter:** `pulsarEvmAdapter(wagmiConfig, appChains)` reads the wallet from the active wagmi connection, asks the wallet to switch to `desiredChainID` before signing, picks the tracker, builds explorer links, and adds speed-up, cancel and retry actions for UI kits such as Nova Transactions.
-- **Tracker routing:** the key returned by your `actionFunction` is tracked as a Safe transaction when the connector is a Safe wallet, and as a standard transaction otherwise. ERC-4337 and Gelato are never detected automatically: pass `tracker: TransactionTracker.ERC4337` (or `Gelato`) in the transaction params.
+- **Tracker routing:** the key returned by your `actionFunction` is tracked as a Safe transaction when the connector is a Safe wallet, and as a standard transaction otherwise. ERC-4337, EIP-5792 and Gelato are never detected automatically: pass `tracker: TransactionTracker.ERC4337` (or `EIP5792`, `Gelato`) in the transaction params.
 - **Standard transactions:** `evmTracker` retries `getTransaction` while the node has not indexed the transaction yet, retries the receipt on transient RPC errors (timeouts, rate limits, 5xx), detects speed-ups and cancels made in the wallet (`Replaced` with `replacedTxHash`), waits for `requiredConfirmations` and records the block timestamp.
 - **ERC-4337 UserOperations:** a two-stage tracker polls `eth_getUserOperationReceipt` on your bundler (`bundlerUrl`, or Pimlico with `pimlicoApiKey`), then follows the bundle transaction on-chain like a standard transaction. After a reload it resumes at the stage it reached.
+- **EIP-5792 call batches:** for an `actionFunction` that returns the batch ID of `wallet_sendCalls` (`sendCalls` of `@wagmi/core`), a two-stage tracker asks the connected wallet for the batch status (`wallet_getCallsStatus`), then follows the transaction that executed the batch on-chain. The status comes from the wallet, so the wallet that sent the batch must stay connected until it is executed.
 - **Safe multisig:** polls the Safe Transaction Service until the `safeTxHash` is executed, and reports it as replaced when another transaction with the same nonce was executed.
 - **Speed up and cancel:** `speedUpTxAction` and `cancelTxAction` resend a pending EIP-1559 transaction with the same nonce and fees raised by 15%; the original tracker then reports it as `Replaced`.
 - **Standalone use:** the trackers and fetchers work without the store, in your own state or on a server. See [EVM Trackers Standalone](https://pulsar.docs.tuwa.io/evmStandalone).
@@ -83,12 +84,13 @@ The step-by-step React setup is in the **[React transaction tracking guide](http
 
 The trackers send requests to these hosts. The transaction hash, `userOpHash` or `safeTxHash` (and for Safe, the Safe address) is sent to them:
 
-| Tracker                    | Host                                                                                                                    | Purpose                                                                     |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Standard, ERC-4337 stage 2 | The RPC transports of your wagmi config                                                                                 | `getTransaction`, receipts, confirmations and block timestamps              |
-| ERC-4337 stage 1           | `bundlerUrl`, else `api.pimlico.io` (with `pimlicoApiKey` in the URL), else the rate-limited public `public.pimlico.io` | `eth_getUserOperationReceipt`                                               |
-| Safe                       | `safe-transaction-<network>.safe.global` (see `SafeTransactionServiceUrls`)                                             | Status of the multisig transaction and of other transactions with its nonce |
-| Gelato (deprecated)        | `api.gelato.cloud`, with the Gelato API key as a `Bearer` token                                                         | `relayer_getStatus` and `relayer_getCapabilities`                           |
+| Tracker             | Host                                                                                                                    | Purpose                                                                     |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Standard, stage 2   | The RPC transports of your wagmi config                                                                                 | `getTransaction`, receipts, confirmations and block timestamps              |
+| ERC-4337 stage 1    | `bundlerUrl`, else `api.pimlico.io` (with `pimlicoApiKey` in the URL), else the rate-limited public `public.pimlico.io` | `eth_getUserOperationReceipt`                                               |
+| EIP-5792 stage 1    | The connected wallet (no host): `wallet_getCallsStatus` through the wagmi connector                                     | Status of the call batch and the hash of the transaction that executed it   |
+| Safe                | `safe-transaction-<network>.safe.global` (see `SafeTransactionServiceUrls`)                                             | Status of the multisig transaction and of other transactions with its nonce |
+| Gelato (deprecated) | `api.gelato.cloud`, with the Gelato API key as a `Bearer` token                                                         | `relayer_getStatus` and `relayer_getCapabilities`                           |
 
 Explorer links point to the block explorer configured in your viem chains, or to `app.safe.global` for Safe transactions; they are not requested by the package.
 

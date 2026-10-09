@@ -7,6 +7,7 @@ import type { SolanaClient } from '@tuwaio/orbit-solana';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { signAndSendSolanaTx } from './signAndSendSolanaTx';
+import { takeSolanaTxLifetime } from './solanaTxLifetimes';
 
 // Mock @solana/kit functions
 const mockSignAndSend = vi.fn();
@@ -96,5 +97,18 @@ describe('signAndSendSolanaTx', () => {
         instruction: mockInstruction,
       }),
     ).rejects.toThrow('RPC blockhash failure');
+  });
+
+  test('remembers the last valid block height of the blockhash for the tracker', async () => {
+    mockSignAndSend.mockResolvedValueOnce(new Uint8Array(64).fill(5));
+
+    const signature = await signAndSendSolanaTx({
+      client: mockClient,
+      signer: mockSigner,
+      instruction: mockInstruction,
+    });
+
+    expect(takeSolanaTxLifetime(signature)).toBe(12345);
+    expect(takeSolanaTxLifetime(signature)).toBeUndefined(); // taken once
   });
 });

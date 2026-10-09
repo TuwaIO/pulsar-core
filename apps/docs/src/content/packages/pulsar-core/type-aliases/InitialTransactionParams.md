@@ -2,7 +2,7 @@
 
 > **InitialTransactionParams** = `Pick`\<[`BaseTransaction`](/packages/pulsar-core/type-aliases/BaseTransaction.md), `"description"` \| `"title"` \| `"type"` \| `"requiredConfirmations"` \| `"rpcUrl"` \| `"payload"`\> & `Pick`\<[`EvmTransaction`](/packages/pulsar-core/type-aliases/EvmTransaction.md), `"bundlerUrl"` \| `"pimlicoApiKey"`\> & `object`
 
-Defined in: [types.ts:241](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L241)
+Defined in: [types.ts:259](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L259)
 
 The metadata of a transaction passed to `executeTxAction` (as `params`, without `actionFunction`) and kept in
 `initialTx`.
@@ -57,8 +57,9 @@ Gelato relay is deprecated. Use ERC-4337 with `bundlerUrl` or `pimlicoApiKey` in
 
 > `optional` **tracker?**: [`TransactionTracker`](/packages/pulsar-core/enumerations/TransactionTracker.md)
 
-Forces a tracker. Required for ERC-4337 (`TransactionTracker.ERC4337`) and Gelato; otherwise the adapter picks
-one from the returned key and the connector.
+Forces a tracker. Required for ERC-4337 (`TransactionTracker.ERC4337`), EIP-5792 batches
+(`TransactionTracker.EIP5792`, the action returns the batch ID) and Gelato; otherwise the adapter picks one from
+the returned key and the connector.
 
 ### withTrackedModal?
 

@@ -2,7 +2,7 @@
 
 > **erc4337Tracker**\<`T`\>(`config`): `void`
 
-Defined in: [trackers/erc4337Tracker.ts:204](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L204)
+Defined in: [trackers/erc4337Tracker.ts:203](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L203)
 
 Starts polling a UserOperation in the background with [erc4337Fetcher](/packages/pulsar-evm/functions/erc4337Fetcher.md), without a store: every 2 s by default,
 giving up after 60 consecutive failed attempts. It only follows the bundler; it does not wait for block

@@ -14,7 +14,7 @@
 - **Web3 (EVM):** `viem` (peer `2.x.x`), `@wagmi/core` (peer `3.x.x`) and `@tuwaio/orbit-evm` (peer `>=0.3`) — peers of `pulsar-evm`.
 - **Web3 (Solana):** `@solana/kit` (peer `>=8.2`) and `@tuwaio/orbit-solana` (peer `>=0.4`, reads genesis-hash chain IDs) — peers of `pulsar-solana`. The `@wallet-standard/*` packages are peers of `@tuwaio/orbit-solana`, not of Pulsar.
 - **Peer rule:** a package declares as peers only what it imports; `zustand`/`immer` belong to `pulsar-core` and reach the chain packages through it.
-- **Shared:** `@tuwaio/orbit-core` (peer `>=0.4`: `setChainId` returns the CAIP-2 chain ID with the genesis hash for Solana) in all chain packages; `pulsar-evm` and `pulsar-solana` need `@tuwaio/pulsar-core` `>=0.9`. Peers between the packages of this repo start at the version released together with them.
+- **Shared:** `@tuwaio/orbit-core` (peer `>=0.4`: `setChainId` returns the CAIP-2 chain ID with the genesis hash for Solana) in all chain packages; `pulsar-evm` needs `@tuwaio/pulsar-core` `>=0.10` (`TransactionTracker.EIP5792`), `pulsar-solana` `>=0.9`. Peers between the packages of this repo start at the version released together with them.
 - **React:** `react` (peer `>=19.2.3`; `useEffectEvent` is used) — the only peer of `pulsar-react`.
 - **Frameworks:**
   - `apps/docs`: Next.js v16, Nextra v4, Tailwind CSS v4, `@tuwaio/docs-ui`, Pagefind.
@@ -42,7 +42,7 @@ pulsar-core/
 │   │       ├── store/                 # createPulsarStore, initializeTxTrackingStore, createTxInMemoryStore, selectors
 │   │       └── utils/                 # validation, initializePollingTracker, createTxUpdater, createBoundedUseStore
 │   ├── pulsar-evm/                    # L4: EVM
-│   │   └── src/                       # adapters/ (pulsarEvmAdapter), trackers/ (evm, erc4337, safe, gelato), utils/
+│   │   └── src/                       # adapters/ (pulsarEvmAdapter), trackers/ (evm, erc4337, eip5792, safe, gelato), utils/
 │   ├── pulsar-solana/                 # L4: Solana
 │   │   └── src/                       # adapters/ (pulsarSolanaAdapter), trackers/ (solana), utils/, errors.ts, types.ts
 │   └── pulsar-react/                  # L4: React
@@ -55,8 +55,8 @@ pulsar-core/
 ### Module Breakdown
 
 - **`pulsar-core`**: `createPulsarStore` (vanilla Zustand + `persist` to `localStorage` under `name`, without `initialTx`), `executeTxAction` (validate → `initialTx` → chain check → `beforeTxProcess` → `actionFunction` → `addTxToPool` → tracker), `initializeTransactionsPool` (resume after reload), remote sync (`onRemoteCreate` in the background and without API keys, `unsyncedTxKeys`, `reconcileUnsyncedTransactions`, `injectExternalPendingTxs`), `createTxInMemoryStore` (paginated, validated remote history; its own Immer instance), metadata validation, selectors, `initializePollingTracker`, `createTxUpdater`. No network requests of its own.
-- **`pulsar-evm`**: `pulsarEvmAdapter` (wagmi), `checkTransactionsTracker` (Safe by connector, ERC-4337/Gelato only when requested), trackers `evmTracker`/`evmTrackerForStore`, `erc4337Tracker`/`erc4337TrackerForStore` (bundler, then on-chain), `safeFetcher`/`safeTrackerForStore` (Safe Transaction Service), Gelato (deprecated), `speedUpTxAction`, `cancelTxAction`, `selectEvmTxExplorerLink`.
-- **`pulsar-solana`**: `pulsarSolanaAdapter` (reads the last connection saved by `@tuwaio/orbit-core`, Wallet Standard), `solanaFetcher`/`solanaTrackerForStore` (signature polling until `finalized`), `signAndSendSolanaTx`, `checkSolanaChain`, `SolanaChainMismatchError`.
+- **`pulsar-evm`**: `pulsarEvmAdapter` (wagmi), `checkTransactionsTracker` (Safe by connector, ERC-4337/EIP-5792/Gelato only when requested), trackers `evmTracker`/`evmTrackerForStore`, `erc4337Tracker`/`erc4337TrackerForStore` (bundler, then on-chain), `eip5792Tracker`/`eip5792TrackerForStore` (the wallet's `wallet_getCallsStatus`, then on-chain; both use the internal `trackOnChainStage`), `safeFetcher`/`safeTrackerForStore` (Safe Transaction Service), Gelato (deprecated), `speedUpTxAction`, `cancelTxAction`, `selectEvmTxExplorerLink`.
+- **`pulsar-solana`**: `pulsarSolanaAdapter` (reads the last connection saved by `@tuwaio/orbit-core`, Wallet Standard), `solanaFetcher`/`solanaTrackerForStore` (signature polling every second until `finalized`, `confirmationStatus` written on the way, errors reported at once, expiry by `lastValidBlockHeight`), `signAndSendSolanaTx` (records the blockhash lifetime for the tracker in `utils/solanaTxLifetimes.ts`), `checkSolanaChain`, `SolanaChainMismatchError`.
 - **`pulsar-react`**: `useInitializeTransactionsPool`. Depends only on `react`.
 
 ### Documentation Model
@@ -109,7 +109,10 @@ pulsar-core/
   - Do **NOT** compare or parse Solana chain IDs by hand (`startsWith('solana:')`, `split(':')`): `tx.chainId` is the genesis-hash CAIP-2 ID for new transactions and `solana:devnet` for persisted old ones. Use `getCluster` from `@tuwaio/orbit-solana` or `getSolanaCluster` / `setChainId` from `@tuwaio/orbit-core`.
   - Do **NOT** assume UI components exist in any package (UI lives in `nova-uikit`).
   - Do **NOT** assume ERC-4337 is detected automatically: it needs `tracker: TransactionTracker.ERC4337`.
+  - Do **NOT** assume EIP-5792 is detected automatically: it needs `tracker: TransactionTracker.EIP5792` and the batch ID as the action's key. Its status comes from the connected wallet, not from an RPC; never link a batch ID to a block explorer.
   - Do **NOT** read `transactionsPool` after `updateTxParams` inside a tracker (it is a snapshot); use `createTxUpdater`.
+  - Do **NOT** make the Solana tracker report `Success` before `finalized`: Quasar runs `solanaFetcher` on its server and its payments and webhooks rely on finality. Show `confirmed` through `confirmationStatus` instead.
+  - Do **NOT** fail an unknown Solana signature on `lastValidBlockHeight` without checking the signature once more after the block height (it may have landed in the last valid blocks).
   - Do **NOT** remove transactions from the pool when a tracker gives up: mark them `Failed` with the reason and stop polling with `withoutRemoving: true`.
   - Do **NOT** send `pimlicoApiKey` or `gelatoApiKey` to `onRemoteCreate`, and do **NOT** await `onRemoteCreate` before a transaction is pooled and tracked.
   - Do **NOT** persist `initialTx`: it describes the flow running in the current page.
