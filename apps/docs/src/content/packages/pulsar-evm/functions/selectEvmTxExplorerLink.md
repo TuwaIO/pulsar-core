@@ -2,13 +2,14 @@
 
 > **selectEvmTxExplorerLink**\<`T`\>(`params`): `string`
 
-Defined in: [utils/selectEvmTxExplorerLink.ts:24](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/selectEvmTxExplorerLink.ts#L24)
+Defined in: [utils/selectEvmTxExplorerLink.ts:25](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/selectEvmTxExplorerLink.ts#L25)
 
 Builds the URL of a transaction page:
 - Safe transactions link to the transaction in the Safe web app ([gnosisSafeLinksHelper](/packages/pulsar-evm/variables/gnosisSafeLinksHelper.md)).
 - Other transactions link to `<explorer>/tx/<hash>` on the default block explorer of the chain in `chains`, where
   `<hash>` is `replacedTxHash`, else `hash`, else `txKey`. Before an ERC-4337 UserOperation is bundled, this is the
-  `userOpHash`, which block explorers do not know.
+  `userOpHash`, which block explorers do not know. An EIP-5792 call batch has no link until the transaction that
+  executed it is known: its batch ID is no transaction.
 
 ## Type Parameters
 

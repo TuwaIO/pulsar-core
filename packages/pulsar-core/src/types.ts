@@ -35,6 +35,11 @@ export enum TransactionTracker {
   Solana = 'solana',
   /** An ERC-4337 UserOperation, tracked by its `userOpHash` through a bundler RPC and then on-chain. */
   ERC4337 = 'erc4337',
+  /**
+   * A batch of calls sent with EIP-5792 `wallet_sendCalls`, tracked by its batch ID through the wallet's
+   * `wallet_getCallsStatus` and then on-chain (`@tuwaio/pulsar-evm`).
+   */
+  EIP5792 = 'eip5792',
 }
 
 /**
@@ -261,8 +266,9 @@ export type InitialTransactionParams = Pick<
     /** When `true`, the transaction is created with `isTrackedModalOpen: true`. */
     withTrackedModal?: boolean;
     /**
-     * Forces a tracker. Required for ERC-4337 (`TransactionTracker.ERC4337`) and Gelato; otherwise the adapter picks
-     * one from the returned key and the connector.
+     * Forces a tracker. Required for ERC-4337 (`TransactionTracker.ERC4337`), EIP-5792 batches
+     * (`TransactionTracker.EIP5792`, the action returns the batch ID) and Gelato; otherwise the adapter picks one from
+     * the returned key and the connector.
      */
     tracker?: TransactionTracker;
     /**

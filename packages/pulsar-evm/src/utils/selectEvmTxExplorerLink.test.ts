@@ -56,6 +56,19 @@ describe('selectEvmTxExplorerLink', () => {
     expect(link).toBe('https://sepolia.etherscan.io/tx/0xminedOnChainTxHash');
   });
 
+  it('has no link for an EIP-5792 batch until the transaction that executed it is known', () => {
+    const batch = {
+      adapter: OrbitAdapter.EVM,
+      tracker: TransactionTracker.EIP5792,
+      chainId: sepolia.id,
+      txKey: 'batch-7f3a',
+    } as unknown as EvmTransaction;
+    expect(selectEvmTxExplorerLink({ chains, tx: batch })).toBe('');
+    expect(selectEvmTxExplorerLink({ chains, tx: { ...batch, hash: '0xexecutedTxHash' } })).toBe(
+      'https://sepolia.etherscan.io/tx/0xexecutedTxHash',
+    );
+  });
+
   it('returns standard explorer URL for standard EVM transactions', () => {
     const link = selectEvmTxExplorerLink({
       chains,

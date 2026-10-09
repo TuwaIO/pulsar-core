@@ -2,7 +2,7 @@
 
 > **erc4337Fetcher**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/erc4337Tracker.ts:69](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L69)
+Defined in: [trackers/erc4337Tracker.ts:68](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L68)
 
 A fetcher for `initializePollingTracker` from `@tuwaio/pulsar-core` that checks a UserOperation once through
 `eth_getUserOperationReceipt`.

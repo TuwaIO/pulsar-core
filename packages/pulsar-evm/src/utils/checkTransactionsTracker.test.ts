@@ -37,6 +37,18 @@ describe('checkTransactionsTracker', () => {
     });
   });
 
+  test('should route to EIP-5792 when tracker is EIP5792, whatever the form of the batch ID', () => {
+    for (const id of [mockTxHash, 'batch-7f3a']) {
+      expect(
+        checkTransactionsTracker({
+          actionTxKey: id,
+          connectorType: 'evm:coinbase',
+          tracker: TransactionTracker.EIP5792,
+        }),
+      ).toEqual({ tracker: TransactionTracker.EIP5792, txKey: id });
+    }
+  });
+
   test('should route to Safe when connectorType indicates Safe wallet', () => {
     const result = checkTransactionsTracker({
       actionTxKey: mockTxHash,

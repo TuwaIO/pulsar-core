@@ -52,7 +52,7 @@
   "peerDependencies": {
     "@tuwaio/orbit-core": ">=0.4",
     "@tuwaio/orbit-evm": ">=0.3",
-    "@tuwaio/pulsar-core": ">=0.9",
+    "@tuwaio/pulsar-core": ">=0.10",
     "@wagmi/core": "3.x.x",
     "dayjs": "1.x.x",
     "viem": "2.x.x"

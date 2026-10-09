@@ -32,7 +32,7 @@ Pulsar builds on Orbit Utils (chain helpers, RPC and bundler clients). Nova Tran
 
 1. **Transactions are state, not component logic:** a transaction lives in a store, not in a button's `useState`. It survives navigation, unmounts and reloads, and every component reads the same status.
 2. **Headless and framework-agnostic:** the store is a vanilla Zustand store with no UI. React bindings live in their own package, and UI in Nova Transactions.
-3. **One store, many chains:** chain logic lives in adapters that implement one contract. The EVM adapter tracks standard transactions, ERC-4337 UserOperations and Safe multisig transactions; the Solana adapter tracks signatures.
+3. **One store, many chains:** chain logic lives in adapters that implement one contract. The EVM adapter tracks standard transactions, ERC-4337 UserOperations, EIP-5792 call batches and Safe multisig transactions; the Solana adapter tracks signatures.
 4. **Modern Web3 libraries only:** `viem` and `@wagmi/core` for EVM, `@solana/kit` and the Wallet Standard for Solana. No `ethers.js`, `web3.js`, `@solana/web3.js` or `gill`.
 5. **Local-first, backend optional:** tracking runs in the browser against your RPC endpoints. Remote sync is an optional callback that never blocks a transaction.
 6. **Transparent side effects:** the package pages list what is saved to `localStorage`, which hosts are contacted, and when trackers give up.
@@ -61,12 +61,12 @@ After a reload, `initializeTransactionsPool` starts the trackers of every transa
 
 ## 🧩 Packages
 
-| Package                                            | Layer | Provides                                                                                                  | Peer dependencies                                                                     |
-| -------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| [`@tuwaio/pulsar-core`](/packages/pulsar-core)     | L3    | Transaction store with persistence, adapter contract, metadata validation, remote sync hooks, selectors   | `@tuwaio/orbit-core` ≥ 0.3, `zustand` 5.x, `immer` 11.x, `dayjs` 1.x                  |
-| [`@tuwaio/pulsar-evm`](/packages/pulsar-evm)       | L4    | EVM adapter; trackers for standard, ERC-4337, Safe and Gelato (deprecated) transactions; speed up, cancel | `@tuwaio/pulsar-core` ≥ 0.8, `@tuwaio/orbit-evm` ≥ 0.3, `@wagmi/core` 3.x, `viem` 2.x |
-| [`@tuwaio/pulsar-solana`](/packages/pulsar-solana) | L4    | Solana adapter, signature tracker, `signAndSendSolanaTx`                                                  | `@tuwaio/pulsar-core` ≥ 0.8, `@tuwaio/orbit-solana` ≥ 0.3, `@solana/kit` ≥ 8.2        |
-| [`@tuwaio/pulsar-react`](/packages/pulsar-react)   | L4    | `useInitializeTransactionsPool` hook                                                                      | `react` ≥ 19.2.3                                                                      |
+| Package                                            | Layer | Provides                                                                                                            | Peer dependencies                                                                      |
+| -------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [`@tuwaio/pulsar-core`](/packages/pulsar-core)     | L3    | Transaction store with persistence, adapter contract, metadata validation, remote sync hooks, selectors             | `@tuwaio/orbit-core` ≥ 0.3, `zustand` 5.x, `immer` 11.x, `dayjs` 1.x                   |
+| [`@tuwaio/pulsar-evm`](/packages/pulsar-evm)       | L4    | EVM adapter; trackers for standard, ERC-4337, EIP-5792, Safe and Gelato (deprecated) transactions; speed up, cancel | `@tuwaio/pulsar-core` ≥ 0.10, `@tuwaio/orbit-evm` ≥ 0.3, `@wagmi/core` 3.x, `viem` 2.x |
+| [`@tuwaio/pulsar-solana`](/packages/pulsar-solana) | L4    | Solana adapter, signature tracker, `signAndSendSolanaTx`                                                            | `@tuwaio/pulsar-core` ≥ 0.8, `@tuwaio/orbit-solana` ≥ 0.3, `@solana/kit` ≥ 8.2         |
+| [`@tuwaio/pulsar-react`](/packages/pulsar-react)   | L4    | `useInitializeTransactionsPool` hook                                                                                | `react` ≥ 19.2.3                                                                       |
 
 Each package page shows the package README followed by a reference of every export, generated from the TypeScript source. The L4 chain packages also need the peers of `@tuwaio/pulsar-core` and of the Orbit packages they use (for Solana, the `@wallet-standard` packages of `@tuwaio/orbit-solana`); the commands below install them.
 

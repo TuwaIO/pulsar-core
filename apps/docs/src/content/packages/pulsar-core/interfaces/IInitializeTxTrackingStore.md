@@ -1,6 +1,6 @@
 # IInitializeTxTrackingStore\<T\>
 
-Defined in: [types.ts:503](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L503)
+Defined in: [types.ts:509](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L509)
 
 The state and actions of the core store slice created by `initializeTxTrackingStore`.
 
@@ -18,7 +18,7 @@ The application transaction type.
 
 > **addTxToPool**: (`tx`) => `Promise`\<`void`\>
 
-Defined in: [types.ts:523](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L523)
+Defined in: [types.ts:529](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L529)
 
 Validates a transaction and adds it to the pool with `pending: true`. When the pool already holds
 `maxTransactions` transactions, the oldest one is evicted. If `onRemoteCreate` is configured, the transaction gets
@@ -50,7 +50,7 @@ or payload is invalid.
 
 > **closeTxTrackedModal**: (`txKey?`) => `void`
 
-Defined in: [types.ts:540](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L540)
+Defined in: [types.ts:546](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L546)
 
 Sets `isTrackedModalOpen: false` on a transaction and always clears `initialTx`.
 
@@ -72,7 +72,7 @@ The key of the transaction whose modal is closed, if any.
 
 > **getLastTxKey**: () => `string` \| `undefined`
 
-Defined in: [types.ts:545](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L545)
+Defined in: [types.ts:551](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L551)
 
 Returns `lastAddedTxKey`.
 
@@ -88,7 +88,7 @@ The key of the transaction added last, or `undefined`.
 
 > `optional` **initialTx?**: [`InitialTransaction`](/packages/pulsar-core/type-aliases/InitialTransaction.md)
 
-Defined in: [types.ts:512](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L512)
+Defined in: [types.ts:518](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L518)
 
 The transaction `executeTxAction` is processing, before it is added to the pool. Not persisted by
 `createPulsarStore`: after a reload it is `undefined`.
@@ -99,7 +99,7 @@ The transaction `executeTxAction` is processing, before it is added to the pool.
 
 > `optional` **lastAddedTxKey?**: `string`
 
-Defined in: [types.ts:507](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L507)
+Defined in: [types.ts:513](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L513)
 
 The `txKey` of the transaction added last.
 
@@ -109,7 +109,7 @@ The `txKey` of the transaction added last.
 
 > **reconcileUnsyncedTransactions**: () => `Promise`\<`void`\>
 
-Defined in: [types.ts:559](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L559)
+Defined in: [types.ts:565](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L565)
 
 Calls `onRemoteCreate` again for every key in `unsyncedTxKeys`, one after another, skipping keys whose call is still
 in flight. Successful transactions are marked `'synced'` and removed from the list; failures are logged and stay
@@ -129,7 +129,7 @@ A promise that resolves when the run is finished. It does not reject.
 
 > **removeTxFromPool**: (`txKey`) => `void`
 
-Defined in: [types.ts:535](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L535)
+Defined in: [types.ts:541](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L541)
 
 Removes a transaction from the pool. Does not stop its tracker.
 
@@ -151,7 +151,7 @@ The key of the transaction.
 
 > **transactionsPool**: [`TransactionPool`](/packages/pulsar-core/type-aliases/TransactionPool.md)\<`T`\>
 
-Defined in: [types.ts:505](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L505)
+Defined in: [types.ts:511](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L511)
 
 Every tracked transaction, indexed by `txKey`. Persisted to `localStorage` by `createPulsarStore`.
 
@@ -161,7 +161,7 @@ Every tracked transaction, indexed by `txKey`. Persisted to `localStorage` by `c
 
 > `optional` **unsyncedTxKeys?**: `Record`\<`string`, `boolean`\>
 
-Defined in: [types.ts:550](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L550)
+Defined in: [types.ts:556](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L556)
 
 Keys of transactions that `onRemoteCreate` has not confirmed yet: in flight, failed, or interrupted by a reload.
 `reconcileUnsyncedTransactions` retries them. Persisted to `localStorage`.
@@ -172,7 +172,7 @@ Keys of transactions that `onRemoteCreate` has not confirmed yet: in flight, fai
 
 > **updateTxParams**: (`txKey`, `fields`) => `void`
 
-Defined in: [types.ts:530](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L530)
+Defined in: [types.ts:536](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L536)
 
 Merges fields into a transaction of the pool; does nothing if the key is unknown. When `fields.status` is terminal
 and the transaction is in `unsyncedTxKeys`, it starts `reconcileUnsyncedTransactions` in the background.

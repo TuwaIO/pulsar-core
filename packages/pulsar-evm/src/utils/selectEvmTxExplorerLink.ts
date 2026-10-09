@@ -13,7 +13,8 @@ import { gnosisSafeLinksHelper } from './safeConstants';
  * - Safe transactions link to the transaction in the Safe web app ({@link gnosisSafeLinksHelper}).
  * - Other transactions link to `<explorer>/tx/<hash>` on the default block explorer of the chain in `chains`, where
  *   `<hash>` is `replacedTxHash`, else `hash`, else `txKey`. Before an ERC-4337 UserOperation is bundled, this is the
- *   `userOpHash`, which block explorers do not know.
+ *   `userOpHash`, which block explorers do not know. An EIP-5792 call batch has no link until the transaction that
+ *   executed it is known: its batch ID is no transaction.
  *
  * @template T - The application transaction type.
  * @param params - The chains and the transaction.
@@ -35,6 +36,9 @@ export const selectEvmTxExplorerLink = <T extends Transaction>({
 
     return `${safeBaseUrl}${tx.from}/transactions/tx?id=multisig_${tx.from}_${tx.txKey}`;
   }
+
+  // A batch ID is no transaction: link once the executing transaction is known
+  if (tx.tracker === TransactionTracker.EIP5792 && !(tx as unknown as EvmTransaction).hash) return '';
 
   // Handle standard EVM transactions and ERC-4337 UserOperations.
   const chain = chains.find((c) => c.id === tx.chainId);

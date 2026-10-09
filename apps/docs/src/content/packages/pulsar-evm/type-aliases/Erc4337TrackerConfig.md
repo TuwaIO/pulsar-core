@@ -2,7 +2,7 @@
 
 > **Erc4337TrackerConfig**\<`T`\> = `object`
 
-Defined in: [trackers/erc4337Tracker.ts:157](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L157)
+Defined in: [trackers/erc4337Tracker.ts:156](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L156)
 
 The configuration of [erc4337Tracker](/packages/pulsar-evm/functions/erc4337Tracker.md).
 
@@ -20,7 +20,7 @@ The tracked transaction type.
 
 > `optional` **maxRetries?**: `number`
 
-Defined in: [trackers/erc4337Tracker.ts:184](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L184)
+Defined in: [trackers/erc4337Tracker.ts:183](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L183)
 
 The number of consecutive failed attempts after which polling stops. Defaults to 60.
 
@@ -30,7 +30,7 @@ The number of consecutive failed attempts after which polling stops. Defaults to
 
 > **onFailure**: (`result?`) => `void`
 
-Defined in: [trackers/erc4337Tracker.ts:170](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L170)
+Defined in: [trackers/erc4337Tracker.ts:169](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L169)
 
 Called when the UserOperation reverted or the chain ID is invalid, and without arguments after `maxRetries`
 consecutive failed attempts.
@@ -53,7 +53,7 @@ The result with the failure `reason`, if any.
 
 > `optional` **onIntervalTick?**: (`result`) => `void`
 
-Defined in: [trackers/erc4337Tracker.ts:175](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L175)
+Defined in: [trackers/erc4337Tracker.ts:174](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L174)
 
 Called on every tick while the UserOperation is not bundled.
 
@@ -75,7 +75,7 @@ The pending result.
 
 > **onSuccess**: (`result`) => `void`
 
-Defined in: [trackers/erc4337Tracker.ts:164](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L164)
+Defined in: [trackers/erc4337Tracker.ts:163](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L163)
 
 Called when the UserOperation succeeded.
 
@@ -97,7 +97,7 @@ The result; `hash` is the bundle transaction hash.
 
 > `optional` **pollingInterval?**: `number`
 
-Defined in: [trackers/erc4337Tracker.ts:182](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L182)
+Defined in: [trackers/erc4337Tracker.ts:181](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L181)
 
 The delay before each attempt, in milliseconds. Defaults to 2000.
 
@@ -107,7 +107,7 @@ The delay before each attempt, in milliseconds. Defaults to 2000.
 
 > `optional` **removeTxFromPool?**: (`txKey`) => `void`
 
-Defined in: [trackers/erc4337Tracker.ts:180](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L180)
+Defined in: [trackers/erc4337Tracker.ts:179](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L179)
 
 Called when polling stops after `maxRetries` consecutive failed attempts.
 
@@ -129,6 +129,6 @@ The `userOpHash`.
 
 > **tx**: `T`
 
-Defined in: [trackers/erc4337Tracker.ts:159](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L159)
+Defined in: [trackers/erc4337Tracker.ts:158](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L158)
 
 The UserOperation to track (see [Erc4337FetcherTx](/packages/pulsar-evm/type-aliases/Erc4337FetcherTx.md)); polling starts only if `pending` is `true`.
