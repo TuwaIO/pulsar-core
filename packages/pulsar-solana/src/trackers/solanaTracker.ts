@@ -1,6 +1,6 @@
 /**
- * @file The tracker for Solana transactions. It polls the `getSignatureStatuses` and `getTransaction` RPC methods
- * through `@solana/kit` until the transaction is finalized or fails.
+ * @file The tracker for Solana transactions. It polls the `getSignatureStatuses`, `getTransaction` and
+ * `getBlockHeight` RPC methods through `@solana/kit` until the transaction is finalized, fails or expires.
  */
 
 import type { Signature, TransactionError } from '@solana/kit';
@@ -17,6 +17,8 @@ import {
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
 import dayjs from 'dayjs';
+
+import { peekSolanaTxLifetime, takeSolanaTxLifetime } from '../utils/solanaTxLifetimes';
 
 /**
  * The status of a Solana transaction that {@link solanaFetcher} reports: the signature status combined with details
@@ -37,6 +39,11 @@ export type SolanaSignatureStatusResponse = {
   recentBlockhash?: string;
   /** The instructions of the transaction. */
   instructions?: unknown[];
+  /**
+   * `true` when the signature is still unknown and the chain has passed the `lastValidBlockHeight` of the transaction:
+   * its blockhash expired and it can no longer land.
+   */
+  expired?: boolean;
 };
 
 /**
@@ -44,7 +51,14 @@ export type SolanaSignatureStatusResponse = {
  * `txKey`, `rpcUrl` or the cluster in `chainId`, `localTimestamp`, and the details it already knows, if any.
  */
 export type SolanaFetcherTx = Pick<Transaction, 'adapter' | 'txKey' | 'chainId' | 'localTimestamp' | 'rpcUrl'> &
-  Pick<SolanaTransaction, 'fee' | 'recentBlockhash' | 'instructions'>;
+  Pick<SolanaTransaction, 'fee' | 'recentBlockhash' | 'instructions' | 'lastValidBlockHeight'>;
+
+/** The error of a transaction whose blockhash expired before it landed. */
+const EXPIRED_ERROR_MESSAGE =
+  'The transaction expired before it landed: its blockhash is no longer valid. It was not executed; send it again.';
+
+/** The error of a transaction that was not found or not finalized in time. */
+const TIMEOUT_ERROR_MESSAGE = 'Transaction tracking timed out or the transaction was not found.';
 
 /** Unconfirmed transactions stop being tracked after this many hours. */
 const MAX_PENDING_HOURS = 1;
@@ -68,10 +82,16 @@ const transactionDetailsCache = new WeakMap<
  * instructions (from `tx`, or fetched on an earlier tick of the same tracking run and cached in memory for the `tx`
  * object), it also sends `getTransaction` (commitment `confirmed`).
  *
- * - Signature not found: keeps polling; one hour after `localTimestamp` calls `onFailure()` and stops polling.
- * - Found but `getTransaction` returns nothing yet: reports nothing this tick.
- * - Otherwise calls `onIntervalTick` with the status, then: an on-chain error calls `onFailure` with it; `finalized`
- *   calls `onSuccess`. A transaction not finalized one hour after `localTimestamp` calls `onFailure` with its status.
+ * - Signature not found, with `tx.lastValidBlockHeight` (or the one `signAndSendSolanaTx` recorded for the signature
+ *   in this page): sends `getBlockHeight` (commitment `confirmed`); once the
+ *   height is above it, checks the signature once more and, still not found, calls `onFailure` with `expired: true`
+ *   and stops polling (the blockhash expired, so the transaction can never land).
+ * - Signature not found otherwise: keeps polling; one hour after `localTimestamp` calls `onFailure()` and stops
+ *   polling.
+ * - Found: calls `onIntervalTick` with the status (`confirmationStatus` `processed`, `confirmed` or `finalized`, plus
+ *   the details once `getTransaction` returns them), then: an on-chain error calls `onFailure` with it right away;
+ *   `finalized` with the details calls `onSuccess`. A transaction not finalized one hour after `localTimestamp` calls
+ *   `onFailure` with its status.
  *
  * Every terminal outcome stops polling with `withoutRemoving: true`, so the transaction is never removed.
  * - RPC errors are thrown, so the polling tracker retries and gives up after `maxRetries` consecutive errors.
@@ -116,8 +136,24 @@ export async function solanaFetcher({
 
   // Fetch transaction signature status. `searchTransactionHistory` also finds transactions that already left the
   // node's recent status cache, e.g. when tracking resumes after a page reload.
-  const statuses = await rpc.getSignatureStatuses([tx.txKey as Signature], { searchTransactionHistory: true }).send();
-  const status = statuses?.value?.[0];
+  const fetchStatus = async () =>
+    (await rpc.getSignatureStatuses([tx.txKey as Signature], { searchTransactionHistory: true }).send())?.value?.[0];
+  let status = await fetchStatus();
+
+  // The signature is unknown and its blockhash may have expired: once the chain is past its last valid block height,
+  // check the signature once more (it may have landed in the last valid blocks), then give up for good.
+  const lastValidBlockHeight = tx.lastValidBlockHeight ?? peekSolanaTxLifetime(tx.txKey);
+  if (!status && lastValidBlockHeight !== undefined) {
+    const blockHeight = await rpc.getBlockHeight({ commitment: 'confirmed' }).send();
+    if (BigInt(blockHeight) > BigInt(lastValidBlockHeight)) {
+      status = await fetchStatus();
+      if (!status) {
+        onFailure({ slot: 0, confirmations: null, err: null, confirmationStatus: null, expired: true });
+        stopPolling({ withoutRemoving: true });
+        return;
+      }
+    }
+  }
 
   // The signature is unknown to the cluster: keep waiting, or give up once the transaction is too old to land.
   if (!status) {
@@ -136,47 +172,45 @@ export async function solanaFetcher({
 
   if (!details) {
     const txDetails = await rpc
-      .getTransaction(tx.txKey as Signature, { encoding: 'json', maxSupportedTransactionVersion: 0 })
+      .getTransaction(tx.txKey as Signature, {
+        commitment: 'confirmed',
+        encoding: 'json',
+        maxSupportedTransactionVersion: 0,
+      })
       .send();
     const { meta, transaction } = txDetails || {};
 
-    // If no transaction details are found, skip further processing
-    if (!meta || !transaction) {
-      return;
+    // The details become available shortly after the status: report the status alone until then.
+    if (meta && transaction) {
+      details = {
+        fee: Number(meta.fee ?? 0),
+        recentBlockhash: transaction.message.recentBlockhash?.toString(),
+        instructions: transaction.message.instructions as unknown[],
+      };
+      transactionDetailsCache.set(tx, details);
     }
-
-    // Extract details from RPC response
-    details = {
-      fee: Number(meta.fee ?? 0),
-      recentBlockhash: transaction.message.recentBlockhash?.toString(),
-      instructions: transaction.message.instructions as unknown[],
-    };
-    transactionDetailsCache.set(tx, details);
   }
-  const { fee, recentBlockhash, instructions } = details;
 
   // Construct the extended transaction status object
   const typedStatus: SolanaSignatureStatusResponse = {
     ...status,
     slot: Number(status.slot),
     confirmations: Number(status.confirmations ?? 0),
-    fee,
-    recentBlockhash,
-    instructions,
+    ...details,
   };
 
   // Trigger periodic updates for transaction tracking
   onIntervalTick?.(typedStatus);
 
-  // Handle transaction error state
+  // Handle transaction error state: an executed transaction with an error is final, with or without its details.
   if (typedStatus.err) {
     onFailure(typedStatus);
     stopPolling({ withoutRemoving: true });
     return;
   }
 
-  // Handle finalized transaction state
-  if (typedStatus.confirmationStatus === 'finalized') {
+  // Handle finalized transaction state (the success carries the details)
+  if (typedStatus.confirmationStatus === 'finalized' && details) {
     onSuccess(typedStatus);
     stopPolling({ withoutRemoving: true });
     return;
@@ -190,14 +224,19 @@ export async function solanaFetcher({
 }
 
 /**
- * Tracks a Solana transaction of the Pulsar store with {@link solanaFetcher} (every 2.5 s, up to 10 consecutive RPC
- * errors) and writes the results to the store: `confirmations`, `slot`, `fee`, `instructions` and `recentBlockhash`
- * while pending, then `Success` with `confirmations: 'MAX'`, or `Failed` with the normalized error, and the local time
- * as `finishedTimestamp`.
+ * Tracks a Solana transaction of the Pulsar store with {@link solanaFetcher} (every second, up to 30 consecutive RPC
+ * errors) and writes the results to the store: `confirmationStatus` (`processed`, then `confirmed`, usually within a
+ * second of sending), `confirmations`, `slot`, `fee`, `instructions` and `recentBlockhash` while pending, then
+ * `Success` with `confirmationStatus: 'finalized'` and `confirmations: 'MAX'`, or `Failed` with the normalized error,
+ * and the local time as `finishedTimestamp`.
  *
- * When tracking gives up (10 consecutive RPC errors, or not finalized one hour after `localTimestamp`), the transaction
+ * A transaction sent with `signAndSendSolanaTx` gets the last valid block height of its blockhash, saved as
+ * `lastValidBlockHeight`: when the chain passes it without the transaction, it is marked `Failed` with an "expired"
+ * error, within seconds instead of an hour.
+ *
+ * When tracking gives up (30 consecutive RPC errors, or not finalized one hour after `localTimestamp`), the transaction
  * is marked `Failed` and stays in the pool. The callbacks receive the transaction with every update written by the
- * tracker; `onError` receives the on-chain error, or an `Error` when tracking timed out.
+ * tracker; `onError` receives the on-chain error, or an `Error` when the transaction expired or tracking timed out.
  *
  * @template T - The application transaction type.
  * @param params - The transaction, the store members and the callbacks.
@@ -223,12 +262,20 @@ export async function solanaTrackerForStore<T extends Transaction>({
     updateTxParams: rest.updateTxParams,
   });
 
+  // Save the blockhash lifetime recorded by `signAndSendSolanaTx`, so it survives reloads and the fetcher can use it.
+  let trackedTx = tx;
+  const lastValidBlockHeight = takeSolanaTxLifetime(tx.txKey);
+  if (lastValidBlockHeight !== undefined && (tx as SolanaFetcherTx).lastValidBlockHeight === undefined) {
+    rest.updateTxParams(tx.txKey, { lastValidBlockHeight });
+    trackedTx = { ...tx, lastValidBlockHeight };
+  }
+
   return initializePollingTracker<SolanaSignatureStatusResponse, T>({
-    tx,
+    tx: trackedTx,
     fetcher: solanaFetcher,
     // `removeTxFromPool` is not passed: failed transactions stay in the pool as `Failed`.
-    pollingInterval: 2500, // Polling interval: 2.5 seconds
-    maxRetries: 10, // Max retries: 10 times
+    pollingInterval: 1000, // Polling interval: 1 second, so `confirmed` shows up quickly
+    maxRetries: 30, // Max consecutive RPC errors: 30 (about 30 seconds of outage)
 
     // Writes the finalized transaction details.
     onSuccess: (response) => {
@@ -241,6 +288,7 @@ export async function solanaTrackerForStore<T extends Transaction>({
         instructions: response.instructions,
         recentBlockhash: response.recentBlockhash,
         confirmations: 'MAX',
+        confirmationStatus: 'finalized',
         slot: response.slot,
       });
 
@@ -255,30 +303,27 @@ export async function solanaTrackerForStore<T extends Transaction>({
       updateTx({
         confirmations: response.confirmations ?? 0,
         slot: response.slot,
+        confirmationStatus: response.confirmationStatus ?? undefined,
         fee: response.fee,
         instructions: response.instructions,
         recentBlockhash: response.recentBlockhash,
       });
     },
 
-    // Marks the transaction failed (on-chain error, timeout or too many RPC errors).
+    // Marks the transaction failed (on-chain error, expired blockhash, timeout or too many RPC errors).
     onFailure: (response) => {
+      const reason = response?.err ?? new Error(response?.expired ? EXPIRED_ERROR_MESSAGE : TIMEOUT_ERROR_MESSAGE);
       const updatedTx = updateTx({
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
-        error: normalizeError(
-          response?.err ?? new Error('Transaction tracking timed out or the transaction was not found.'),
-        ),
+        error: normalizeError(reason),
         finishedTimestamp: dayjs().unix(),
       });
 
       // Call user onError callback
       if (onError && updatedTx) {
-        onError(
-          response?.err ?? new Error('Transaction tracking timed out or the transaction was not found.'),
-          updatedTx,
-        );
+        onError(reason, updatedTx);
       }
     },
   });

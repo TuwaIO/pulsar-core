@@ -213,6 +213,19 @@ export type SolanaTransaction = BaseTransaction & {
   recentBlockhash?: string;
   /** The slot in which the transaction was processed. */
   slot?: number;
+  /**
+   * The commitment the transaction has reached, updated by the Solana tracker while it is pending: `processed`,
+   * `confirmed` (voted on by a supermajority, usually within a second; UIs can show the transaction as confirmed), then
+   * `finalized`, when the tracker marks it `Success`.
+   */
+  confirmationStatus?: 'processed' | 'confirmed' | 'finalized';
+  /**
+   * The last block height at which the blockhash of the transaction is valid. When the chain passes it and the
+   * signature is still unknown, the transaction can no longer land and the Solana tracker marks it `Failed`. Saved
+   * automatically for transactions sent with `signAndSendSolanaTx` of `@tuwaio/pulsar-solana`; for transactions sent
+   * otherwise, set it with `updateTxParams`. Without it, an unknown signature fails one hour after `localTimestamp`.
+   */
+  lastValidBlockHeight?: number;
 };
 
 /**
@@ -499,7 +512,19 @@ export type UpdatableTransactionFields = Partial<
     | 'requiredConfirmations'
   >
 > &
-  Partial<Pick<SolanaTransaction, 'slot' | 'confirmations' | 'fee' | 'instructions' | 'recentBlockhash' | 'rpcUrl'>>;
+  Partial<
+    Pick<
+      SolanaTransaction,
+      | 'slot'
+      | 'confirmations'
+      | 'fee'
+      | 'instructions'
+      | 'recentBlockhash'
+      | 'rpcUrl'
+      | 'confirmationStatus'
+      | 'lastValidBlockHeight'
+    >
+  >;
 
 /**
  * The state and actions of the core store slice created by `initializeTxTrackingStore`.

@@ -6,10 +6,12 @@ import { OrbitAdapter } from '@tuwaio/orbit-core';
 import dayjs from 'dayjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { rememberSolanaTxLifetime } from '../utils/solanaTxLifetimes';
 import { solanaFetcher, SolanaFetcherTx } from './solanaTracker';
 
 const getSignatureStatuses = vi.fn();
 const getTransaction = vi.fn();
+const getBlockHeight = vi.fn();
 
 vi.mock('@tuwaio/orbit-solana', async (importActual) => {
   const original = await importActual<typeof import('@tuwaio/orbit-solana')>();
@@ -18,6 +20,7 @@ vi.mock('@tuwaio/orbit-solana', async (importActual) => {
     createSolanaRPC: vi.fn(() => ({
       getSignatureStatuses: (...args: unknown[]) => ({ send: () => getSignatureStatuses(...args) }),
       getTransaction: (...args: unknown[]) => ({ send: () => getTransaction(...args) }),
+      getBlockHeight: (...args: unknown[]) => ({ send: () => getBlockHeight(...args) }),
     })),
   };
 });
@@ -154,5 +157,108 @@ describe('solanaFetcher', () => {
     await expect(solanaFetcher({ tx: createTx({ adapter: OrbitAdapter.EVM }), ...createCallbacks() })).rejects.toThrow(
       'Tx adapter is not Solana',
     );
+  });
+
+  test('asks getTransaction at the confirmed commitment', async () => {
+    getSignatureStatuses.mockResolvedValue({
+      value: [{ slot: 10n, confirmations: 1n, err: null, confirmationStatus: 'confirmed' }],
+    });
+    getTransaction.mockResolvedValue(txDetails);
+
+    await solanaFetcher({ tx: createTx(), ...createCallbacks() });
+
+    expect(getTransaction).toHaveBeenCalledWith('signature', {
+      commitment: 'confirmed',
+      encoding: 'json',
+      maxSupportedTransactionVersion: 0,
+    });
+  });
+
+  test('reports the confirmed status even before the details are available', async () => {
+    getSignatureStatuses.mockResolvedValue({
+      value: [{ slot: 10n, confirmations: 1n, err: null, confirmationStatus: 'confirmed' }],
+    });
+    getTransaction.mockResolvedValue(null);
+    const callbacks = createCallbacks();
+
+    await solanaFetcher({ tx: createTx(), ...callbacks });
+
+    expect(callbacks.onIntervalTick).toHaveBeenCalledWith(
+      expect.objectContaining({ slot: 10, confirmations: 1, confirmationStatus: 'confirmed' }),
+    );
+    expect(callbacks.onSuccess).not.toHaveBeenCalled();
+    expect(callbacks.onFailure).not.toHaveBeenCalled();
+  });
+
+  test('fails right away on an on-chain error, even before the details are available', async () => {
+    const err = { InstructionError: [0, { Custom: 1 }] };
+    getSignatureStatuses.mockResolvedValue({
+      value: [{ slot: 10n, confirmations: 1n, err, confirmationStatus: 'confirmed' }],
+    });
+    getTransaction.mockResolvedValue(null);
+    const callbacks = createCallbacks();
+
+    await solanaFetcher({ tx: createTx(), ...callbacks });
+
+    expect(callbacks.onFailure).toHaveBeenCalledWith(expect.objectContaining({ err }));
+    expect(callbacks.stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
+  });
+
+  test('fails an unknown signature once the chain passes the last valid block height of its blockhash', async () => {
+    getSignatureStatuses.mockResolvedValue({ value: [null] });
+    getBlockHeight.mockResolvedValue(101n);
+    const callbacks = createCallbacks();
+
+    await solanaFetcher({ tx: createTx({ lastValidBlockHeight: 100 }), ...callbacks });
+
+    // the signature is checked again after the block height, so a last-moment landing is not missed
+    expect(getSignatureStatuses).toHaveBeenCalledTimes(2);
+    expect(getBlockHeight).toHaveBeenCalledWith({ commitment: 'confirmed' });
+    expect(callbacks.onFailure).toHaveBeenCalledWith(expect.objectContaining({ expired: true }));
+    expect(callbacks.stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
+  });
+
+  test('keeps polling an unknown signature while its blockhash is still valid', async () => {
+    getSignatureStatuses.mockResolvedValue({ value: [null] });
+    getBlockHeight.mockResolvedValue(100n);
+    const callbacks = createCallbacks();
+
+    await solanaFetcher({ tx: createTx({ lastValidBlockHeight: 100 }), ...callbacks });
+
+    expect(callbacks.onFailure).not.toHaveBeenCalled();
+    expect(callbacks.stopPolling).not.toHaveBeenCalled();
+  });
+
+  test('does not fail a transaction that landed just before its blockhash expired', async () => {
+    getSignatureStatuses
+      .mockResolvedValueOnce({ value: [null] })
+      .mockResolvedValueOnce({ value: [{ slot: 10n, confirmations: 1n, err: null, confirmationStatus: 'confirmed' }] });
+    getBlockHeight.mockResolvedValue(101n);
+    getTransaction.mockResolvedValue(txDetails);
+    const callbacks = createCallbacks();
+
+    await solanaFetcher({ tx: createTx({ lastValidBlockHeight: 100 }), ...callbacks });
+
+    expect(callbacks.onFailure).not.toHaveBeenCalled();
+    expect(callbacks.onIntervalTick).toHaveBeenCalledWith(expect.objectContaining({ confirmationStatus: 'confirmed' }));
+  });
+
+  test('does not ask the block height without a last valid block height', async () => {
+    getSignatureStatuses.mockResolvedValue({ value: [null] });
+
+    await solanaFetcher({ tx: createTx(), ...createCallbacks() });
+
+    expect(getBlockHeight).not.toHaveBeenCalled();
+  });
+
+  test('uses the last valid block height recorded by signAndSendSolanaTx when the transaction has none', async () => {
+    rememberSolanaTxLifetime('sent-by-helper', 100);
+    getSignatureStatuses.mockResolvedValue({ value: [null] });
+    getBlockHeight.mockResolvedValue(101n);
+    const callbacks = createCallbacks();
+
+    await solanaFetcher({ tx: createTx({ txKey: 'sent-by-helper' }), ...callbacks });
+
+    expect(callbacks.onFailure).toHaveBeenCalledWith(expect.objectContaining({ expired: true }));
   });
 });

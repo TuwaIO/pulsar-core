@@ -1,7 +1,7 @@
 # UpdatableTransactionFields
 
-> **UpdatableTransactionFields** = `Partial`\<`Pick`\<[`EvmTransaction`](/packages/pulsar-core/type-aliases/EvmTransaction.md), `"to"` \| `"nonce"` \| `"txKey"` \| `"pending"` \| `"hash"` \| `"status"` \| `"replacedTxHash"` \| `"error"` \| `"finishedTimestamp"` \| `"isTrackedModalOpen"` \| `"isError"` \| `"maxPriorityFeePerGas"` \| `"maxFeePerGas"` \| `"input"` \| `"value"` \| `"confirmations"` \| `"requiredConfirmations"`\>\> & `Partial`\<`Pick`\<[`SolanaTransaction`](/packages/pulsar-core/type-aliases/SolanaTransaction.md), `"slot"` \| `"confirmations"` \| `"fee"` \| `"instructions"` \| `"recentBlockhash"` \| `"rpcUrl"`\>\>
+> **UpdatableTransactionFields** = `Partial`\<`Pick`\<[`EvmTransaction`](/packages/pulsar-core/type-aliases/EvmTransaction.md), `"to"` \| `"nonce"` \| `"txKey"` \| `"pending"` \| `"hash"` \| `"status"` \| `"replacedTxHash"` \| `"error"` \| `"finishedTimestamp"` \| `"isTrackedModalOpen"` \| `"isError"` \| `"maxPriorityFeePerGas"` \| `"maxFeePerGas"` \| `"input"` \| `"value"` \| `"confirmations"` \| `"requiredConfirmations"`\>\> & `Partial`\<`Pick`\<[`SolanaTransaction`](/packages/pulsar-core/type-aliases/SolanaTransaction.md), `"slot"` \| `"confirmations"` \| `"fee"` \| `"instructions"` \| `"recentBlockhash"` \| `"rpcUrl"` \| `"confirmationStatus"` \| `"lastValidBlockHeight"`\>\>
 
-Defined in: [types.ts:480](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L480)
+Defined in: [types.ts:493](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L493)
 
 The fields `updateTxParams` accepts: the fields trackers change while a transaction is tracked.

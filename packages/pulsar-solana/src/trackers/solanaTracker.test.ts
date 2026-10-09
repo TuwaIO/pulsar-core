@@ -19,6 +19,7 @@ import {
 import dayjs from 'dayjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import { rememberSolanaTxLifetime } from '../utils/solanaTxLifetimes';
 import { solanaTrackerForStore } from './solanaTracker';
 
 // --- Mocks ---
@@ -93,8 +94,8 @@ describe('solanaTrackerForStore', () => {
     expect(initializePollingTracker).toHaveBeenCalled();
     const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
     expect(config.tx).toBe(mockTx);
-    expect(config.pollingInterval).toBe(2500);
-    expect(config.maxRetries).toBe(10);
+    expect(config.pollingInterval).toBe(1000);
+    expect(config.maxRetries).toBe(30);
   });
 
   test('should call updateTxParams with SUCCESS on onSuccess callback', () => {
@@ -117,6 +118,7 @@ describe('solanaTrackerForStore', () => {
       isError: false,
       finishedTimestamp: expect.any(Number),
       confirmations: 'MAX',
+      confirmationStatus: 'finalized',
       slot: 12345,
     });
   });
@@ -239,10 +241,11 @@ describe('solanaTrackerForStore', () => {
     // Simulate calling `onIntervalTick`.
     config.onIntervalTick?.(mockIntervalResponse);
 
-    // Check that only `confirmations` and `slot` are updated for ongoing tracking, without terminal updates.
+    // Check that only the progress fields are updated for ongoing tracking, without terminal updates.
     expect(mockParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
       confirmations: 5,
       slot: 12344,
+      confirmationStatus: 'confirmed',
     });
   });
 
@@ -275,6 +278,48 @@ describe('solanaTrackerForStore', () => {
     expect(mockParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, {
       confirmations: 3,
       slot: 12344,
+      confirmationStatus: 'processed',
     });
+  });
+
+  test('marks a successful transaction finalized', () => {
+    solanaTrackerForStore(mockParams);
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    config.onSuccess({ slot: 12345, confirmations: 0, err: null, confirmationStatus: 'finalized' });
+
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(
+      mockTx.txKey,
+      expect.objectContaining({ status: TransactionStatus.Success, confirmationStatus: 'finalized' }),
+    );
+  });
+
+  test('saves the last valid block height recorded by signAndSendSolanaTx and tracks with it', async () => {
+    rememberSolanaTxLifetime(mockTx.txKey, 123);
+
+    await solanaTrackerForStore(mockParams);
+
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(mockTx.txKey, { lastValidBlockHeight: 123 });
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+    expect(config.tx).toMatchObject({ txKey: mockTx.txKey, lastValidBlockHeight: 123 });
+  });
+
+  test('fails an expired transaction with an error that says so', () => {
+    solanaTrackerForStore(mockParams);
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    config.onFailure({ slot: 0, confirmations: null, err: null, confirmationStatus: null, expired: true });
+
+    expect(mockParams.updateTxParams).toHaveBeenCalledWith(
+      mockTx.txKey,
+      expect.objectContaining({
+        status: TransactionStatus.Failed,
+        error: expect.objectContaining({ message: expect.stringContaining('expired') }),
+      }),
+    );
+    expect(mockParams.onError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('expired') }),
+      expect.anything(),
+    );
   });
 });

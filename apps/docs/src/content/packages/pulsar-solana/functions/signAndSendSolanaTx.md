@@ -2,14 +2,15 @@
 
 > **signAndSendSolanaTx**(`params`): `Promise`\<`string`\>
 
-Defined in: [utils/signAndSendSolanaTx.ts:38](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts#L38)
+Defined in: [utils/signAndSendSolanaTx.ts:42](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/utils/signAndSendSolanaTx.ts#L42)
 
 Builds a version 0 transaction with the given instructions, the signer as fee payer and the latest blockhash, then
 has the signer sign and send it. Use it inside an `actionFunction`: the returned signature is the `txKey` the Solana
-tracker follows.
+tracker follows. The tracker also gets the last valid block height of the blockhash, saves it as
+`lastValidBlockHeight` and fails the transaction as soon as the chain passes that height without it.
 
-Side effects: calls `getLatestBlockhash` through `client.rpc` and asks the wallet behind `signer` to sign and send
-the transaction.
+Side effects: calls `getLatestBlockhash` through `client.rpc`, asks the wallet behind `signer` to sign and send the
+transaction, and keeps the last valid block height in memory until the tracker of the signature takes it.
 
 ## Parameters
 
@@ -33,8 +34,9 @@ One instruction or an array of instructions.
 
 `TransactionSendingSigner`
 
-A `TransactionSendingSigner`, such as the one from `useWalletAccountTransactionSendingSigner`
-of `@solana/react`; it pays the fee.
+A `TransactionSendingSigner`, such as the one from `createSolanaTransactionSendingSigner` of
+`@tuwaio/orbit-solana` (0.5 and later) or `useWalletAccountTransactionSendingSigner` of `@solana/react`; it pays the
+fee.
 
 ## Returns
 
