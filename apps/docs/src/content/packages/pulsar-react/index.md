@@ -1,8 +1,5 @@
 # @tuwaio/pulsar-react
 
-[![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-react.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-react)
-[![License](https://img.shields.io/npm/l/@tuwaio/pulsar-react.svg)](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-react/LICENSE)
-
 `@tuwaio/pulsar-react` is the React Layer 4 (L4) package of **Pulsar**, the transaction tracking project of TUWA Stage 2 ("State & Connection", next to Satellite Connect). Built on **`react`** only, it ships one hook, `useInitializeTransactionsPool`, that restarts the trackers of pending transactions when your app mounts. It has no UI components and no dependency on the other Pulsar packages: to read the store in components, use `createBoundedUseStore` from [`@tuwaio/pulsar-core`](https://pulsar.docs.tuwa.io/packages/pulsar-core).
 
 ---

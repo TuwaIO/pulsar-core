@@ -1,8 +1,5 @@
 # @tuwaio/pulsar-evm
 
-[![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-evm.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-evm)
-[![License](https://img.shields.io/npm/l/@tuwaio/pulsar-evm.svg)](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/LICENSE)
-
 `@tuwaio/pulsar-evm` is the EVM Layer 4 (L4) package of **Pulsar**, the transaction tracking project of TUWA Stage 2 ("State & Connection", next to Satellite Connect). Built on **`@wagmi/core`**, **`viem`** and **`@tuwaio/orbit-evm`**, it provides the EVM adapter for [`@tuwaio/pulsar-core`](https://pulsar.docs.tuwa.io/packages/pulsar-core) and trackers for standard transactions, ERC-4337 UserOperations, EIP-5792 call batches, Safe multisig transactions and Gelato relay tasks (deprecated). It does not use `ethers.js` or `web3.js`.
 
 ---

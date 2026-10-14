@@ -1,8 +1,5 @@
 # @tuwaio/pulsar-solana
 
-[![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-solana.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-solana)
-[![License](https://img.shields.io/npm/l/@tuwaio/pulsar-solana.svg)](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/LICENSE)
-
 `@tuwaio/pulsar-solana` is the Solana Layer 4 (L4) package of **Pulsar**, the transaction tracking project of TUWA Stage 2 ("State & Connection", next to Satellite Connect). Built on **`@solana/kit`** and **`@tuwaio/orbit-solana`** (Wallet Standard discovery and cached RPC clients), it provides the Solana adapter for [`@tuwaio/pulsar-core`](https://pulsar.docs.tuwa.io/packages/pulsar-core), a signature tracker and a helper to sign and send transactions. It does not use the legacy `@solana/web3.js` or `gill`.
 
 ---

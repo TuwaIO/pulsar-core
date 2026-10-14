@@ -1,8 +1,5 @@
 # @tuwaio/pulsar-core
 
-[![NPM Version](https://img.shields.io/npm/v/@tuwaio/pulsar-core.svg)](https://www.npmjs.com/package/@tuwaio/pulsar-core)
-[![License](https://img.shields.io/npm/l/@tuwaio/pulsar-core.svg)](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/LICENSE)
-
 `@tuwaio/pulsar-core` is the Layer 3 (L3) core package of **Pulsar**, the transaction tracking project of TUWA Stage 2 ("State & Connection", next to Satellite Connect). Built on **`zustand`** (with the `persist` middleware), **`immer`** and **`@tuwaio/orbit-core`**, it keeps the pool of tracked transactions, runs new transactions through chain adapters and restarts their trackers after a page reload. It has no chain logic, UI or network requests of its own: the chain adapters are [`@tuwaio/pulsar-evm`](https://pulsar.docs.tuwa.io/packages/pulsar-evm) and [`@tuwaio/pulsar-solana`](https://pulsar.docs.tuwa.io/packages/pulsar-solana).
 
 ---

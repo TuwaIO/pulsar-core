@@ -35,9 +35,9 @@ export const metadata: Metadata = {
     'Documentation for Pulsar, the Stage 2 transaction tracking layer of the TUWA ecosystem: headless, framework-agnostic tracking of EVM and Solana transactions with persistence and resume after reload.',
   manifest: '/manifest.json',
   icons: {
-    icon: 'https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/icon0.svg',
-    shortcut: 'https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/web-app-manifest-512x512.png',
-    apple: 'https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/favicon/web-app-manifest-512x512.png',
+    icon: 'https://tuwa.io/brand/icon0.svg',
+    shortcut: 'https://tuwa.io/brand/web-app-manifest-512x512.png',
+    apple: 'https://tuwa.io/brand/web-app-manifest-512x512.png',
   },
   keywords: [
     'pulsar',
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     siteName: 'Pulsar Docs',
     images: [
       {
-        url: 'https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/preview/preview-logo.png',
+        url: 'https://tuwa.io/brand/preview-logo.png',
         width: 1200,
         height: 630,
       },
@@ -84,7 +84,7 @@ export const metadata: Metadata = {
     title: 'Pulsar Documentation',
     description:
       'Documentation for Pulsar, the Stage 2 transaction tracking layer of the TUWA ecosystem: headless, framework-agnostic tracking of EVM and Solana transactions with persistence and resume after reload.',
-    images: ['https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/preview/preview-logo.png'],
+    images: ['https://tuwa.io/brand/preview-logo.png'],
   },
 };
 
