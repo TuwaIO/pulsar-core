@@ -7,6 +7,14 @@ Defined in: [types.ts:681](https://github.com/TuwaIO/pulsar-core/blob/main/packa
 The state and actions of the store created by `createTxInMemoryStore`: a paginated remote history merged with the
 local pool. Nothing in it is persisted.
 
+## Type Parameters
+
+### T
+
+`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
+
+The application transaction type.
+
 ## Type Declaration
 
 ### fetchInitial
@@ -52,11 +60,3 @@ The pool of the persistent store, usually from its `subscribe` listener.
 > **transactionsPool**: [`TransactionPool`](/packages/pulsar-core/type-aliases/TransactionPool.md)\<`T`\>
 
 The local and remote transactions, indexed by `txKey`.
-
-## Type Parameters
-
-### T
-
-`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
-
-The application transaction type.

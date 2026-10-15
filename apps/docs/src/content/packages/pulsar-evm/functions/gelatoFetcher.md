@@ -16,6 +16,8 @@ keeping the transaction. Request errors are thrown, so the polling tracker count
 
 ### client
 
+\{ \}
+
 A transport created by [createGelatoClient](/packages/pulsar-evm/functions/createGelatoClient.md).
 
 ## Returns

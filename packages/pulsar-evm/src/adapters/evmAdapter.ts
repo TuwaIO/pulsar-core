@@ -19,7 +19,8 @@ import { speedUpTxAction } from '../utils/speedUpTxAction';
  *
  * The adapter implements `TxAdapter` from `@tuwaio/pulsar-core`:
  * - `getConnectorInfo` returns the address of the active wagmi connection (or, without one, the last connected address
- *   saved in `localStorage` by `@tuwaio/orbit-core`, then the zero address) and the connector type, e.g. `evm:metamask`.
+ *   saved by `@tuwaio/orbit-core` in `localStorage` or `sessionStorage`, then the zero address) and the connector type,
+ *   e.g. `evm:metamask`.
  * - `checkChainForTx` runs `checkAndSwitchChain` from `@tuwaio/orbit-evm`: when the wallet is on another chain, it asks
  *   the wallet to switch and rejects if the user declines.
  * - `checkTransactionsTracker` and `checkAndInitializeTrackerInStore` are {@link checkTransactionsTracker} and

@@ -7,6 +7,14 @@ Defined in: [trackers/eip5792Tracker.ts:163](https://github.com/TuwaIO/pulsar-co
 The parameters of [eip5792TrackerForStore](/packages/pulsar-evm/functions/eip5792TrackerForStore.md): the transaction, the wagmi config, the store members used by
 trackers and the callbacks.
 
+## Type Parameters
+
+### T
+
+`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
+
+The application transaction type.
+
 ## Type Declaration
 
 ### config
@@ -20,11 +28,3 @@ The wagmi config with the wallet that sent the batch; also used for the on-chain
 > **tx**: `T`
 
 The transaction to track; `txKey` is the batch ID returned by `wallet_sendCalls`.
-
-## Type Parameters
-
-### T
-
-`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
-
-The application transaction type.

@@ -7,6 +7,14 @@ Defined in: [trackers/erc4337Tracker.ts:220](https://github.com/TuwaIO/pulsar-co
 The parameters of [erc4337TrackerForStore](/packages/pulsar-evm/functions/erc4337TrackerForStore.md): the transaction, an optional wagmi config, the store members used
 by trackers and the callbacks.
 
+## Type Parameters
+
+### T
+
+`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
+
+The application transaction type.
+
 ## Type Declaration
 
 ### config?
@@ -20,11 +28,3 @@ The wagmi config, used for the on-chain stage. Without it, the transaction succe
 > **tx**: `T`
 
 The transaction to track; `txKey` is the `userOpHash`.
-
-## Type Parameters
-
-### T
-
-`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
-
-The application transaction type.

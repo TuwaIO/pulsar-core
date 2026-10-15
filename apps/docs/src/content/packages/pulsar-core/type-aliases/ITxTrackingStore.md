@@ -6,6 +6,14 @@ Defined in: [types.ts:598](https://github.com/TuwaIO/pulsar-core/blob/main/packa
 
 The state and actions of the store created by `createPulsarStore`.
 
+## Type Parameters
+
+### T
+
+`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
+
+The application transaction type.
+
 ## Type Declaration
 
 ### executeTxAction
@@ -87,11 +95,3 @@ Transactions returned by the backend.
 `Promise`\<`void`\>
 
 A promise that resolves when the trackers of the added transactions have started.
-
-## Type Parameters
-
-### T
-
-`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
-
-The application transaction type.

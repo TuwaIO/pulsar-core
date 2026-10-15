@@ -7,6 +7,14 @@ Defined in: [types.ts:412](https://github.com/TuwaIO/pulsar-core/blob/main/packa
 The contract a chain adapter implements to plug into the Pulsar store. `@tuwaio/pulsar-evm` and
 `@tuwaio/pulsar-solana` provide implementations.
 
+## Type Parameters
+
+### T
+
+`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
+
+The application transaction type.
+
 ## Type Declaration
 
 ### cancelTxAction?
@@ -180,11 +188,3 @@ The transaction to speed up.
 `Promise`\<`string`\>
 
 The hash of the replacement transaction.
-
-## Type Parameters
-
-### T
-
-`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
-
-The application transaction type.

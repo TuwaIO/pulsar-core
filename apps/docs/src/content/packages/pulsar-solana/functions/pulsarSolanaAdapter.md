@@ -6,9 +6,9 @@ Defined in: [adapters/solanaAdapter.ts:69](https://github.com/TuwaIO/pulsar-core
 
 Creates the Solana adapter for `createPulsarStore` from `@tuwaio/pulsar-core`. Pass it alone or in the adapter array.
 
-The adapter reads the connected wallet from the last connection saved in `localStorage` by `@tuwaio/orbit-core`
-(Satellite Connect writes it) and finds the matching Wallet Standard wallet with `getConnectedSolanaConnector` from
-`@tuwaio/orbit-solana`. It implements `TxAdapter` from `@tuwaio/pulsar-core`:
+The adapter reads the connected wallet from the last connection saved by `@tuwaio/orbit-core` (Satellite Connect
+writes it, in `localStorage`, or in `sessionStorage` for a wallet the user did not ask to remember) and finds the
+matching Wallet Standard wallet with `getConnectedSolanaConnector` from `@tuwaio/orbit-solana`. It implements `TxAdapter` from `@tuwaio/pulsar-core`:
 - `getConnectorInfo` returns the saved address and the connector type, e.g. `solana:phantom`. It throws when no
   installed wallet holds the saved address.
 - `checkChainForTx` compares the cluster of `desiredChainID` with the saved chain of the connection (`devnet`,

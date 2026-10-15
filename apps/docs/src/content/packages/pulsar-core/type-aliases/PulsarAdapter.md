@@ -6,6 +6,14 @@ Defined in: [types.ts:373](https://github.com/TuwaIO/pulsar-core/blob/main/packa
 
 The configuration of `createPulsarStore`: one or more chain adapters and the store options.
 
+## Type Parameters
+
+### T
+
+`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
+
+The application transaction type.
+
 ## Type Declaration
 
 ### abortOnTxError?
@@ -34,11 +42,3 @@ Gelato relay is deprecated. Gelato API key used to track `TransactionTracker.Gel
 > `optional` **maxTransactions?**: `number`
 
 Maximum number of transactions in the pool. When it is full, the oldest one (by `localTimestamp`) is evicted. Defaults to 50.
-
-## Type Parameters
-
-### T
-
-`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
-
-The application transaction type.

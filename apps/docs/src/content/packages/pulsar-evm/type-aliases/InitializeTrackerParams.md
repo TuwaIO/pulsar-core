@@ -6,6 +6,14 @@ Defined in: [utils/checkAndInitializeTrackerInStore.ts:19](https://github.com/Tu
 
 The parameters of [checkAndInitializeTrackerInStore](/packages/pulsar-evm/functions/checkAndInitializeTrackerInStore.md).
 
+## Type Parameters
+
+### T
+
+`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
+
+The application transaction type.
+
 ## Type Declaration
 
 ### config
@@ -33,11 +41,3 @@ The tracker to run, usually `tx.tracker`.
 > **tx**: `T`
 
 The transaction to track.
-
-## Type Parameters
-
-### T
-
-`T` *extends* [`Transaction`](/packages/pulsar-core/type-aliases/Transaction.md)
-
-The application transaction type.
