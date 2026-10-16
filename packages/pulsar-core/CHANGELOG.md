@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.10.1...pulsar-core-v0.10.2) (2026-10-16)
+
+
+### Bug Fixes
+
+* added transactions retention option ([3bcba9b](https://github.com/TuwaIO/pulsar-core/commit/3bcba9b2d2e9263bb8c57b3f07d6eb5169604979))
+
 ## [0.10.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.10.0...pulsar-core-v0.10.1) (2026-10-15)
 
 
