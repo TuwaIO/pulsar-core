@@ -2,7 +2,14 @@ import { OrbitAdapter } from '@tuwaio/orbit-core';
 import { describe, expect, it, vi } from 'vitest';
 import { createJSONStorage, StateStorage } from 'zustand/middleware';
 
-import { EvmTransaction, InitialTransactionParams, ITxTrackingStore, TransactionTracker, TxAdapter } from '../types';
+import {
+  EvmTransaction,
+  InitialTransactionParams,
+  ITxTrackingStore,
+  TransactionStatus,
+  TransactionTracker,
+  TxAdapter,
+} from '../types';
 import { PulsarTransactionValidationError } from '../utils/transactionValidation';
 import { createPulsarStore } from './txTrackingStore';
 
@@ -374,5 +381,51 @@ describe('txTrackingStore persistence', () => {
 
     expect(store.getState().transactionsPool[txHash]).toBeDefined();
     expect(store.getState().initialTx).toBeUndefined();
+  });
+});
+
+// A finished transaction is not kept in the browser without a term (Cookie Policy of TUWA, 2026-10-16): by default it is
+// dropped 30 days after it finished; a pending one stays until it finishes.
+describe('retention of finished transactions', () => {
+  const day = 24 * 60 * 60;
+  const now = Math.floor(Date.now() / 1000);
+  const finished = (txKey: string, overrides: Partial<EvmTransaction>) =>
+    createTransaction({
+      txKey,
+      pending: false,
+      status: TransactionStatus.Success,
+      localTimestamp: now - 40 * day,
+      ...overrides,
+    });
+  const pool = {
+    old: finished('old', { finishedTimestamp: now - 31 * day }),
+    recent: finished('recent', { finishedTimestamp: now - 29 * day }),
+    // Without finishedTimestamp the term runs from localTimestamp
+    noFinish: finished('noFinish', { status: TransactionStatus.Failed, localTimestamp: now - 31 * day }),
+    pending: createTransaction({ txKey: 'pending', pending: true, localTimestamp: now - 90 * day }),
+  };
+  const restored = (overrides: Partial<StoreConfig> = {}) => {
+    const storage = createMemoryStorage();
+    storage.setItem('retention', JSON.stringify({ state: { transactionsPool: pool }, version: 0 }));
+    const store = createStore({ name: 'retention', storage: createJSONStorage(() => storage), ...overrides });
+    return Object.keys(store.getState().transactionsPool).sort();
+  };
+
+  it('drops a finished transaction 30 days after it finished when the store is restored, and keeps pending ones', () => {
+    expect(restored()).toEqual(['pending', 'recent']);
+  });
+
+  it('keeps finished transactions for the days the app chooses, or without a term with null', () => {
+    expect(restored({ retentionDays: 45 })).toEqual(['noFinish', 'old', 'pending', 'recent']);
+    expect(restored({ retentionDays: null })).toEqual(['noFinish', 'old', 'pending', 'recent']);
+  });
+
+  it('drops expired transactions when a new one is added', () => {
+    const store = createStore();
+    setStoreState(store, { transactionsPool: { old: pool.old, pending: pool.pending } });
+
+    store.getState().addTxToPool(createTransaction({ txKey: '0xnew', localTimestamp: now }));
+
+    expect(Object.keys(store.getState().transactionsPool).sort()).toEqual(['0xnew', 'pending']);
   });
 });

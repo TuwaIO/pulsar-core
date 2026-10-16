@@ -10,6 +10,7 @@ import { persist, PersistOptions } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
 import { ITxTrackingStore, PulsarAdapter, Transaction, TransactionPool, TransactionStatus } from '../types';
+import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
 import { validateInitialTransactionParams, validateTransaction } from '../utils/transactionValidation';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 
@@ -18,7 +19,8 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  * `createBoundedUseStore`) that runs transactions through chain adapters and tracks them in the background.
  *
  * Side effects: the state is saved with Zustand's `persist` middleware under the key `name`, by default in
- * `localStorage`, on every change: `transactionsPool`, `lastAddedTxKey` and `unsyncedTxKeys`. `initialTx` is neither
+ * `localStorage`, on every change: `transactionsPool`, `lastAddedTxKey` and `unsyncedTxKeys`. A finished transaction
+ * is kept for `retentionDays` (30 by default) and at most `maxTransactions` are kept. `initialTx` is neither
  * saved nor restored (pass your own `partialize` and `merge` to change that). In the browser the saved state is
  * restored synchronously when the store is created. Where
  * `localStorage` is not available (server rendering), nothing is read or written and Zustand logs a warning on
@@ -29,6 +31,9 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  * @param params.adapter - A chain adapter, or an array of adapters, such as `pulsarEvmAdapter` from
  * `@tuwaio/pulsar-evm` or `pulsarSolanaAdapter` from `@tuwaio/pulsar-solana`.
  * @param params.maxTransactions - Maximum number of transactions in the pool. Defaults to 50.
+ * @param params.retentionDays - Days a finished transaction stays in the pool, from its `finishedTimestamp`: expired
+ *   ones are dropped when the saved state is restored and when a transaction is added. `null` keeps them without a
+ *   term. Defaults to 30.
  * @param params.onRemoteCreate - Remote sync callback (see `SyncCallbacks`).
  * @param params.gelatoApiKey - Deprecated Gelato API key, passed to the trackers.
  * @param params.beforeTxProcess - Global preflight callback (see `BeforeTxProcess`).
@@ -50,6 +55,7 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 export function createPulsarStore<T extends Transaction>({
   adapter,
   maxTransactions = 50,
+  retentionDays = DEFAULT_RETENTION_DAYS,
   onRemoteCreate,
   gelatoApiKey,
   beforeTxProcess,
@@ -60,7 +66,7 @@ export function createPulsarStore<T extends Transaction>({
     persist(
       (set, get) => ({
         // Initialize the base store slice with core state and actions
-        ...initializeTxTrackingStore<T>({ maxTransactions, onRemoteCreate })(set, get),
+        ...initializeTxTrackingStore<T>({ maxTransactions, retentionDays, onRemoteCreate })(set, get),
 
         getAdapter: () => adapter,
 
@@ -309,12 +315,26 @@ export function createPulsarStore<T extends Transaction>({
           delete persistedState.initialTx;
           return persistedState;
         },
-        merge: (persistedState, currentState) => ({
-          ...currentState,
-          ...(persistedState as Partial<ITxTrackingStore<T>>),
-          initialTx: currentState.initialTx,
-        }),
         ...options, // Merges user-provided persistence options.
+        // The saved state comes back without the finished transactions past their term, whatever `merge` the app passes
+        merge: (persistedState, currentState) => {
+          const merged = options.merge
+            ? options.merge(persistedState, currentState)
+            : {
+                ...currentState,
+                ...(persistedState as Partial<ITxTrackingStore<T>>),
+                initialTx: currentState.initialTx,
+              };
+          const expired = expiredTransactionKeys(merged.transactionsPool ?? {}, retentionDays);
+          if (expired.length === 0) return merged;
+          const transactionsPool = { ...merged.transactionsPool };
+          const unsyncedTxKeys = merged.unsyncedTxKeys ? { ...merged.unsyncedTxKeys } : merged.unsyncedTxKeys;
+          for (const key of expired) {
+            delete transactionsPool[key];
+            if (unsyncedTxKeys) delete unsyncedTxKeys[key];
+          }
+          return { ...merged, transactionsPool, unsyncedTxKeys };
+        },
       },
     ),
   );

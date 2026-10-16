@@ -2,13 +2,14 @@
 
 > **createPulsarStore**\<`T`\>(`params`): `WithPersist`\<`StoreApi`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>\>, [`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>\>
 
-Defined in: [store/txTrackingStore.ts:50](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txTrackingStore.ts#L50)
+Defined in: [store/txTrackingStore.ts:55](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txTrackingStore.ts#L55)
 
 Creates the Pulsar transaction store: a vanilla Zustand store (use it from any framework, or bind it to React with
 `createBoundedUseStore`) that runs transactions through chain adapters and tracks them in the background.
 
 Side effects: the state is saved with Zustand's `persist` middleware under the key `name`, by default in
-`localStorage`, on every change: `transactionsPool`, `lastAddedTxKey` and `unsyncedTxKeys`. `initialTx` is neither
+`localStorage`, on every change: `transactionsPool`, `lastAddedTxKey` and `unsyncedTxKeys`. A finished transaction
+is kept for `retentionDays` (30 by default) and at most `maxTransactions` are kept. `initialTx` is neither
 saved nor restored (pass your own `partialize` and `merge` to change that). In the browser the saved state is
 restored synchronously when the store is created. Where
 `localStorage` is not available (server rendering), nothing is read or written and Zustand logs a warning on

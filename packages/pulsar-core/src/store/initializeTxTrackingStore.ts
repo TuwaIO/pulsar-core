@@ -5,7 +5,15 @@
 
 import { produce } from 'immer';
 
-import { IInitializeTxTrackingStore, PulsarAdapter, StoreSlice, Transaction, TransactionStatus } from '../types';
+import {
+  IInitializeTxTrackingStore,
+  PulsarAdapter,
+  StoreSlice,
+  Transaction,
+  TransactionPool,
+  TransactionStatus,
+} from '../types';
+import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
 import { validateTransaction } from '../utils/transactionValidation';
 
 /**
@@ -32,14 +40,19 @@ function omitClientSecrets<T extends Transaction>(tx: T): T {
  * @param params - The slice options.
  * @param params.maxTransactions - Maximum number of transactions in the pool; `addTxToPool` evicts the oldest one
  * (by `localTimestamp`) when the pool is full.
+ * @param params.retentionDays - Days a finished transaction stays in the pool; `addTxToPool` drops the expired ones
+ * first. `null` keeps them without a term. Defaults to 30.
  * @param params.onRemoteCreate - Optional remote sync callback, called in the background by `addTxToPool` (see
  * `SyncCallbacks`).
  * @returns A slice creator for Zustand's `create` / `createStore`.
  */
 export function initializeTxTrackingStore<T extends Transaction>({
   maxTransactions,
+  retentionDays = DEFAULT_RETENTION_DAYS,
   onRemoteCreate,
-}: Pick<PulsarAdapter<T>, 'onRemoteCreate'> & { maxTransactions: number }): StoreSlice<IInitializeTxTrackingStore<T>> {
+}: Pick<PulsarAdapter<T>, 'onRemoteCreate' | 'retentionDays'> & {
+  maxTransactions: number;
+}): StoreSlice<IInitializeTxTrackingStore<T>> {
   let isReconciling = false;
   // Keys whose `onRemoteCreate` call is in flight, so a reconciliation run does not send them twice.
   const syncingTxKeys = new Set<string>();
@@ -128,6 +141,12 @@ export function initializeTxTrackingStore<T extends Transaction>({
                   draft.unsyncedTxKeys = {};
                 }
                 draft.unsyncedTxKeys[tx.txKey] = true;
+              }
+
+              // Finished transactions past their term go first
+              for (const key of expiredTransactionKeys(state.transactionsPool as TransactionPool<T>, retentionDays)) {
+                delete draft.transactionsPool[key];
+                if (draft.unsyncedTxKeys) delete draft.unsyncedTxKeys[key];
               }
 
               const currentCount = Object.keys(draft.transactionsPool).length;
