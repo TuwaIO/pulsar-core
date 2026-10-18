@@ -13,7 +13,8 @@
   },
   "files": [
     "dist",
-    "socket.json"
+    "socket.json",
+    "NOTICE"
   ],
   "scripts": {
     "start": "tsup src/index.ts --watch",
