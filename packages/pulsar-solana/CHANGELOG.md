@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.10.2...pulsar-solana-v0.10.3) (2026-10-20)
+
+
+### Bug Fixes
+
+* update @tuwaio/orbit-solana to 0.7.1 ([46e3154](https://github.com/TuwaIO/pulsar-core/commit/46e315483daccb7ad1d51a0fe0b3d9eac90e9bc4))
+
 ## [0.10.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.10.1...pulsar-solana-v0.10.2) (2026-10-20)
 
 
