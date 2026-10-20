@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.9.1...pulsar-evm-v0.10.0) (2026-10-20)
+
+
+### Features
+
+* transaction finished event, pending transactions kept in the pool, Safe tracker for multi-owner Safes ([881f436](https://github.com/TuwaIO/pulsar-core/commit/881f4364475e592816e2ecf42c33794f14fb7d89))
+
 ## [0.9.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.9.0...pulsar-evm-v0.9.1) (2026-10-15)
 
 
