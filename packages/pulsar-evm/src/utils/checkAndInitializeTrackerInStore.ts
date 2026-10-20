@@ -28,6 +28,11 @@ export type InitializeTrackerParams<T extends Transaction> = Pick<
   tracker: TransactionTracker;
   /** @deprecated Gelato API key; required to run the Gelato tracker. */
   gelatoApiKey?: string;
+  /**
+   * How long a Safe transaction may stay unexecuted before the Safe tracker gives up (see `SafeTrackerOptions`); `null`
+   * waits without a limit. Defaults to one day.
+   */
+  safePendingTimeoutMs?: number | null;
 } & TrackerCallbacks<T>;
 
 /**
@@ -51,6 +56,7 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   onError,
   onReplaced,
   gelatoApiKey,
+  safePendingTimeoutMs,
   ...rest
 }: InitializeTrackerParams<T>): Promise<void> {
   switch (tracker) {
@@ -76,7 +82,15 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
 
     case TransactionTracker.Safe:
       // The Safe tracker also uses its own API endpoints.
-      return safeTrackerForStore({ tx, transactionsPool, onSuccess, onError, onReplaced, ...rest });
+      return safeTrackerForStore({
+        tx,
+        transactionsPool,
+        onSuccess,
+        onError,
+        onReplaced,
+        pendingTimeoutMs: safePendingTimeoutMs,
+        ...rest,
+      });
 
     // The default case handles any unknown or unspecified tracker types.
     // It logs a warning and treats them as standard EVM transactions.

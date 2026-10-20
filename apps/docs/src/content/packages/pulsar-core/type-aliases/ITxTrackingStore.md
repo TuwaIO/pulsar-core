@@ -2,7 +2,7 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](/packages/pulsar-core/interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [types.ts:605](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L605)
+Defined in: [types.ts:634](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L634)
 
 The state and actions of the store created by `createPulsarStore`.
 
@@ -65,7 +65,8 @@ The adapter, or the array of adapters.
 
 Restarts the trackers of all pending transactions in the pool, for example after a page reload. Pending
 transactions that fail validation are removed from the pool. Call it once per page load: every call starts new
-trackers, and trackers started here have no `TrackerCallbacks`.
+trackers. Trackers started here have no `TrackerCallbacks`; `onTxFinished` and `subscribeTxFinished` still run
+when they finish a transaction.
 
 #### Returns
 
@@ -95,3 +96,25 @@ Transactions returned by the backend.
 `Promise`\<`void`\>
 
 A promise that resolves when the trackers of the added transactions have started.
+
+### subscribeTxFinished
+
+> **subscribeTxFinished**: (`listener`) => () => `void`
+
+Adds a listener of the "transaction finished" event (see `TxFinishedListener`). Listeners live in memory, not in
+storage: add them after every page load, for example in a React effect (`useTxFinished` of
+`@tuwaio/pulsar-react`). Adding the same function twice registers it once.
+
+#### Parameters
+
+##### listener
+
+[`TxFinishedListener`](/packages/pulsar-core/type-aliases/TxFinishedListener.md)\<`T`\>
+
+Called with the transaction when it finishes.
+
+#### Returns
+
+A function that removes the listener.
+
+() => `void`

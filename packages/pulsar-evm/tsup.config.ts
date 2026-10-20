@@ -5,7 +5,8 @@ import pkg from './package.json';
 export default defineConfig([
   {
     format: ['cjs', 'esm'],
-    entry: ['./src/index.ts'],
+    // `safe` is the entry without wagmi and `@tuwaio/orbit-evm`, for apps built on viem alone
+    entry: { index: './src/index.ts', safe: './src/safe.ts' },
     sourcemap: false,
     splitting: true,
     treeshake: true,

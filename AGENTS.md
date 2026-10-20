@@ -11,7 +11,7 @@
 - **Core:** TypeScript 6.0.3 (pinned exactly in the root and every `packages/*` `package.json`), Node.js 20+, pnpm v12+ (Workspace).
 - **State:** `zustand` v5 (peer `5.x.x`) with the `persist` middleware and `immer` v11 (peer `11.x.x`), `dayjs` (peer `1.x.x`) — peers of `pulsar-core`.
 - **Testing:** `vitest` v5 (run per package via `pnpm test`); `jsdom` for `pulsar-evm` and `pulsar-solana`.
-- **Web3 (EVM):** `viem` (peer `2.x.x`), `@wagmi/core` (peer `3.x.x`) and `@tuwaio/orbit-evm` (peer `>=0.3`) — peers of `pulsar-evm`.
+- **Web3 (EVM):** `viem` (peer `2.x.x`), `@wagmi/core` (peer `3.x.x`) and `@tuwaio/orbit-evm` (peer `>=0.3`) — peers of `pulsar-evm`; the last two are optional (`peerDependenciesMeta`) because the `@tuwaio/pulsar-evm/safe` entry does not import them.
 - **Web3 (Solana):** `@solana/kit` (peer `>=8.2`) and `@tuwaio/orbit-solana` (peer `>=0.4`, reads genesis-hash chain IDs) — peers of `pulsar-solana`. The `@wallet-standard/*` packages are peers of `@tuwaio/orbit-solana`, not of Pulsar.
 - **Peer rule:** a package declares as peers only what it imports; `zustand`/`immer` belong to `pulsar-core` and reach the chain packages through it.
 - **Shared:** `@tuwaio/orbit-core` (peer `>=0.4`: `setChainId` returns the CAIP-2 chain ID with the genesis hash for Solana) in all chain packages; `pulsar-evm` needs `@tuwaio/pulsar-core` `>=0.10` (`TransactionTracker.EIP5792`), `pulsar-solana` `>=0.9`. Peers between the packages of this repo start at the version released together with them.
@@ -46,7 +46,7 @@ pulsar-core/
 │   ├── pulsar-solana/                 # L4: Solana
 │   │   └── src/                       # adapters/ (pulsarSolanaAdapter), trackers/ (solana), utils/, errors.ts, types.ts
 │   └── pulsar-react/                  # L4: React
-│       └── src/hooks/                 # useInitializeTransactionsPool
+│       └── src/hooks/                 # useInitializeTransactionsPool, useTxFinished
 ├── typedoc.json                       # Reference generation ("packages" strategy)
 ├── package.json                       # Root checks & scripts
 └── pnpm-workspace.yaml                # Workspace definition
@@ -54,17 +54,17 @@ pulsar-core/
 
 ### Module Breakdown
 
-- **`pulsar-core`**: `createPulsarStore` (vanilla Zustand + `persist` to `localStorage` under `name`, without `initialTx`), `executeTxAction` (validate → `initialTx` → chain check → `beforeTxProcess` → `actionFunction` → `addTxToPool` → tracker), `initializeTransactionsPool` (resume after reload), remote sync (`onRemoteCreate` in the background and without API keys, `unsyncedTxKeys`, `reconcileUnsyncedTransactions`, `injectExternalPendingTxs`), `createTxInMemoryStore` (paginated, validated remote history; its own Immer instance), metadata validation, selectors, `initializePollingTracker`, `createTxUpdater`. No network requests of its own.
-- **`pulsar-evm`**: `pulsarEvmAdapter` (wagmi), `checkTransactionsTracker` (Safe by connector, ERC-4337/EIP-5792/Gelato only when requested), trackers `evmTracker`/`evmTrackerForStore`, `erc4337Tracker`/`erc4337TrackerForStore` (bundler, then on-chain), `eip5792Tracker`/`eip5792TrackerForStore` (the wallet's `wallet_getCallsStatus`, then on-chain; both use the internal `trackOnChainStage`), `safeFetcher`/`safeTrackerForStore` (Safe Transaction Service), Gelato (deprecated), `speedUpTxAction`, `cancelTxAction`, `selectEvmTxExplorerLink`.
+- **`pulsar-core`**: `createPulsarStore` (vanilla Zustand + `persist` to `localStorage` under `name`, without `initialTx`), `executeTxAction` (validate → `initialTx` → chain check → `beforeTxProcess` → `actionFunction` → `addTxToPool` → tracker), `initializeTransactionsPool` (resume after reload), the "transaction finished" event (`onTxFinished` option and `subscribeTxFinished`, fired once from `updateTxParams` and from the remote heal of `injectExternalPendingTxs`; listeners in memory, `utils/txFinished.ts`), pool eviction that never drops a pending transaction, remote sync (`onRemoteCreate` in the background and without API keys, `unsyncedTxKeys`, `reconcileUnsyncedTransactions`, `injectExternalPendingTxs`), `createTxInMemoryStore` (paginated, validated remote history; its own Immer instance), metadata validation, selectors, `initializePollingTracker`, `createTxUpdater`. No network requests of its own.
+- **`pulsar-evm`**: `pulsarEvmAdapter` (wagmi), `checkTransactionsTracker` (Safe by connector, ERC-4337/EIP-5792/Gelato only when requested), trackers `evmTracker`/`evmTrackerForStore`, `erc4337Tracker`/`erc4337TrackerForStore` (bundler, then on-chain), `eip5792Tracker`/`eip5792TrackerForStore` (the wallet's `wallet_getCallsStatus`, then on-chain; both use the internal `trackOnChainStage`), `createSafeFetcher`/`safeFetcher`/`safeTrackerForStore` (Safe Transaction Service; `pendingTimeoutMs` from the adapter option `safePendingTimeoutMs`, `safePollingInterval` 5 s then 30 s after an hour, owner confirmations in `confirmations`/`requiredConfirmations`; also the `/safe` entry without wagmi, `src/safe.ts`), Gelato (deprecated), `speedUpTxAction`, `cancelTxAction`, `selectEvmTxExplorerLink`.
 - **`pulsar-solana`**: `pulsarSolanaAdapter` (reads the last connection saved by `@tuwaio/orbit-core`, Wallet Standard), `solanaFetcher`/`solanaTrackerForStore` (signature polling every second until `finalized`, `confirmationStatus` written on the way, errors reported at once, expiry by `lastValidBlockHeight`), `signAndSendSolanaTx` (records the blockhash lifetime for the tracker in `utils/solanaTxLifetimes.ts`), `checkSolanaChain`, `SolanaChainMismatchError`.
-- **`pulsar-react`**: `useInitializeTransactionsPool`. Depends only on `react`.
+- **`pulsar-react`**: `useInitializeTransactionsPool`, `useTxFinished`. Depends only on `react`.
 
 ### Documentation Model
 
 - The docs site has an **Introduction**, the single-package guide pages **EVM Trackers Standalone** and **Solana Trackers Standalone**, a **Packages** section (generated) and a sidebar link to the TUWA guides at `docs.tuwa.io/guides`.
 - Each package page at `/packages/<package>` is the package `README.md` followed by the generated list of exports; every export has its own page generated from its JSDoc.
 - **No duplicates:** a package README has a short usage example and an absolute link to the page with the full scenario; a guide page has the full scenario; the Introduction links to pages and repeats no code. Scenarios that combine several TUWA projects live in the docs hub (`TuwaIO/docs`, `apps/docs-hub/src/content/guides`): the React setup with a wallet connector (`docs.tuwa.io/guides/react-transaction-tracking`) and the Cosmos Playground templates (`docs.tuwa.io/guides/starter-templates`). Quasar and full-stack integration live in the TUWA SDK docs (`sdk.docs.tuwa.io`), not here.
-- A change to a public API used by the hub guide (`createPulsarStore`, `executeTxAction` params, the adapters, `useInitializeTransactionsPool`) must update its code blocks, which must compile.
+- A change to a public API used by the hub guide (`createPulsarStore`, `executeTxAction` params, the adapters, `useInitializeTransactionsPool`, `useTxFinished`) must update its code blocks, which must compile.
 - `typedoc.json` maps the `@tuwaio/pulsar-*` imports to their sources (`compilerOptions.paths`), so cross-package links point to the defining package and the output does not depend on `dist`. `excludeExternals` hides members inherited from external types (e.g. `Error`). No package has subpath exports; a new one needs `@module` names (never `index`) and sidebar labels in `apps/docs/typedoc/meta/`, as in SIWX.
 - This layout (introduced by Orbit Utils, used by SIWX) is the template for the other TUWA documentation sites (Satellite Connect, Nova UI Kit, SDK). Keep it consistent.
 
@@ -117,4 +117,6 @@ pulsar-core/
   - Do **NOT** send `pimlicoApiKey` or `gelatoApiKey` to `onRemoteCreate`, and do **NOT** await `onRemoteCreate` before a transaction is pooled and tracked.
   - Do **NOT** persist `initialTx`: it describes the flow running in the current page.
   - Do **NOT** couple any package to Quasar or the TUWA SDK. They are consumers, not dependencies.
+  - Do **NOT** evict a pending transaction from the pool: its tracker could no longer record the result or fire the "transaction finished" event.
+  - Do **NOT** import `@wagmi/core` or `@tuwaio/orbit-evm` from anything `src/safe.ts` of `pulsar-evm` reaches (`src/safe.test.ts` checks it).
   - Do **NOT** use `typedoc-plugin-react` (it files functions under `components/` and breaks reference links).

@@ -2,7 +2,7 @@
 
 > **PulsarAdapter**\<`T`\> = `OrbitGenericAdapter`\<[`TxAdapter`](/packages/pulsar-core/type-aliases/TxAdapter.md)\<`T`\>\> & `object` & [`SyncCallbacks`](/packages/pulsar-core/interfaces/SyncCallbacks.md)\<`T`\>
 
-Defined in: [types.ts:373](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L373)
+Defined in: [types.ts:391](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L391)
 
 The configuration of `createPulsarStore`: one or more chain adapters and the store options.
 
@@ -41,7 +41,16 @@ Gelato relay is deprecated. Gelato API key used to track `TransactionTracker.Gel
 
 > `optional` **maxTransactions?**: `number`
 
-Maximum number of transactions in the pool. When it is full, the oldest one (by `localTimestamp`) is evicted. Defaults to 50.
+Maximum number of transactions in the pool. When it is full, the oldest finished ones (by `localTimestamp`) are
+evicted; pending transactions are never evicted, so while more of them are pending the pool holds more. Defaults to
+50.
+
+### onTxFinished?
+
+> `optional` **onTxFinished?**: [`TxFinishedListener`](/packages/pulsar-core/type-aliases/TxFinishedListener.md)\<`T`\>
+
+Called once when a transaction finishes (see `TxFinishedListener`), also when a tracker restarted after a page
+reload finishes it. Runs before the listeners added with `subscribeTxFinished`.
 
 ### retentionDays?
 

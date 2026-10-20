@@ -89,8 +89,11 @@ export type PollingTrackerConfig<R, T extends Pick<Transaction, 'txKey' | 'pendi
    * @param txKey - The `txKey` of the tracked transaction.
    */
   removeTxFromPool?: (txKey: string) => void;
-  /** The delay before each attempt, in milliseconds. Defaults to 5000. */
-  pollingInterval?: number;
+  /**
+   * The delay before each attempt, in milliseconds, or a function that returns it from the milliseconds elapsed since
+   * polling started, to poll less often over time. Defaults to 5000.
+   */
+  pollingInterval?: number | ((elapsedMs: number) => number);
   /** The number of consecutive failed attempts (thrown errors) after which polling stops. Defaults to 10. */
   maxRetries?: number;
 };
@@ -101,7 +104,8 @@ const DEFAULT_MAX_RETRIES = 10;
 /**
  * Starts polling a transaction in the background and returns immediately. Does nothing if `tx.pending` is `false`.
  *
- * Every `pollingInterval` milliseconds (the first attempt also waits) it calls `fetcher`. Polling continues until the
+ * Every `pollingInterval` milliseconds (the first attempt also waits; a function is asked before each wait) it calls
+ * `fetcher`. Polling continues until the
  * fetcher calls `stopPolling`. A fetcher that throws counts as a failed attempt; after `maxRetries` consecutive failed
  * attempts the tracker calls `onFailure()` without arguments, logs a warning and stops (which calls
  * `removeTxFromPool`, if configured). A successful attempt resets the count.
@@ -153,6 +157,9 @@ export function initializePollingTracker<R, T extends Pick<Transaction, 'txKey' 
 
   let retriesLeft = maxRetries;
   let isPolling = true;
+  const startedAt = Date.now();
+  const nextDelay = () =>
+    typeof pollingInterval === 'function' ? pollingInterval(Date.now() - startedAt) : pollingInterval;
 
   /**
    * Stops the polling interval and optionally removes the transaction from the pool.
@@ -171,7 +178,7 @@ export function initializePollingTracker<R, T extends Pick<Transaction, 'txKey' 
   const pollingLoop = async () => {
     while (isPolling && retriesLeft > 0) {
       try {
-        await new Promise((resolve) => setTimeout(resolve, pollingInterval));
+        await new Promise((resolve) => setTimeout(resolve, nextDelay()));
         if (!isPolling) break;
 
         // The fetcher's responsibility is to call onSuccess, onFailure, etc., which in turn call stopPolling.

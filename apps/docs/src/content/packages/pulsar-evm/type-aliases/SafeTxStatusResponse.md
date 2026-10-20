@@ -8,6 +8,26 @@ The fields of a multisig transaction returned by the Safe Transaction Service AP
 
 ## Properties
 
+### confirmations?
+
+> `optional` **confirmations?**: `object`[] \| `null`
+
+Defined in: [trackers/safeTracker.ts:48](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L48)
+
+The owner confirmations collected so far.
+
+***
+
+### confirmationsRequired?
+
+> `optional` **confirmationsRequired?**: `number`
+
+Defined in: [trackers/safeTracker.ts:46](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L46)
+
+The number of owner confirmations the Safe needs to execute the transaction (its threshold).
+
+***
+
 ### executionDate
 
 > **executionDate**: `string` \| `null`

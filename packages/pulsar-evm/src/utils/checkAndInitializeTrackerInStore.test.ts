@@ -125,4 +125,18 @@ describe('checkAndInitializeTrackerInStore', () => {
 
     expect(safeTrackerForStore).toHaveBeenCalled();
   });
+
+  test('passes the Safe timeout of the adapter to the Safe tracker', async () => {
+    await checkAndInitializeTrackerInStore({
+      tracker: TransactionTracker.Safe,
+      tx: { ...mockTx, tracker: TransactionTracker.Safe },
+      config: mockConfig,
+      transactionsPool: {},
+      updateTxParams: vi.fn(),
+      removeTxFromPool: vi.fn(),
+      safePendingTimeoutMs: null,
+    });
+
+    expect(safeTrackerForStore).toHaveBeenCalledWith(expect.objectContaining({ pendingTimeoutMs: null }));
+  });
 });

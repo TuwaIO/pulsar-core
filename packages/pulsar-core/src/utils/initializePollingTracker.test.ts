@@ -35,6 +35,29 @@ describe('initializePollingTracker', () => {
     expect(onSuccess).toHaveBeenCalledWith('done');
   });
 
+  it('asks a pollingInterval function for every delay, with the time since polling started', async () => {
+    const fetcher = vi.fn(async () => undefined);
+    // 100 ms during the first 300 ms, then 1000 ms
+    const pollingInterval = vi.fn((elapsedMs: number) => (elapsedMs < 300 ? 100 : 1000));
+
+    initializePollingTracker({
+      tx: { txKey: 'task-interval', pending: true },
+      fetcher,
+      onSuccess: vi.fn(),
+      onFailure: vi.fn(),
+      pollingInterval,
+    });
+
+    await vi.advanceTimersByTimeAsync(300);
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(pollingInterval.mock.calls.map(([elapsedMs]) => elapsedMs)).toEqual([0, 100, 200, 300]);
+
+    await vi.advanceTimersByTimeAsync(999);
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetcher).toHaveBeenCalledTimes(4);
+  });
+
   it('counts only consecutive failed fetches towards maxRetries', async () => {
     let call = 0;
     // Fails twice, succeeds once, fails twice, succeeds once... never three failures in a row.

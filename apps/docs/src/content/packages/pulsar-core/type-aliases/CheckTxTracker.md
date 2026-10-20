@@ -2,7 +2,7 @@
 
 > **CheckTxTracker** = `object`
 
-Defined in: [types.ts:398](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L398)
+Defined in: [types.ts:425](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L425)
 
 The input of `TxAdapter.checkTransactionsTracker`: the key returned by the action and the context needed to pick a
 tracker.
@@ -13,7 +13,7 @@ tracker.
 
 > **actionTxKey**: [`ActionTxKey`](/packages/pulsar-core/type-aliases/ActionTxKey.md)
 
-Defined in: [types.ts:400](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L400)
+Defined in: [types.ts:427](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L427)
 
 The key returned by `actionFunction`.
 
@@ -23,7 +23,7 @@ The key returned by `actionFunction`.
 
 > `optional` **bundlerUrl?**: `string`
 
-Defined in: [types.ts:408](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L408)
+Defined in: [types.ts:435](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L435)
 
 Custom bundler RPC URL for ERC-4337 UserOperation tracking.
 
@@ -33,7 +33,7 @@ Custom bundler RPC URL for ERC-4337 UserOperation tracking.
 
 > **connectorType**: `string`
 
-Defined in: [types.ts:402](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L402)
+Defined in: [types.ts:429](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L429)
 
 The connector that signed the transaction, for example `evm:safe` for a Safe wallet.
 
@@ -43,7 +43,7 @@ The connector that signed the transaction, for example `evm:safe` for a Safe wal
 
 > `optional` **gelatoApiKey?**: `string`
 
-Defined in: [types.ts:406](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L406)
+Defined in: [types.ts:433](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L433)
 
 #### Deprecated
 
@@ -55,7 +55,7 @@ Gelato relay is deprecated. Use `bundlerUrl` / `pimlicoApiKey` with ERC-4337 ins
 
 > `optional` **pimlicoApiKey?**: `string`
 
-Defined in: [types.ts:410](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L410)
+Defined in: [types.ts:437](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L437)
 
 Pimlico API key for ERC-4337 UserOperation tracking.
 
@@ -65,6 +65,6 @@ Pimlico API key for ERC-4337 UserOperation tracking.
 
 > `optional` **tracker?**: [`TransactionTracker`](/packages/pulsar-core/enumerations/TransactionTracker.md)
 
-Defined in: [types.ts:404](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L404)
+Defined in: [types.ts:431](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L431)
 
 The tracker requested in `executeTxAction` params, if any.

@@ -9,9 +9,10 @@ import { produce } from 'immer';
 import { persist, PersistOptions } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 
-import { ITxTrackingStore, PulsarAdapter, Transaction, TransactionPool, TransactionStatus } from '../types';
+import { ITxTrackingStore, PulsarAdapter, Transaction, TransactionPool } from '../types';
 import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
 import { validateInitialTransactionParams, validateTransaction } from '../utils/transactionValidation';
+import { createTxFinishedNotifier, isFinishedStatus } from '../utils/txFinished';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
 
 /**
@@ -38,6 +39,8 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  * @param params.gelatoApiKey - Deprecated Gelato API key, passed to the trackers.
  * @param params.beforeTxProcess - Global preflight callback (see `BeforeTxProcess`).
  * @param params.abortOnTxError - Whether a `beforeTxProcess` error aborts the transaction. Defaults to `true`.
+ * @param params.onTxFinished - Called once when a transaction finishes, also after a page reload (see
+ *   `TxFinishedListener`).
  * @param params.name - The storage key. Required by `persist`; use a different key for every store.
  * @returns The vanilla Zustand store. `store.persist` exposes the `persist` API (for example `clearStorage()`).
  *
@@ -60,15 +63,26 @@ export function createPulsarStore<T extends Transaction>({
   gelatoApiKey,
   beforeTxProcess,
   abortOnTxError,
+  onTxFinished,
   ...options
 }: PulsarAdapter<T> & PersistOptions<ITxTrackingStore<T>>) {
+  // Listeners of the "transaction finished" event live in memory: functions cannot be saved with the pool
+  const txFinished = createTxFinishedNotifier<T>(onTxFinished);
+
   return createStore<ITxTrackingStore<T>>()(
     persist(
       (set, get) => ({
         // Initialize the base store slice with core state and actions
-        ...initializeTxTrackingStore<T>({ maxTransactions, retentionDays, onRemoteCreate })(set, get),
+        ...initializeTxTrackingStore<T>({
+          maxTransactions,
+          retentionDays,
+          onRemoteCreate,
+          onTxFinished: txFinished.notify,
+        })(set, get),
 
         getAdapter: () => adapter,
+
+        subscribeTxFinished: txFinished.subscribe,
 
         // Restarts the trackers of pending transactions, e.g. after a page reload.
         initializeTransactionsPool: async () => {
@@ -105,6 +119,8 @@ export function createPulsarStore<T extends Transaction>({
           const state = get();
           const adapter = state.getAdapter();
           const txsToTrack: T[] = [];
+          // Local transactions that the remote backend reports as finished, for the "transaction finished" event
+          const finishedTxKeys: string[] = [];
           const validRemoteTxs = remoteTxs.filter((remoteTx) => {
             try {
               validateTransaction(remoteTx);
@@ -130,13 +146,8 @@ export function createPulsarStore<T extends Transaction>({
                 }
 
                 // Case B: Self-healing. Local is stuck on pending, but remote says it's terminal.
-                // Note: Ensure `isTerminalStatus` helper is accessible here or re-implemented.
-                const isRemoteTerminal =
-                  remoteTx.status === TransactionStatus.Success ||
-                  remoteTx.status === TransactionStatus.Failed ||
-                  remoteTx.status === TransactionStatus.Replaced;
-
-                if (localTx?.pending && isRemoteTerminal) {
+                if (localTx?.pending && isFinishedStatus(remoteTx.status)) {
+                  if (!isFinishedStatus(localTx.status)) finishedTxKeys.push(remoteTx.txKey);
                   localTx.status = remoteTx.status;
                   localTx.pending = false;
                   if (remoteTx.txKey) localTx.txKey = remoteTx.txKey;
@@ -145,6 +156,11 @@ export function createPulsarStore<T extends Transaction>({
               });
             }),
           );
+
+          for (const txKey of finishedTxKeys) {
+            const finishedTx = get().transactionsPool[txKey];
+            if (finishedTx) txFinished.notify(finishedTx);
+          }
 
           // 2. Asynchronously start trackers for the newly injected pending transactions
           if (txsToTrack.length > 0) {

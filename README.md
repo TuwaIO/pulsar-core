@@ -21,13 +21,13 @@ Inside the monorepo, packages are split into two layers:
 
 ### Layer 3: Core (L3)
 
-- **[`@tuwaio/pulsar-core`](./packages/pulsar-core)**: the transaction store (Zustand with `persist`), the adapter contract, metadata validation, remote sync hooks, selectors and building blocks for trackers. Peer dependencies: `@tuwaio/orbit-core`, `zustand`, `immer`, `dayjs`.
+- **[`@tuwaio/pulsar-core`](./packages/pulsar-core)**: the transaction store (Zustand with `persist`), the adapter contract, metadata validation, remote sync hooks, selectors, the "transaction finished" event (`onTxFinished`, `subscribeTxFinished`) and building blocks for trackers. Peer dependencies: `@tuwaio/orbit-core`, `zustand`, `immer`, `dayjs`.
 
 ### Layer 4: Chains and React (L4)
 
-- **[`@tuwaio/pulsar-evm`](./packages/pulsar-evm)**: the EVM adapter and trackers for standard transactions, ERC-4337 UserOperations, Safe multisig transactions and Gelato relay tasks (deprecated), plus speed-up and cancel actions. Peer dependencies: `@tuwaio/orbit-evm`, `@wagmi/core`, `viem`.
+- **[`@tuwaio/pulsar-evm`](./packages/pulsar-evm)**: the EVM adapter and trackers for standard transactions, ERC-4337 UserOperations, Safe multisig transactions and Gelato relay tasks (deprecated), plus speed-up and cancel actions; `@tuwaio/pulsar-evm/safe` is the Safe tracker alone, without wagmi. Peer dependencies: `viem`, and for the main entry `@tuwaio/orbit-evm` and `@wagmi/core`.
 - **[`@tuwaio/pulsar-solana`](./packages/pulsar-solana)**: the Solana adapter, the signature tracker and `signAndSendSolanaTx`. Peer dependencies: `@tuwaio/orbit-solana`, `@solana/kit` (plus the `@wallet-standard` peers of `@tuwaio/orbit-solana`).
-- **[`@tuwaio/pulsar-react`](./packages/pulsar-react)**: the `useInitializeTransactionsPool` hook that resumes tracking after a reload. Peer dependency: `react`.
+- **[`@tuwaio/pulsar-react`](./packages/pulsar-react)**: the `useInitializeTransactionsPool` hook that resumes tracking after a reload and the `useTxFinished` hook that reacts to every finished transaction. Peer dependency: `react`.
 
 The EVM and Solana packages have `@tuwaio/pulsar-core` as a peer dependency.
 

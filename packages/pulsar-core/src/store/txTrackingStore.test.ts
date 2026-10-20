@@ -429,3 +429,215 @@ describe('retention of finished transactions', () => {
     expect(Object.keys(store.getState().transactionsPool).sort()).toEqual(['0xnew', 'pending']);
   });
 });
+
+describe('txTrackingStore onTxFinished', () => {
+  const pendingPool = () => ({ [txHash]: createTransaction() });
+
+  it('calls onTxFinished and the subscribers once when a pending transaction reaches a final status', () => {
+    const onTxFinished = vi.fn();
+    const listener = vi.fn();
+    const store = createStore({ onTxFinished });
+    store.getState().subscribeTxFinished(listener);
+    setStoreState(store, { transactionsPool: pendingPool() });
+
+    store.getState().updateTxParams(txHash, { hash: '0xabc', confirmations: 1 });
+    expect(onTxFinished).not.toHaveBeenCalled();
+
+    store.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false });
+    // A second tracker of the same transaction (React Strict Mode) writes the same status again
+    store.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false });
+
+    expect(onTxFinished).toHaveBeenCalledTimes(1);
+    expect(onTxFinished).toHaveBeenCalledWith(
+      expect.objectContaining({ txKey: txHash, hash: '0xabc', status: TransactionStatus.Success, pending: false }),
+    );
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(onTxFinished.mock.calls[0][0]);
+  });
+
+  it.each([TransactionStatus.Failed, TransactionStatus.Replaced])('fires for %s as well', (status) => {
+    const onTxFinished = vi.fn();
+    const store = createStore({ onTxFinished });
+    setStoreState(store, { transactionsPool: pendingPool() });
+
+    store.getState().updateTxParams(txHash, { status, pending: false });
+
+    expect(onTxFinished).toHaveBeenCalledWith(expect.objectContaining({ status }));
+  });
+
+  it('fires for a transaction that a tracker restarted after a reload finishes', async () => {
+    const onTxFinished = vi.fn();
+    const adapter = createAdapter({
+      checkAndInitializeTrackerInStore: vi.fn(async ({ tx, updateTxParams }) => {
+        updateTxParams(tx.txKey, { status: TransactionStatus.Success, pending: false });
+      }),
+    });
+    const store = createStore({ adapter, onTxFinished });
+    setStoreState(store, { transactionsPool: pendingPool() });
+
+    await store.getState().initializeTransactionsPool();
+
+    expect(onTxFinished).toHaveBeenCalledTimes(1);
+    expect(onTxFinished).toHaveBeenCalledWith(expect.objectContaining({ status: TransactionStatus.Success }));
+  });
+
+  it('fires when a remote backend reports a pending transaction as finished, and not for one that already was', async () => {
+    const onTxFinished = vi.fn();
+    const store = createStore({ onTxFinished });
+    setStoreState(store, {
+      transactionsPool: {
+        ...pendingPool(),
+        '0xdone': createTransaction({ txKey: '0xdone', pending: false, status: TransactionStatus.Success }),
+      },
+    });
+
+    await store
+      .getState()
+      .injectExternalPendingTxs([
+        createTransaction({ pending: false, status: TransactionStatus.Failed, finishedTimestamp: 2 }),
+        createTransaction({ txKey: '0xdone', pending: false, status: TransactionStatus.Success }),
+      ]);
+
+    expect(onTxFinished).toHaveBeenCalledTimes(1);
+    expect(onTxFinished).toHaveBeenCalledWith(
+      expect.objectContaining({ txKey: txHash, status: TransactionStatus.Failed, pending: false }),
+    );
+  });
+
+  it('records the status and calls the other listeners when a listener throws or rejects', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const store = createStore({
+      onTxFinished: () => {
+        throw new Error('sync failure');
+      },
+    });
+    const rejecting = vi.fn().mockRejectedValue(new Error('async failure'));
+    const last = vi.fn();
+    store.getState().subscribeTxFinished(rejecting);
+    store.getState().subscribeTxFinished(last);
+    setStoreState(store, { transactionsPool: pendingPool() });
+
+    expect(() =>
+      store.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false }),
+    ).not.toThrow();
+
+    expect(store.getState().transactionsPool[txHash].status).toBe(TransactionStatus.Success);
+    expect(rejecting).toHaveBeenCalledTimes(1);
+    expect(last).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(consoleError).toHaveBeenCalledTimes(2));
+    consoleError.mockRestore();
+  });
+
+  it('stops calling a listener after it unsubscribes', () => {
+    const listener = vi.fn();
+    const store = createStore();
+    const unsubscribe = store.getState().subscribeTxFinished(listener);
+    unsubscribe();
+    setStoreState(store, { transactionsPool: pendingPool() });
+
+    store.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false });
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('does not fire for finished transactions restored from storage', async () => {
+    const onTxFinished = vi.fn();
+    const storage = createMemoryStorage();
+    storage.setItem(
+      'finished',
+      JSON.stringify({
+        state: {
+          transactionsPool: {
+            [txHash]: createTransaction({ pending: false, status: TransactionStatus.Success, localTimestamp: 9e9 }),
+          },
+        },
+        version: 0,
+      }),
+    );
+    const store = createStore({ name: 'finished', storage: createJSONStorage(() => storage), onTxFinished });
+
+    await store.getState().initializeTransactionsPool();
+
+    expect(store.getState().transactionsPool[txHash].status).toBe(TransactionStatus.Success);
+    expect(onTxFinished).not.toHaveBeenCalled();
+  });
+
+  it('fires before the callbacks of the transaction itself', async () => {
+    const order: string[] = [];
+    const adapter = createAdapter({
+      checkAndInitializeTrackerInStore: vi.fn(async ({ tx, updateTxParams, onSuccess }) => {
+        updateTxParams(tx.txKey, { status: TransactionStatus.Success, pending: false });
+        await onSuccess?.({ ...tx, status: TransactionStatus.Success, pending: false });
+      }),
+    });
+    const store = createStore({ adapter, onTxFinished: () => void order.push('onTxFinished') });
+
+    await store.getState().executeTxAction({
+      actionFunction: async () => txHash,
+      params: createValidParams(),
+      onSuccess: () => void order.push('onSuccess'),
+    });
+
+    expect(order).toEqual(['onTxFinished', 'onSuccess']);
+  });
+});
+
+describe('txTrackingStore pool limit', () => {
+  const finishedTx = (txKey: string, localTimestamp: number) =>
+    createTransaction({
+      txKey,
+      localTimestamp,
+      pending: false,
+      status: TransactionStatus.Success,
+      finishedTimestamp: 9e9,
+    });
+  const pendingTx = (txKey: string, localTimestamp: number) => createTransaction({ txKey, localTimestamp });
+
+  it('never evicts a transaction that is still pending, even past maxTransactions', async () => {
+    const store = createStore({ maxTransactions: 2 });
+    setStoreState(store, { transactionsPool: { a: pendingTx('a', 1), b: pendingTx('b', 2) } });
+
+    await store.getState().addTxToPool(pendingTx('c', 3));
+
+    expect(Object.keys(store.getState().transactionsPool).sort()).toEqual(['a', 'b', 'c']);
+  });
+
+  it('evicts the oldest finished transaction first and keeps an older pending one', async () => {
+    const store = createStore({ maxTransactions: 3 });
+    setStoreState(store, {
+      transactionsPool: {
+        pending: pendingTx('pending', 1),
+        old: finishedTx('old', 2),
+        recent: finishedTx('recent', 3),
+      },
+    });
+
+    await store.getState().addTxToPool(pendingTx('new', 4));
+
+    expect(Object.keys(store.getState().transactionsPool).sort()).toEqual(['new', 'pending', 'recent']);
+  });
+
+  it('shrinks back to maxTransactions once the transactions that held it over have finished', async () => {
+    const store = createStore({ maxTransactions: 2 });
+    setStoreState(store, {
+      transactionsPool: { a: finishedTx('a', 1), b: finishedTx('b', 2), c: finishedTx('c', 3) },
+    });
+
+    await store.getState().addTxToPool(pendingTx('d', 4));
+
+    expect(Object.keys(store.getState().transactionsPool).sort()).toEqual(['c', 'd']);
+  });
+
+  it('still calls the finished event for a transaction tracked while the pool was over the limit', async () => {
+    const onTxFinished = vi.fn();
+    const store = createStore({ maxTransactions: 1, onTxFinished });
+    setStoreState(store, { transactionsPool: { a: pendingTx('a', 1) } });
+
+    await store.getState().addTxToPool(pendingTx('b', 2));
+    store.getState().updateTxParams('a', { status: TransactionStatus.Success, pending: false });
+
+    expect(onTxFinished).toHaveBeenCalledWith(
+      expect.objectContaining({ txKey: 'a', status: TransactionStatus.Success }),
+    );
+  });
+});

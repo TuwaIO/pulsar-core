@@ -1,8 +1,8 @@
 # pulsarEvmAdapter()
 
-> **pulsarEvmAdapter**\<`T`\>(`config`, `appChains`): [`TxAdapter`](/packages/pulsar-core/type-aliases/TxAdapter.md)\<`T`\>
+> **pulsarEvmAdapter**\<`T`\>(`config`, `appChains`, `options?`): [`TxAdapter`](/packages/pulsar-core/type-aliases/TxAdapter.md)\<`T`\>
 
-Defined in: [adapters/evmAdapter.ts:54](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/adapters/evmAdapter.ts#L54)
+Defined in: [adapters/evmAdapter.ts:58](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/adapters/evmAdapter.ts#L58)
 
 Creates the EVM adapter for `createPulsarStore` from `@tuwaio/pulsar-core`. Pass it alone or in the adapter array.
 
@@ -43,6 +43,18 @@ The wagmi config of the app.
 readonly \[`Chain`, `Chain`\]
 
 The viem chains of the app, used to build explorer links.
+
+### options?
+
+The adapter options.
+
+#### safePendingTimeoutMs?
+
+`number` \| `null`
+
+How long a Safe transaction may stay unexecuted, from when it was proposed,
+before the Safe tracker marks it `Failed`; `null` waits without a limit. Defaults to one day. As part of the adapter it
+also applies to trackers restarted after a page reload.
 
 ## Returns
 

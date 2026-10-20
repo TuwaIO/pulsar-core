@@ -4,7 +4,7 @@
   "private": false,
   "author": "Oleksandr Tkach",
   "license": "Apache-2.0",
-  "description": "L4 React package of Pulsar (TUWA): useInitializeTransactionsPool hook that resumes tracking of pending transactions after a page reload.",
+  "description": "L4 React package of Pulsar (TUWA): useInitializeTransactionsPool resumes tracking of pending transactions after a page reload, and useTxFinished reacts to every finished transaction.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

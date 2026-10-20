@@ -36,6 +36,10 @@ import { speedUpTxAction } from '../utils/speedUpTxAction';
  * @template T - The application transaction type.
  * @param config - The wagmi config of the app.
  * @param appChains - The viem chains of the app, used to build explorer links.
+ * @param options - The adapter options.
+ * @param options.safePendingTimeoutMs - How long a Safe transaction may stay unexecuted, from when it was proposed,
+ * before the Safe tracker marks it `Failed`; `null` waits without a limit. Defaults to one day. As part of the adapter it
+ * also applies to trackers restarted after a page reload.
  * @returns The EVM adapter.
  * @throws `Error` when `config` is not provided.
  *
@@ -54,6 +58,7 @@ import { speedUpTxAction } from '../utils/speedUpTxAction';
 export function pulsarEvmAdapter<T extends Transaction>(
   config: Config,
   appChains: readonly [Chain, ...Chain[]],
+  options: { safePendingTimeoutMs?: number | null } = {},
 ): TxAdapter<T> {
   if (!config) {
     throw new Error('EVM adapter requires a wagmi config object.');
@@ -78,7 +83,13 @@ export function pulsarEvmAdapter<T extends Transaction>(
     checkChainForTx: (chainId: string | number) => checkAndSwitchChain(chainId as number, config),
     checkTransactionsTracker: (props) => checkTransactionsTracker(props),
     checkAndInitializeTrackerInStore: ({ tx, ...rest }) =>
-      checkAndInitializeTrackerInStore({ tracker: tx.tracker, tx, config, ...rest }),
+      checkAndInitializeTrackerInStore({
+        tracker: tx.tracker,
+        tx,
+        config,
+        safePendingTimeoutMs: options.safePendingTimeoutMs,
+        ...rest,
+      }),
 
     // --- UI & Explorer Methods ---
     getExplorerUrl: (url, chainId) => {

@@ -49,7 +49,7 @@ The transaction, `stopPolling` and the callbacks.
 
 > `optional` **maxRetries?**: `number`
 
-Defined in: [utils/initializePollingTracker.ts:95](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L95)
+Defined in: [utils/initializePollingTracker.ts:98](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L98)
 
 The number of consecutive failed attempts (thrown errors) after which polling stops. Defaults to 10.
 
@@ -160,11 +160,12 @@ The result reported by the fetcher.
 
 ### pollingInterval?
 
-> `optional` **pollingInterval?**: `number`
+> `optional` **pollingInterval?**: `number` \| ((`elapsedMs`) => `number`)
 
-Defined in: [utils/initializePollingTracker.ts:93](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L93)
+Defined in: [utils/initializePollingTracker.ts:96](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L96)
 
-The delay before each attempt, in milliseconds. Defaults to 5000.
+The delay before each attempt, in milliseconds, or a function that returns it from the milliseconds elapsed since
+polling started, to poll less often over time. Defaults to 5000.
 
 ***
 

@@ -25,10 +25,10 @@ keep `solana:<cluster>` (for example `solana:devnet`); the trackers and explorer
 
 > `optional` **confirmations?**: `number` \| `string` \| `null`
 
-Defined in: [types.ts:142](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L142)
+Defined in: [types.ts:143](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L143)
 
 Confirmations reported by the tracker while the transaction is pending. The Solana tracker sets it to `'MAX'` when
-the transaction is finalized.
+the transaction is finalized. For a Safe transaction it is the number of owners who have confirmed it so far.
 
 ***
 
@@ -148,10 +148,11 @@ Defined in: [types.ts:108](https://github.com/TuwaIO/pulsar-core/blob/main/packa
 
 > `optional` **requiredConfirmations?**: `number`
 
-Defined in: [types.ts:137](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L137)
+Defined in: [types.ts:138](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L138)
 
 Number of block confirmations the EVM trackers wait for before marking the transaction successful. Defaults to 1.
-The Solana tracker always waits for the `finalized` commitment instead.
+The Solana tracker always waits for the `finalized` commitment instead. For a Safe transaction, the Safe tracker
+writes the number of owner confirmations the Safe needs to execute it (its threshold).
 
 ***
 
@@ -159,7 +160,7 @@ The Solana tracker always waits for the `finalized` commitment instead.
 
 > `optional` **rpcUrl?**: `string`
 
-Defined in: [types.ts:147](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L147)
+Defined in: [types.ts:148](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L148)
 
 RPC endpoint used by the Solana tracker, also after a page reload. Without it, the tracker uses the public
 endpoint of the cluster in `chainId`.
@@ -180,7 +181,7 @@ The terminal status, set together with `pending: false`.
 
 > `optional` **syncStatus?**: `"synced"` \| `"pending-sync"`
 
-Defined in: [types.ts:153](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L153)
+Defined in: [types.ts:154](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L154)
 
 Remote sync state, set only when the store has an `onRemoteCreate` callback: `'pending-sync'` from the moment the
 transaction is added until `onRemoteCreate` resolves (the key is listed in `unsyncedTxKeys` meanwhile and retried

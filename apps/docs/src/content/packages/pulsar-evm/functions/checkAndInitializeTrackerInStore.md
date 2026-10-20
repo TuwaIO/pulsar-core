@@ -2,7 +2,7 @@
 
 > **checkAndInitializeTrackerInStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [utils/checkAndInitializeTrackerInStore.ts:45](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts#L45)
+Defined in: [utils/checkAndInitializeTrackerInStore.ts:50](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts#L50)
 
 Starts the tracker named by `tracker` for a transaction of the Pulsar store: [evmTrackerForStore](/packages/pulsar-evm/functions/evmTrackerForStore.md),
 [erc4337TrackerForStore](/packages/pulsar-evm/functions/erc4337TrackerForStore.md), [eip5792TrackerForStore](/packages/pulsar-evm/functions/eip5792TrackerForStore.md), [safeTrackerForStore](/packages/pulsar-evm/functions/safeTrackerForStore.md) or

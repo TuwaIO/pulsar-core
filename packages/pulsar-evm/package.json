@@ -8,6 +8,29 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./safe": {
+      "import": {
+        "types": "./dist/safe.d.mts",
+        "default": "./dist/safe.mjs"
+      },
+      "require": {
+        "types": "./dist/safe.d.ts",
+        "default": "./dist/safe.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -56,6 +79,14 @@
     "@wagmi/core": "3.x.x",
     "dayjs": "1.x.x",
     "viem": "2.x.x"
+  },
+  "peerDependenciesMeta": {
+    "@tuwaio/orbit-evm": {
+      "optional": true
+    },
+    "@wagmi/core": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@tuwaio/orbit-core": "^0.6.0",

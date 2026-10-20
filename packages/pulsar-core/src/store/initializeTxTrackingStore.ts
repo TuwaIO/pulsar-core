@@ -5,16 +5,10 @@
 
 import { produce } from 'immer';
 
-import {
-  IInitializeTxTrackingStore,
-  PulsarAdapter,
-  StoreSlice,
-  Transaction,
-  TransactionPool,
-  TransactionStatus,
-} from '../types';
+import { IInitializeTxTrackingStore, PulsarAdapter, StoreSlice, Transaction, TransactionPool } from '../types';
 import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
 import { validateTransaction } from '../utils/transactionValidation';
+import { isFinishedStatus } from '../utils/txFinished';
 
 /**
  * Returns a copy of a transaction without the API keys that the client needs to resume tracking but a backend must
@@ -38,19 +32,24 @@ function omitClientSecrets<T extends Transaction>(tx: T): T {
  *
  * @template T - The application transaction type.
  * @param params - The slice options.
- * @param params.maxTransactions - Maximum number of transactions in the pool; `addTxToPool` evicts the oldest one
- * (by `localTimestamp`) when the pool is full.
+ * @param params.maxTransactions - Maximum number of transactions in the pool; `addTxToPool` evicts the oldest
+ * finished ones (by `localTimestamp`) to stay within it. Pending transactions are never evicted, so the pool can hold
+ * more while they are pending.
  * @param params.retentionDays - Days a finished transaction stays in the pool; `addTxToPool` drops the expired ones
  * first. `null` keeps them without a term. Defaults to 30.
  * @param params.onRemoteCreate - Optional remote sync callback, called in the background by `addTxToPool` (see
  * `SyncCallbacks`).
+ * @param params.onTxFinished - Called by `updateTxParams` once when it moves a transaction from a non-final to a final
+ * status (see `TxFinishedListener`). `createPulsarStore` passes a function that runs its `onTxFinished` option and the
+ * listeners of `subscribeTxFinished`; it must not throw.
  * @returns A slice creator for Zustand's `create` / `createStore`.
  */
 export function initializeTxTrackingStore<T extends Transaction>({
   maxTransactions,
   retentionDays = DEFAULT_RETENTION_DAYS,
   onRemoteCreate,
-}: Pick<PulsarAdapter<T>, 'onRemoteCreate' | 'retentionDays'> & {
+  onTxFinished,
+}: Pick<PulsarAdapter<T>, 'onRemoteCreate' | 'retentionDays' | 'onTxFinished'> & {
   maxTransactions: number;
 }): StoreSlice<IInitializeTxTrackingStore<T>> {
   let isReconciling = false;
@@ -149,18 +148,19 @@ export function initializeTxTrackingStore<T extends Transaction>({
                 if (draft.unsyncedTxKeys) delete draft.unsyncedTxKeys[key];
               }
 
-              const currentCount = Object.keys(draft.transactionsPool).length;
-
-              // FIFO Eviction Policy
-              if (currentCount >= maxTransactions) {
-                const sortedTxs = Object.values(draft.transactionsPool).sort((a, b) => {
-                  return (a as T).localTimestamp - (b as T).localTimestamp;
-                });
-
-                if (sortedTxs.length > 0) {
-                  const oldestTx = sortedTxs[0] as T;
-                  delete draft.transactionsPool[oldestTx.txKey];
-                }
+              // Eviction: the oldest finished transactions make room for the new one. A transaction still pending is
+              // never evicted, so its tracker can always record the result; while many are pending the pool may hold
+              // more than `maxTransactions`, and it shrinks back as they finish and new ones are added.
+              const finishedOldestFirst = (Object.values(draft.transactionsPool) as T[])
+                .filter(
+                  (pooledTx) => pooledTx.txKey !== tx.txKey && (!pooledTx.pending || isFinishedStatus(pooledTx.status)),
+                )
+                .sort((a, b) => a.localTimestamp - b.localTimestamp);
+              let count = Object.keys(draft.transactionsPool).length + (draft.transactionsPool[tx.txKey] ? 0 : 1);
+              for (const finishedTx of finishedOldestFirst) {
+                if (count <= maxTransactions) break;
+                delete draft.transactionsPool[finishedTx.txKey];
+                count--;
               }
 
               draft.transactionsPool[tx.txKey] = newTx as (typeof draft.transactionsPool)[string];
@@ -177,6 +177,7 @@ export function initializeTxTrackingStore<T extends Transaction>({
       },
 
       updateTxParams: (txKey, fields) => {
+        const wasFinished = isFinishedStatus(get().transactionsPool[txKey]?.status);
         set((state) =>
           produce(state, (draft) => {
             const tx = draft.transactionsPool[txKey];
@@ -187,13 +188,14 @@ export function initializeTxTrackingStore<T extends Transaction>({
           }),
         );
 
-        // Trigger reconciliation if transitioning to a terminal state and it's unsynced
-        const isTerminalStatus =
-          fields.status === TransactionStatus.Success ||
-          fields.status === TransactionStatus.Failed ||
-          fields.status === TransactionStatus.Replaced;
+        // The "transaction finished" event: once, on the move from a non-final to a final status
+        const updatedTx = get().transactionsPool[txKey];
+        if (onTxFinished && updatedTx && !wasFinished && isFinishedStatus(updatedTx.status)) {
+          onTxFinished(updatedTx);
+        }
 
-        if (isTerminalStatus) {
+        // Trigger reconciliation if transitioning to a terminal state and it's unsynced
+        if (isFinishedStatus(fields.status)) {
           if (get().reconcileUnsyncedTransactions && get().unsyncedTxKeys?.[txKey]) {
             // Fire and forget asynchronous reconciliation
             get()

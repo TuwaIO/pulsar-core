@@ -17,7 +17,7 @@ import dayjs from 'dayjs';
 import { Hex, zeroAddress, zeroHash } from 'viem';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { safeFetcher, safeTrackerForStore, SafeTxStatusResponse } from './safeTracker';
+import { createSafeFetcher, safeFetcher, safeTrackerForStore, SafeTxStatusResponse } from './safeTracker';
 
 // Mock the core polling utility.
 vi.mock('@tuwaio/pulsar-core', async (importActual) => {
@@ -76,7 +76,7 @@ describe('safeTrackerForStore', () => {
     safeTrackerForStore(mockParams);
 
     expect(initializePollingTracker).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(initializePollingTracker).mock.calls[0][0].fetcher).toBe(safeFetcher);
+    expect(vi.mocked(initializePollingTracker).mock.calls[0][0].fetcher).toEqual(expect.any(Function));
     // Failed transactions stay in the pool.
     expect(vi.mocked(initializePollingTracker).mock.calls[0][0].removeTxFromPool).toBeUndefined();
   });
@@ -263,5 +263,131 @@ describe('safeFetcher', () => {
 
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(pollingCallbacks.onSuccess).not.toHaveBeenCalled();
+  });
+});
+
+describe('Safe transactions of multi-owner Safes', () => {
+  const pendingFor = (days: number) =>
+    createMockSafeResponse({ isExecuted: false, submissionDate: dayjs().subtract(days, 'day').toISOString() });
+
+  let pollingCallbacks: Omit<PollingFetcherParams<SafeTxStatusResponse, Transaction>, 'tx'>;
+
+  const respondPending = (response: SafeTxStatusResponse) =>
+    vi
+      .mocked(fetch)
+      .mockResolvedValueOnce({ ok: true, json: async () => response } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ results: [response] }) } as Response);
+
+  beforeEach(() => {
+    global.fetch = vi.fn();
+    pollingCallbacks = {
+      onSuccess: vi.fn() as PollingFetcherParams<SafeTxStatusResponse, Transaction>['onSuccess'],
+      onFailure: vi.fn() as PollingFetcherParams<SafeTxStatusResponse, Transaction>['onFailure'],
+      onReplaced: vi.fn() as PollingFetcherParams<SafeTxStatusResponse, Transaction>['onReplaced'],
+      onIntervalTick: vi.fn() as PollingFetcherParams<SafeTxStatusResponse, Transaction>['onIntervalTick'],
+      stopPolling: vi.fn() as PollingFetcherParams<SafeTxStatusResponse, Transaction>['stopPolling'],
+    };
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test('keeps waiting past a day without a timeout', async () => {
+    respondPending(pendingFor(10));
+
+    await createSafeFetcher({ pendingTimeoutMs: null })({ tx: mockTx, ...pollingCallbacks });
+
+    expect(pollingCallbacks.onFailure).not.toHaveBeenCalled();
+    expect(pollingCallbacks.stopPolling).not.toHaveBeenCalled();
+  });
+
+  test('gives up only after the configured time', async () => {
+    const threeDays = 3 * 24 * 60 * 60 * 1000;
+    respondPending(pendingFor(2));
+    await createSafeFetcher({ pendingTimeoutMs: threeDays })({ tx: mockTx, ...pollingCallbacks });
+    expect(pollingCallbacks.onFailure).not.toHaveBeenCalled();
+
+    respondPending(pendingFor(4));
+    await createSafeFetcher({ pendingTimeoutMs: threeDays })({ tx: mockTx, ...pollingCallbacks });
+    expect(pollingCallbacks.onFailure).toHaveBeenCalledTimes(1);
+    expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
+  });
+
+  test('the store tracker uses the timeout it is given', async () => {
+    const params = {
+      tx: mockTx,
+      transactionsPool: { [mockTx.txKey]: mockTx },
+      updateTxParams: vi.fn() as unknown as ITxTrackingStore<Transaction>['updateTxParams'],
+      removeTxFromPool: vi.fn() as unknown as ITxTrackingStore<Transaction>['removeTxFromPool'],
+      onError: vi.fn() as unknown as TrackerCallbacks<Transaction>['onError'],
+    };
+    safeTrackerForStore({ ...params, pendingTimeoutMs: null });
+    const fetcher = vi.mocked(initializePollingTracker).mock.calls[0][0].fetcher as typeof safeFetcher;
+
+    respondPending(pendingFor(10));
+    await fetcher({ tx: mockTx, ...pollingCallbacks });
+
+    expect(pollingCallbacks.onFailure).not.toHaveBeenCalled();
+  });
+
+  test('names the configured time when it gives up', () => {
+    const updateTxParams = vi.fn();
+    const onError = vi.fn();
+    safeTrackerForStore({
+      tx: mockTx,
+      transactionsPool: { [mockTx.txKey]: mockTx },
+      updateTxParams,
+      removeTxFromPool: vi.fn(),
+      onError,
+      pendingTimeoutMs: 3 * 24 * 60 * 60 * 1000,
+    });
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    config.onFailure(createMockSafeResponse({ isExecuted: false }));
+
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Safe transaction was not executed within 3 days.' }),
+      expect.anything(),
+    );
+  });
+
+  test('polls every 5 s for the first hour, then every 30 s', () => {
+    safeTrackerForStore({
+      tx: mockTx,
+      transactionsPool: { [mockTx.txKey]: mockTx },
+      updateTxParams: vi.fn(),
+      removeTxFromPool: vi.fn(),
+    });
+    const { pollingInterval } = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    expect(typeof pollingInterval).toBe('function');
+    const interval = pollingInterval as (elapsedMs: number) => number;
+    expect(interval(0)).toBe(5000);
+    expect(interval(59 * 60 * 1000)).toBe(5000);
+    expect(interval(60 * 60 * 1000)).toBe(30000);
+  });
+
+  test('writes the owner confirmations and the threshold while the transaction waits', () => {
+    const updateTxParams = vi.fn();
+    safeTrackerForStore({
+      tx: mockTx,
+      transactionsPool: { [mockTx.txKey]: mockTx },
+      updateTxParams,
+      removeTxFromPool: vi.fn(),
+    });
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+
+    config.onIntervalTick?.(
+      createMockSafeResponse({
+        confirmationsRequired: 3,
+        confirmations: [{ owner: zeroAddress }, { owner: '0x0000000000000000000000000000000000000002' }],
+      }),
+    );
+
+    expect(updateTxParams).toHaveBeenCalledWith(
+      mockTx.txKey,
+      expect.objectContaining({ confirmations: 2, requiredConfirmations: 3 }),
+    );
   });
 });

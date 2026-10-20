@@ -30,6 +30,13 @@ The wagmi config of the app.
 
 Gelato API key; required to run the Gelato tracker.
 
+### safePendingTimeoutMs?
+
+> `optional` **safePendingTimeoutMs?**: `number` \| `null`
+
+How long a Safe transaction may stay unexecuted before the Safe tracker gives up (see `SafeTrackerOptions`); `null`
+waits without a limit. Defaults to one day.
+
 ### tracker
 
 > **tracker**: [`TransactionTracker`](/packages/pulsar-core/enumerations/TransactionTracker.md)

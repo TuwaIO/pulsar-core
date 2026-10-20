@@ -6,7 +6,7 @@ The trackers of `@tuwaio/pulsar-evm` also work without the Pulsar store. Use the
 - track transactions on a server, where there is no `localStorage` and no wallet;
 - need a callback for each stage of the lifecycle instead of store updates.
 
-Without the store nothing is persisted and nothing is resumed after a restart: you decide what to save and when to start tracking again. The trackers use only `viem`, `@wagmi/core` and HTTP APIs, so they run in the browser and in Node.js.
+Without the store nothing is persisted and nothing is resumed after a restart: you decide what to save and when to start tracking again. The trackers use only `viem`, `@wagmi/core` and HTTP APIs (the Safe tracker of `@tuwaio/pulsar-evm/safe` only `viem` and HTTP), so they run in the browser and in Node.js.
 
 ---
 
@@ -118,20 +118,26 @@ In the store, return the batch ID from `actionFunction` and pass `tracker: Trans
 
 ## Safe Multisig and Gelato: Polling Fetchers
 
-Safe and Gelato are tracked by polling an API. Pass their fetcher to `initializePollingTracker` from `@tuwaio/pulsar-core`, which calls it every 5 s by default and gives up after 10 consecutive failed requests (it then calls `onFailure()` without arguments).
+Safe and Gelato are tracked by polling an API. Pass their fetcher to `initializePollingTracker` from `@tuwaio/pulsar-core`, which calls it every 5 s by default (or on the schedule of a `pollingInterval` function) and gives up after 10 consecutive failed requests (it then calls `onFailure()` without arguments).
+
+The Safe tracker is also available as `@tuwaio/pulsar-evm/safe`, an entry that loads neither `@wagmi/core` nor `@tuwaio/orbit-evm`: install `@tuwaio/pulsar-evm`, `@tuwaio/pulsar-core`, `@tuwaio/orbit-core`, `viem` and `dayjs`, and an app built on `viem` alone can track Safe transactions.
 
 > [!NOTE]
 > Gelato relay is deprecated. Use ERC-4337 UserOperations with `@tuwaio/orbit-evm` and `erc4337Tracker` instead.
 
 ```typescript
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
-import { createGelatoClient, gelatoFetcher, safeFetcher } from '@tuwaio/pulsar-evm';
+import { createGelatoClient, gelatoFetcher } from '@tuwaio/pulsar-evm';
+import { createSafeFetcher, safePollingInterval } from '@tuwaio/pulsar-evm/safe';
 
-// Safe: txKey is the safeTxHash, from is the Safe address.
+// Safe: txKey is the safeTxHash, from is the Safe address. Without a timeout it waits until the owners act.
 export function trackSafeTransaction(safeTxHash: `0x${string}`, safeAddress: `0x${string}`, chainId: number) {
   initializePollingTracker({
     tx: { txKey: safeTxHash, chainId, from: safeAddress, pending: true },
-    fetcher: safeFetcher,
+    fetcher: createSafeFetcher({ pendingTimeoutMs: null }),
+    pollingInterval: safePollingInterval, // every 5 s for the first hour, then every 30 s
+    onIntervalTick: (status) =>
+      console.log(`Confirmed by ${status.confirmations?.length ?? 0} of ${status.confirmationsRequired} owners`),
     onSuccess: (status) => console.log('Executed in', status.transactionHash),
     onFailure: (status) => console.error(status ? 'Execution failed' : 'Not found or too many failed requests'),
     onReplaced: (executed) =>
@@ -150,7 +156,7 @@ export function trackGelatoTask(taskId: string, apiKey: string) {
 }
 ```
 
-- **Safe:** the fetcher calls the Safe Transaction Service of the chain (see `SafeTransactionServiceUrls` for the supported chains). A 404 response calls `onFailure()` without a response and stops. A transaction still pending one day after it was proposed calls `onFailure` with its status and stops.
+- **Safe:** the fetcher calls the Safe Transaction Service of the chain (see `SafeTransactionServiceUrls` for the supported chains) and reports each check to `onIntervalTick`, with the owner confirmations collected (`confirmations`) and the threshold (`confirmationsRequired`). A 404 response calls `onFailure()` without a response and stops. A transaction still pending `pendingTimeoutMs` after it was proposed (one day for `safeFetcher` and by default) calls `onFailure` with its status and stops; `createSafeFetcher({ pendingTimeoutMs: null })` waits without a limit.
 - **Gelato:** a task still pending one hour after it was created calls `onFailure` with its status and stops.
 
 These fetchers stop with `withoutRemoving: true`, so a `removeTxFromPool` you pass to `initializePollingTracker` is called only when polling gives up after `maxRetries` consecutive errors.

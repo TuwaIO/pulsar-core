@@ -11,11 +11,12 @@
 
 - **Transaction store:** `createPulsarStore` returns a vanilla Zustand store. Its `executeTxAction` validates the metadata, sets `initialTx` for immediate UI feedback, checks the wallet's chain, runs the `beforeTxProcess` preflight, calls your `actionFunction` to sign and submit, adds the transaction to `transactionsPool` and starts its tracker.
 - **Chain adapters:** pass one adapter or an array. Each transaction goes to the adapter whose `key` matches its `adapter` (the first adapter when none matches). Adapters implement the `TxAdapter` contract, so other chains can be added.
-- **Persistence and resume:** the pool is saved to `localStorage` (see Browser Storage below). After a reload, `initializeTransactionsPool` restarts the trackers of pending transactions. The pool keeps at most `maxTransactions` (default 50) and evicts the oldest one; a finished transaction is dropped `retentionDays` (default 30) after it finished.
+- **Persistence and resume:** the pool is saved to `localStorage` (see Browser Storage below). After a reload, `initializeTransactionsPool` restarts the trackers of pending transactions. The pool keeps at most `maxTransactions` (default 50) by evicting the oldest finished transactions; a transaction still pending is never evicted, so the pool can hold more while many are pending. A finished transaction is dropped `retentionDays` (default 30) after it finished.
 - **Metadata safety:** each `title` string is limited to 100 characters, each `description` string to 300 and the JSON of `payload` to 10 KB, and strings must not contain executable-like patterns (`eval(`, `Function(`, `setTimeout`/`setInterval` with a string, `javascript:`). Invalid metadata throws `PulsarTransactionValidationError` before anything runs; invalid restored or remote transactions are dropped. This is a defensive gate, not a replacement for escaping output in your UI.
 - **Remote sync:** `onRemoteCreate` sends every new transaction to your backend (for example Quasar) in the background, without its API keys, retries unconfirmed syncs later, and never delays or blocks tracking. `injectExternalPendingTxs` and `createTxInMemoryStore` bring the remote history back into the app; both drop transactions that fail validation.
+- **Transaction finished event:** the `onTxFinished` option of `createPulsarStore` and the store's `subscribeTxFinished` are called once when a transaction reaches `Success`, `Failed` or `Replaced`, whatever finished it: its tracker, a tracker restarted after a page reload (which no longer has the `onSuccess`, `onError` and `onReplaced` of `executeTxAction`), or remote sync. Use them for reactions that must also happen after a reload, such as refetching balances; in React, `useTxFinished` of [`@tuwaio/pulsar-react`](https://pulsar.docs.tuwa.io/packages/pulsar-react).
 - **Selectors and React binding:** `selectAllTransactions`, `selectPendingTransactions`, `selectTxByKey` and the `…ByActiveWallet` variants; `createBoundedUseStore` turns the store into a typed React hook.
-- **Tracker building blocks:** `initializePollingTracker` (a polling loop with consecutive-failure retries) and `createTxUpdater` (keeps a tracker's copy of the transaction in sync with its store updates) for custom trackers.
+- **Tracker building blocks:** `initializePollingTracker` (a polling loop with consecutive-failure retries; its `pollingInterval` can be a function of the time since polling started, to poll less often over time) and `createTxUpdater` (keeps a tracker's copy of the transaction in sync with its store updates) for custom trackers.
 
 ---
 
@@ -112,6 +113,42 @@ await pulsarStore.getState().executeTxAction({
 ```
 
 With `abortOnTxError: false` (globally or per call), a `beforeTxProcess` error is logged and the transaction continues. `abortOnTxError` does not apply to `onRemoteCreate`.
+
+### Reacting to finished transactions
+
+The callbacks of `executeTxAction` belong to one page session: functions cannot be saved to `localStorage`, so a transaction still pending at a reload finishes without them. Put reactions that must always happen in `onTxFinished`, which is part of the store's code and runs for every transaction, also after a reload. It runs synchronously while the store records the final status, before the callbacks of the transaction; its return value is not awaited, and an error it throws or a promise it rejects is logged without stopping tracking.
+
+```typescript
+import { createPulsarStore, type Transaction, TransactionStatus, type TxAdapter } from '@tuwaio/pulsar-core';
+
+declare const adapter: TxAdapter<Transaction>; // pulsarEvmAdapter(...) or pulsarSolanaAdapter(...)
+declare function refreshBalances(): void;
+
+export const pulsarStore = createPulsarStore<Transaction>({
+  name: 'pulsar-transactions',
+  adapter,
+  onTxFinished: (tx) => {
+    if (tx.status === TransactionStatus.Success) refreshBalances();
+  },
+});
+
+// Or add a listener later, for example from a component; it returns the function that removes it
+const unsubscribe = pulsarStore.getState().subscribeTxFinished((tx) => console.log(tx.txKey, tx.status));
+unsubscribe();
+```
+
+A transaction that was already final when the store restored it from storage does not call them.
+
+**Which one to use.** Both kinds of callbacks stay; they answer different questions:
+
+|                     | `onTxFinished`, `subscribeTxFinished`, `useTxFinished`                                     | `onSuccess`, `onError`, `onReplaced` of `executeTxAction`                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Runs for            | Every transaction of the store, once, whatever finished it                                 | The one transaction of that call                                                                              |
+| After a page reload | Yes                                                                                        | No: the page that started the transaction is gone                                                             |
+| Receives            | The transaction with its final `status` (and `error` when it failed)                       | The transaction; `onError` also the raw error, `onReplaced` also the transaction as tracking started          |
+| Use it for          | Data that must stay correct: refetching balances or lists, analytics, telling your backend | The interface of the current page: closing a dialog, showing a message in place, navigating to a success page |
+
+Decide what to do from the transaction itself, not from a function attached to it: switch on `tx.type` (your own label, such as `'SWAP'` or `'APPROVE'`) and read what you need from `tx.payload`. One listener can serve any number of transaction kinds, and any number of listeners can be added. For the same transaction, the store's listeners run first, then the callbacks of the call.
 
 ### Remote sync and recovery
 

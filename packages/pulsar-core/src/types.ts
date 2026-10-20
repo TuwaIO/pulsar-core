@@ -132,12 +132,13 @@ export type BaseTransaction = {
   connectorType: string;
   /**
    * Number of block confirmations the EVM trackers wait for before marking the transaction successful. Defaults to 1.
-   * The Solana tracker always waits for the `finalized` commitment instead.
+   * The Solana tracker always waits for the `finalized` commitment instead. For a Safe transaction, the Safe tracker
+   * writes the number of owner confirmations the Safe needs to execute it (its threshold).
    */
   requiredConfirmations?: number;
   /**
    * Confirmations reported by the tracker while the transaction is pending. The Solana tracker sets it to `'MAX'` when
-   * the transaction is finalized.
+   * the transaction is finalized. For a Safe transaction it is the number of owners who have confirmed it so far.
    */
   confirmations?: number | string | null;
   /**
@@ -313,7 +314,8 @@ export type InitialTransaction = InitialTransactionParams & {
 /**
  * Callbacks passed to `executeTxAction` and forwarded to the tracker of that transaction. They are not stored:
  * trackers restarted by `initializeTransactionsPool` or `injectExternalPendingTxs` (for example after a page reload)
- * run without them. Their return values are not awaited.
+ * run without them. Their return values are not awaited. For reactions that must also run after a reload, use the
+ * `onTxFinished` option of `createPulsarStore` or `subscribeTxFinished` of the store: they run first, then these.
  *
  * @template T - The application transaction type.
  */
@@ -336,6 +338,22 @@ export interface TrackerCallbacks<T extends Transaction> {
    */
   onReplaced?: (newTx: T, oldTx: T) => Promise<void> | void;
 }
+
+/**
+ * A listener of the "transaction finished" event: `onTxFinished` of `createPulsarStore` and `subscribeTxFinished` of
+ * the store.
+ *
+ * It is called once per transaction, when the transaction moves from a non-final status to `Success`, `Failed` or
+ * `Replaced`, whatever finished it: the tracker started by `executeTxAction`, a tracker restarted after a page reload
+ * by `initializeTransactionsPool`, or a remote backend through `injectExternalPendingTxs`. Transactions that are
+ * already final when the store restores them from storage do not call it. It runs synchronously while the store
+ * writes the final status, before the `TrackerCallbacks` of the transaction. Its return value is not awaited; an error
+ * it throws or a promise it rejects is logged and does not stop the other listeners.
+ *
+ * @template T - The application transaction type.
+ * @param tx - The transaction with its final `status`.
+ */
+export type TxFinishedListener<T extends Transaction> = (tx: T) => Promise<void> | void;
 
 /**
  * Callbacks that synchronize the local pool with a remote backend (for example Quasar). Passed to
@@ -373,7 +391,11 @@ export type BeforeTxProcess = () => Promise<void> | void;
 export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter<T>> & {
   /** Global preflight callback run before every transaction. A `beforeTxProcess` passed to `executeTxAction` replaces it. */
   beforeTxProcess?: BeforeTxProcess;
-  /** Maximum number of transactions in the pool. When it is full, the oldest one (by `localTimestamp`) is evicted. Defaults to 50. */
+  /**
+   * Maximum number of transactions in the pool. When it is full, the oldest finished ones (by `localTimestamp`) are
+   * evicted; pending transactions are never evicted, so while more of them are pending the pool holds more. Defaults to
+   * 50.
+   */
   maxTransactions?: number;
   /**
    * Days a finished transaction stays in the pool, counted from its `finishedTimestamp` (or `localTimestamp` when it
@@ -389,6 +411,11 @@ export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter
    * `onRemoteCreate`, whose errors never abort the transaction.
    */
   abortOnTxError?: boolean;
+  /**
+   * Called once when a transaction finishes (see `TxFinishedListener`), also when a tracker restarted after a page
+   * reload finishes it. Runs before the listeners added with `subscribeTxFinished`.
+   */
+  onTxFinished?: TxFinishedListener<T>;
 } & SyncCallbacks<T>;
 
 /**
@@ -550,7 +577,7 @@ export interface IInitializeTxTrackingStore<T extends Transaction> {
   initialTx?: InitialTransaction;
   /**
    * Validates a transaction and adds it to the pool with `pending: true`. When the pool already holds
-   * `maxTransactions` transactions, the oldest one is evicted. If `onRemoteCreate` is configured, the transaction gets
+   * `maxTransactions` transactions, the oldest finished ones are evicted (pending ones never are). If `onRemoteCreate` is configured, the transaction gets
    * `syncStatus: 'pending-sync'`, its key is listed in `unsyncedTxKeys`, and `onRemoteCreate` runs in the background
    * (see `SyncCallbacks`). Does not start a tracker.
    * @param tx - The transaction to add.
@@ -561,7 +588,9 @@ export interface IInitializeTxTrackingStore<T extends Transaction> {
   addTxToPool: (tx: T) => Promise<void>;
   /**
    * Merges fields into a transaction of the pool; does nothing if the key is unknown. When `fields.status` is terminal
-   * and the transaction is in `unsyncedTxKeys`, it starts `reconcileUnsyncedTransactions` in the background.
+   * and the transaction is in `unsyncedTxKeys`, it starts `reconcileUnsyncedTransactions` in the background. When it
+   * moves the transaction from a non-final to a final status, it calls the "transaction finished" listeners (see
+   * `TxFinishedListener`).
    * @param txKey - The key of the transaction.
    * @param fields - The fields to merge.
    */
@@ -644,10 +673,19 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
   /**
    * Restarts the trackers of all pending transactions in the pool, for example after a page reload. Pending
    * transactions that fail validation are removed from the pool. Call it once per page load: every call starts new
-   * trackers, and trackers started here have no `TrackerCallbacks`.
+   * trackers. Trackers started here have no `TrackerCallbacks`; `onTxFinished` and `subscribeTxFinished` still run
+   * when they finish a transaction.
    * @returns A promise that resolves when all trackers have started.
    */
   initializeTransactionsPool: () => Promise<void>;
+  /**
+   * Adds a listener of the "transaction finished" event (see `TxFinishedListener`). Listeners live in memory, not in
+   * storage: add them after every page load, for example in a React effect (`useTxFinished` of
+   * `@tuwaio/pulsar-react`). Adding the same function twice registers it once.
+   * @param listener - Called with the transaction when it finishes.
+   * @returns A function that removes the listener.
+   */
+  subscribeTxFinished: (listener: TxFinishedListener<T>) => () => void;
   /**
    * Merges transactions from a remote backend into the pool (cross-device sync). Invalid transactions are skipped
    * with a warning. Pending remote transactions that are not in the pool are added and tracked. Local pending
