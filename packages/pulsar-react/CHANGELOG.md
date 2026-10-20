@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.6.2...pulsar-react-v0.7.0) (2026-10-20)
+
+
+### Features
+
+* transaction finished event, pending transactions kept in the pool, Safe tracker for multi-owner Safes ([881f436](https://github.com/TuwaIO/pulsar-core/commit/881f4364475e592816e2ecf42c33794f14fb7d89))
+
 ## [0.6.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.6.1...pulsar-react-v0.6.2) (2026-10-15)
 
 
