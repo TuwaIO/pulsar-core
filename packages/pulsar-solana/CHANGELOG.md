@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.10.3...pulsar-solana-v0.10.4) (2026-10-23)
+
+
+### Bug Fixes
+
+* track version 1 transactions and never fail a finalized one on missing details ([7857cc0](https://github.com/TuwaIO/pulsar-core/commit/7857cc0a40979ad06e609e3f8d1a89989794021a))
+
 ## [0.10.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.10.2...pulsar-solana-v0.10.3) (2026-10-20)
 
 
