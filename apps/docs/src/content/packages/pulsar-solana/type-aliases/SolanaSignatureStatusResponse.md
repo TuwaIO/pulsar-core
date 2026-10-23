@@ -2,10 +2,11 @@
 
 > **SolanaSignatureStatusResponse** = `object`
 
-Defined in: [trackers/solanaTracker.ts:27](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L27)
+Defined in: [trackers/solanaTracker.ts:28](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L28)
 
 The status of a Solana transaction that [solanaFetcher](/packages/pulsar-solana/functions/solanaFetcher.md) reports: the signature status combined with details
-from `getTransaction`.
+from `getTransaction`. The details (`fee`, `recentBlockhash`, `instructions`) are missing until `getTransaction`
+returns them, and in a success reported without them.
 
 ## Properties
 
@@ -13,7 +14,7 @@ from `getTransaction`.
 
 > **confirmations**: `number` \| `null`
 
-Defined in: [trackers/solanaTracker.ts:31](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L31)
+Defined in: [trackers/solanaTracker.ts:32](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L32)
 
 The number of confirmations (0 once the transaction is rooted).
 
@@ -23,7 +24,7 @@ The number of confirmations (0 once the transaction is rooted).
 
 > **confirmationStatus**: `"processed"` \| `"confirmed"` \| `"finalized"` \| `null`
 
-Defined in: [trackers/solanaTracker.ts:35](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L35)
+Defined in: [trackers/solanaTracker.ts:36](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L36)
 
 The commitment level the transaction has reached.
 
@@ -33,7 +34,7 @@ The commitment level the transaction has reached.
 
 > **err**: `TransactionError` \| `null`
 
-Defined in: [trackers/solanaTracker.ts:33](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L33)
+Defined in: [trackers/solanaTracker.ts:34](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L34)
 
 The on-chain error of a failed transaction, or `null`.
 
@@ -43,7 +44,7 @@ The on-chain error of a failed transaction, or `null`.
 
 > `optional` **expired?**: `boolean`
 
-Defined in: [trackers/solanaTracker.ts:46](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L46)
+Defined in: [trackers/solanaTracker.ts:47](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L47)
 
 `true` when the signature is still unknown and the chain has passed the `lastValidBlockHeight` of the transaction:
 its blockhash expired and it can no longer land.
@@ -54,7 +55,7 @@ its blockhash expired and it can no longer land.
 
 > `optional` **fee?**: `number`
 
-Defined in: [trackers/solanaTracker.ts:37](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L37)
+Defined in: [trackers/solanaTracker.ts:38](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L38)
 
 The transaction fee, in lamports.
 
@@ -64,7 +65,7 @@ The transaction fee, in lamports.
 
 > `optional` **instructions?**: `unknown`[]
 
-Defined in: [trackers/solanaTracker.ts:41](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L41)
+Defined in: [trackers/solanaTracker.ts:42](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L42)
 
 The instructions of the transaction.
 
@@ -74,7 +75,7 @@ The instructions of the transaction.
 
 > `optional` **recentBlockhash?**: `string`
 
-Defined in: [trackers/solanaTracker.ts:39](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L39)
+Defined in: [trackers/solanaTracker.ts:40](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L40)
 
 The blockhash the transaction was signed with.
 
@@ -84,6 +85,6 @@ The blockhash the transaction was signed with.
 
 > **slot**: `number`
 
-Defined in: [trackers/solanaTracker.ts:29](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L29)
+Defined in: [trackers/solanaTracker.ts:30](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L30)
 
 The slot in which the transaction was processed.

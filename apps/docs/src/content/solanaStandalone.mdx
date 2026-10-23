@@ -12,13 +12,13 @@ Without the store nothing is persisted and nothing is resumed after a restart: y
 
 ## Why `solanaFetcher` Instead of Manual Polling
 
-| Situation                              | Manual `getSignatureStatuses` polling                             | `solanaFetcher` with `initializePollingTracker`                                                                            |
-| -------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **The RPC has not seen the signature** | You decide how long to wait.                                      | With `lastValidBlockHeight`, fails as "expired" as soon as the chain passes it; otherwise one hour after `localTimestamp`. |
-| **Transient RPC errors**               | You write the retry logic.                                        | Errors are retried on the next tick; tracking gives up after `maxRetries` consecutive errors.                              |
-| **Tracking resumed later**             | Recent statuses only, unless you pass `searchTransactionHistory`. | Always searches the transaction history, so transactions that finished while you were away are found.                      |
-| **Transaction details**                | A separate `getTransaction` call.                                 | Fetches `fee`, `recentBlockhash` and `instructions` once and adds them to every reported status.                           |
-| **Progress and final status**          | You compare commitment levels yourself.                           | `onIntervalTick` with `processed` and `confirmed`, `onSuccess` at `finalized`, `onFailure` as soon as there is an error.   |
+| Situation                              | Manual `getSignatureStatuses` polling                             | `solanaFetcher` with `initializePollingTracker`                                                                                                                            |
+| -------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **The RPC has not seen the signature** | You decide how long to wait.                                      | With `lastValidBlockHeight`, fails as "expired" as soon as the chain passes it; otherwise one hour after `localTimestamp`.                                                 |
+| **Transient RPC errors**               | You write the retry logic.                                        | Errors are retried on the next tick; tracking gives up after `maxRetries` consecutive errors.                                                                              |
+| **Tracking resumed later**             | Recent statuses only, unless you pass `searchTransactionHistory`. | Always searches the transaction history, so transactions that finished while you were away are found.                                                                      |
+| **Transaction details**                | A separate `getTransaction` call.                                 | Fetches `fee`, `recentBlockhash` and `instructions` once and adds them to every reported status; a `getTransaction` error never hides the status or fails the transaction. |
+| **Progress and final status**          | You compare commitment levels yourself.                           | `onIntervalTick` with `processed` and `confirmed`, `onSuccess` at `finalized`, `onFailure` as soon as there is an error.                                                   |
 
 ---
 
@@ -57,12 +57,12 @@ export function trackSignature(signature: string, lastValidBlockHeight?: number)
 How each check works:
 
 1. `getSignatureStatuses` with `searchTransactionHistory: true`. If the signature is unknown and the transaction has a `lastValidBlockHeight` (or `signAndSendSolanaTx` sent it in this page, which records the height), the fetcher sends `getBlockHeight` (commitment `confirmed`): once the chain is past that height, it checks the signature once more and, still unknown, calls `onFailure` with `expired: true`, because the blockhash expired and the transaction can never land. Otherwise it waits for the next tick, until one hour after `localTimestamp`.
-2. `getTransaction` (commitment `confirmed`) for the fee, blockhash and instructions, only until it has returned them once for this `tx` object: the details are cached in memory for the tracking run, or taken from `tx` if it already has them.
-3. `onIntervalTick` with the status (and the details once known); then `onFailure` with the status if it has an `err`, right away, or `onSuccess` when it is `finalized` and the details are known. A transaction that is not finalized one hour after `localTimestamp` calls `onFailure`.
+2. `getTransaction` (commitment `confirmed`, `maxSupportedTransactionVersion: 1`, so legacy, version 0 and version 1 transactions are read) for the fee, blockhash and instructions, only until it has returned them once for this `tx` object: the details are cached in memory for the tracking run, or taken from `tx` if it already has them. A `getTransaction` error is not thrown: the check goes on with the status alone and asks again on the next tick.
+3. `onIntervalTick` with the status (and the details once known); then `onFailure` with the status if it has an `err`, right away, or `onSuccess` when it is `finalized` and the details are known. A finalized transaction whose details are still missing on its 10th check gets `onSuccess` without them, with a warning in the console. A transaction that is not finalized one hour after `localTimestamp` calls `onFailure`; a finalized one never does.
 
 `lastValidBlockHeight` comes from the blockhash you signed with (`getLatestBlockhash` returns both). Durable-nonce transactions have no such limit: leave it out for them.
 
-RPC errors are thrown to `initializePollingTracker`, which retries on the next tick and calls `onFailure()` without arguments after `maxRetries` (default 10) consecutive errors.
+Errors of `getSignatureStatuses` and `getBlockHeight` are thrown to `initializePollingTracker`, which retries on the next tick and calls `onFailure()` without arguments after `maxRetries` (default 10) consecutive errors.
 
 ---
 

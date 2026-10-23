@@ -22,7 +22,8 @@ import { peekSolanaTxLifetime, takeSolanaTxLifetime } from '../utils/solanaTxLif
 
 /**
  * The status of a Solana transaction that {@link solanaFetcher} reports: the signature status combined with details
- * from `getTransaction`.
+ * from `getTransaction`. The details (`fee`, `recentBlockhash`, `instructions`) are missing until `getTransaction`
+ * returns them, and in a success reported without them.
  */
 export type SolanaSignatureStatusResponse = {
   /** The slot in which the transaction was processed. */
@@ -63,6 +64,9 @@ const TIMEOUT_ERROR_MESSAGE = 'Transaction tracking timed out or the transaction
 /** Unconfirmed transactions stop being tracked after this many hours. */
 const MAX_PENDING_HOURS = 1;
 
+/** On this check, a finalized transaction whose details are still missing succeeds without them. */
+const MAX_FINALIZED_CHECKS_WITHOUT_DETAILS = 10;
+
 /**
  * Transaction details already fetched with `getTransaction`, by tracked transaction object. `initializePollingTracker`
  * passes the same object on every tick, so the details are fetched once per tracking run; entries are released with
@@ -73,6 +77,9 @@ const transactionDetailsCache = new WeakMap<
   Pick<SolanaFetcherTx, 'fee' | 'recentBlockhash' | 'instructions'>
 >();
 
+/** The number of checks that found the transaction finalized but without its details, by tracked transaction object. */
+const finalizedChecksWithoutDetails = new WeakMap<object, number>();
+
 /**
  * A fetcher for `initializePollingTracker` from `@tuwaio/pulsar-core` that checks a Solana transaction once.
  *
@@ -80,7 +87,9 @@ const transactionDetailsCache = new WeakMap<
  * cache are found after a page reload) to `tx.rpcUrl`, or to the public endpoint of the cluster in `tx.chainId`,
  * through a client cached by `createSolanaRPC` from `@tuwaio/orbit-solana`. Until it has the fee, blockhash and
  * instructions (from `tx`, or fetched on an earlier tick of the same tracking run and cached in memory for the `tx`
- * object), it also sends `getTransaction` (commitment `confirmed`).
+ * object), it also sends `getTransaction` (commitment `confirmed`, `maxSupportedTransactionVersion: 1`, so legacy,
+ * version 0 and version 1 transactions are read). A `getTransaction` error is not thrown: the check goes on with the
+ * status alone and the details are asked again on the next tick.
  *
  * - Signature not found, with `tx.lastValidBlockHeight` (or the one `signAndSendSolanaTx` recorded for the signature
  *   in this page): sends `getBlockHeight` (commitment `confirmed`); once the
@@ -90,15 +99,19 @@ const transactionDetailsCache = new WeakMap<
  *   polling.
  * - Found: calls `onIntervalTick` with the status (`confirmationStatus` `processed`, `confirmed` or `finalized`, plus
  *   the details once `getTransaction` returns them), then: an on-chain error calls `onFailure` with it right away;
- *   `finalized` with the details calls `onSuccess`. A transaction not finalized one hour after `localTimestamp` calls
- *   `onFailure` with its status.
+ *   `finalized` with the details calls `onSuccess`. `finalized` without the details keeps polling for them and, on
+ *   the 10th such check of the `tx` object (counted in memory), logs a warning and calls `onSuccess` without them. A
+ *   transaction not finalized one hour after `localTimestamp` calls `onFailure` with its status; a finalized one never
+ *   does.
  *
  * Every terminal outcome stops polling with `withoutRemoving: true`, so the transaction is never removed.
- * - RPC errors are thrown, so the polling tracker retries and gives up after `maxRetries` consecutive errors.
+ * - Errors of `getSignatureStatuses` and `getBlockHeight` are thrown, so the polling tracker retries and gives up after
+ *   `maxRetries` consecutive errors.
  *
  * @param params - The fetcher parameters provided by `initializePollingTracker`.
  * @returns A promise that resolves when the check is done.
- * @throws `Error` when `tx.adapter` is not `OrbitAdapter.SOLANA`, and any RPC error.
+ * @throws `Error` when `tx.adapter` is not `OrbitAdapter.SOLANA`, and any error of `getSignatureStatuses` or
+ * `getBlockHeight`.
  *
  * @example
  * ```ts
@@ -126,8 +139,8 @@ export async function solanaFetcher({
     throw new Error('Tx adapter is not Solana. Please set the adapter to "solana" in the transaction object.');
   }
 
-  // RPC errors are not caught here: they propagate to `initializePollingTracker`, which retries the next tick
-  // and gives up only after `maxRetries` consecutive failures.
+  // Status and block height errors are not caught here: they propagate to `initializePollingTracker`, which retries
+  // the next tick and gives up only after `maxRetries` consecutive failures.
 
   // Initialize the Solana RPC client
   const rpc = createSolanaRPC({ rpcUrlOrMoniker: tx.rpcUrl ?? getCluster({ cluster: tx.chainId as string }) });
@@ -170,24 +183,31 @@ export async function solanaFetcher({
       ? { fee: tx.fee, recentBlockhash: tx.recentBlockhash, instructions: tx.instructions }
       : transactionDetailsCache.get(tx);
 
+  // The details are optional: a `getTransaction` error (e.g. a transaction version newer than the one requested) must
+  // neither hide the status nor fail the transaction, so it is caught and the status is reported alone.
+  let detailsError: unknown;
   if (!details) {
-    const txDetails = await rpc
-      .getTransaction(tx.txKey as Signature, {
-        commitment: 'confirmed',
-        encoding: 'json',
-        maxSupportedTransactionVersion: 0,
-      })
-      .send();
-    const { meta, transaction } = txDetails || {};
+    try {
+      const txDetails = await rpc
+        .getTransaction(tx.txKey as Signature, {
+          commitment: 'confirmed',
+          encoding: 'json',
+          maxSupportedTransactionVersion: 1,
+        })
+        .send();
+      const { meta, transaction } = txDetails || {};
 
-    // The details become available shortly after the status: report the status alone until then.
-    if (meta && transaction) {
-      details = {
-        fee: Number(meta.fee ?? 0),
-        recentBlockhash: transaction.message.recentBlockhash?.toString(),
-        instructions: transaction.message.instructions as unknown[],
-      };
-      transactionDetailsCache.set(tx, details);
+      // The details become available shortly after the status: report the status alone until then.
+      if (meta && transaction) {
+        details = {
+          fee: Number(meta.fee ?? 0),
+          recentBlockhash: transaction.message.recentBlockhash?.toString(),
+          instructions: transaction.message.instructions as unknown[],
+        };
+        transactionDetailsCache.set(tx, details);
+      }
+    } catch (error) {
+      detailsError = error;
     }
   }
 
@@ -209,8 +229,20 @@ export async function solanaFetcher({
     return;
   }
 
-  // Handle finalized transaction state (the success carries the details)
-  if (typedStatus.confirmationStatus === 'finalized' && details) {
+  // Handle finalized transaction state: the success carries the details, or goes without them once they are still
+  // missing after a few checks. A finalized transaction never reaches the one-hour timeout below.
+  if (typedStatus.confirmationStatus === 'finalized') {
+    if (!details) {
+      const checksWithoutDetails = (finalizedChecksWithoutDetails.get(tx) ?? 0) + 1;
+      if (checksWithoutDetails < MAX_FINALIZED_CHECKS_WITHOUT_DETAILS) {
+        finalizedChecksWithoutDetails.set(tx, checksWithoutDetails);
+        return;
+      }
+      console.warn(
+        `Solana transaction ${tx.txKey} is finalized, but its details were not fetched in ${MAX_FINALIZED_CHECKS_WITHOUT_DETAILS} checks; reporting success without them.`,
+        ...(detailsError === undefined ? [] : [detailsError]),
+      );
+    }
     onSuccess(typedStatus);
     stopPolling({ withoutRemoving: true });
     return;
@@ -224,19 +256,22 @@ export async function solanaFetcher({
 }
 
 /**
- * Tracks a Solana transaction of the Pulsar store with {@link solanaFetcher} (every second, up to 30 consecutive RPC
+ * Tracks a Solana transaction of the Pulsar store with {@link solanaFetcher} (every second, up to 30 consecutive status
  * errors) and writes the results to the store: `confirmationStatus` (`processed`, then `confirmed`, usually within a
  * second of sending), `confirmations`, `slot`, `fee`, `instructions` and `recentBlockhash` while pending, then
  * `Success` with `confirmationStatus: 'finalized'` and `confirmations: 'MAX'`, or `Failed` with the normalized error,
- * and the local time as `finishedTimestamp`.
+ * and the local time as `finishedTimestamp`. The details (`fee`, `instructions`, `recentBlockhash`) are optional: when
+ * `getTransaction` fails, the status is still written, and a finalized transaction whose details are still missing
+ * after 10 checks is marked `Success` without them.
  *
  * A transaction sent with `signAndSendSolanaTx` gets the last valid block height of its blockhash, saved as
  * `lastValidBlockHeight`: when the chain passes it without the transaction, it is marked `Failed` with an "expired"
  * error, within seconds instead of an hour.
  *
- * When tracking gives up (30 consecutive RPC errors, or not finalized one hour after `localTimestamp`), the transaction
- * is marked `Failed` and stays in the pool. The callbacks receive the transaction with every update written by the
- * tracker; `onError` receives the on-chain error, or an `Error` when the transaction expired or tracking timed out.
+ * When tracking gives up (30 consecutive errors of `getSignatureStatuses` or `getBlockHeight`, or not finalized one
+ * hour after `localTimestamp`), the transaction is marked `Failed` and stays in the pool. The callbacks receive the
+ * transaction with every update written by the tracker; `onError` receives the on-chain error, or an `Error` when the
+ * transaction expired or tracking timed out.
  *
  * @template T - The application transaction type.
  * @param params - The transaction, the store members and the callbacks.
