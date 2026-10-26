@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/npm/l/@tuwaio/pulsar-core.svg)](./LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/TuwaIO/pulsar-core/release.yml?branch=main)](https://github.com/TuwaIO/pulsar-core/actions)
 
-<img src="https://cdn.jsdelivr.net/gh/TuwaIO/workflows@main/preview/repos/pulsar_core.png" alt="Pulsar" width="400" style="border-radius: 10px; text-align: center; margin-bottom: 20px; margin-top: 20px; margin-left: auto; margin-right: auto; display: block;" />
+<img src="https://tuwa.io/brand/pulsar_core.png" alt="Pulsar" width="400" style="border-radius: 10px; text-align: center; margin-bottom: 20px; margin-top: 20px; margin-left: auto; margin-right: auto; display: block;" />
 
 **Pulsar** is the transaction tracking project of TUWA Stage 2: a headless, framework-agnostic engine that follows EVM and Solana transactions from the wallet prompt to their final status. It keeps transactions in a store outside your components, persists them to `localStorage`, resumes tracking after a page reload and detects EVM speed-ups and cancels made in the wallet, with no UI components and no required backend.
 
