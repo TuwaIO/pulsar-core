@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
-    "@tuwaio/docs-ui": "^0.5.4",
+    "@tuwaio/docs-ui": "^0.5.5",
     "@tuwaio/orbit-core": "^0.6.0",
     "@tuwaio/pulsar-core": "workspace:^",
     "framer-motion": "^14.3.0",
