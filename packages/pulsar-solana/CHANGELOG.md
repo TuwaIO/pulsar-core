@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.5](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.10.4...pulsar-solana-v0.10.5) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** @tuwaio/orbit-solana 0.7.2 ([2970a01](https://github.com/TuwaIO/pulsar-core/commit/2970a01d66a6910878599c5df2a5dd8dd79d6edb))
+* **deps:** update dependencies except TypeScript ([eb0c743](https://github.com/TuwaIO/pulsar-core/commit/eb0c7430d3ca511534c06465273bbc0a68eb6199))
+
 ## [0.10.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.10.3...pulsar-solana-v0.10.4) (2026-10-23)
 
 

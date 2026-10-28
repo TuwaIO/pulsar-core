@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.11.0...pulsar-core-v0.11.1) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependencies except TypeScript ([eb0c743](https://github.com/TuwaIO/pulsar-core/commit/eb0c7430d3ca511534c06465273bbc0a68eb6199))
+
 ## [0.11.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.10.2...pulsar-core-v0.11.0) (2026-10-20)
 
 
