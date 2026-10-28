@@ -1,0 +1,110 @@
+# 独立使用 Solana 追踪器
+
+`@tuwaio/pulsar-solana` 的 Solana 追踪器也可以脱离 Pulsar 状态库单独使用。以下情况适合这样做：
+
+- 交易保存在您自己的状态中（Redux、MobX、另一个 Zustand store、数据库）；
+- 在服务器上追踪交易，那里既没有 `localStorage` 也没有钱包；
+- 需要在每次检查后收到回调，而不是状态库更新。
+
+脱离状态库时，不会持久化任何内容，重启后也不会恢复追踪：由您决定保存什么、何时重新开始追踪。追踪器只使用 `@solana/kit` 的 RPC 调用，因此可以在浏览器与 Node.js 中运行。
+
+---
+
+## 为什么使用 `solanaFetcher` 而不是手动轮询 [#why-solanafetcher-instead-of-manual-polling]
+
+| 场景                   | 手动轮询 `getSignatureStatuses`                           | `solanaFetcher` 配合 `initializePollingTracker`                                                                                              |
+| ---------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RPC 尚未看到该签名** | 由您决定等待多久。                                        | 提供 `lastValidBlockHeight` 时，链一旦超过该高度即以“expired”失败；否则在 `localTimestamp` 一小时后失败。                                    |
+| **RPC 临时错误**       | 需要自己编写重试逻辑。                                    | 出错后在下一次轮询时重试；连续 `maxRetries` 次出错后放弃追踪。                                                                               |
+| **稍后恢复追踪**       | 除非传入 `searchTransactionHistory`，否则只返回近期状态。 | 始终搜索交易历史，因此能找到您离开期间已完成的交易。                                                                                         |
+| **交易详情**           | 需要单独调用 `getTransaction`。                           | 只获取一次 `fee`、`recentBlockhash` 与 `instructions`，并附加到之后报告的每个状态中；`getTransaction` 出错既不会掩盖状态，也不会让交易失败。 |
+| **进度与最终状态**     | 需要自己比较确认级别 (commitment)。                       | `processed` 与 `confirmed` 时调用 `onIntervalTick`，达到 `finalized` 时调用 `onSuccess`，一旦出错立即调用 `onFailure`。                      |
+
+---
+
+## 追踪签名：`solanaFetcher` [#tracking-a-signature-solanafetcher]
+
+将 `solanaFetcher` 传给 `@tuwaio/pulsar-core` 的 `initializePollingTracker`。它会在后台开始轮询并立即返回：
+
+```typescript
+import { OrbitAdapter, SOLANA_CHAIN_IDS } from '@tuwaio/orbit-core';
+import { initializePollingTracker } from '@tuwaio/pulsar-core';
+import { solanaFetcher } from '@tuwaio/pulsar-solana';
+
+export function trackSignature(signature: string, lastValidBlockHeight?: number) {
+  initializePollingTracker({
+    tx: {
+      adapter: OrbitAdapter.SOLANA,
+      txKey: signature,
+      chainId: SOLANA_CHAIN_IDS.devnet, // the CAIP-2 chain ID; picks the public endpoint when rpcUrl is not set
+      rpcUrl: 'https://api.devnet.solana.com', // prefer your own RPC provider
+      localTimestamp: Math.floor(Date.now() / 1000), // when the transaction was sent, in seconds
+      lastValidBlockHeight, // from the blockhash the transaction was signed with; optional (see below)
+      pending: true, // polling starts only for pending transactions
+    },
+    fetcher: solanaFetcher,
+    pollingInterval: 1000,
+    onIntervalTick: (status) => console.log(status.confirmationStatus, status.confirmations), // 'confirmed' within about a second
+    onSuccess: (status) => console.log('Finalized in slot', status.slot, 'fee', status.fee),
+    onFailure: (status) => {
+      if (status?.expired) console.error('Expired: the blockhash is no longer valid, send the transaction again');
+      else console.error(status ? 'Failed on-chain' : 'Not finalized in time or too many RPC errors', status?.err);
+    },
+  });
+}
+```
+
+每次检查的过程：
+
+1. 以 `searchTransactionHistory: true` 调用 `getSignatureStatuses`。如果签名未知，且交易带有 `lastValidBlockHeight`（或者交易由本页面中的 `signAndSendSolanaTx` 发送，它会记录该高度），获取器会发送 `getBlockHeight`（确认级别 `confirmed`）：一旦链超过该高度，它会再检查一次签名；若仍未知，则以 `expired: true` 调用 `onFailure`，因为 blockhash 已过期，该交易永远无法上链。否则它会等待下一次轮询，直到 `localTimestamp` 之后一小时。
+2. 调用 `getTransaction`（确认级别 `confirmed`，`maxSupportedTransactionVersion: 1`，因此可读取 legacy、版本 0 与版本 1 交易）以获取手续费、blockhash 与指令，直到它为该 `tx` 对象成功返回一次为止：详情在本次追踪期间缓存在内存中；如果 `tx` 已包含详情，则直接使用。`getTransaction` 出错不会抛出：本次检查仅凭状态继续进行，并在下一次轮询时再次请求。
+3. 以状态（以及已获知的详情）调用 `onIntervalTick`；随后，如果状态包含 `err`，立即以该状态调用 `onFailure`；或者在状态为 `finalized` 且详情已知时调用 `onSuccess`。已最终确认、但在第 10 次检查时仍缺少详情的交易，会在没有详情的情况下收到 `onSuccess`，并在控制台输出警告。在 `localTimestamp` 一小时后仍未最终确认的交易会调用 `onFailure`；已最终确认的交易则永远不会。
+
+`lastValidBlockHeight` 来自您签名时使用的 blockhash（`getLatestBlockhash` 会同时返回两者）。持久 nonce (durable nonce) 交易没有这一限制：请不要为它们传入该值。
+
+`getSignatureStatuses` 与 `getBlockHeight` 的错误会抛给 `initializePollingTracker`，它会在下一次轮询时重试，并在连续 `maxRetries`（默认 10）次出错后不带参数调用 `onFailure()`。
+
+---
+
+## 辅助函数 [#helpers]
+
+### `signAndSendSolanaTx` [#signandsendsolanatx]
+
+用一条或多条指令构建版本 0 交易，以签名者作为手续费支付方并使用最新的 blockhash，然后由签名者签名并发送。它返回 base58 签名，可直接用于 `solanaFetcher`：
+
+```typescript
+import type { Instruction, TransactionSendingSigner } from '@solana/kit';
+import type { SolanaClient } from '@tuwaio/orbit-solana';
+import { signAndSendSolanaTx } from '@tuwaio/pulsar-solana';
+
+export async function send(client: SolanaClient, signer: TransactionSendingSigner, instructions: Instruction[]) {
+  const signature = await signAndSendSolanaTx({ client, signer, instruction: instructions });
+  console.log('Sent', signature);
+  return signature;
+}
+```
+
+出错时它会以 RPC 或签名者的错误拒绝 (reject)，例如用户在钱包中拒绝该交易时。
+
+### `checkSolanaChain` [#checksolanachain]
+
+精确比较两个集群标识符，不一致时抛出 `SolanaChainMismatchError`。Solana 适配器用它来比较 `desiredChainID` 与为该钱包连接保存的集群：比较前先用 `@tuwaio/orbit-solana` 的 `getCluster` 将两者都转换为集群名称，因此 `devnet`、`solana:devnet` 与使用创世哈希的链 ID `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` 都能匹配：
+
+```typescript
+import { checkSolanaChain, SolanaChainMismatchError } from '@tuwaio/pulsar-solana';
+
+export function isOnCluster(requiredCluster: string, walletCluster: string): boolean {
+  try {
+    checkSolanaChain(requiredCluster, walletCluster);
+    return true;
+  } catch (error) {
+    if (error instanceof SolanaChainMismatchError) {
+      console.warn(`Switch the wallet from ${error.currentChain} to ${error.requiredChain}.`);
+      return false;
+    }
+    throw error;
+  }
+}
+```
+
+完整的导出列表见 **[`@tuwaio/pulsar-solana` 参考文档](/packages/pulsar-solana)**。

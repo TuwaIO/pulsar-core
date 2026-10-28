@@ -1,0 +1,180 @@
+# 独立使用 EVM 追踪器
+
+`@tuwaio/pulsar-evm` 的追踪器也可以脱离 Pulsar 状态库单独使用。以下情况适合这样做：
+
+- 交易保存在您自己的状态中（Redux、MobX、另一个 Zustand store、数据库）；
+- 在服务器上追踪交易，那里既没有 `localStorage` 也没有钱包；
+- 需要在生命周期的每个阶段收到回调，而不是状态库更新。
+
+脱离状态库时，不会持久化任何内容，重启后也不会恢复追踪：由您决定保存什么、何时重新开始追踪。追踪器只使用 `viem`、`@wagmi/core` 与 HTTP API（`@tuwaio/pulsar-evm/safe` 的 Safe 追踪器只使用 `viem` 与 HTTP），因此可以在浏览器与 Node.js 中运行。
+
+---
+
+## 为什么使用 `evmTracker` 而不是 `waitForTransactionReceipt` [#why-evmtracker-instead-of-waitfortransactionreceipt]
+
+| 场景                   | `waitForTransactionReceipt` (viem)                         | `evmTracker` (Pulsar)                                                                     |
+| ---------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **节点尚未索引该交易** | 等待收据；不获取交易详情。                                 | 重试 `getTransaction`（默认 10 次，间隔 3 秒），并将详情（nonce、手续费、`to`）传给回调。 |
+| **RPC 临时错误**       | 超时或自身重试次数用尽后，调用被拒绝 (reject)。            | 以递增的延迟最多重试 5 次等待收据，然后调用 `onFailure`。                                 |
+| **在钱包中加速或取消** | 通过 `onReplaced` 报告；Promise 以新的收据完成 (resolve)。 | 调用 `onReplaced` 并停止，因此被替换的交易永远不会被报告为成功。                          |
+| **多次区块确认**       | 单次调用的 `confirmations` 选项。                          | 每 5 秒轮询一次确认数，并通过 `onConfirmationsUpdate` 报告每个数值。                      |
+
+`evmTracker` 会为每一笔已打包上链的交易调用 `onSuccess`，包括执行回滚 (reverted) 的交易：请检查 `receipt.status`。
+
+---
+
+## 标准交易：`evmTracker` [#standard-transactions-evmtracker]
+
+`evmTracker` 通过交易所在链的 wagmi 客户端按哈希追踪交易，追踪结束时它返回的 Promise 才会完成：
+
+```typescript
+import { evmTracker } from '@tuwaio/pulsar-evm';
+import { createConfig, http } from '@wagmi/core';
+import { sepolia } from 'viem/chains';
+
+const wagmiConfig = createConfig({ chains: [sepolia], transports: { [sepolia.id]: http() } });
+
+export async function trackTransaction(hash: `0x${string}`) {
+  await evmTracker({
+    config: wagmiConfig,
+    tx: { txKey: hash, chainId: sepolia.id, requiredConfirmations: 2 },
+    onTxDetailsFetched: (details) => console.log('Nonce', details.nonce),
+    onConfirmationsUpdate: (confirmations) => console.log(`${confirmations}/2 confirmations`),
+    onSuccess: async (_details, receipt) => {
+      console.log(receipt.status === 'success' ? 'Confirmed' : 'Reverted', receipt.blockNumber);
+    },
+    onReplaced: (replacement) => console.log(`Replaced (${replacement.reason}) by`, replacement.transaction.hash),
+    onFailure: (error) => console.error('Tracking failed', error),
+  });
+}
+```
+
+该链必须已在 wagmi 配置中设置。对于零哈希或未知的链，追踪会立即失败。
+
+---
+
+## ERC-4337 UserOperation：`erc4337Tracker` [#erc-4337-useroperations-erc4337tracker]
+
+`erc4337Tracker` 每 2 秒轮询一次 `eth_getUserOperationReceipt`，直到 UserOperation 被打包进 bundle，连续 60 次请求失败后放弃。它以 bundle 交易的哈希调用 `onSuccess`；如果还需要区块确认数，请将该哈希传给 `evmTracker`：
+
+```typescript
+import { erc4337Tracker, evmTracker } from '@tuwaio/pulsar-evm';
+import { type Config } from '@wagmi/core';
+import { sepolia } from 'viem/chains';
+
+declare const wagmiConfig: Config;
+
+export function trackUserOperation(userOpHash: `0x${string}`, pimlicoApiKey?: string) {
+  erc4337Tracker({
+    // Uses bundlerUrl if set, else api.pimlico.io with the API key, else the rate-limited public Pimlico endpoint.
+    tx: { txKey: userOpHash, chainId: sepolia.id, pimlicoApiKey, pending: true },
+    onSuccess: ({ hash }) => {
+      if (!hash) return;
+      void evmTracker({
+        config: wagmiConfig,
+        tx: { txKey: hash, chainId: sepolia.id },
+        onTxDetailsFetched: () => {},
+        onSuccess: async (_details, receipt) => console.log('Bundle transaction', receipt.status),
+        onReplaced: () => {},
+        onFailure: (error) => console.error(error),
+      });
+    },
+    onFailure: (result) => console.error('UserOperation failed:', result?.reason ?? 'too many failed requests'),
+  });
+}
+```
+
+`erc4337Tracker` 会立即返回；轮询在后台运行。执行回滚的 UserOperation 会以其回滚原因调用 `onFailure`。
+
+---
+
+## EIP-5792 批量调用：`eip5792Tracker` [#eip-5792-call-batches-eip5792tracker]
+
+`eip5792Tracker` 每 2 秒通过 wagmi 连接器，向使用 `wallet_sendCalls` 发送该批量调用的钱包查询其状态，连续 60 次请求失败后放弃（例如在没有连接钱包时）。它以执行该批量调用的交易哈希调用 `onSuccess`；如果还需要区块确认数，请将该哈希传给 `evmTracker`：
+
+```typescript
+import { eip5792Tracker } from '@tuwaio/pulsar-evm';
+import { type Config, sendCalls } from '@wagmi/core';
+import { type Address, encodeFunctionData, erc20Abi } from 'viem';
+
+declare const wagmiConfig: Config;
+
+export async function payInOneBatch(token: Address, to: Address, amount: bigint) {
+  const { id } = await sendCalls(wagmiConfig, {
+    calls: [{ to: token, data: encodeFunctionData({ abi: erc20Abi, functionName: 'transfer', args: [to, amount] }) }],
+  });
+  eip5792Tracker({
+    tx: { txKey: id, pending: true },
+    config: wagmiConfig,
+    onSuccess: ({ hash }) => console.log('Executed in', hash),
+    onFailure: (result) => console.error('Batch failed:', result?.reason ?? 'too many failed requests'),
+  });
+}
+```
+
+在状态库中，请从 `actionFunction` 返回批量调用 ID，并传入 `tracker: TransactionTracker.EIP5792`：状态库的追踪器会写入执行交易的 `hash`，随后在链上追踪它；重新加载后，会从已到达的阶段继续。
+
+---
+
+## Safe 多签与 Gelato：轮询获取器 [#safe-multisig-and-gelato-polling-fetchers]
+
+Safe 与 Gelato 通过轮询 API 进行追踪。将它们的获取器 (fetcher) 传给 `@tuwaio/pulsar-core` 的 `initializePollingTracker`，它默认每 5 秒调用一次获取器（或按 `pollingInterval` 函数给出的间隔），连续 10 次请求失败后放弃（此时会不带参数调用 `onFailure()`）。
+
+Safe 追踪器也可以通过 `@tuwaio/pulsar-evm/safe` 使用，该入口既不加载 `@wagmi/core` 也不加载 `@tuwaio/orbit-evm`：安装 `@tuwaio/pulsar-evm`、`@tuwaio/pulsar-core`、`@tuwaio/orbit-core`、`viem` 与 `dayjs` 后，仅基于 `viem` 构建的应用也能追踪 Safe 交易。
+
+> [!NOTE]
+> Gelato 中继已弃用。请改用 ERC-4337 UserOperation，配合 `@tuwaio/orbit-evm` 与 `erc4337Tracker`。
+
+```typescript
+import { initializePollingTracker } from '@tuwaio/pulsar-core';
+import { createGelatoClient, gelatoFetcher } from '@tuwaio/pulsar-evm';
+import { createSafeFetcher, safePollingInterval } from '@tuwaio/pulsar-evm/safe';
+
+// Safe: txKey is the safeTxHash, from is the Safe address. Without a timeout it waits until the owners act.
+export function trackSafeTransaction(safeTxHash: `0x${string}`, safeAddress: `0x${string}`, chainId: number) {
+  initializePollingTracker({
+    tx: { txKey: safeTxHash, chainId, from: safeAddress, pending: true },
+    fetcher: createSafeFetcher({ pendingTimeoutMs: null }),
+    pollingInterval: safePollingInterval, // every 5 s for the first hour, then every 30 s
+    onIntervalTick: (status) =>
+      console.log(`Confirmed by ${status.confirmations?.length ?? 0} of ${status.confirmationsRequired} owners`),
+    onSuccess: (status) => console.log('Executed in', status.transactionHash),
+    onFailure: (status) => console.error(status ? 'Execution failed' : 'Not found or too many failed requests'),
+    onReplaced: (executed) =>
+      console.warn('Another transaction with the same nonce was executed:', executed.safeTxHash),
+  });
+}
+
+// Gelato (deprecated): txKey is the task ID.
+export function trackGelatoTask(taskId: string, apiKey: string) {
+  initializePollingTracker({
+    tx: { txKey: taskId, pending: true },
+    fetcher: gelatoFetcher(createGelatoClient({ apiKey })),
+    onSuccess: (status) => console.log('Task succeeded', status),
+    onFailure: (status) => console.error('Task failed', status),
+  });
+}
+```
+
+- **Safe：** 获取器会调用该链的 Safe Transaction Service（支持的链见 `SafeTransactionServiceUrls`），并将每次检查结果连同已收集的所有者确认 (`confirmations`) 与阈值 (`confirmationsRequired`) 报告给 `onIntervalTick`。404 响应会不带响应地调用 `onFailure()` 并停止。交易在提议后经过 `pendingTimeoutMs`（`safeFetcher` 与默认值均为一天）仍处于挂起状态时，会以其状态调用 `onFailure` 并停止；`createSafeFetcher({ pendingTimeoutMs: null })` 则无限期等待。
+- **Gelato：** 任务在创建一小时后仍处于挂起状态时，会以其状态调用 `onFailure` 并停止。
+
+这些获取器以 `withoutRemoving: true` 停止，因此传给 `initializePollingTracker` 的 `removeTxFromPool` 只会在轮询连续 `maxRetries` 次出错而放弃时被调用。
+
+---
+
+## 辅助函数 [#helpers]
+
+- `checkTransactionsTracker({ actionTxKey, connectorType, tracker })` 返回 Pulsar 会为某个交易键使用的追踪器：`ERC4337` 或 `Gelato` 仅在显式请求时返回，Safe 连接器 (`evm:safe`) 返回 `Safe`，其他情况返回 `Ethereum`。
+- `speedUpTxAction` 与 `cancelTxAction` 以相同的 nonce 重新发送一笔挂起的 EIP-1559 交易，并将手续费提高 15%。它们需要追踪器获取到的 `nonce` 与手续费字段；随后 `evmTracker` 会将原交易报告为已替换。
+- `selectEvmTxExplorerLink` 生成交易在区块浏览器（或 Safe 应用）中的链接。
+
+```typescript
+import { TransactionTracker } from '@tuwaio/pulsar-core';
+import { checkTransactionsTracker } from '@tuwaio/pulsar-evm';
+
+const { tracker, txKey } = checkTransactionsTracker({ actionTxKey: '0xabc123', connectorType: 'evm:metamask' });
+console.log(tracker === TransactionTracker.Ethereum, txKey); // true '0xabc123'
+```
+
+完整的导出列表见 **[`@tuwaio/pulsar-evm` 参考文档](/packages/pulsar-evm)**。

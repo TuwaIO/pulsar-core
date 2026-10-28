@@ -1,0 +1,103 @@
+# Вступ
+
+<p align="center">
+  <img
+    src="https://tuwa.io/brand/pulsar_core.png"
+    alt="Pulsar"
+    width="450"
+    style={{ borderRadius: '12px', margin: '24px auto', display: 'block' }}
+  />
+</p>
+
+**Pulsar** — проєкт відстеження транзакцій Етапу 2 TUWA: headless-модуль, незалежний від фреймворку, що супроводжує транзакції EVM і Solana від запиту в гаманці до фінального статусу. Він тримає транзакції у сховищі поза вашими компонентами, зберігає їх у `localStorage`, відновлює відстеження після перезавантаження сторінки та розпізнає пришвидшення й скасування EVM-транзакцій, зроблені в гаманці. Без UI-компонентів і без обов’язкового бекенду.
+
+---
+
+## 🏛️ Місце Pulsar у TUWA [#️-where-pulsar-fits-in-tuwa]
+
+TUWA побудовано етапами. Кожен етап спирається на попередні:
+
+| Етап                                       | Проєкти                                                                                                                            | Роль                                                        |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| **1 — Базова автентифікація та примітиви** | [SIWX](https://siwx.docs.tuwa.io/), [Orbit Utils](https://orbit.docs.tuwa.io/)                                                     | Автентифікація CAIP-122 і мультичейн-примітиви              |
+| **2 — Стан та підключення**                | [Satellite Connect](https://satellite.docs.tuwa.io/), **Pulsar**                                                                   | Машина станів підключення гаманців і відстеження транзакцій |
+| **3 — Бекенд та синхронізація**            | [Quasar Cloud](https://docs.tuwa.io/quasar) або [Quasar Community](https://github.com/TuwaIO/quasar-community) на власному сервері | Індексація транзакцій і синхронізація між пристроями        |
+| **4 — Інтерфейс користувача**              | [Nova UI Kit](https://stories.tuwa.io/)                                                                                            | Дизайн-система та компоненти React                          |
+
+Pulsar побудовано на Orbit Utils (помічники для мереж, клієнти RPC і бандлерів). Nova Transactions показує його стан у модальних вікнах і спливаючих сповіщеннях, а Quasar може індексувати його транзакції та синхронізувати їх між пристроями; обидва необов’язкові. Адаптери читають підключення гаманця, яке зберігає Satellite Connect, але Pulsar можна використовувати з будь-яким налаштуванням wagmi чи Wallet Standard.
+
+---
+
+## 🧭 Принципи [#-principles]
+
+1. **Транзакції — це стан, а не логіка компонентів:** транзакція живе у сховищі, а не в `useState` кнопки. Вона зберігається під час навігації, після розмонтування компонентів і після перезавантаження, а кожен компонент читає той самий статус.
+2. **Headless і без прив’язки до фреймворку:** сховище — це vanilla-сховище Zustand без UI. Прив’язки до React винесено в окремий пакет, а UI — у Nova Transactions.
+3. **Одне сховище, багато мереж:** логіка мереж живе в адаптерах, що реалізують один спільний інтерфейс. EVM-адаптер відстежує стандартні транзакції, UserOperations ERC-4337, батчі викликів EIP-5792 і мультипідписні транзакції Safe; Solana-адаптер відстежує підписи.
+4. **Лише сучасні Web3-бібліотеки:** `viem` і `@wagmi/core` для EVM, `@solana/kit` і Wallet Standard для Solana. Жодних `ethers.js`, `web3.js`, `@solana/web3.js` чи `gill`.
+5. **Local-first, бекенд необов’язковий:** відстеження працює в браузері через ваші RPC-ендпоінти. Віддалена синхронізація — це необов’язковий колбек, який ніколи не блокує транзакцію.
+6. **Прозорі побічні ефекти:** сторінки пакетів перелічують, що зберігається в `localStorage`, до яких хостів надсилаються запити і коли трекери припиняють спроби.
+
+---
+
+## 🔄 Як відстежується транзакція [#-how-a-transaction-is-tracked]
+
+```
+executeTxAction({ actionFunction, params })
+  │ validate title, description and payload
+  │ initialTx = { isInitializing: true }          → UI shows the signing state
+  │ adapter.checkChainForTx                       → EVM: the wallet is asked to switch networks
+  │ beforeTxProcess()                             → your preflight check (optional)
+  │ actionFunction()                              → the wallet signs; returns a hash, userOpHash, safeTxHash or signature
+  │ adapter.checkTransactionsTracker              → picks the tracker
+  │ addTxToPool                                   → onRemoteCreate (optional), saved to localStorage
+  ▼
+tracker (background)                              → updateTxParams(...) until pending: false
+                                                    status: Success | Failed | Replaced
+```
+
+Після перезавантаження `initializeTransactionsPool` запускає трекери всіх транзакцій, що досі перебувають у стані `pending`.
+
+---
+
+## 🧩 Пакети [#-packages]
+
+| Пакет                                              | Рівень | Що надає                                                                                                                                             | Peer-залежності                                                                                                       |
+| -------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| [`@tuwaio/pulsar-core`](/packages/pulsar-core)     | L3     | Сховище транзакцій зі збереженням, інтерфейс адаптера, валідація метаданих, хуки віддаленої синхронізації, селектори, подія «транзакцію завершено»   | `@tuwaio/orbit-core` ≥ 0.3, `zustand` 5.x, `immer` 11.x, `dayjs` 1.x                                                  |
+| [`@tuwaio/pulsar-evm`](/packages/pulsar-evm)       | L4     | EVM-адаптер; трекери стандартних транзакцій, ERC-4337, EIP-5792, Safe і Gelato (застарілий); пришвидшення, скасування; точка входу `/safe` без wagmi | `@tuwaio/pulsar-core` ≥ 0.10, `viem` 2.x; для основної точки входу також `@tuwaio/orbit-evm` ≥ 0.3, `@wagmi/core` 3.x |
+| [`@tuwaio/pulsar-solana`](/packages/pulsar-solana) | L4     | Solana-адаптер, трекер підписів, `signAndSendSolanaTx`                                                                                               | `@tuwaio/pulsar-core` ≥ 0.8, `@tuwaio/orbit-solana` ≥ 0.3, `@solana/kit` ≥ 8.2                                        |
+| [`@tuwaio/pulsar-react`](/packages/pulsar-react)   | L4     | Хуки `useInitializeTransactionsPool` і `useTxFinished`                                                                                               | `react` ≥ 19.2.3                                                                                                      |
+
+Кожна сторінка пакета показує README пакета, а за ним — довідник усіх експортів, згенерований із вихідного коду TypeScript. Мережевим пакетам L4 також потрібні peer-залежності `@tuwaio/pulsar-core` і пакетів Orbit, які вони використовують (для Solana — пакети `@wallet-standard` з `@tuwaio/orbit-solana`); команди нижче встановлюють їх.
+
+---
+
+## 💾 Встановлення [#-installation]
+
+Встановіть основний пакет і ті пакети L4, які потрібні вашому застосунку:
+
+```bash
+# L3 core
+pnpm add @tuwaio/pulsar-core @tuwaio/orbit-core zustand immer dayjs
+
+# L4 EVM
+pnpm add @tuwaio/pulsar-evm @tuwaio/orbit-evm @wagmi/core viem
+
+# L4 Solana
+pnpm add @tuwaio/pulsar-solana @tuwaio/orbit-solana @solana/kit @wallet-standard/app @wallet-standard/ui-core @wallet-standard/ui-registry
+
+# L4 React
+pnpm add @tuwaio/pulsar-react react
+```
+
+---
+
+## 📚 Що далі [#-next-steps]
+
+- Пройдіть **[посібник «Відстеження транзакцій у React»](https://docs.tuwa.io/guides/react-transaction-tracking)**, щоб крок за кроком додати Pulsar до React-застосунку з гаманцем EVM або Solana.
+- Почніть із готового застосунку: **[Стартові шаблони](https://docs.tuwa.io/guides/starter-templates)**.
+- Відстежуйте транзакції без сховища, у власному стані чи на сервері: **[Автономні трекери EVM](/evmStandalone)** і **[Автономні трекери Solana](/solanaStandalone)**.
+- Перегляньте розділ **[Пакети](/packages)**: там повний довідник кожного пакета.
+- Прочитайте **[«Чому стан Web3-транзакцій зламаний»](https://docs.tuwa.io/guides/why-web3-transaction-state-is-broken)** про збої стану транзакцій, прив’язаного до компонентів, з урахуванням яких створено Pulsar, і **[посібник з ERC-4337](https://docs.tuwa.io/guides/erc-4337-sovereign-account-abstraction)** про смарт-акаунти з Orbit EVM і двофазне відстеження UserOperation у Pulsar.
+- Синхронізуйте транзакції між пристроями з Quasar: дивіться **[посібник «Синхронізація транзакцій із Quasar»](https://docs.tuwa.io/guides/quasar-transaction-sync)**.
+- Вихідний код — на **[GitHub](https://github.com/TuwaIO/pulsar-core)**.

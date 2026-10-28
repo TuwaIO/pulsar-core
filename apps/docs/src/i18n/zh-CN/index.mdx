@@ -1,0 +1,103 @@
+# 简介
+
+<p align="center">
+  <img
+    src="https://tuwa.io/brand/pulsar_core.png"
+    alt="Pulsar"
+    width="450"
+    style={{ borderRadius: '12px', margin: '24px auto', display: 'block' }}
+  />
+</p>
+
+**Pulsar** 是 TUWA 第 2 阶段的交易追踪项目：一个无头、框架无关的引擎，从钱包弹出签名请求开始，一路追踪 EVM 与 Solana 交易直至最终状态。它在组件之外的状态库中保存交易，将其持久化到 `localStorage`，在页面重新加载后恢复追踪，并能识别用户在钱包中对 EVM 交易进行的加速与取消。它不包含 UI 组件，也不强制依赖后端。
+
+---
+
+## 🏛️ Pulsar 在 TUWA 中的位置 [#️-where-pulsar-fits-in-tuwa]
+
+TUWA 按阶段构建，每个阶段都建立在之前的阶段之上：
+
+| 阶段                       | 项目                                                                                                                  | 作用                        |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| **1 — 核心认证与底层原语** | [SIWX](https://siwx.docs.tuwa.io/)、[Orbit Utils](https://orbit.docs.tuwa.io/)                                        | CAIP-122 身份认证与多链原语 |
+| **2 — 状态机与连接层**     | [Satellite Connect](https://satellite.docs.tuwa.io/)、**Pulsar**                                                      | 钱包连接状态机与交易追踪    |
+| **3 — 服务端与状态同步**   | [Quasar Cloud](https://docs.tuwa.io/quasar) 或自部署的 [Quasar Community](https://github.com/TuwaIO/quasar-community) | 交易索引与跨设备同步        |
+| **4 — 用户界面组件**       | [Nova UI Kit](https://stories.tuwa.io/)                                                                               | React 设计系统与组件        |
+
+Pulsar 构建于 Orbit Utils 之上（链辅助函数、RPC 与 Bundler 客户端）。Nova Transactions 将它的状态渲染为模态框与弹窗提示 (Toast)，Quasar 可以索引它的交易并在设备之间同步；两者都是可选的。适配器会读取 Satellite Connect 保存的钱包连接，但您也可以在任何 wagmi 或 Wallet Standard 环境中使用 Pulsar。
+
+---
+
+## 🧭 设计原则 [#-principles]
+
+1. **交易是状态，而不是组件逻辑：** 交易存放在状态库中，而不是某个按钮的 `useState` 里。它在页面导航、组件卸载与重新加载后依然保留，每个组件读取的都是同一个状态。
+2. **无头且框架无关：** 状态库是不含 UI 的原生 (vanilla) Zustand store。React 绑定位于独立的包中，UI 由 Nova Transactions 提供。
+3. **一个状态库，多条链：** 链相关逻辑位于实现同一接口的适配器中。EVM 适配器追踪标准交易、ERC-4337 UserOperation、EIP-5792 批量调用与 Safe 多签交易；Solana 适配器追踪交易签名。
+4. **只使用现代 Web3 库：** EVM 使用 `viem` 与 `@wagmi/core`，Solana 使用 `@solana/kit` 与 Wallet Standard。不使用 `ethers.js`、`web3.js`、`@solana/web3.js` 或 `gill`。
+5. **本地优先，后端可选：** 追踪在浏览器中通过您自己的 RPC 端点运行。远程同步是一个可选回调，从不阻塞交易。
+6. **透明的副作用：** 各包页面列出了写入 `localStorage` 的内容、会访问的主机，以及追踪器何时放弃。
+
+---
+
+## 🔄 交易如何被追踪 [#-how-a-transaction-is-tracked]
+
+```
+executeTxAction({ actionFunction, params })
+  │ validate title, description and payload
+  │ initialTx = { isInitializing: true }          → UI shows the signing state
+  │ adapter.checkChainForTx                       → EVM: the wallet is asked to switch networks
+  │ beforeTxProcess()                             → your preflight check (optional)
+  │ actionFunction()                              → the wallet signs; returns a hash, userOpHash, safeTxHash or signature
+  │ adapter.checkTransactionsTracker              → picks the tracker
+  │ addTxToPool                                   → onRemoteCreate (optional), saved to localStorage
+  ▼
+tracker (background)                              → updateTxParams(...) until pending: false
+                                                    status: Success | Failed | Replaced
+```
+
+页面重新加载后，`initializeTransactionsPool` 会为所有仍处于 `pending` 状态的交易重新启动追踪器。
+
+---
+
+## 🧩 软件包 [#-packages]
+
+| 软件包                                             | 层级 | 提供的功能                                                                                                               | 对等依赖                                                                                            |
+| -------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| [`@tuwaio/pulsar-core`](/packages/pulsar-core)     | L3   | 支持持久化的交易状态库、适配器接口、元数据校验、远程同步钩子、选择器、“交易已完成”事件                                   | `@tuwaio/orbit-core` ≥ 0.3, `zustand` 5.x, `immer` 11.x, `dayjs` 1.x                                |
+| [`@tuwaio/pulsar-evm`](/packages/pulsar-evm)       | L4   | EVM 适配器；标准交易、ERC-4337、EIP-5792、Safe 与 Gelato（已弃用）交易的追踪器；加速、取消；不依赖 wagmi 的 `/safe` 入口 | `@tuwaio/pulsar-core` ≥ 0.10, `viem` 2.x；主入口还需要 `@tuwaio/orbit-evm` ≥ 0.3, `@wagmi/core` 3.x |
+| [`@tuwaio/pulsar-solana`](/packages/pulsar-solana) | L4   | Solana 适配器、签名追踪器、`signAndSendSolanaTx`                                                                         | `@tuwaio/pulsar-core` ≥ 0.8, `@tuwaio/orbit-solana` ≥ 0.3, `@solana/kit` ≥ 8.2                      |
+| [`@tuwaio/pulsar-react`](/packages/pulsar-react)   | L4   | `useInitializeTransactionsPool` 与 `useTxFinished` Hook                                                                  | `react` ≥ 19.2.3                                                                                    |
+
+每个包页面先展示该包的 README，然后是根据 TypeScript 源码生成的全部导出的参考文档。L4 链相关包还需要 `@tuwaio/pulsar-core` 以及其所用 Orbit 包的对等依赖（Solana 需要 `@tuwaio/orbit-solana` 的 `@wallet-standard` 包）；下面的命令会一并安装它们。
+
+---
+
+## 💾 安装 [#-installation]
+
+安装核心包以及应用所需的 L4 包：
+
+```bash
+# L3 core
+pnpm add @tuwaio/pulsar-core @tuwaio/orbit-core zustand immer dayjs
+
+# L4 EVM
+pnpm add @tuwaio/pulsar-evm @tuwaio/orbit-evm @wagmi/core viem
+
+# L4 Solana
+pnpm add @tuwaio/pulsar-solana @tuwaio/orbit-solana @solana/kit @wallet-standard/app @wallet-standard/ui-core @wallet-standard/ui-registry
+
+# L4 React
+pnpm add @tuwaio/pulsar-react react
+```
+
+---
+
+## 📚 后续步骤 [#-next-steps]
+
+- 按照 **[在 React 中追踪交易指南](https://docs.tuwa.io/guides/react-transaction-tracking)**，逐步将 Pulsar 接入使用 EVM 或 Solana 钱包的 React 应用。
+- 从完整的应用开始：**[启动模板](https://docs.tuwa.io/guides/starter-templates)**。
+- 不使用状态库，在您自己的状态中或服务器上追踪交易：**[独立使用 EVM 追踪器](/evmStandalone)** 与 **[独立使用 Solana 追踪器](/solanaStandalone)**。
+- 浏览 **[软件包](/packages)** 部分，查看每个包的完整参考。
+- 阅读 **[为什么 Web3 交易状态管理如此困难](https://docs.tuwa.io/guides/why-web3-transaction-state-is-broken)**，了解 Pulsar 所针对的、绑定在组件上的交易状态有哪些失效场景；阅读 **[ERC-4337 指南](https://docs.tuwa.io/guides/erc-4337-sovereign-account-abstraction)**，了解如何结合 Orbit EVM 使用智能账户，以及 Pulsar 对 UserOperation 的两阶段追踪。
+- 通过 Quasar 在设备之间同步交易：参见 **[将交易同步至 Quasar 指南](https://docs.tuwa.io/guides/quasar-transaction-sync)**。
+- 在 **[GitHub](https://github.com/TuwaIO/pulsar-core)** 阅读源代码。

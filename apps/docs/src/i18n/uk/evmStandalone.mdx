@@ -1,0 +1,180 @@
+# Автономні трекери EVM
+
+Трекери `@tuwaio/pulsar-evm` працюють і без сховища Pulsar. Використовуйте їх, коли ви:
+
+- зберігаєте транзакції у власному стані (Redux, MobX, інше сховище Zustand, база даних);
+- відстежуєте транзакції на сервері, де немає ні `localStorage`, ні гаманця;
+- хочете отримувати колбек на кожному етапі життєвого циклу замість оновлень сховища.
+
+Без сховища нічого не зберігається і нічого не відновлюється після перезапуску: ви самі вирішуєте, що зберігати і коли знову почати відстеження. Трекери використовують лише `viem`, `@wagmi/core` і HTTP API (трекер Safe з `@tuwaio/pulsar-evm/safe` — лише `viem` і HTTP), тому працюють і в браузері, і в Node.js.
+
+---
+
+## Чому `evmTracker`, а не `waitForTransactionReceipt` [#why-evmtracker-instead-of-waitfortransactionreceipt]
+
+| Ситуація                                  | `waitForTransactionReceipt` (viem)                                                | `evmTracker` (Pulsar)                                                                                                    |
+| ----------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Вузол ще не проіндексував транзакцію**  | Чекає на квитанцію; деталі транзакції не запитуються.                             | Повторює `getTransaction` (за замовчуванням 10 разів з інтервалом 3 с) і передає деталі (nonce, комісії, `to`) у колбек. |
+| **Тимчасові помилки RPC**                 | Виклик відхиляється, щойно спливає його тайм-аут або вичерпуються власні повтори. | До 5 разів повторює очікування квитанції зі зростаючою затримкою, потім викликає `onFailure`.                            |
+| **Пришвидшення або скасування в гаманці** | Повідомляється через `onReplaced`; проміс виконується з новою квитанцією.         | Викликає `onReplaced` і зупиняється, тож замінену транзакцію ніколи не буде позначено як успішну.                        |
+| **Кілька підтверджень**                   | Параметр `confirmations` одного виклику.                                          | Кожні 5 с опитує кількість підтверджень і повідомляє кожне значення через `onConfirmationsUpdate`.                       |
+
+`evmTracker` викликає `onSuccess` для кожної транзакції, включеної в блок, зокрема й для відхилених (reverted): перевіряйте `receipt.status`.
+
+---
+
+## Стандартні транзакції: `evmTracker` [#standard-transactions-evmtracker]
+
+`evmTracker` відстежує транзакцію за її хешем через клієнт wagmi її мережі й повертає результат, коли відстеження завершено:
+
+```typescript
+import { evmTracker } from '@tuwaio/pulsar-evm';
+import { createConfig, http } from '@wagmi/core';
+import { sepolia } from 'viem/chains';
+
+const wagmiConfig = createConfig({ chains: [sepolia], transports: { [sepolia.id]: http() } });
+
+export async function trackTransaction(hash: `0x${string}`) {
+  await evmTracker({
+    config: wagmiConfig,
+    tx: { txKey: hash, chainId: sepolia.id, requiredConfirmations: 2 },
+    onTxDetailsFetched: (details) => console.log('Nonce', details.nonce),
+    onConfirmationsUpdate: (confirmations) => console.log(`${confirmations}/2 confirmations`),
+    onSuccess: async (_details, receipt) => {
+      console.log(receipt.status === 'success' ? 'Confirmed' : 'Reverted', receipt.blockNumber);
+    },
+    onReplaced: (replacement) => console.log(`Replaced (${replacement.reason}) by`, replacement.transaction.hash),
+    onFailure: (error) => console.error('Tracking failed', error),
+  });
+}
+```
+
+Мережу має бути налаштовано в конфігурації wagmi. Для нульового хешу або невідомої мережі відстеження одразу завершується помилкою.
+
+---
+
+## UserOperations ERC-4337: `erc4337Tracker` [#erc-4337-useroperations-erc4337tracker]
+
+`erc4337Tracker` кожні 2 с опитує `eth_getUserOperationReceipt`, доки UserOperation не потрапить до бандла, і припиняє спроби після 60 невдалих запитів поспіль. Він викликає `onSuccess` із хешем транзакції бандла; передайте цей хеш у `evmTracker`, якщо вам потрібні ще й підтвердження блоків:
+
+```typescript
+import { erc4337Tracker, evmTracker } from '@tuwaio/pulsar-evm';
+import { type Config } from '@wagmi/core';
+import { sepolia } from 'viem/chains';
+
+declare const wagmiConfig: Config;
+
+export function trackUserOperation(userOpHash: `0x${string}`, pimlicoApiKey?: string) {
+  erc4337Tracker({
+    // Uses bundlerUrl if set, else api.pimlico.io with the API key, else the rate-limited public Pimlico endpoint.
+    tx: { txKey: userOpHash, chainId: sepolia.id, pimlicoApiKey, pending: true },
+    onSuccess: ({ hash }) => {
+      if (!hash) return;
+      void evmTracker({
+        config: wagmiConfig,
+        tx: { txKey: hash, chainId: sepolia.id },
+        onTxDetailsFetched: () => {},
+        onSuccess: async (_details, receipt) => console.log('Bundle transaction', receipt.status),
+        onReplaced: () => {},
+        onFailure: (error) => console.error(error),
+      });
+    },
+    onFailure: (result) => console.error('UserOperation failed:', result?.reason ?? 'too many failed requests'),
+  });
+}
+```
+
+`erc4337Tracker` повертає керування одразу; опитування триває у фоні. Відхилена (reverted) UserOperation викликає `onFailure` з причиною відхилення.
+
+---
+
+## Батчі викликів EIP-5792: `eip5792Tracker` [#eip-5792-call-batches-eip5792tracker]
+
+`eip5792Tracker` кожні 2 с через конектор wagmi запитує статус батчу в гаманця, який надіслав цей батч через `wallet_sendCalls`, і припиняє спроби після 60 невдалих запитів поспіль (наприклад, поки жоден гаманець не підключено). Він викликає `onSuccess` із хешем транзакції, яка виконала батч; передайте цей хеш у `evmTracker`, якщо вам потрібні ще й підтвердження блоків:
+
+```typescript
+import { eip5792Tracker } from '@tuwaio/pulsar-evm';
+import { type Config, sendCalls } from '@wagmi/core';
+import { type Address, encodeFunctionData, erc20Abi } from 'viem';
+
+declare const wagmiConfig: Config;
+
+export async function payInOneBatch(token: Address, to: Address, amount: bigint) {
+  const { id } = await sendCalls(wagmiConfig, {
+    calls: [{ to: token, data: encodeFunctionData({ abi: erc20Abi, functionName: 'transfer', args: [to, amount] }) }],
+  });
+  eip5792Tracker({
+    tx: { txKey: id, pending: true },
+    config: wagmiConfig,
+    onSuccess: ({ hash }) => console.log('Executed in', hash),
+    onFailure: (result) => console.error('Batch failed:', result?.reason ?? 'too many failed requests'),
+  });
+}
+```
+
+У сховищі поверніть ID батчу з `actionFunction` і передайте `tracker: TransactionTracker.EIP5792`: трекер сховища записує `hash` транзакції, що виконала батч, а потім відстежує її в мережі, а після перезавантаження продовжує з того етапу, якого досяг.
+
+---
+
+## Мультипідпис Safe і Gelato: фетчери з опитуванням [#safe-multisig-and-gelato-polling-fetchers]
+
+Safe і Gelato відстежуються опитуванням API. Передайте їхній фетчер у `initializePollingTracker` з `@tuwaio/pulsar-core`, який за замовчуванням викликає його кожні 5 с (або за розкладом функції `pollingInterval`) і припиняє спроби після 10 невдалих запитів поспіль (тоді він викликає `onFailure()` без аргументів).
+
+Трекер Safe також доступний як `@tuwaio/pulsar-evm/safe` — точка входу, яка не завантажує ні `@wagmi/core`, ні `@tuwaio/orbit-evm`: встановіть `@tuwaio/pulsar-evm`, `@tuwaio/pulsar-core`, `@tuwaio/orbit-core`, `viem` і `dayjs`, і застосунок, побудований лише на `viem`, зможе відстежувати транзакції Safe.
+
+> [!NOTE]
+> Релей Gelato застарів. Натомість використовуйте UserOperations ERC-4337 з `@tuwaio/orbit-evm` і `erc4337Tracker`.
+
+```typescript
+import { initializePollingTracker } from '@tuwaio/pulsar-core';
+import { createGelatoClient, gelatoFetcher } from '@tuwaio/pulsar-evm';
+import { createSafeFetcher, safePollingInterval } from '@tuwaio/pulsar-evm/safe';
+
+// Safe: txKey is the safeTxHash, from is the Safe address. Without a timeout it waits until the owners act.
+export function trackSafeTransaction(safeTxHash: `0x${string}`, safeAddress: `0x${string}`, chainId: number) {
+  initializePollingTracker({
+    tx: { txKey: safeTxHash, chainId, from: safeAddress, pending: true },
+    fetcher: createSafeFetcher({ pendingTimeoutMs: null }),
+    pollingInterval: safePollingInterval, // every 5 s for the first hour, then every 30 s
+    onIntervalTick: (status) =>
+      console.log(`Confirmed by ${status.confirmations?.length ?? 0} of ${status.confirmationsRequired} owners`),
+    onSuccess: (status) => console.log('Executed in', status.transactionHash),
+    onFailure: (status) => console.error(status ? 'Execution failed' : 'Not found or too many failed requests'),
+    onReplaced: (executed) =>
+      console.warn('Another transaction with the same nonce was executed:', executed.safeTxHash),
+  });
+}
+
+// Gelato (deprecated): txKey is the task ID.
+export function trackGelatoTask(taskId: string, apiKey: string) {
+  initializePollingTracker({
+    tx: { txKey: taskId, pending: true },
+    fetcher: gelatoFetcher(createGelatoClient({ apiKey })),
+    onSuccess: (status) => console.log('Task succeeded', status),
+    onFailure: (status) => console.error('Task failed', status),
+  });
+}
+```
+
+- **Safe:** фетчер звертається до Safe Transaction Service мережі (підтримувані мережі перелічено в `SafeTransactionServiceUrls`) і передає кожну перевірку в `onIntervalTick` разом із зібраними підтвердженнями власників (`confirmations`) і порогом (`confirmationsRequired`). Відповідь 404 викликає `onFailure()` без відповіді й зупиняє відстеження. Транзакція, що все ще очікує через `pendingTimeoutMs` після того, як її запропонували (один день для `safeFetcher` і за замовчуванням), викликає `onFailure` зі своїм статусом і зупиняє відстеження; `createSafeFetcher({ pendingTimeoutMs: null })` чекає без обмеження.
+- **Gelato:** завдання, що все ще очікує через годину після створення, викликає `onFailure` зі своїм статусом і зупиняє відстеження.
+
+Ці фетчери зупиняються з `withoutRemoving: true`, тому `removeTxFromPool`, переданий у `initializePollingTracker`, викликається лише тоді, коли опитування припиняється після `maxRetries` помилок поспіль.
+
+---
+
+## Помічники [#helpers]
+
+- `checkTransactionsTracker({ actionTxKey, connectorType, tracker })` повертає трекер, який Pulsar використав би для ключа: `ERC4337` або `Gelato` лише на запит, `Safe` для конекторів Safe (`evm:safe`), інакше `Ethereum`.
+- `speedUpTxAction` і `cancelTxAction` повторно надсилають EIP-1559-транзакцію, що очікує, з тим самим nonce і комісіями, підвищеними на 15%. Їм потрібні `nonce` і поля комісій, які отримав трекер; після цього `evmTracker` повідомляє, що вихідну транзакцію замінено.
+- `selectEvmTxExplorerLink` будує посилання на транзакцію в експлорері блоків (або в застосунку Safe).
+
+```typescript
+import { TransactionTracker } from '@tuwaio/pulsar-core';
+import { checkTransactionsTracker } from '@tuwaio/pulsar-evm';
+
+const { tracker, txKey } = checkTransactionsTracker({ actionTxKey: '0xabc123', connectorType: 'evm:metamask' });
+console.log(tracker === TransactionTracker.Ethereum, txKey); // true '0xabc123'
+```
+
+Повний список експортів — у **[довіднику `@tuwaio/pulsar-evm`](/packages/pulsar-evm)**.

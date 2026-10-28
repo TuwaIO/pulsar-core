@@ -10,7 +10,7 @@ The site follows the TUWA **Packages** layout introduced by Orbit Utils and used
 
 - **Framework:** Next.js 16 (App Router)
 - **Docs theme:** Nextra 4 (`nextra`, `nextra-theme-docs`)
-- **Shared TUWA UI:** `@tuwaio/docs-ui` (navbar, footer, logo, code blocks, design tokens)
+- **Shared TUWA UI:** `@tuwaio/docs-ui` (navbar, footer, logo, code blocks, design tokens, the layout and page route in three languages)
 - **Styling:** Tailwind CSS 4
 - **Search:** Pagefind (built in the `postbuild` step)
 - **Reference generation:** TypeDoc + `typedoc-plugin-markdown`, plus two local plugins in [`typedoc/`](./typedoc)
@@ -69,6 +69,30 @@ Hand-written pages are MDX files in `src/content`; the folder structure maps to 
 - **EVM Trackers Standalone** / **Solana Trackers Standalone**: using the trackers without the store.
 
 Each topic has one home: a package README keeps a short usage example and links to the page with the full scenario; the Introduction links to pages instead of repeating code. Scenarios that combine several TUWA projects live in the [docs hub guides](https://docs.tuwa.io/guides): the React setup with a wallet connector is the [React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking), the Cosmos Playground templates are on [Starter Templates](https://docs.tuwa.io/guides/starter-templates). Quasar integration is documented in the [Quasar transaction sync guide](https://docs.tuwa.io/guides/quasar-transaction-sync).
+
+---
+
+## 🌐 Languages
+
+The site is in **English**, **Українська** and **简体中文**, as the [docs hub](https://docs.tuwa.io): every page keeps one URL, the language switch sits in the navbar, and the reader's choice is kept in `localStorage` (`tuwa-locale`, forgotten after 30 days; no cookie). The layout (`DocsLayout`) and the page route (`createDocsPage`) come from `@tuwaio/docs-ui`, with the interface texts and the common sidebar titles; `src/app/layout.tsx` adds the titles of the two guide pages (`sidebarTitles`).
+
+```
+src/i18n/
+├── pages.ts                 # Translated pages by route ('/', '/evmStandalone', '/solanaStandalone', '/packages')
+├── mdx.d.ts                 # Types of the imported MDX files
+├── uk/
+│   ├── index.mdx            # Translates src/content/index.mdx
+│   ├── evmStandalone.mdx    # Translates src/content/evmStandalone.mdx
+│   ├── solanaStandalone.mdx # Translates src/content/solanaStandalone.mdx
+│   └── packages/index.mdx   # Translates the generated src/content/packages/index.md
+└── zh-CN/                   # The same files in Simplified Chinese
+```
+
+Only the hand-written pages are translated; package READMEs and the API reference stay in English in every language, with a short note in the reader's language. The translated packages overview says this in a sentence that its English page does not have; apart from it, a translation says what its English page says. A translation keeps the code blocks of its English page unchanged and in the same order (comments included), the heading levels with the English heading ids (`## 💾 Встановлення [#-installation]`, so anchors work in every language) and the same links. `pnpm i18n:check` (also part of `pnpm docs:gen` and of the build) checks it:
+
+```bash
+pnpm --filter @tuwaio/pulsar-core-docs i18n:check
+```
 
 ---
 

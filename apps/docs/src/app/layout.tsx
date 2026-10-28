@@ -1,15 +1,28 @@
 import '@/styles/app.css';
 
-import { Footer, Navbar, PreferenceExpiry, SiteLogo } from '@tuwaio/docs-ui';
+import { PreferenceExpiry, SiteLogo } from '@tuwaio/docs-ui';
+import { DocsLayout } from '@tuwaio/docs-ui/nextra';
 import type { Metadata } from 'next';
 import NextTopLoader from 'nextjs-toploader';
 import { Head } from 'nextra/components';
 import { getPageMap } from 'nextra/page-map';
-import { Layout } from 'nextra-theme-docs';
 
 import { navLinks } from '@/constants';
 
 const logo = <SiteLogo width={126} height={40} className="tuwadocs:transition-opacity tuwadocs:duration-300" />;
+
+// Sidebar titles of the guide pages in Ukrainian and Simplified Chinese (`Introduction`, `Packages`, `Guides` and
+// `Overview` come translated from docs-ui)
+const sidebarTitles = {
+  uk: {
+    'EVM Trackers Standalone': 'Автономні трекери EVM',
+    'Solana Trackers Standalone': 'Автономні трекери Solana',
+  },
+  'zh-CN': {
+    'EVM Trackers Standalone': '独立使用 EVM 追踪器',
+    'Solana Trackers Standalone': '独立使用 Solana 追踪器',
+  },
+};
 
 // --- Metadata Configuration ---
 export const metadata: Metadata = {
@@ -79,22 +92,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <Head backgroundColor={{ light: '#ffffff', dark: '#0a0e27' }}>
         <meta name="apple-mobile-web-app-title" content="Pulsar Docs" />
-        <PreferenceExpiry />
+        {/* The theme and the language are kept 30 days after they are chosen (Cookie Policy) */}
+        <PreferenceExpiry keys={['theme', 'tuwa-locale']} />
       </Head>
       <body
         className="antialiased bg-[var(--tuwa-bg-primary)] dark:bg-[#0a0e27] text-[var(--tuwa-text-primary)]"
         suppressHydrationWarning
       >
-        <Layout
-          navbar={<Navbar key="navbar" links={navLinks} logo={logo} />}
-          footer={<Footer key="footer" logo={logo} />}
+        {/* English, Ukrainian and Simplified Chinese: the language switch, the interface, the sidebar titles and the
+            translated pages of src/i18n follow the reader's language without changing the URL */}
+        <DocsLayout
+          logo={logo}
+          links={navLinks}
           pageMap={await getPageMap()}
           docsRepositoryBase="https://github.com/TuwaIO/pulsar-core/tree/main/apps/docs"
-          navigation={{ prev: true, next: true }}
+          sidebarTitles={sidebarTitles}
         >
           <NextTopLoader color="#0052ff" shadow="0 0 10px #0052ff,0 0 5px #0052ff" showSpinner={false} />
           {children}
-        </Layout>
+        </DocsLayout>
       </body>
     </html>
   );

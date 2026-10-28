@@ -1,0 +1,110 @@
+# Автономні трекери Solana
+
+Трекер Solana з `@tuwaio/pulsar-solana` працює і без сховища Pulsar. Використовуйте його, коли ви:
+
+- зберігаєте транзакції у власному стані (Redux, MobX, інше сховище Zustand, база даних);
+- відстежуєте транзакції на сервері, де немає ні `localStorage`, ні гаманця;
+- хочете отримувати колбек після кожної перевірки замість оновлень сховища.
+
+Без сховища нічого не зберігається і нічого не відновлюється після перезапуску: ви самі вирішуєте, що зберігати і коли знову почати відстеження. Трекер використовує лише RPC-виклики `@solana/kit`, тому працює і в браузері, і в Node.js.
+
+---
+
+## Чому `solanaFetcher`, а не ручне опитування [#why-solanafetcher-instead-of-manual-polling]
+
+| Ситуація                           | Ручне опитування `getSignatureStatuses`                              | `solanaFetcher` з `initializePollingTracker`                                                                                                                                             |
+| ---------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RPC ще не бачив підпису**        | Ви самі вирішуєте, скільки чекати.                                   | З `lastValidBlockHeight` завершується помилкою «expired», щойно мережа перейде цю висоту; інакше — через годину після `localTimestamp`.                                                  |
+| **Тимчасові помилки RPC**          | Логіку повторів пишете ви.                                           | Після помилки запит повторюється на наступному такті; відстеження припиняється після `maxRetries` помилок поспіль.                                                                       |
+| **Відстеження відновлено пізніше** | Лише нещодавні статуси, якщо не передати `searchTransactionHistory`. | Завжди шукає в історії транзакцій, тож знаходить транзакції, що завершилися, поки вас не було.                                                                                           |
+| **Деталі транзакції**              | Окремий виклик `getTransaction`.                                     | Один раз отримує `fee`, `recentBlockhash` і `instructions` і додає їх до кожного переданого статусу; помилка `getTransaction` ніколи не приховує статус і не робить транзакцію невдалою. |
+| **Прогрес і фінальний статус**     | Рівні commitment ви порівнюєте самі.                                 | `onIntervalTick` із `processed` і `confirmed`, `onSuccess` на `finalized`, `onFailure`, щойно з’являється помилка.                                                                       |
+
+---
+
+## Відстеження підпису: `solanaFetcher` [#tracking-a-signature-solanafetcher]
+
+Передайте `solanaFetcher` у `initializePollingTracker` з `@tuwaio/pulsar-core`. Він запускає опитування у фоні й одразу повертає керування:
+
+```typescript
+import { OrbitAdapter, SOLANA_CHAIN_IDS } from '@tuwaio/orbit-core';
+import { initializePollingTracker } from '@tuwaio/pulsar-core';
+import { solanaFetcher } from '@tuwaio/pulsar-solana';
+
+export function trackSignature(signature: string, lastValidBlockHeight?: number) {
+  initializePollingTracker({
+    tx: {
+      adapter: OrbitAdapter.SOLANA,
+      txKey: signature,
+      chainId: SOLANA_CHAIN_IDS.devnet, // the CAIP-2 chain ID; picks the public endpoint when rpcUrl is not set
+      rpcUrl: 'https://api.devnet.solana.com', // prefer your own RPC provider
+      localTimestamp: Math.floor(Date.now() / 1000), // when the transaction was sent, in seconds
+      lastValidBlockHeight, // from the blockhash the transaction was signed with; optional (see below)
+      pending: true, // polling starts only for pending transactions
+    },
+    fetcher: solanaFetcher,
+    pollingInterval: 1000,
+    onIntervalTick: (status) => console.log(status.confirmationStatus, status.confirmations), // 'confirmed' within about a second
+    onSuccess: (status) => console.log('Finalized in slot', status.slot, 'fee', status.fee),
+    onFailure: (status) => {
+      if (status?.expired) console.error('Expired: the blockhash is no longer valid, send the transaction again');
+      else console.error(status ? 'Failed on-chain' : 'Not finalized in time or too many RPC errors', status?.err);
+    },
+  });
+}
+```
+
+Як працює кожна перевірка:
+
+1. `getSignatureStatuses` із `searchTransactionHistory: true`. Якщо підпис невідомий, а транзакція має `lastValidBlockHeight` (або її надіслав на цій сторінці `signAndSendSolanaTx`, який записує висоту), фетчер надсилає `getBlockHeight` (commitment `confirmed`): щойно мережа перейде цю висоту, він ще раз перевіряє підпис і, якщо той досі невідомий, викликає `onFailure` з `expired: true`, бо blockhash застарів і транзакція вже ніколи не потрапить у блок. Інакше він чекає наступного такту — до години після `localTimestamp`.
+2. `getTransaction` (commitment `confirmed`, `maxSupportedTransactionVersion: 1`, тож читаються legacy-транзакції і транзакції версій 0 і 1), щоб отримати комісію, blockhash та інструкції, — лише доти, доки він не поверне їх один раз для цього об’єкта `tx`: деталі кешуються в пам’яті на час відстеження або беруться з `tx`, якщо вони там уже є. Помилка `getTransaction` не викидається: перевірка продовжується лише зі статусом і повторює запит на наступному такті.
+3. `onIntervalTick` зі статусом (і деталями, щойно вони відомі); потім `onFailure` зі статусом, якщо в ньому є `err`, — одразу, або `onSuccess`, коли статус `finalized` і деталі відомі. Фіналізована транзакція, деталі якої все ще відсутні на її 10-й перевірці, отримує `onSuccess` без них, із попередженням у консолі. Транзакція, не фіналізована через годину після `localTimestamp`, викликає `onFailure`; фіналізована — ніколи.
+
+`lastValidBlockHeight` береться з blockhash, з яким ви підписали транзакцію (`getLatestBlockhash` повертає обидва значення). Транзакції з durable nonce не мають такого обмеження: для них не передавайте цей параметр.
+
+Помилки `getSignatureStatuses` і `getBlockHeight` викидаються в `initializePollingTracker`, який повторює спробу на наступному такті й викликає `onFailure()` без аргументів після `maxRetries` (за замовчуванням 10) помилок поспіль.
+
+---
+
+## Помічники [#helpers]
+
+### `signAndSendSolanaTx` [#signandsendsolanatx]
+
+Будує транзакцію версії 0 з однієї чи кількох інструкцій, з підписувачем як платником комісії та останнім blockhash, і дає підписувачу підписати й надіслати її. Повертає підпис у base58, готовий для `solanaFetcher`:
+
+```typescript
+import type { Instruction, TransactionSendingSigner } from '@solana/kit';
+import type { SolanaClient } from '@tuwaio/orbit-solana';
+import { signAndSendSolanaTx } from '@tuwaio/pulsar-solana';
+
+export async function send(client: SolanaClient, signer: TransactionSendingSigner, instructions: Instruction[]) {
+  const signature = await signAndSendSolanaTx({ client, signer, instruction: instructions });
+  console.log('Sent', signature);
+  return signature;
+}
+```
+
+Проміс відхиляється з помилкою RPC або підписувача, наприклад коли користувач відхиляє транзакцію в гаманці.
+
+### `checkSolanaChain` [#checksolanachain]
+
+Точно порівнює два ідентифікатори кластерів і викидає `SolanaChainMismatchError`, якщо вони різняться. Solana-адаптер використовує його, щоб порівняти `desiredChainID` із кластером, збереженим для підключення гаманця, попередньо перетворивши обидва на назви кластерів за допомогою `getCluster` з `@tuwaio/orbit-solana`, тож `devnet`, `solana:devnet` і chain ID з genesis-хешем `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` збігаються:
+
+```typescript
+import { checkSolanaChain, SolanaChainMismatchError } from '@tuwaio/pulsar-solana';
+
+export function isOnCluster(requiredCluster: string, walletCluster: string): boolean {
+  try {
+    checkSolanaChain(requiredCluster, walletCluster);
+    return true;
+  } catch (error) {
+    if (error instanceof SolanaChainMismatchError) {
+      console.warn(`Switch the wallet from ${error.currentChain} to ${error.requiredChain}.`);
+      return false;
+    }
+    throw error;
+  }
+}
+```
+
+Повний список експортів — у **[довіднику `@tuwaio/pulsar-solana`](/packages/pulsar-solana)**.
