@@ -2,7 +2,7 @@
 
 > **createEip5792Fetcher**(`config`): \<`T`\>(`__namedParameters`) => `Promise`\<`void`\>
 
-Defined in: [trackers/eip5792Tracker.ts:63](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L63)
+Defined in: [trackers/eip5792Tracker.ts:64](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L64)
 
 Creates a fetcher for `initializePollingTracker` from `@tuwaio/pulsar-core` that asks the connected wallet once for
 the status of an EIP-5792 call batch (`getCallsStatus` of `@wagmi/core`, `wallet_getCallsStatus`). The status comes

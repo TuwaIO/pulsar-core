@@ -346,7 +346,8 @@ export interface TrackerCallbacks<T extends Transaction> {
    */
   onSuccess?: (tx: T) => Promise<void> | void;
   /**
-   * Called when the transaction fails: it reverted, was rejected, or tracking gave up.
+   * Called when the transaction fails: it reverted, was rejected, or tracking gave up. Also, with `status: Replaced`, for
+   * another transaction in its nonce that reverted.
    * @param error - The raw error, or a generated `Error`.
    * @param tx - The transaction after the update.
    */
@@ -354,7 +355,8 @@ export interface TrackerCallbacks<T extends Transaction> {
   /**
    * Called when the transaction is replaced by another one with the same nonce. After a speed-up (`replacedReason:
    * 'repriced'`) the operation goes on: a new record tracks the new hash, and `onSuccess` or `onError` run for it.
-   * @param newTx - The tracked transaction after the update (`status: Replaced`, `replacedTxHash` set).
+   * @param newTx - The tracked transaction after the update (`status: Replaced`, `replacedTxHash` set unless
+   * `replacedReason` is `unknown`).
    * @param oldTx - The transaction as tracking started.
    */
   onReplaced?: (newTx: T, oldTx: T) => Promise<void> | void;
@@ -364,8 +366,9 @@ export interface TrackerCallbacks<T extends Transaction> {
  * A listener of the "transaction finished" event: `onTxFinished` of `createPulsarStore` and `subscribeTxFinished` of
  * the store.
  *
- * It is called once per transaction, when the transaction moves from a non-final status to `Success`, `Failed` or
- * `Replaced`, whatever finished it: the tracker started by `executeTxAction`, a tracker restarted after a page reload
+ * It is called per open tab, when the transaction moves from a non-final status to `Success`, `Failed` or `Replaced`, and
+ * again if the chain corrects a `Failed`, so a listener with side effects should key on `txKey` and `status`. Whatever finished
+ * it counts: the tracker started by `executeTxAction`, a tracker restarted after a page reload
  * by `initializeTransactionsPool`, or a remote backend through `injectExternalPendingTxs`. Transactions that are
  * already final when the store restores them from storage do not call it. It runs synchronously while the store
  * writes the final status, before the `TrackerCallbacks` of the transaction. Its return value is not awaited; an error
@@ -492,7 +495,10 @@ export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl
     tracker: TransactionTracker;
   };
   /**
-   * Starts the background tracker of a transaction. Trackers update the transaction through `updateTxParams`. The
+   * Starts the background tracker of a transaction, and resolves once it has started, not when the transaction has finished:
+   * `executeTxAction` and `initializeTransactionsPool` wait for this. Trackers update the transaction through `updateTxParams`,
+   * and should stop when `isTxTracked` turns false. A tracker that ends with no final status leaves the transaction marked as
+   * tracked, so a later `initializeTransactionsPool` does not restart it. The
    * built-in trackers keep failed transactions in the pool; `removeTxFromPool` is available to custom trackers.
    * @param params - The transaction, the Gelato API key, the callbacks and the store members used by trackers.
    */
@@ -605,11 +611,13 @@ export interface IInitializeTxTrackingStore<T extends Transaction> {
    * `syncStatus: 'pending-sync'`, its key is listed in `unsyncedTxKeys`, and `onRemoteCreate` runs in the background
    * (see `SyncCallbacks`). Does not start a tracker.
    * @param tx - The transaction to add.
+   * @param options - The options.
+   * @param options.withoutSync - Keeps it from `onRemoteCreate`, for a record the backend has no row to continue from.
    * @returns A promise that resolves once the transaction is in the pool, without waiting for `onRemoteCreate`.
    * @throws `PulsarTransactionValidationError` synchronously, before anything is written, when the title, description
    * or payload is invalid.
    */
-  addTxToPool: (tx: T) => Promise<void>;
+  addTxToPool: (tx: T, options?: { withoutSync?: boolean }) => Promise<void>;
   /**
    * Merges fields into a transaction of the pool; does nothing if the key is unknown. When `fields.status` is terminal
    * and the transaction is in `unsyncedTxKeys`, it starts `reconcileUnsyncedTransactions` in the background. When it
@@ -617,10 +625,15 @@ export interface IInitializeTxTrackingStore<T extends Transaction> {
    * `TxFinishedListener`).
    * @param txKey - The key of the transaction.
    * @param fields - The fields to merge.
+   * Once a transaction has a final status, its result fields (`status`, `pending`, `isError`, `error`, `finishedTimestamp`,
+   * `replacedTxHash`, `replacedReason`) are kept against a later write, as a late writer only lost sight of it. The one
+   * exception is `Success` or `Replaced` over a `Failed`: the chain corrects what a time limit may have said.
+   * @returns The transaction as the store holds it after the write, or `undefined` when it is not in the pool.
    */
   updateTxParams: (txKey: string, fields: UpdatableTransactionFields) => T | undefined | void;
   /**
-   * Removes a transaction from the pool. Does not stop its tracker.
+   * Deletes a transaction from the pool and stops its tracker, for trackers that read `isTxTracked`. Finishing never
+   * deletes a transaction: only this does, and the retention limits of the pool.
    * @param txKey - The key of the transaction.
    */
   removeTxFromPool: (txKey: string) => void;
@@ -719,8 +732,9 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
   /**
    * Merges transactions from a remote backend into the pool (cross-device sync). Invalid transactions are skipped
    * with a warning. Pending remote transactions that are not in the pool are added and tracked. Local pending
-   * transactions that are terminal remotely take the remote `status`, `txKey` and `finishedTimestamp` and are marked
-   * not pending.
+   * transactions that are terminal remotely take the remote result and are marked not pending, and a tracker running on
+   * them stops. While a tracker runs, a remote `Failed`, or a remote `Replaced` with no `replacedReason`, is ignored: it may
+   * be a server's time limit, and the chain answers through the tracker. A remote speed-up adds the new record.
    * @param remoteTxs - Transactions returned by the backend.
    * @returns A promise that resolves when the trackers of the added transactions have started.
    */

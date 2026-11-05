@@ -17,7 +17,8 @@ import { assertSentBy, rememberSentFees, replacementFees } from './replacementFe
  * added to the pool.
  *
  * Side effects: reads the fees of the chain over RPC, opens a wallet prompt, broadcasts a transaction, and keeps the fees
- * sent in memory for the next replacement of this nonce.
+ * sent for the next replacement of this nonce, in memory and in `sessionStorage` under
+ * `pulsar-evm:replacementFees:<chain>:<sender>:<nonce>`.
  *
  * @template T - The application transaction type.
  * @param params - The wagmi config and the transaction.

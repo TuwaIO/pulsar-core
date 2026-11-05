@@ -5,6 +5,7 @@
 
 import { normalizeError } from '@tuwaio/orbit-core';
 import {
+  createAbandonCheck,
   EvmTransaction,
   TrackerCallbacks,
   Transaction,
@@ -43,7 +44,7 @@ export function storeTrackerOptions(tx: Transaction, isTxTracked?: (txKey: strin
     // A number by type, but a transaction injected from a server's history brings a string
     notFoundUntil: (Number(tx.localTimestamp) + NOT_FOUND_LIMIT_SECONDS) * 1000,
     receiptAttempts: Infinity,
-    isAbandoned: isTxTracked && (() => !isTxTracked(tx.txKey)),
+    isAbandoned: createAbandonCheck(isTxTracked, tx.txKey),
   };
 }
 

@@ -2,7 +2,7 @@
 
 > **gelatoTrackerForStore**\<`T`\>(`params`): `void`
 
-Defined in: [trackers/gelatoTracker.ts:171](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L171)
+Defined in: [trackers/gelatoTracker.ts:172](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L172)
 
 Tracks a Gelato task of the Pulsar store with [gelatoFetcher](/packages/pulsar-evm/functions/gelatoFetcher.md) (every 5 s, and every minute after 10 consecutive
 failed attempts) and writes the results to the store: the transaction `hash` once the task is submitted, then `Success` or

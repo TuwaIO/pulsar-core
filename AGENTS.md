@@ -14,7 +14,7 @@
 - **Web3 (EVM):** `viem` (peer `2.x.x`), `@wagmi/core` (peer `3.x.x`) and `@tuwaio/orbit-evm` (peer `>=0.3`) — peers of `pulsar-evm`; the last two are optional (`peerDependenciesMeta`) because the `@tuwaio/pulsar-evm/safe` entry does not import them.
 - **Web3 (Solana):** `@solana/kit` (peer `>=8.2`) and `@tuwaio/orbit-solana` (peer `>=0.4`, reads genesis-hash chain IDs) — peers of `pulsar-solana`. The `@wallet-standard/*` packages are peers of `@tuwaio/orbit-solana`, not of Pulsar.
 - **Peer rule:** a package declares as peers only what it imports; `zustand`/`immer` belong to `pulsar-core` and reach the chain packages through it.
-- **Shared:** `@tuwaio/orbit-core` (peer `>=0.4`: `setChainId` returns the CAIP-2 chain ID with the genesis hash for Solana) in all chain packages; `pulsar-evm` needs `@tuwaio/pulsar-core` `>=0.11.2` (`TransactionTracker.EIP5792`), `pulsar-solana` `>=0.9`. Peers between the packages of this repo start at the version released together with them.
+- **Shared:** `@tuwaio/orbit-core` (peer `>=0.4`: `setChainId` returns the CAIP-2 chain ID with the genesis hash for Solana) in all chain packages; `pulsar-evm` and `pulsar-solana` need `@tuwaio/pulsar-core` `>=0.12` (`TransactionTracker.EIP5792`), `pulsar-solana` `>=0.9`. Peers between the packages of this repo start at the version released together with them.
 - **React:** `react` (peer `>=19.2.3`; `useEffectEvent` is used) — the only peer of `pulsar-react`.
 - **Frameworks:**
   - `apps/docs`: Next.js v16, Nextra v4, Tailwind CSS v4, `@tuwaio/docs-ui`, Pagefind.

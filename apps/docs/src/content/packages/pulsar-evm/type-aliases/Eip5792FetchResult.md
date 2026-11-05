@@ -2,7 +2,7 @@
 
 > **Eip5792FetchResult** = `object`
 
-Defined in: [trackers/eip5792Tracker.ts:33](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L33)
+Defined in: [trackers/eip5792Tracker.ts:34](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L34)
 
 The result [createEip5792Fetcher](/packages/pulsar-evm/functions/createEip5792Fetcher.md)'s fetcher reports on each polling tick.
 
@@ -12,7 +12,7 @@ The result [createEip5792Fetcher](/packages/pulsar-evm/functions/createEip5792Fe
 
 > `optional` **hash?**: `Hex`
 
-Defined in: [trackers/eip5792Tracker.ts:39](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L39)
+Defined in: [trackers/eip5792Tracker.ts:40](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L40)
 
 The hash of the transaction that executed the batch (its last receipt), once known.
 
@@ -22,7 +22,7 @@ The hash of the transaction that executed the batch (its last receipt), once kno
 
 > `optional` **reason?**: `string`
 
-Defined in: [trackers/eip5792Tracker.ts:41](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L41)
+Defined in: [trackers/eip5792Tracker.ts:42](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L42)
 
 The failure reason.
 
@@ -32,7 +32,7 @@ The failure reason.
 
 > **status**: `"pending"` \| `"success"` \| `"failed"`
 
-Defined in: [trackers/eip5792Tracker.ts:35](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L35)
+Defined in: [trackers/eip5792Tracker.ts:36](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L36)
 
 `pending` while the wallet has not executed the batch, then `success` or `failed`.
 
@@ -42,6 +42,6 @@ Defined in: [trackers/eip5792Tracker.ts:35](https://github.com/TuwaIO/pulsar-cor
 
 > `optional` **statusCode?**: `number`
 
-Defined in: [trackers/eip5792Tracker.ts:37](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L37)
+Defined in: [trackers/eip5792Tracker.ts:38](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L38)
 
 The EIP-5792 status code the wallet reported (100 pending, 200 confirmed, 400, 500, 600 failures).

@@ -26,7 +26,7 @@ pnpm add @tuwaio/pulsar-solana @tuwaio/pulsar-core @tuwaio/orbit-core @tuwaio/or
 ```
 
 > [!IMPORTANT]
-> `@tuwaio/pulsar-core` (>=0.11.2), `@tuwaio/orbit-core` (>=0.4), `@tuwaio/orbit-solana` (>=0.4), `@solana/kit` (>=8.2) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-solana`. The `@wallet-standard` packages are the peer dependencies of `@tuwaio/orbit-solana`, and `zustand` and `immer` those of `@tuwaio/pulsar-core`.
+> `@tuwaio/pulsar-core` (>=0.12), `@tuwaio/orbit-core` (>=0.4), `@tuwaio/orbit-solana` (>=0.4), `@solana/kit` (>=8.2) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-solana`. The `@wallet-standard` packages are the peer dependencies of `@tuwaio/orbit-solana`, and `zustand` and `immer` those of `@tuwaio/pulsar-core`.
 
 ---
 

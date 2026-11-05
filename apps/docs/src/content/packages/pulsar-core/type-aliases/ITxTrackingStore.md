@@ -2,7 +2,7 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](/packages/pulsar-core/interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:658](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L658)
+Defined in: [packages/pulsar-core/src/types.ts:671](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L671)
 
 The state and actions of the store created by `createPulsarStore`.
 
@@ -79,8 +79,9 @@ A promise that resolves when all trackers have started.
 
 Merges transactions from a remote backend into the pool (cross-device sync). Invalid transactions are skipped
 with a warning. Pending remote transactions that are not in the pool are added and tracked. Local pending
-transactions that are terminal remotely take the remote `status`, `txKey` and `finishedTimestamp` and are marked
-not pending.
+transactions that are terminal remotely take the remote result and are marked not pending, and a tracker running on
+them stops. While a tracker runs, a remote `Failed`, or a remote `Replaced` with no `replacedReason`, is ignored: it may
+be a server's time limit, and the chain answers through the tracker. A remote speed-up adds the new record.
 
 #### Parameters
 

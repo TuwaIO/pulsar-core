@@ -2,14 +2,16 @@
 
 > **createTxInMemoryStore**\<`T`\>(`params`): `StoreApi`\<[`ITxInMemoryStore`](/packages/pulsar-core/type-aliases/ITxInMemoryStore.md)\<`T`\>\>
 
-Defined in: [packages/pulsar-core/src/store/txInMemoryStore.ts:119](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txInMemoryStore.ts#L119)
+Defined in: [packages/pulsar-core/src/store/txInMemoryStore.ts:139](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txInMemoryStore.ts#L139)
 
 Creates an in-memory store that shows the remote transaction history of a wallet (for example from Quasar) together
 with the local pool of the persistent store. Nothing in it is persisted. Keep it in sync with the persistent store by
 calling `syncWithLocalPool` from that store's `subscribe` listener.
 
-Merge rules: a transaction that is `Success`, `Failed` or `Replaced` in memory is never overwritten; a pending one
-is overwritten only by a terminal transaction or by one with more confirmations; any other one is overwritten.
+Merge rules: a transaction that is `Success` or `Replaced` in memory is never overwritten, and a `Failed` one only by
+`Success` or `Replaced`, as a server's `Failed` may be its own time limit. A pending one is overwritten by a record of the
+local pool, and by a remote one with a result or more confirmations; a remote `Failed`, or a remote `Replaced` with no
+`replacedReason`, leaves it pending until its tracker answers. Any other one is overwritten.
 
 History pages are validated like `injectExternalPendingTxs` does: transactions whose title, description or payload
 break the safety limits are skipped with a warning and are not passed to `onHistoryFetched`.

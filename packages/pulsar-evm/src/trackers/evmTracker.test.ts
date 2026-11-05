@@ -9,7 +9,7 @@ import { createClient, Hex, http, TransactionReceipt, zeroAddress, zeroHash } fr
 import { mainnet, sepolia } from 'viem/chains';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { evmTracker, EVMTrackerParams } from './evmTracker';
+import { evmTracker, EVMTrackerParams, isRetryableReceiptError } from './evmTracker';
 
 // Mock the entire 'viem/actions' module to control its behavior in tests.
 vi.mock('viem/actions', async (importActual) => {
@@ -44,6 +44,46 @@ const viemActions = {
 };
 
 describe('evmTracker Unit Tests', () => {
+  test('a report of the transaction as replaced by itself is taken as its receipt', async () => {
+    const config = createConfig({
+      chains: [sepolia],
+      client({ chain }) {
+        return createClient({ chain, transport: http() });
+      },
+    });
+    const hash = '0x0908f7a70a9f8acd9ced904f4e288bc46ae42923ce82bde706b26fdb8452abec' as Hex;
+    // @ts-expect-error - only what the tracker reads
+    viemActions.getTransaction.mockResolvedValue({
+      hash,
+      nonce: 1,
+      from: zeroAddress,
+      to: zeroAddress,
+      value: 0n,
+      input: '0x',
+    });
+    viemActions.getBlockNumber.mockResolvedValue(1n);
+    const receipt = { status: 'success', transactionHash: hash } as TransactionReceipt;
+    viemActions.waitForTransactionReceipt.mockImplementationOnce(async (_client, { onReplaced }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      onReplaced?.({ reason: 'repriced', transaction: { hash: hash.toUpperCase().replace('0X', '0x') } } as any);
+      return receipt;
+    });
+    const onReplaced = vi.fn();
+    const onSuccess = vi.fn();
+
+    await evmTracker({
+      tx: { txKey: hash, chainId: sepolia.id },
+      config,
+      onTxDetailsFetched: vi.fn(),
+      onSuccess,
+      onFailure: vi.fn(),
+      onReplaced,
+    });
+
+    expect(onReplaced).not.toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalledOnce();
+  });
+
   let baseTrackerParams: EVMTrackerParams;
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
@@ -208,6 +248,21 @@ describe('evmTracker Unit Tests', () => {
     expect(baseTrackerParams.onConfirmationsUpdate).toHaveBeenCalledWith(3);
     expect(baseTrackerParams.onSuccess).toHaveBeenCalled();
     vi.useRealTimers();
+  });
+});
+
+describe('isRetryableReceiptError, kept for those who import it', () => {
+  test('tells a transient error from another', () => {
+    expect(isRetryableReceiptError(new Error('Request timed out after 60000ms'))).toBe(true);
+    expect(isRetryableReceiptError(Object.assign(new Error('x'), { name: 'HttpRequestError' }))).toBe(true);
+    expect(isRetryableReceiptError(new Error('Execution reverted by EVM'))).toBe(false);
+    expect(isRetryableReceiptError(null)).toBe(false);
+  });
+
+  test('reads nested causes', () => {
+    const outer = new Error('RPC Call Failed');
+    outer.cause = new Error('502 Bad Gateway');
+    expect(isRetryableReceiptError(outer)).toBe(true);
   });
 });
 

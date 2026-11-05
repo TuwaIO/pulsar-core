@@ -64,8 +64,8 @@ function withoutResultFields(fields: UpdatableTransactionFields): UpdatableTrans
  * first. `null` keeps them without a term. Defaults to 30.
  * @param params.onRemoteCreate - Optional remote sync callback, called in the background by `addTxToPool` (see
  * `SyncCallbacks`).
- * @param params.onTxFinished - Called by `updateTxParams` once when it moves a transaction from a non-final to a final
- * status (see `TxFinishedListener`). `createPulsarStore` passes a function that runs its `onTxFinished` option and the
+ * @param params.onTxFinished - Called by `updateTxParams` when it moves a transaction from a non-final to a final status,
+ * and again when the chain corrects a `Failed` (see `TxFinishedListener`). `createPulsarStore` passes a function that runs its `onTxFinished` option and the
  * listeners of `subscribeTxFinished`; it must not throw.
  * @returns A slice creator for Zustand's `create` / `createStore`.
  */
@@ -146,15 +146,16 @@ export function initializeTxTrackingStore<T extends Transaction>({
         }
       },
 
-      addTxToPool: (tx) => {
+      addTxToPool: (tx, options) => {
         validateTransaction(tx);
+        const syncIt = !!onRemoteCreate && !options?.withoutSync;
 
         const newTx = {
           ...tx,
           pending: true, // Ensure all new transactions start as pending.
           // Synced only once `onRemoteCreate` resolves; until then the key is listed in `unsyncedTxKeys`, so an
           // interrupted sync (for example a closed tab) is retried later.
-          ...(onRemoteCreate && { syncStatus: 'pending-sync' as const }),
+          ...(syncIt && { syncStatus: 'pending-sync' as const }),
         };
 
         set((state) =>
@@ -162,7 +163,7 @@ export function initializeTxTrackingStore<T extends Transaction>({
             draft.lastAddedTxKey = tx.txKey;
 
             if (tx.txKey) {
-              if (onRemoteCreate) {
+              if (syncIt) {
                 if (!draft.unsyncedTxKeys) {
                   draft.unsyncedTxKeys = {};
                 }
@@ -196,7 +197,7 @@ export function initializeTxTrackingStore<T extends Transaction>({
         );
 
         // The remote sync runs in the background, so a slow or unreachable backend never delays tracking.
-        if (onRemoteCreate && tx.txKey) {
+        if (syncIt && tx.txKey) {
           void syncTransaction(tx.txKey, '[Pulsar] onRemoteCreate failed, transaction queued for background sync:');
         }
 

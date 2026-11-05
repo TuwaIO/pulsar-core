@@ -5,6 +5,7 @@
 
 import { normalizeError, OrbitAdapter } from '@tuwaio/orbit-core';
 import {
+  createAbandonCheck,
   createTxUpdater,
   FinalPollingError,
   initializePollingTracker,
@@ -286,7 +287,7 @@ export function safeTrackerForStore<T extends Transaction>({
     fetcher: createSafeFetcher({ pendingTimeoutMs, notFoundGraceMs }),
     pollingInterval: safePollingInterval,
     retryForeverEveryMs: STORE_RETRY_EVERY_MS,
-    isAbandoned: isTxTracked && (() => !isTxTracked(tx.txKey)),
+    isAbandoned: createAbandonCheck(isTxTracked, tx.txKey),
     // `removeTxFromPool` is not passed: failed transactions stay in the pool as `Failed`.
     onSuccess: (response) => {
       const updatedTx = updateTx({

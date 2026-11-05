@@ -7,6 +7,7 @@ import type { Signature, TransactionError } from '@solana/kit';
 import { normalizeError, OrbitAdapter } from '@tuwaio/orbit-core';
 import { createSolanaRPC, getCluster } from '@tuwaio/orbit-solana';
 import {
+  createAbandonCheck,
   createTxUpdater,
   initializePollingTracker,
   ITxTrackingStore,
@@ -315,7 +316,7 @@ export async function solanaTrackerForStore<T extends Transaction>({
     maxRetries: 30, // Consecutive RPC errors before it slows down: 30 (about 30 seconds of outage)
     // An RPC outage says nothing about the transaction. The expired blockhash is what ends one that will never land.
     retryForeverEveryMs: 60_000,
-    isAbandoned: rest.isTxTracked && (() => !rest.isTxTracked?.(tx.txKey)),
+    isAbandoned: createAbandonCheck(rest.isTxTracked, tx.txKey),
 
     // Writes the finalized transaction details.
     onSuccess: (response) => {

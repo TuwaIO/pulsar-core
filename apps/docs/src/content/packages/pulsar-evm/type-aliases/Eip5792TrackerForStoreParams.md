@@ -2,7 +2,7 @@
 
 > **Eip5792TrackerForStoreParams**\<`T`\> = `Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"updateTxParams"` \| `"removeTxFromPool"` \| `"transactionsPool"`\> & `Partial`\<`Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"isTxTracked"`\>\> & `object` & [`TrackerCallbacks`](/packages/pulsar-core/interfaces/TrackerCallbacks.md)\<`T`\>
 
-Defined in: [trackers/eip5792Tracker.ts:163](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L163)
+Defined in: [trackers/eip5792Tracker.ts:164](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L164)
 
 The parameters of [eip5792TrackerForStore](/packages/pulsar-evm/functions/eip5792TrackerForStore.md): the transaction, the wagmi config, the store members used by
 trackers and the callbacks.

@@ -159,7 +159,7 @@ export function trackGelatoTask(taskId: string, apiKey: string) {
 - **Safe：** 获取器会调用该链的 Safe Transaction Service（支持的链见 `SafeTransactionServiceUrls`），并将每次检查结果连同已收集的所有者确认 (`confirmations`) 与阈值 (`confirmationsRequired`) 报告给 `onIntervalTick`。404 响应会不带响应地调用 `onFailure()` 并停止。交易在提议后经过 `pendingTimeoutMs`（`safeFetcher` 与默认值均为一天）仍处于挂起状态时，会以其状态调用 `onFailure` 并停止；`createSafeFetcher({ pendingTimeoutMs: null })` 则无限期等待。
 - **Gelato：** 任务在创建一小时后仍处于挂起状态时，会以其状态调用 `onFailure` 并停止。
 
-这些获取器以 `withoutRemoving: true` 停止，因此传给 `initializePollingTracker` 的 `removeTxFromPool` 只会在轮询连续 `maxRetries` 次出错而放弃时被调用。
+这些获取器以 `withoutRemoving: true` 停止，因此传给 `initializePollingTracker` 的 `removeTxFromPool` 只会在轮询放弃时被调用：连续 `maxRetries` 次出错后，或遇到 `FinalPollingError` 时。
 
 ---
 

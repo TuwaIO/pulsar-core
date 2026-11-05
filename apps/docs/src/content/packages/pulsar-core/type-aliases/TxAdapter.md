@@ -2,7 +2,7 @@
 
 > **TxAdapter**\<`T`\> = `Pick`\<`BaseAdapter`, `"getExplorerUrl"`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:467](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L467)
+Defined in: [packages/pulsar-core/src/types.ts:470](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L470)
 
 The contract a chain adapter implements to plug into the Pulsar store. `@tuwaio/pulsar-evm` and
 `@tuwaio/pulsar-solana` provide implementations.
@@ -41,7 +41,10 @@ The hash of the cancellation transaction.
 
 > **checkAndInitializeTrackerInStore**: (`params`) => `Promise`\<`void`\> \| `void`
 
-Starts the background tracker of a transaction. Trackers update the transaction through `updateTxParams`. The
+Starts the background tracker of a transaction, and resolves once it has started, not when the transaction has finished:
+`executeTxAction` and `initializeTransactionsPool` wait for this. Trackers update the transaction through `updateTxParams`,
+and should stop when `isTxTracked` turns false. A tracker that ends with no final status leaves the transaction marked as
+tracked, so a later `initializeTransactionsPool` does not restart it. The
 built-in trackers keep failed transactions in the pool; `removeTxFromPool` is available to custom trackers.
 
 #### Parameters

@@ -2,7 +2,7 @@
 
 > **eip5792TrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/eip5792Tracker.ts:190](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L190)
+Defined in: [trackers/eip5792Tracker.ts:191](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L191)
 
 Tracks an EIP-5792 call batch of the Pulsar store in two stages and writes the results to the store:
 
@@ -35,4 +35,4 @@ The transaction, the wagmi config, the store members and the callbacks.
 
 `Promise`\<`void`\>
 
-A promise that resolves once stage 1 has started, or when stage 2 has finished if it started directly.
+A promise that resolves once tracking has started, whichever stage it starts at.

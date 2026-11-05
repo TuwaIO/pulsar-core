@@ -38,7 +38,9 @@ export function createTxUpdater<T extends Transaction>({
 
   return (fields: UpdatableTransactionFields): T | undefined => {
     const stored = updateTxParams(tx.txKey, fields);
-    if (current) current = stored ?? ({ ...current, ...fields } as T);
+    // Only the store's own answer counts: a custom `updateTxParams` may return anything, such as a promise
+    const held = stored && (stored as T).txKey !== undefined ? (stored as T) : undefined;
+    if (current) current = held ?? ({ ...current, ...fields } as T);
     return current;
   };
 }

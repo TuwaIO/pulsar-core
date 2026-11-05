@@ -2,7 +2,7 @@
 
 > **createSafeFetcher**(`options?`): (`__namedParameters`) => `Promise`\<`void`\>
 
-Defined in: [trackers/safeTracker.ts:146](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L146)
+Defined in: [trackers/safeTracker.ts:147](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L147)
 
 Creates a fetcher for `initializePollingTracker` from `@tuwaio/pulsar-core` that checks a Safe multisig transaction once
 through the Safe Transaction Service API of `tx.chainId` ([SafeTransactionServiceUrls](/packages/pulsar-evm/variables/SafeTransactionServiceUrls.md)). `tx.txKey` is the

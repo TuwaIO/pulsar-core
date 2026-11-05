@@ -29,7 +29,7 @@ pnpm add @tuwaio/pulsar-evm @tuwaio/pulsar-core @tuwaio/orbit-core @tuwaio/orbit
 ```
 
 > [!IMPORTANT]
-> `@tuwaio/pulsar-core` (>=0.11.2), `@tuwaio/orbit-core` (>=0.4), `viem` (2.x) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-evm`. The main entry also needs `@tuwaio/orbit-evm` (>=0.3) and `@wagmi/core` (3.x); they are optional peers because the `@tuwaio/pulsar-evm/safe` entry does not use them. `zustand` and `immer` are the peer dependencies of `@tuwaio/pulsar-core`.
+> `@tuwaio/pulsar-core` (>=0.12), `@tuwaio/orbit-core` (>=0.4), `viem` (2.x) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-evm`. The main entry also needs `@tuwaio/orbit-evm` (>=0.3) and `@wagmi/core` (3.x); they are optional peers because the `@tuwaio/pulsar-evm/safe` entry does not use them. `zustand` and `immer` are the peer dependencies of `@tuwaio/pulsar-core`.
 
 For the Safe tracker alone, on `viem` without wagmi:
 
@@ -123,6 +123,7 @@ Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/
 
 ## Classes
 
+- [ConfirmationsTimeoutError](/packages/pulsar-evm/classes/ConfirmationsTimeoutError.md)
 - [NonceSlotSpentError](/packages/pulsar-evm/classes/NonceSlotSpentError.md)
 
 ## Type Aliases
@@ -177,6 +178,7 @@ Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/
 - [evmTrackerForStore](/packages/pulsar-evm/functions/evmTrackerForStore.md)
 - [~~gelatoFetcher~~](/packages/pulsar-evm/functions/gelatoFetcher.md)
 - [~~gelatoTrackerForStore~~](/packages/pulsar-evm/functions/gelatoTrackerForStore.md)
+- [~~isRetryableReceiptError~~](/packages/pulsar-evm/functions/isRetryableReceiptError.md)
 - [pulsarEvmAdapter](/packages/pulsar-evm/functions/pulsarEvmAdapter.md)
 - [readNonceSlot](/packages/pulsar-evm/functions/readNonceSlot.md)
 - [safePollingInterval](/packages/pulsar-evm/functions/safePollingInterval.md)

@@ -118,6 +118,22 @@ export class FinalPollingError extends Error {
   override name = 'FinalPollingError';
 }
 
+/**
+ * The stop check of a store tracker: `true` once the store stopped tracking a transaction it was tracking. A tracker
+ * started by hand on a transaction the store never tracked (`isTxTracked` says no from the start) goes on as before.
+ *
+ * @param isTxTracked - `isTxTracked` of the store, when the tracker has it.
+ * @param txKey - The key of the transaction.
+ * @returns The function to pass as `isAbandoned`, or `undefined` when there is nothing to check.
+ */
+export function createAbandonCheck(
+  isTxTracked: ((txKey: string) => boolean) | undefined,
+  txKey: string,
+): (() => boolean) | undefined {
+  if (!isTxTracked?.(txKey)) return undefined;
+  return () => !isTxTracked(txKey);
+}
+
 const DEFAULT_POLLING_INTERVAL = 5000;
 const DEFAULT_MAX_RETRIES = 10;
 
@@ -132,7 +148,7 @@ const DEFAULT_MAX_RETRIES = 10;
  * resets the count. A {@link FinalPollingError} ends it at once. An error thrown by a callback is logged and is not a
  * failed attempt, as the fetcher would then report the same result again on the next tick.
  *
- * Side effects: runs a timer loop until it is stopped; there is no way to cancel it from the outside.
+ * Side effects: runs a timer loop until it is stopped; from the outside only `isAbandoned` can end it.
  *
  * @template R - The response type the fetcher reports.
  * @template T - The tracked transaction type.

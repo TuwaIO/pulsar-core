@@ -5,6 +5,7 @@
 
 import { normalizeError } from '@tuwaio/orbit-core';
 import {
+  createAbandonCheck,
   createTxUpdater,
   initializePollingTracker,
   ITxTrackingStore,
@@ -190,7 +191,7 @@ export function gelatoTrackerForStore<T extends Transaction>({
     fetcher,
     // A service that cannot be reached says nothing about the task
     retryForeverEveryMs: 60_000,
-    isAbandoned: isTxTracked && (() => !isTxTracked(tx.txKey)),
+    isAbandoned: createAbandonCheck(isTxTracked, tx.txKey),
     // `removeTxFromPool` is not passed: failed transactions stay in the pool as `Failed`.
     onSuccess: (response) => {
       const hash = response.status === GelatoStatusCode.Success ? response.receipt.transactionHash : undefined;

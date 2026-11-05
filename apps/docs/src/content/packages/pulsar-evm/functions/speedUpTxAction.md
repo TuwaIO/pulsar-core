@@ -2,16 +2,17 @@
 
 > **speedUpTxAction**\<`T`\>(`params`): `Promise`\<`` `0x${string}` ``\>
 
-Defined in: [utils/speedUpTxAction.ts:38](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/speedUpTxAction.ts#L38)
+Defined in: [utils/speedUpTxAction.ts:39](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/speedUpTxAction.ts#L39)
 
 Speeds up a pending EVM transaction: asks the connected wallet to resend it (same `to`, `value`, `input` and nonce)
 with both EIP-1559 fees 15% above the fees last sent for this nonce, and at least at the market estimate, since a
 transaction stuck below the base fee stays stuck with 15% more. When it is mined, the tracker of the original
-transaction reports it as `Replaced` with `replacedReason: 'repriced'`; the new transaction itself is not added to the
-pool.
+transaction reports it as `Replaced` with `replacedReason: 'repriced'`. In a `createPulsarStore` store a new record under
+the new hash, linked by `replaces`, then goes on to the result: do not add the returned hash to the pool yourself.
 
 Side effects: reads the fees of the chain over RPC, opens a wallet prompt, broadcasts a transaction, and keeps the fees
-sent in memory for the next replacement of this nonce.
+sent for the next replacement of this nonce, in memory and in `sessionStorage` under
+`pulsar-evm:replacementFees:<chain>:<sender>:<nonce>`.
 
 ## Type Parameters
 

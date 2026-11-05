@@ -32,7 +32,7 @@ pnpm add @tuwaio/pulsar-evm @tuwaio/pulsar-core @tuwaio/orbit-core @tuwaio/orbit
 ```
 
 > [!IMPORTANT]
-> `@tuwaio/pulsar-core` (>=0.11.2), `@tuwaio/orbit-core` (>=0.4), `viem` (2.x) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-evm`. The main entry also needs `@tuwaio/orbit-evm` (>=0.3) and `@wagmi/core` (3.x); they are optional peers because the `@tuwaio/pulsar-evm/safe` entry does not use them. `zustand` and `immer` are the peer dependencies of `@tuwaio/pulsar-core`.
+> `@tuwaio/pulsar-core` (>=0.12), `@tuwaio/orbit-core` (>=0.4), `viem` (2.x) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-evm`. The main entry also needs `@tuwaio/orbit-evm` (>=0.3) and `@wagmi/core` (3.x); they are optional peers because the `@tuwaio/pulsar-evm/safe` entry does not use them. `zustand` and `immer` are the peer dependencies of `@tuwaio/pulsar-core`.
 
 For the Safe tracker alone, on `viem` without wagmi:
 

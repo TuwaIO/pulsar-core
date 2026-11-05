@@ -22,7 +22,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createJSONStorage } from 'zustand/middleware';
 
 import { pulsarEvmAdapter } from '../adapters/evmAdapter';
-import { evmTracker, evmTrackerForStore } from './evmTracker';
+import { ConfirmationsTimeoutError, evmTracker, evmTrackerForStore } from './evmTracker';
 
 const SENDER = '0xad9a211d227d2d9c1b5573f73cda0284b758ac0c' as Address;
 const RECIPIENT = '0xb8d9b1ec1c1f8bea7fb10450198c0b47d50c96b7' as Address;
@@ -471,27 +471,73 @@ describe('evmTracker on the real viem', () => {
 
       expect(tracker.onFailure).not.toHaveBeenCalled();
       expect(tracker.onSuccess).toHaveBeenCalledOnce();
-      expect(tracker.onSuccess.mock.calls[0][0]).toBeUndefined();
+      const details = tracker.onSuccess.mock.calls[0][0];
+      expect(details.hash).toBe(OLD_HASH);
+      expect(details.from).toBe(SENDER);
+      expect(details.nonce).toBe(NONCE);
     });
 
-    test('a server does not wait for confirmations for ever', async () => {
+    test('a limit on the confirmations is an option: without it a mined transaction waits as it did', async () => {
       const { config } = setup({ minedAt: 12 });
       const onFailure = vi.fn();
-      const onSuccess = vi.fn();
       void evmTracker({
         tx: { txKey: OLD_HASH, chainId: sepolia.id, requiredConfirmations: 1_000_000 },
         config,
         onTxDetailsFetched: vi.fn(),
-        onSuccess,
+        onSuccess: vi.fn(),
         onFailure,
         onReplaced: vi.fn(),
       });
 
-      await pass(400);
+      await pass(2000);
 
-      expect(onSuccess).not.toHaveBeenCalled();
+      expect(onFailure).not.toHaveBeenCalled();
+    });
+
+    test('with the limit a server gets the receipt and the reason', async () => {
+      const { config } = setup({ minedAt: 12 });
+      const onFailure = vi.fn();
+      void evmTracker({
+        tx: { txKey: OLD_HASH, chainId: sepolia.id, requiredConfirmations: 1_000_000 },
+        config,
+        confirmationsTimeout: 300_000,
+        onTxDetailsFetched: vi.fn(),
+        onSuccess: vi.fn(),
+        onFailure,
+        onReplaced: vi.fn(),
+      });
+
+      await pass(320);
+
       expect(onFailure).toHaveBeenCalledOnce();
-      expect((onFailure.mock.calls[0][0] as Error).message).toMatch(/confirmations/);
+      expect(onFailure.mock.calls[0][0]).toBeInstanceOf(ConfirmationsTimeoutError);
+      expect(onFailure.mock.calls[0][0].receipt.transactionHash).toBe(OLD_HASH);
+    });
+
+    test('a store tracker started by hand on a transaction the store never tracked goes on', async () => {
+      const { config } = setup({ minedAt: 24 });
+      const tx = {
+        txKey: OLD_HASH,
+        chainId: sepolia.id,
+        pending: true,
+        from: SENDER,
+        localTimestamp: Math.floor(Date.now() / 1000),
+      } as unknown as Transaction;
+      const pool: Record<string, Transaction> = { [OLD_HASH]: tx };
+      void evmTrackerForStore({
+        tx,
+        config,
+        transactionsPool: pool,
+        updateTxParams: (key, fields) => {
+          pool[key] = { ...pool[key], ...fields } as Transaction;
+          return pool[key];
+        },
+        isTxTracked: () => false,
+      });
+
+      await pass(120);
+
+      expect(pool[OLD_HASH].status).toBe(TransactionStatus.Success);
     });
 
     test('a receipt a reorganization dropped goes back to waiting and is not reported as final', async () => {

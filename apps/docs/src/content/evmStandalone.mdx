@@ -159,7 +159,7 @@ export function trackGelatoTask(taskId: string, apiKey: string) {
 - **Safe:** the fetcher calls the Safe Transaction Service of the chain (see `SafeTransactionServiceUrls` for the supported chains) and reports each check to `onIntervalTick`, with the owner confirmations collected (`confirmations`) and the threshold (`confirmationsRequired`). A 404 response calls `onFailure()` without a response and stops. A transaction still pending `pendingTimeoutMs` after it was proposed (one day for `safeFetcher` and by default) calls `onFailure` with its status and stops; `createSafeFetcher({ pendingTimeoutMs: null })` waits without a limit.
 - **Gelato:** a task still pending one hour after it was created calls `onFailure` with its status and stops.
 
-These fetchers stop with `withoutRemoving: true`, so a `removeTxFromPool` you pass to `initializePollingTracker` is called only when polling gives up after `maxRetries` consecutive errors.
+These fetchers stop with `withoutRemoving: true`, so a `removeTxFromPool` you pass to `initializePollingTracker` is called only when polling gives up: after `maxRetries` consecutive errors, or on a `FinalPollingError`.
 
 ---
 

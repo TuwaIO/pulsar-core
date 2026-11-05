@@ -5,6 +5,7 @@
 
 import { normalizeError } from '@tuwaio/orbit-core';
 import {
+  createAbandonCheck,
   createTxUpdater,
   EvmTransaction,
   initializePollingTracker,
@@ -185,7 +186,7 @@ export type Eip5792TrackerForStoreParams<T extends Transaction> = Pick<
  *
  * @template T - The application transaction type.
  * @param params - The transaction, the wagmi config, the store members and the callbacks.
- * @returns A promise that resolves once stage 1 has started, or when stage 2 has finished if it started directly.
+ * @returns A promise that resolves once tracking has started, whichever stage it starts at.
  */
 export async function eip5792TrackerForStore<T extends Transaction>({
   tx,
@@ -219,7 +220,7 @@ export async function eip5792TrackerForStore<T extends Transaction>({
     maxRetries: 60,
     // A wallet not reconnected yet after a reload says nothing about the batch, which may be mined by now
     retryForeverEveryMs: 60_000,
-    isAbandoned: isTxTracked && (() => !isTxTracked(tx.txKey)),
+    isAbandoned: createAbandonCheck(isTxTracked, tx.txKey),
     onSuccess: async ({ hash }) => {
       if (!hash) {
         const updatedTx = updateTx({

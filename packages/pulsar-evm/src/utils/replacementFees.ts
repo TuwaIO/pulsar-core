@@ -11,8 +11,8 @@ type Fees = { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint };
 
 /**
  * The fees last sent for a nonce. The store keeps the fees of the original transaction and an adapter has no access to
- * it, while a node refuses a replacement that does not pay more than the one it holds. Lost on a reload, when the market
- * estimate has to be enough.
+ * it, while a node refuses a replacement that does not pay more than the one it holds. `sessionStorage` keeps them over a
+ * reload.
  */
 const lastSentFees = new Map<string, Fees>();
 const STORAGE_KEY_PREFIX = 'pulsar-evm:replacementFees:';

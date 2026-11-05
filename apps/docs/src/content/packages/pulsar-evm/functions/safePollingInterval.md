@@ -2,7 +2,7 @@
 
 > **safePollingInterval**(`elapsedMs`): `number`
 
-Defined in: [trackers/safeTracker.ts:69](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L69)
+Defined in: [trackers/safeTracker.ts:70](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L70)
 
 The polling schedule of the Safe tracker: every 5 s during the first hour of tracking, then every 30 s, since
 collecting the signatures of several owners can take days.

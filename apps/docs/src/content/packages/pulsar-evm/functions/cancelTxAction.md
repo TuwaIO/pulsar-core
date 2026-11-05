@@ -2,7 +2,7 @@
 
 > **cancelTxAction**\<`T`\>(`params`): `Promise`\<`` `0x${string}` ``\>
 
-Defined in: [utils/cancelTxAction.ts:37](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/cancelTxAction.ts#L37)
+Defined in: [utils/cancelTxAction.ts:38](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/cancelTxAction.ts#L38)
 
 Cancels a pending EVM transaction: asks the connected wallet to send a zero-value transaction to its own address with
 the same nonce and both EIP-1559 fees 15% above the fees last sent for this nonce, and at least at the market estimate,
@@ -11,7 +11,8 @@ transaction reports it as `Replaced` with `replacedReason: 'cancelled'`; the can
 added to the pool.
 
 Side effects: reads the fees of the chain over RPC, opens a wallet prompt, broadcasts a transaction, and keeps the fees
-sent in memory for the next replacement of this nonce.
+sent for the next replacement of this nonce, in memory and in `sessionStorage` under
+`pulsar-evm:replacementFees:<chain>:<sender>:<nonce>`.
 
 ## Type Parameters
 

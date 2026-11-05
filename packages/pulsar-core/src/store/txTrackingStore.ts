@@ -20,6 +20,7 @@ import {
   TransactionTracker,
 } from '../types';
 import { mergeTabPools } from '../utils/mergeTabPools';
+import { normalizeRemoteTx } from '../utils/normalizeRemoteTx';
 import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
 import { validateInitialTransactionParams, validateTransaction } from '../utils/transactionValidation';
 import { createTxFinishedNotifier, isFinishedStatus } from '../utils/txFinished';
@@ -35,11 +36,13 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  * saved nor restored (pass your own `partialize` and `merge` to change that). In the browser the saved state is
  * restored synchronously when the store is created. Where
  * `localStorage` is not available (server rendering), nothing is read or written and Zustand logs a warning on
- * updates. Creating the store does not start any tracker: call `initializeTransactionsPool` once on the client.
+ * updates. Creating the store starts no tracker: call `initializeTransactionsPool` on the client. Later, a storage event
+ * starts trackers for the pending transactions of another tab, which means RPC requests from this tab too.
  * In the browser it listens to `storage` events and merges what another tab has saved, by transaction, into this tab's
- * pool. Every transaction gets one tracker, however often `initializeTransactionsPool` runs. A speed-up made in the wallet or
- * through `speedUpTxAction` continues in a new record: the old one ends as `Replaced`, and a new one under the new hash, linked
- * by `replaces`, goes on to the result with the same callbacks.
+ * pool, and it tracks the pending transactions it learns that way, so a closed tab leaves nothing unfinished. Every
+ * transaction gets one tracker, however often `initializeTransactionsPool` runs. A speed-up made in the wallet or through
+ * `speedUpTxAction` continues in a new record: the old one ends as `Replaced`, and a new one under the new hash, linked by
+ * `replaces`, goes on to the result with the same callbacks.
  *
  * @template T - The application transaction type.
  * @param params - The adapters, the store options and the options of Zustand's `persist` middleware.
@@ -53,7 +56,7 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  * @param params.gelatoApiKey - Deprecated Gelato API key, passed to the trackers.
  * @param params.beforeTxProcess - Global preflight callback (see `BeforeTxProcess`).
  * @param params.abortOnTxError - Whether a `beforeTxProcess` error aborts the transaction. Defaults to `true`.
- * @param params.onTxFinished - Called once when a transaction finishes, also after a page reload (see
+ * @param params.onTxFinished - Called when a transaction finishes, also after a page reload, per open tab (see
  *   `TxFinishedListener`).
  * @param params.name - The storage key. Required by `persist`; use a different key for every store.
  * @returns The vanilla Zustand store. `store.persist` exposes the `persist` API (for example `clearStorage()`).
@@ -98,23 +101,92 @@ export function createPulsarStore<T extends Transaction>({
     }
   };
 
-  // What executeTxAction was given, in memory as functions cannot be saved: a speed-up hands it on to the new record
-  const trackerCallbacks = new Map<string, TrackerCallbacks<T>>();
+  // What executeTxAction was given, in memory as functions cannot be saved. Trackers get `callbacksOf`, which looks here at
+  // the moment of the call and runs each callback once for a record: a result can reach this tab through its own tracker
+  // and through another tab or a server, and a speed-up hands the callbacks on after the tracker of the new hash started.
+  const trackerCallbacks = new Map<string, { callbacks: TrackerCallbacks<T>; called: Set<string> }>();
+  // Removed here, so the next save of another tab does not bring them back at once, with a new tracker
+  const removedTxKeys = new Set<string>();
+
+  const runCallback = (txKey: string, name: keyof TrackerCallbacks<T>, ...args: unknown[]) => {
+    const entry = trackerCallbacks.get(txKey);
+    if (!entry || entry.called.has(name)) return;
+    entry.called.add(name);
+    const log = (error: unknown) => console.error(`[Pulsar] ${name} callback threw for ${txKey}:`, error);
+    try {
+      void Promise.resolve((entry.callbacks[name] as ((...a: unknown[]) => unknown) | undefined)?.(...args)).catch(log);
+    } catch (error) {
+      log(error);
+    }
+    // An error after a reverted replacement is the last thing that can come
+    const tx = args[0] as T | undefined;
+    if (name !== 'onReplaced' || !tx?.isError) trackerCallbacks.delete(txKey);
+  };
+  const callbacksOf = (txKey: string): TrackerCallbacks<T> => ({
+    onSuccess: (tx) => runCallback(txKey, 'onSuccess', tx),
+    onError: (error, tx) => runCallback(txKey, 'onError', error, tx),
+    onReplaced: (newTx, oldTx) => runCallback(txKey, 'onReplaced', newTx, oldTx),
+  });
+
+  const startRestored = (tx: T) =>
+    startTracker(tx.txKey, () =>
+      selectAdapterByKey({ adapterKey: tx.adapter, adapter })?.checkAndInitializeTrackerInStore({
+        tx,
+        gelatoApiKey,
+        ...callbacksOf(tx.txKey),
+        ...store.getState(),
+      }),
+    ).catch((error: unknown) => {
+      console.error(`[Pulsar] Could not track ${tx.txKey}:`, error);
+    });
 
   /**
    * A speed-up is the same operation under a new hash: the old record ends as `Replaced`, and a new record goes on to the
-   * result, linked by `replaces`. Only for `repriced`: a cancel or another transaction in the nonce is not this operation,
-   * and "Success" on a transfer of nothing to oneself would be false.
+   * result, linked by `replaces`, with the callbacks of the old one. Only for `repriced`: a cancel or another transaction in
+   * the nonce is not this operation, and "Success" on a transfer of nothing to oneself would be false.
    */
   const followSpeedUp = (replaced: T) => {
     const { replacedTxHash, replacedReason } = replaced as unknown as EvmTransaction;
     if (replaced.status !== TransactionStatus.Replaced || replacedReason !== 'repriced' || !replacedTxHash) return;
 
-    const callbacks = trackerCallbacks.get(replaced.txKey);
-    trackerCallbacks.delete(replaced.txKey);
+    const entry = trackerCallbacks.get(replaced.txKey);
+    if (entry) trackerCallbacks.set(replacedTxHash, { callbacks: entry.callbacks, called: new Set() });
+
     const before = store.getState();
-    // Another tab or a remote history may have added it, with a result this one must not overwrite
-    if (before.transactionsPool[replacedTxHash]) return;
+    const known = before.transactionsPool[replacedTxHash] as EvmTransaction | undefined;
+
+    // A reorganization brought the original back in place of its replacement: the two would be replaced by each other, and
+    // no record would say the money moved. The original is pending again.
+    if (known?.status === TransactionStatus.Replaced && known.replacedTxHash === replaced.txKey) {
+      store.setState(
+        produce(before, (draft) => {
+          const reopened = draft.transactionsPool[replacedTxHash] as EvmTransaction | undefined;
+          if (!reopened) return;
+          reopened.pending = true;
+          for (const field of [
+            'status',
+            'isError',
+            'error',
+            'finishedTimestamp',
+            'replacedTxHash',
+            'replacedReason',
+          ] as const) {
+            delete reopened[field];
+          }
+        }),
+      );
+      const tx = store.getState().transactionsPool[replacedTxHash];
+      if (tx) void startRestored(tx);
+      return;
+    }
+
+    // Another tab or a remote history has added it, maybe with its result. Its tracker reads the callbacks moved above; if it
+    // has already finished, nothing would call them.
+    if (known) {
+      if (known.pending && !trackedTxKeys.has(replacedTxHash)) void startRestored(known as unknown as T);
+      else if (!known.pending) deliverResult(known as unknown as T);
+      return;
+    }
 
     const next = {
       ...replaced,
@@ -122,16 +194,22 @@ export function createPulsarStore<T extends Transaction>({
       hash: replacedTxHash,
       tracker: TransactionTracker.Ethereum,
       replaces: replaced.txKey,
+      // It is in a block: this is how a record says so, and why speed-up and cancel are not offered on it
+      confirmations: 1,
     } as unknown as T & Partial<EvmTransaction>;
-    for (const field of ['status', 'isError', 'error', 'finishedTimestamp', 'confirmations', 'syncStatus'] as const) {
+    for (const field of ['status', 'isError', 'error', 'finishedTimestamp', 'syncStatus'] as const) {
       delete next[field as keyof typeof next];
     }
     delete next.replacedTxHash;
     delete next.replacedReason;
 
-    void before.addTxToPool(next).catch((error: unknown) => {
+    // A record that never went to the backend has no row there to continue, such as a payment handed over from a checkout
+    try {
+      void before.addTxToPool(next, { withoutSync: !replaced.syncStatus });
+    } catch (error) {
       console.error('[Pulsar] Could not add the transaction that replaced another:', error);
-    });
+      return;
+    }
     store.setState(
       produce(store.getState(), (draft) => {
         // Whatever followed the old record follows the new one, unless a later transaction has taken over
@@ -142,19 +220,24 @@ export function createPulsarStore<T extends Transaction>({
       }),
     );
 
-    if (callbacks) trackerCallbacks.set(replacedTxHash, callbacks);
     const tx = store.getState().transactionsPool[replacedTxHash];
-    if (!tx) return;
-    void startTracker(replacedTxHash, () =>
-      selectAdapterByKey({ adapterKey: tx.adapter, adapter })?.checkAndInitializeTrackerInStore({
-        tx,
-        gelatoApiKey,
-        ...callbacks,
-        ...store.getState(),
-      }),
-    ).catch((error: unknown) => {
-      console.error('[Pulsar] Could not track the transaction that replaced another:', error);
-    });
+    if (tx) void startRestored(tx);
+  };
+
+  /** Runs the callbacks of a result that came from another tab or a server, which no tracker of this tab will report. */
+  const deliverResult = (tx: T) => {
+    if (tx.status === TransactionStatus.Success) runCallback(tx.txKey, 'onSuccess', tx);
+    else if (tx.status === TransactionStatus.Failed) {
+      runCallback(tx.txKey, 'onError', new Error(tx.error?.message ?? 'The transaction failed.'), tx);
+    } else if (tx.status === TransactionStatus.Replaced) runCallback(tx.txKey, 'onReplaced', tx, tx);
+  };
+
+  /** A final result that did not come through this tab's tracker, which stops at its next check. */
+  const finishedElsewhere = (tx: T) => {
+    trackedTxKeys.delete(tx.txKey);
+    followSpeedUp(tx);
+    deliverResult(tx);
+    txFinished.notify(tx);
   };
 
   const store = createStore<ITxTrackingStore<T>>()(
@@ -168,12 +251,12 @@ export function createPulsarStore<T extends Transaction>({
           onTxFinished: (tx) => {
             trackedTxKeys.delete(tx.txKey);
             followSpeedUp(tx);
-            trackerCallbacks.delete(tx.txKey);
             txFinished.notify(tx);
           },
           onTxRemoved: (txKey) => {
             trackedTxKeys.delete(txKey);
             trackerCallbacks.delete(txKey);
+            removedTxKeys.add(txKey);
           },
         })(set, get),
 
@@ -209,6 +292,7 @@ export function createPulsarStore<T extends Transaction>({
                 foundAdapter?.checkAndInitializeTrackerInStore({
                   tx,
                   gelatoApiKey,
+                  ...callbacksOf(tx.txKey),
                   ...get(),
                 }),
               );
@@ -242,14 +326,20 @@ export function createPulsarStore<T extends Transaction>({
 
                 // Case A: Transaction is pending remotely but doesn't exist locally (Cross-device).
                 if (remoteTx.pending && !localTx) {
-                  pool[remoteTx.txKey] = remoteTx as Extract<T, Transaction>;
-                  txsToTrack.push(remoteTx);
+                  const record = normalizeRemoteTx(remoteTx);
+                  pool[remoteTx.txKey] = record as Extract<T, Transaction>;
+                  txsToTrack.push(record);
                 }
 
                 // Case B: Self-healing. Local is stuck on pending, but remote says it's terminal.
                 if (localTx?.pending && isFinishedStatus(remoteTx.status)) {
-                  // A server's Failed can be its own time limit. While this page's tracker runs, the chain answers
-                  if (remoteTx.status === TransactionStatus.Failed && trackedTxKeys.has(remoteTx.txKey)) return;
+                  // A server's Failed can be its own time limit, and its Replaced may not say why, when a speed-up is what
+                  // decides whether a new record follows. While this page's tracker runs, the chain answers
+                  const remoteReason = (remoteTx as unknown as EvmTransaction).replacedReason;
+                  const provesNothing =
+                    remoteTx.status === TransactionStatus.Failed ||
+                    (remoteTx.status === TransactionStatus.Replaced && !remoteReason);
+                  if (provesNothing && trackedTxKeys.has(remoteTx.txKey)) return;
                   if (!isFinishedStatus(localTx.status)) finishedTxKeys.push(remoteTx.txKey);
                   localTx.status = remoteTx.status;
                   localTx.pending = false;
@@ -268,13 +358,8 @@ export function createPulsarStore<T extends Transaction>({
           );
 
           for (const txKey of finishedTxKeys) {
-            trackedTxKeys.delete(txKey);
             const finishedTx = get().transactionsPool[txKey];
-            if (finishedTx) {
-              followSpeedUp(finishedTx);
-              trackerCallbacks.delete(txKey);
-              txFinished.notify(finishedTx);
-            }
+            if (finishedTx) finishedElsewhere(finishedTx);
           }
 
           // 2. Asynchronously start trackers for the newly injected pending transactions
@@ -287,6 +372,7 @@ export function createPulsarStore<T extends Transaction>({
                   foundAdapter?.checkAndInitializeTrackerInStore({
                     tx,
                     gelatoApiKey,
+                    ...callbacksOf(tx.txKey),
                     // Pass the fresh state after the synchronous set above
                     ...get(),
                   }),
@@ -426,13 +512,12 @@ export function createPulsarStore<T extends Transaction>({
 
             // Step 8: Initialize the background tracker for the transaction.
             const tx = get().transactionsPool[finalTxKey];
-            trackerCallbacks.set(finalTxKey, { onSuccess, onError, onReplaced });
+            removedTxKeys.delete(finalTxKey);
+            trackerCallbacks.set(finalTxKey, { callbacks: { onSuccess, onError, onReplaced }, called: new Set() });
             await startTracker(finalTxKey, () =>
               foundAdapter.checkAndInitializeTrackerInStore({
                 tx,
-                onSuccess,
-                onError,
-                onReplaced,
+                ...callbacksOf(finalTxKey),
                 gelatoApiKey,
                 ...get(),
               }),
@@ -483,7 +568,8 @@ export function createPulsarStore<T extends Transaction>({
       const theirs = (saved?.state as Partial<ITxTrackingStore<T>> | undefined)?.transactionsPool;
       if (!theirs) return;
       const valid = Object.fromEntries(
-        Object.entries(theirs).filter(([, tx]) => {
+        Object.entries(theirs).filter(([key, tx]) => {
+          if (removedTxKeys.has(key)) return false;
           try {
             validateTransaction(tx);
             return true;
@@ -496,20 +582,10 @@ export function createPulsarStore<T extends Transaction>({
       const { pool, finished, added } = mergeTabPools(state.transactionsPool as TransactionPool<T>, valid);
       if (pool !== state.transactionsPool)
         (store as StoreApi<ITxTrackingStore<T>>).setState({ transactionsPool: pool });
-      for (const txKey of finished) {
-        trackedTxKeys.delete(txKey);
-        txFinished.notify(pool[txKey]);
-      }
+      // Finished first: a speed-up hands its callbacks on, and the new record among `added` must start with them
+      for (const txKey of finished) finishedElsewhere(pool[txKey]);
       // The tab that sent it may close: this one must then be able to finish it
-      for (const tx of added) {
-        void startTracker(tx.txKey, () =>
-          selectAdapterByKey({ adapterKey: tx.adapter, adapter })?.checkAndInitializeTrackerInStore({
-            tx,
-            gelatoApiKey,
-            ...store.getState(),
-          }),
-        ).catch((error: unknown) => console.error('[Pulsar] Could not track a transaction of another tab:', error));
-      }
+      for (const tx of added) void startRestored(tx);
     };
     window.addEventListener('storage', (event) => {
       if (event.key !== options.name) return;

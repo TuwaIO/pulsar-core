@@ -6,6 +6,7 @@
 import { normalizeError } from '@tuwaio/orbit-core';
 import { createBundlerRpcClient } from '@tuwaio/orbit-evm';
 import {
+  createAbandonCheck,
   createTxUpdater,
   EvmTransaction,
   initializePollingTracker,
@@ -243,7 +244,7 @@ export type Erc4337TrackerForStoreParams<T extends Transaction> = Pick<
  *
  * @template T - The application transaction type.
  * @param params - The transaction, the wagmi config, the store members and the callbacks.
- * @returns A promise that resolves once stage 1 has started, or when stage 2 has finished if it started directly.
+ * @returns A promise that resolves once tracking has started, whichever stage it starts at.
  */
 export async function erc4337TrackerForStore<T extends Transaction>({
   tx,
@@ -280,7 +281,7 @@ export async function erc4337TrackerForStore<T extends Transaction>({
     maxRetries: 60,
     // A bundler that cannot be reached says nothing about the UserOperation
     retryForeverEveryMs: 60_000,
-    isAbandoned: isTxTracked && (() => !isTxTracked(tx.txKey)),
+    isAbandoned: createAbandonCheck(isTxTracked, tx.txKey),
     onSuccess: async (response) => {
       const hash = response.hash;
 

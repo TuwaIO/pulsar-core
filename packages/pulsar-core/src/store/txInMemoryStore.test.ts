@@ -2,7 +2,7 @@ import { OrbitAdapter } from '@tuwaio/orbit-core';
 import { produce } from 'immer';
 import { describe, expect, it, vi } from 'vitest';
 
-import { EvmTransaction, TransactionStatus, TransactionTracker } from '../types';
+import { EvmTransaction, Transaction, TransactionStatus, TransactionTracker } from '../types';
 import { createTxInMemoryStore } from './txInMemoryStore';
 
 function createTransaction(overrides: Partial<EvmTransaction> = {}): EvmTransaction {
@@ -149,5 +149,70 @@ describe('createTxInMemoryStore', () => {
     });
 
     expect(Object.isFrozen(result)).toBe(true);
+  });
+});
+
+describe('createTxInMemoryStore: what the local tracker knows and a server does not', () => {
+  const key = '0xabc';
+  const pending = { txKey: key, pending: true, nonce: 7 } as unknown as Transaction;
+  const withStatus = (status: TransactionStatus, fields: Record<string, unknown> = {}) =>
+    ({ txKey: key, pending: false, status, ...fields }) as unknown as Transaction;
+
+  const make = (pool: Record<string, Transaction>) =>
+    createTxInMemoryStore<Transaction>({ localTransactionsPool: pool as never });
+
+  it('lets the chain correct a Failed from a server', () => {
+    const store = make({ [key]: withStatus(TransactionStatus.Failed, { error: { message: 'Timed out' } }) });
+
+    store.getState().syncWithLocalPool({ [key]: withStatus(TransactionStatus.Success) } as never);
+
+    const tx = store.getState().transactionsPool[key];
+    expect(tx.status).toBe(TransactionStatus.Success);
+    expect(tx.error).toBeUndefined();
+  });
+
+  it('does not take a Failed over the answer of the chain', () => {
+    const store = make({ [key]: withStatus(TransactionStatus.Success) });
+
+    store.getState().syncWithLocalPool({ [key]: withStatus(TransactionStatus.Failed) } as never);
+
+    expect(store.getState().transactionsPool[key].status).toBe(TransactionStatus.Success);
+  });
+
+  it('gives the local fields to a pending copy: speed-up and cancel need its nonce and fees', () => {
+    const store = make({ [key]: { txKey: key, pending: true } as unknown as Transaction });
+
+    store.getState().syncWithLocalPool({ [key]: pending } as never);
+
+    expect((store.getState().transactionsPool[key] as unknown as { nonce: number }).nonce).toBe(7);
+  });
+
+  it.each([
+    ['a Failed', TransactionStatus.Failed, {}],
+    ['a Replaced with no reason', TransactionStatus.Replaced, { replacedTxHash: '0xnew' }],
+  ])('does not put %s from a server over a pending copy', async (_name, status, fields) => {
+    const store = createTxInMemoryStore<Transaction>({
+      localTransactionsPool: { [key]: pending } as never,
+      getHistory: async () =>
+        ({
+          docs: [
+            {
+              ...withStatus(status, fields),
+              adapter: 'evm',
+              tracker: 'ethereum',
+              chainId: 1,
+              from: '0x1',
+              type: 'T',
+              localTimestamp: 1,
+            },
+          ],
+          page: 1,
+          hasNextPage: false,
+        }) as never,
+    });
+
+    await store.getState().fetchInitial('0x1');
+
+    expect(store.getState().transactionsPool[key].pending).toBe(true);
   });
 });
