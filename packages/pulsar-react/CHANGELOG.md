@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.7.0...pulsar-react-v0.8.0) (2026-11-05)
+
+
+### Features
+
+* a wallet's speed-up is followed to its result, and a slow transaction is not a failed one ([#98](https://github.com/TuwaIO/pulsar-core/issues/98)) ([6740c87](https://github.com/TuwaIO/pulsar-core/commit/6740c87b78280c4e49b0d4cdeb810bf15f03f76c))
+
 ## [0.7.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-react-v0.6.2...pulsar-react-v0.7.0) (2026-10-20)
 
 
