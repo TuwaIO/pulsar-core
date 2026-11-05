@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.11.0...pulsar-evm-v0.11.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* **pulsar-core:** stopping the tracking of a transaction also holds in the history store and in the modal of another tab ([#100](https://github.com/TuwaIO/pulsar-core/issues/100)) ([b92351e](https://github.com/TuwaIO/pulsar-core/commit/b92351e13f390587a0eeee7153e1e104c0616222))
+
 ## [0.11.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.10.1...pulsar-evm-v0.11.0) (2026-11-05)
 
 
