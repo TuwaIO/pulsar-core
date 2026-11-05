@@ -5,20 +5,11 @@
  */
 
 import { createConfig } from '@wagmi/core';
-import {
-  createClient,
-  Hex,
-  http,
-  HttpRequestError,
-  TransactionReceipt,
-  WaitForTransactionReceiptTimeoutError,
-  zeroAddress,
-  zeroHash,
-} from 'viem';
+import { createClient, Hex, http, TransactionReceipt, zeroAddress, zeroHash } from 'viem';
 import { mainnet, sepolia } from 'viem/chains';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { evmTracker, EVMTrackerParams, isRetryableReceiptError } from './evmTracker';
+import { evmTracker, EVMTrackerParams } from './evmTracker';
 
 // Mock the entire 'viem/actions' module to control its behavior in tests.
 vi.mock('viem/actions', async (importActual) => {
@@ -28,17 +19,19 @@ vi.mock('viem/actions', async (importActual) => {
     waitForTransactionReceipt: vi.fn(),
     getTransaction: vi.fn(),
     getBlock: vi.fn(),
+    getBlockNumber: vi.fn(),
     getTransactionConfirmations: vi.fn(),
   };
 });
 
 // We need to await the mocked module to get the mocked functions.
-const { waitForTransactionReceipt, getTransaction, getBlock, getTransactionConfirmations } =
+const { waitForTransactionReceipt, getTransaction, getBlock, getBlockNumber, getTransactionConfirmations } =
   await import('viem/actions');
 const viemActions = {
   waitForTransactionReceipt: vi.mocked(waitForTransactionReceipt),
   getTransaction: vi.mocked(getTransaction),
   getBlock: vi.mocked(getBlock),
+  getBlockNumber: vi.mocked(getBlockNumber),
   getTransactionConfirmations: vi.mocked(getTransactionConfirmations),
 };
 
@@ -86,6 +79,8 @@ describe('evmTracker Unit Tests', () => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     viemActions.getTransaction.mockResolvedValue(mockTxDetails);
+    viemActions.getBlockNumber.mockResolvedValue(1n);
+    viemActions.waitForTransactionReceipt.mockResolvedValue({ status: 'success' } as TransactionReceipt);
 
     // Suppress console.error logs during tests for a cleaner output.
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -155,6 +150,7 @@ describe('evmTracker Unit Tests', () => {
     const replacementData = {
       reason: 'repriced' as const,
       transaction: { hash: '0xnewHash' as Hex },
+      transactionReceipt: { status: 'success', blockNumber: 1n } as TransactionReceipt,
     };
 
     // Simulate viem's behavior: onReplaced is called, then the promise resolves.
@@ -203,37 +199,6 @@ describe('evmTracker Unit Tests', () => {
     expect(baseTrackerParams.onConfirmationsUpdate).toHaveBeenCalledWith(3);
     expect(baseTrackerParams.onSuccess).toHaveBeenCalled();
     vi.useRealTimers();
-  });
-});
-
-describe('isRetryableReceiptError Unit Tests', () => {
-  test('should return true for explicit WaitForTransactionReceiptTimeoutError', () => {
-    const error = new WaitForTransactionReceiptTimeoutError({ hash: '0x123' });
-    expect(isRetryableReceiptError(error)).toBe(true);
-  });
-
-  test('should return true for network and transport errors', () => {
-    const httpErr = new HttpRequestError({ url: 'https://rpc.example.com', details: 'fetch failed' });
-    expect(isRetryableReceiptError(httpErr)).toBe(true);
-
-    const genericTimeout = new Error('Request timed out after 60000ms');
-    expect(isRetryableReceiptError(genericTimeout)).toBe(true);
-  });
-
-  test('should return true for nested error cause (wrapped Viem BaseError)', () => {
-    const innerError = new HttpRequestError({ url: 'https://rpc.example.com', details: '502 Bad Gateway' });
-    const outerError = new Error('RPC Call Failed');
-    outerError.cause = innerError;
-
-    expect(isRetryableReceiptError(outerError)).toBe(true);
-  });
-
-  test('should return false for non-retryable errors or non-Error objects', () => {
-    expect(isRetryableReceiptError(null)).toBe(false);
-    expect(isRetryableReceiptError('some error string')).toBe(false);
-
-    const fatalError = new Error('Execution reverted by EVM');
-    expect(isRetryableReceiptError(fatalError)).toBe(false);
   });
 });
 
@@ -300,6 +265,7 @@ describe('evmTrackerForStore Unit Tests - TrackerCallbacks', () => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     viemActions.getBlock.mockResolvedValue(mockBlock);
+    viemActions.getBlockNumber.mockResolvedValue(1n);
 
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
@@ -366,6 +332,7 @@ describe('evmTrackerForStore Unit Tests - TrackerCallbacks', () => {
     const replacementData = {
       reason: 'repriced' as const,
       transaction: { hash: '0xnewHash' as Hex },
+      transactionReceipt: { status: 'success', blockNumber: 1n } as TransactionReceipt,
     };
 
     viemActions.waitForTransactionReceipt.mockImplementation(async (_client, { onReplaced }) => {
@@ -455,6 +422,7 @@ describe('evmTrackerForStore Unit Tests - TrackerCallbacks', () => {
     const replacementData = {
       reason: 'repriced' as const,
       transaction: { hash: '0xnewHash' as Hex },
+      transactionReceipt: { status: 'success', blockNumber: 1n } as TransactionReceipt,
     };
 
     viemActions.waitForTransactionReceipt.mockImplementation(async (_client, { onReplaced }) => {

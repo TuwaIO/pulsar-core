@@ -2,7 +2,7 @@
 
 > **InitialTransaction** = [`InitialTransactionParams`](/packages/pulsar-core/type-aliases/InitialTransactionParams.md) & `object`
 
-Defined in: [types.ts:299](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L299)
+Defined in: [types.ts:310](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L310)
 
 The state of a transaction while `executeTxAction` runs, before it is added to the pool. UI layers use it for
 immediate feedback (signature prompts, preflight errors).

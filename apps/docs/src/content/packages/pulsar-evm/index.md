@@ -113,6 +113,10 @@ Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/
 
 - [~~GelatoStatusCode~~](/packages/pulsar-evm/enumerations/GelatoStatusCode.md)
 
+## Classes
+
+- [NonceSlotSpentError](/packages/pulsar-evm/classes/NonceSlotSpentError.md)
+
 ## Type Aliases
 
 - [Eip5792FetcherTx](/packages/pulsar-evm/type-aliases/Eip5792FetcherTx.md)
@@ -132,6 +136,8 @@ Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/
 - [~~GelatoTaskStatus~~](/packages/pulsar-evm/type-aliases/GelatoTaskStatus.md)
 - [~~GelatoToken~~](/packages/pulsar-evm/type-aliases/GelatoToken.md)
 - [InitializeTrackerParams](/packages/pulsar-evm/type-aliases/InitializeTrackerParams.md)
+- [NonceSlot](/packages/pulsar-evm/type-aliases/NonceSlot.md)
+- [NonceSlotReading](/packages/pulsar-evm/type-aliases/NonceSlotReading.md)
 - [SafeTrackerOptions](/packages/pulsar-evm/type-aliases/SafeTrackerOptions.md)
 - [SafeTxStatusResponse](/packages/pulsar-evm/type-aliases/SafeTxStatusResponse.md)
 
@@ -162,8 +168,8 @@ Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/
 - [evmTrackerForStore](/packages/pulsar-evm/functions/evmTrackerForStore.md)
 - [~~gelatoFetcher~~](/packages/pulsar-evm/functions/gelatoFetcher.md)
 - [~~gelatoTrackerForStore~~](/packages/pulsar-evm/functions/gelatoTrackerForStore.md)
-- [isRetryableReceiptError](/packages/pulsar-evm/functions/isRetryableReceiptError.md)
 - [pulsarEvmAdapter](/packages/pulsar-evm/functions/pulsarEvmAdapter.md)
+- [readNonceSlot](/packages/pulsar-evm/functions/readNonceSlot.md)
 - [safePollingInterval](/packages/pulsar-evm/functions/safePollingInterval.md)
 - [safeTrackerForStore](/packages/pulsar-evm/functions/safeTrackerForStore.md)
 - [selectEvmTxExplorerLink](/packages/pulsar-evm/functions/selectEvmTxExplorerLink.md)

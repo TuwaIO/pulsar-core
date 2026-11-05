@@ -61,12 +61,27 @@ The nonce of the sender account.
 Pimlico API key used to track an ERC-4337 UserOperation when no `bundlerUrl` is set. Persisted to `localStorage`
 with the transaction, so tracking can resume after a reload, but never passed to `onRemoteCreate`.
 
+### replacedReason?
+
+> `optional` **replacedReason?**: `"repriced"` \| `"cancelled"` \| `"replaced"` \| `"unknown"`
+
+What spent the nonce (set with `status: Replaced`): `repriced` is the same transaction with higher fees (a speed-up),
+so the money moved in the replacement; `cancelled` is a transfer of nothing to the sender, so it did not; `replaced` is
+any other transaction; `unknown` means the nonce was spent by a transaction that could not be found.
+
 ### replacedTxHash?
 
 > `optional` **replacedTxHash?**: `` `0x${string}` ``
 
 The hash of the transaction that replaced this one (set with `status: Replaced`). For Safe transactions it is the
 `safeTxHash` of the transaction executed instead.
+
+### sender?
+
+> `optional` **sender?**: `` `0x${string}` ``
+
+The sender as the chain reports it, read by the tracker. It owns `nonce`, so together they tell what became of the
+transaction when a node no longer returns its hash. It differs from `from`, the wallet, for a relayed transaction.
 
 ### to?
 

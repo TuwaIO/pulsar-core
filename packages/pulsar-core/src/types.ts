@@ -183,6 +183,17 @@ export type EvmTransaction = BaseTransaction & {
    * `safeTxHash` of the transaction executed instead.
    */
   replacedTxHash?: `0x${string}`;
+  /**
+   * What spent the nonce (set with `status: Replaced`): `repriced` is the same transaction with higher fees (a speed-up),
+   * so the money moved in the replacement; `cancelled` is a transfer of nothing to the sender, so it did not; `replaced` is
+   * any other transaction; `unknown` means the nonce was spent by a transaction that could not be found.
+   */
+  replacedReason?: 'repriced' | 'cancelled' | 'replaced' | 'unknown';
+  /**
+   * The sender as the chain reports it, read by the tracker. It owns `nonce`, so together they tell what became of the
+   * transaction when a node no longer returns its hash. It differs from `from`, the wallet, for a relayed transaction.
+   */
+  sender?: `0x${string}`;
   /** The recipient or contract address. */
   to?: `0x${string}`;
   /** The native value sent, in wei, as a decimal string. */
@@ -534,6 +545,8 @@ export type UpdatableTransactionFields = Partial<
     | 'hash'
     | 'status'
     | 'replacedTxHash'
+    | 'replacedReason'
+    | 'sender'
     | 'error'
     | 'finishedTimestamp'
     | 'isTrackedModalOpen'
