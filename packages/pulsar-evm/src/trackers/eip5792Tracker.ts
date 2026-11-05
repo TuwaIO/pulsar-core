@@ -163,12 +163,13 @@ export function eip5792Tracker<T extends Eip5792FetcherTx & Pick<Transaction, 'p
 export type Eip5792TrackerForStoreParams<T extends Transaction> = Pick<
   ITxTrackingStore<T>,
   'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
-> & {
-  /** The transaction to track; `txKey` is the batch ID returned by `wallet_sendCalls`. */
-  tx: T;
-  /** The wagmi config with the wallet that sent the batch; also used for the on-chain stage. */
-  config: Config;
-} & TrackerCallbacks<T>;
+> &
+  Partial<Pick<ITxTrackingStore<T>, 'isTxTracked'>> & {
+    /** The transaction to track; `txKey` is the batch ID returned by `wallet_sendCalls`. */
+    tx: T;
+    /** The wagmi config with the wallet that sent the batch; also used for the on-chain stage. */
+    config: Config;
+  } & TrackerCallbacks<T>;
 
 /**
  * Tracks an EIP-5792 call batch of the Pulsar store in two stages and writes the results to the store:
@@ -191,16 +192,24 @@ export async function eip5792TrackerForStore<T extends Transaction>({
   config,
   updateTxParams,
   transactionsPool,
+  isTxTracked,
   onSuccess,
   onError,
   onReplaced,
 }: Eip5792TrackerForStoreParams<T>): Promise<void> {
   const updateTx = createTxUpdater({ tx, transactionsPool, updateTxParams });
-  const onChain = (hash: Hex) => trackOnChainStage({ tx, hash, config, updateTx, onSuccess, onError, onReplaced });
+  const onChain = (hash: Hex) =>
+    trackOnChainStage({ tx, hash, config, updateTx, isTxTracked, onSuccess, onError, onReplaced });
 
   // Resumed after a reload with the executing transaction known: only the on-chain stage is left
   const known = (tx as unknown as EvmTransaction).hash;
-  if (known) return onChain(known);
+  if (known) {
+    // Not awaited: whoever starts a tracker must not wait for a transaction that may stay pending for long
+    void onChain(known).catch((error: unknown) => {
+      console.error(`[Pulsar] A tracker stopped with an error: ${error instanceof Error ? error.name : 'Unknown'}.`);
+    });
+    return;
+  }
 
   initializePollingTracker<Eip5792FetchResult, T>({
     tx,
@@ -210,6 +219,7 @@ export async function eip5792TrackerForStore<T extends Transaction>({
     maxRetries: 60,
     // A wallet not reconnected yet after a reload says nothing about the batch, which may be mined by now
     retryForeverEveryMs: 60_000,
+    isAbandoned: isTxTracked && (() => !isTxTracked(tx.txKey)),
     onSuccess: async ({ hash }) => {
       if (!hash) {
         const updatedTx = updateTx({

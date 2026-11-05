@@ -13,6 +13,7 @@ import {
   TransactionPool,
   UpdatableTransactionFields,
 } from '../types';
+import { keepsItsResult } from '../utils/mergeTabPools';
 import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
 import { validateTransaction } from '../utils/transactionValidation';
 import { isFinishedStatus } from '../utils/txFinished';
@@ -73,8 +74,10 @@ export function initializeTxTrackingStore<T extends Transaction>({
   retentionDays = DEFAULT_RETENTION_DAYS,
   onRemoteCreate,
   onTxFinished,
+  onTxRemoved,
 }: Pick<PulsarAdapter<T>, 'onRemoteCreate' | 'retentionDays' | 'onTxFinished'> & {
   maxTransactions: number;
+  onTxRemoved?: (txKey: string) => void;
 }): StoreSlice<IInitializeTxTrackingStore<T>> {
   let isReconciling = false;
   // Keys whose `onRemoteCreate` call is in flight, so a reconciliation run does not send them twice.
@@ -201,22 +204,27 @@ export function initializeTxTrackingStore<T extends Transaction>({
       },
 
       updateTxParams: (txKey, fields) => {
-        const wasFinished = isFinishedStatus(get().transactionsPool[txKey]?.status);
+        const before = get().transactionsPool[txKey]?.status;
+        const wasFinished = isFinishedStatus(before);
+        const keepsResult = keepsItsResult(before, fields.status);
         set((state) =>
           produce(state, (draft) => {
             const tx = draft.transactionsPool[txKey];
             // Ensure the transaction exists before attempting to update.
             if (tx) {
               // A final status is the result the chain gave. A late writer (a second tracker, another tab) only lost
-              // sight of the transaction, and must not turn a mined transaction into a failed one.
-              Object.assign(tx, wasFinished ? withoutResultFields(fields) : fields);
+              // sight of the transaction, and must not turn a mined transaction into a failed one. A Failed can be taken
+              // back by the chain's answer: it may have come from a server's time limit.
+              Object.assign(tx, keepsResult ? withoutResultFields(fields) : fields);
+              if (wasFinished && !keepsResult) (tx as { error?: unknown }).error = undefined;
             }
           }),
         );
 
-        // The "transaction finished" event: once, on the move from a non-final to a final status
+        // The "transaction finished" event: on the move from a non-final to a final status, and again when the chain
+        // corrects a Failed, as whoever heard it was told something false
         const updatedTx = get().transactionsPool[txKey];
-        if (onTxFinished && updatedTx && !wasFinished && isFinishedStatus(updatedTx.status)) {
+        if (onTxFinished && updatedTx && isFinishedStatus(updatedTx.status) && updatedTx.status !== before) {
           onTxFinished(updatedTx);
         }
 
@@ -231,9 +239,12 @@ export function initializeTxTrackingStore<T extends Transaction>({
               });
           }
         }
+
+        return updatedTx;
       },
 
       removeTxFromPool: (txKey) => {
+        onTxRemoved?.(txKey);
         set((state) =>
           produce(state, (draft) => {
             delete draft.transactionsPool[txKey];

@@ -6,6 +6,7 @@
 import { normalizeError, OrbitAdapter } from '@tuwaio/orbit-core';
 import {
   createTxUpdater,
+  FinalPollingError,
   initializePollingTracker,
   ITxTrackingStore,
   PollingFetcherParams,
@@ -134,7 +135,8 @@ type SafeTxSameNonceResponse = {
  *   and stops polling, keeping the transaction. Without a timeout (`null`) it keeps waiting.
  * - The service returns 404 past `notFoundGraceMs`: calls `onFailure()` without a response and stops polling, keeping the
  *   transaction. Within it, a 404 throws like a failed request.
- * - An unsupported chain or another failed request throws, so the polling tracker counts it as a failed attempt.
+ * - An unsupported chain throws `FinalPollingError` from `@tuwaio/pulsar-core`, so the polling tracker fails at once.
+ *   Another failed request throws, so it counts as a failed attempt.
  *
  * @param options - The tracker options.
  * @param options.pendingTimeoutMs - How long the transaction may stay unexecuted; `null` waits without a limit.
@@ -157,7 +159,8 @@ export const createSafeFetcher = ({
   }: PollingFetcherParams<SafeTxStatusResponse, Pick<Transaction, 'txKey' | 'chainId' | 'from'>>): Promise<void> => {
     const baseUrl = SafeTransactionServiceUrls[tx.chainId as number];
     if (!baseUrl) {
-      throw new Error(`Safe Transaction Service URL not found for chainId: ${tx.chainId}`);
+      // No later check can change this, unlike a service that is down: it must not poll forever
+      throw new FinalPollingError(`Safe Transaction Service URL not found for chainId: ${tx.chainId}`);
     }
 
     // 1. Fetch the status of the primary transaction.
@@ -165,10 +168,13 @@ export const createSafeFetcher = ({
     if (!primaryTxResponse.ok) {
       // Treat 404 as a terminal failure (the service does not know the transaction).
       if (primaryTxResponse.status === 404) {
-        const firstAt = firstNotFoundAt.get(tx.txKey) ?? Date.now();
-        firstNotFoundAt.set(tx.txKey, firstAt);
-        if (Date.now() - firstAt < notFoundGraceMs) {
-          throw new Error(`The Safe Transaction Service does not know ${tx.txKey} yet.`);
+        if (notFoundGraceMs > 0) {
+          const firstAt = firstNotFoundAt.get(tx.txKey) ?? Date.now();
+          firstNotFoundAt.set(tx.txKey, firstAt);
+          if (Date.now() - firstAt < notFoundGraceMs) {
+            throw new Error(`The Safe Transaction Service does not know ${tx.txKey} yet.`);
+          }
+          firstNotFoundAt.delete(tx.txKey);
         }
         onFailure();
         stopPolling({ withoutRemoving: true });
@@ -176,6 +182,8 @@ export const createSafeFetcher = ({
       }
       throw new Error(`Safe API responded with status: ${primaryTxResponse.status}`);
     }
+    // Known now: a later 404 is judged on its own, not against an indexing delay from days ago
+    firstNotFoundAt.delete(tx.txKey);
     const safeStatus = (await primaryTxResponse.json()) as SafeTxStatusResponse;
     onIntervalTick?.(safeStatus);
 
@@ -254,6 +262,7 @@ export const safeFetcher = createSafeFetcher();
  * @param params.onReplaced - Called when another transaction with the same nonce was executed.
  * @param params.pendingTimeoutMs - How long the transaction may stay unexecuted (see {@link SafeTrackerOptions}).
  * @param params.notFoundGraceMs - How long a 404 is not final (see {@link SafeTrackerOptions}).
+ * @param params.isTxTracked - `isTxTracked` of the store: the tracker stops when it says no.
  */
 export function safeTrackerForStore<T extends Transaction>({
   tx,
@@ -264,9 +273,11 @@ export function safeTrackerForStore<T extends Transaction>({
   onReplaced,
   pendingTimeoutMs = null,
   notFoundGraceMs = STORE_NOT_FOUND_GRACE_MS,
-}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> & {
-  tx: T;
-} & TrackerCallbacks<T> &
+  isTxTracked,
+}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> &
+  Partial<Pick<ITxTrackingStore<T>, 'isTxTracked'>> & {
+    tx: T;
+  } & TrackerCallbacks<T> &
   SafeTrackerOptions) {
   const updateTx = createTxUpdater({ tx, transactionsPool, updateTxParams });
 
@@ -275,6 +286,7 @@ export function safeTrackerForStore<T extends Transaction>({
     fetcher: createSafeFetcher({ pendingTimeoutMs, notFoundGraceMs }),
     pollingInterval: safePollingInterval,
     retryForeverEveryMs: STORE_RETRY_EVERY_MS,
+    isAbandoned: isTxTracked && (() => !isTxTracked(tx.txKey)),
     // `removeTxFromPool` is not passed: failed transactions stay in the pool as `Failed`.
     onSuccess: (response) => {
       const updatedTx = updateTx({

@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
 import { Hex } from 'viem';
 
 import { evmTracker } from './evmTracker';
-import { storeCallbacks } from './storeCallbacks';
+import { storeCallbacks, storeTrackerOptions } from './storeCallbacks';
 
 /**
  * Follows the transaction `hash` of a tracked transaction on-chain with {@link evmTracker} and writes the details,
@@ -23,6 +23,7 @@ import { storeCallbacks } from './storeCallbacks';
  * @param params.hash - The hash of the transaction that executed it.
  * @param params.config - The wagmi config; without it the transaction succeeds at once.
  * @param params.updateTx - The updater from `createTxUpdater` of `@tuwaio/pulsar-core`.
+ * @param params.isTxTracked - `isTxTracked` of the store, when it has one.
  * @returns A promise that resolves when the on-chain tracking has finished.
  */
 export async function trackOnChainStage<T extends Transaction>({
@@ -30,6 +31,7 @@ export async function trackOnChainStage<T extends Transaction>({
   hash,
   config,
   updateTx,
+  isTxTracked,
   onSuccess,
   onError,
   onReplaced,
@@ -38,6 +40,7 @@ export async function trackOnChainStage<T extends Transaction>({
   hash: Hex;
   config?: Config;
   updateTx: (fields: UpdatableTransactionFields) => T | undefined;
+  isTxTracked?: (txKey: string) => boolean;
 } & TrackerCallbacks<T>): Promise<void> {
   if (config) {
     return evmTracker({
@@ -47,7 +50,7 @@ export async function trackOnChainStage<T extends Transaction>({
         requiredConfirmations: tx.requiredConfirmations,
       },
       config,
-      receiptAttempts: Infinity,
+      ...storeTrackerOptions(tx, isTxTracked),
       ...storeCallbacks({
         tx,
         config,

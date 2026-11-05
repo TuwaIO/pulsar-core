@@ -18,8 +18,9 @@ import { ITxTrackingStore, Transaction, UpdatableTransactionFields } from '../ty
  * @param params.tx - The tracked transaction.
  * @param params.transactionsPool - The pool snapshot; the tracked transaction is read from it once.
  * @param params.updateTxParams - The store's `updateTxParams`.
- * @returns A function that calls `updateTxParams(tx.txKey, fields)` and returns the updated transaction, or `undefined`
- * when the transaction was not in the pool when tracking started. The snapshot is not mutated.
+ * @returns A function that calls `updateTxParams(tx.txKey, fields)` and returns the updated transaction as the store
+ * holds it, which differs from `fields` when the store kept a final result. It returns `undefined` when the transaction
+ * was not in the pool when tracking started. The snapshot is not mutated.
  *
  * @example
  * ```ts
@@ -36,8 +37,8 @@ export function createTxUpdater<T extends Transaction>({
   let current: T | undefined = transactionsPool[tx.txKey];
 
   return (fields: UpdatableTransactionFields): T | undefined => {
-    updateTxParams(tx.txKey, fields);
-    if (current) current = { ...current, ...fields } as T;
+    const stored = updateTxParams(tx.txKey, fields);
+    if (current) current = stored ?? ({ ...current, ...fields } as T);
     return current;
   };
 }

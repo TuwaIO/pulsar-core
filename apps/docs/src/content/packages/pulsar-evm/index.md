@@ -28,7 +28,7 @@ pnpm add @tuwaio/pulsar-evm @tuwaio/pulsar-core @tuwaio/orbit-core @tuwaio/orbit
 ```
 
 > [!IMPORTANT]
-> `@tuwaio/pulsar-core` (>=0.10), `@tuwaio/orbit-core` (>=0.4), `viem` (2.x) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-evm`. The main entry also needs `@tuwaio/orbit-evm` (>=0.3) and `@wagmi/core` (3.x); they are optional peers because the `@tuwaio/pulsar-evm/safe` entry does not use them. `zustand` and `immer` are the peer dependencies of `@tuwaio/pulsar-core`.
+> `@tuwaio/pulsar-core` (>=0.11.2), `@tuwaio/orbit-core` (>=0.4), `viem` (2.x) and `dayjs` (1.x) are peer dependencies and must be installed alongside `@tuwaio/pulsar-evm`. The main entry also needs `@tuwaio/orbit-evm` (>=0.3) and `@wagmi/core` (3.x); they are optional peers because the `@tuwaio/pulsar-evm/safe` entry does not use them. `zustand` and `immer` are the peer dependencies of `@tuwaio/pulsar-core`.
 
 For the Safe tracker alone, on `viem` without wagmi:
 
@@ -86,17 +86,23 @@ The step-by-step React setup is in the **[React transaction tracking guide](http
 
 ---
 
+## 🗄️ Browser Storage
+
+`speedUpTxAction` and `cancelTxAction` save the fees they last sent for a nonce in `sessionStorage`, under `pulsar-evm:replacementFees:<chain>:<sender>:<nonce>`, so the next replacement goes above them after a reload too. Only the two fees are saved, and they go away with the tab. The fees of a replacement sent by the wallet itself or from another tab are not known: if they are higher, the node refuses this one and the error says so. Everything else is saved by `@tuwaio/pulsar-core`.
+
+---
+
 ## 🌐 External Services
 
 The trackers send requests to these hosts. The transaction hash, `userOpHash` or `safeTxHash` (and for Safe, the Safe address) is sent to them:
 
-| Tracker             | Host                                                                                                                    | Purpose                                                                     |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Standard, stage 2   | The RPC transports of your wagmi config                                                                                 | `getTransaction`, receipts, confirmations and block timestamps              |
-| ERC-4337 stage 1    | `bundlerUrl`, else `api.pimlico.io` (with `pimlicoApiKey` in the URL), else the rate-limited public `public.pimlico.io` | `eth_getUserOperationReceipt`                                               |
-| EIP-5792 stage 1    | The connected wallet (no host): `wallet_getCallsStatus` through the wagmi connector                                     | Status of the call batch and the hash of the transaction that executed it   |
-| Safe                | `safe-transaction-<network>.safe.global` (see `SafeTransactionServiceUrls`)                                             | Status of the multisig transaction and of other transactions with its nonce |
-| Gelato (deprecated) | `api.gelato.cloud`, with the Gelato API key as a `Bearer` token                                                         | `relayer_getStatus` and `relayer_getCapabilities`                           |
+| Tracker             | Host                                                                                                                    | Purpose                                                                                                                                                                                                       |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Standard, stage 2   | The RPC transports of your wagmi config                                                                                 | `getTransaction`, receipts, confirmations and block timestamps; the sender's nonce after every attempt without an answer, and once it is spent `eth_getTransactionBySenderAndNonce` or up to 1000 full blocks |
+| ERC-4337 stage 1    | `bundlerUrl`, else `api.pimlico.io` (with `pimlicoApiKey` in the URL), else the rate-limited public `public.pimlico.io` | `eth_getUserOperationReceipt`                                                                                                                                                                                 |
+| EIP-5792 stage 1    | The connected wallet (no host): `wallet_getCallsStatus` through the wagmi connector                                     | Status of the call batch and the hash of the transaction that executed it                                                                                                                                     |
+| Safe                | `safe-transaction-<network>.safe.global` (see `SafeTransactionServiceUrls`)                                             | Status of the multisig transaction and of other transactions with its nonce                                                                                                                                   |
+| Gelato (deprecated) | `api.gelato.cloud`, with the Gelato API key as a `Bearer` token                                                         | `relayer_getStatus` and `relayer_getCapabilities`                                                                                                                                                             |
 
 Explorer links point to the block explorer configured in your viem chains, or to `app.safe.global` for Safe transactions; they are not requested by the package.
 
@@ -139,6 +145,7 @@ Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/
 - [InitializeTrackerParams](/packages/pulsar-evm/type-aliases/InitializeTrackerParams.md)
 - [NonceSlot](/packages/pulsar-evm/type-aliases/NonceSlot.md)
 - [NonceSlotReading](/packages/pulsar-evm/type-aliases/NonceSlotReading.md)
+- [NonceSlotScan](/packages/pulsar-evm/type-aliases/NonceSlotScan.md)
 - [SafeTrackerOptions](/packages/pulsar-evm/type-aliases/SafeTrackerOptions.md)
 - [SafeTxStatusResponse](/packages/pulsar-evm/type-aliases/SafeTxStatusResponse.md)
 

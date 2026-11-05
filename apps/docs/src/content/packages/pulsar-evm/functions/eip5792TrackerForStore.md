@@ -2,7 +2,7 @@
 
 > **eip5792TrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/eip5792Tracker.ts:189](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L189)
+Defined in: [trackers/eip5792Tracker.ts:190](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L190)
 
 Tracks an EIP-5792 call batch of the Pulsar store in two stages and writes the results to the store:
 

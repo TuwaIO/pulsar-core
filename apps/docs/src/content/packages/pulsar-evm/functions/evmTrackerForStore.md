@@ -2,7 +2,7 @@
 
 > **evmTrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/evmTracker.ts:359](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L359)
+Defined in: [trackers/evmTracker.ts:440](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L440)
 
 Runs [evmTracker](/packages/pulsar-evm/functions/evmTracker.md) for a transaction of the Pulsar store and writes the results to it through
 `updateTxParams`: the on-chain sender and the other details at start, `confirmations`, and finally `status`
@@ -31,7 +31,7 @@ The application transaction type.
 
 ### params
 
-`Pick`\<[`EVMTrackerParams`](/packages/pulsar-evm/type-aliases/EVMTrackerParams.md), `"config"`\> & `Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"updateTxParams"` \| `"transactionsPool"`\> & `object` & [`TrackerCallbacks`](/packages/pulsar-core/interfaces/TrackerCallbacks.md)\<`T`\>
+`Pick`\<[`EVMTrackerParams`](/packages/pulsar-evm/type-aliases/EVMTrackerParams.md), `"config"`\> & `Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"updateTxParams"` \| `"transactionsPool"`\> & `Partial`\<`Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"isTxTracked"`\>\> & `object` & [`TrackerCallbacks`](/packages/pulsar-core/interfaces/TrackerCallbacks.md)\<`T`\>
 
 The transaction, the wagmi config, the store members and the callbacks.
 

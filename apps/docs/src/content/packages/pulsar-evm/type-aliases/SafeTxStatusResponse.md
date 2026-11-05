@@ -2,7 +2,7 @@
 
 > **SafeTxStatusResponse** = `object`
 
-Defined in: [trackers/safeTracker.ts:28](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L28)
+Defined in: [trackers/safeTracker.ts:29](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L29)
 
 The fields of a multisig transaction returned by the Safe Transaction Service API that the Safe tracker reads.
 
@@ -12,7 +12,7 @@ The fields of a multisig transaction returned by the Safe Transaction Service AP
 
 > `optional` **confirmations?**: `object`[] \| `null`
 
-Defined in: [trackers/safeTracker.ts:48](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L48)
+Defined in: [trackers/safeTracker.ts:49](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L49)
 
 The owner confirmations collected so far.
 
@@ -22,7 +22,7 @@ The owner confirmations collected so far.
 
 > `optional` **confirmationsRequired?**: `number`
 
-Defined in: [trackers/safeTracker.ts:46](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L46)
+Defined in: [trackers/safeTracker.ts:47](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L47)
 
 The number of owner confirmations the Safe needs to execute the transaction (its threshold).
 
@@ -32,7 +32,7 @@ The number of owner confirmations the Safe needs to execute the transaction (its
 
 > **executionDate**: `string` \| `null`
 
-Defined in: [trackers/safeTracker.ts:38](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L38)
+Defined in: [trackers/safeTracker.ts:39](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L39)
 
 ISO date of the execution, or `null` before execution.
 
@@ -42,7 +42,7 @@ ISO date of the execution, or `null` before execution.
 
 > **isExecuted**: `boolean`
 
-Defined in: [trackers/safeTracker.ts:34](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L34)
+Defined in: [trackers/safeTracker.ts:35](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L35)
 
 `true` once the multisig transaction has been executed on-chain.
 
@@ -52,7 +52,7 @@ Defined in: [trackers/safeTracker.ts:34](https://github.com/TuwaIO/pulsar-core/b
 
 > **isSuccessful**: `boolean` \| `null`
 
-Defined in: [trackers/safeTracker.ts:36](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L36)
+Defined in: [trackers/safeTracker.ts:37](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L37)
 
 Whether the execution succeeded; `null` before execution.
 
@@ -62,7 +62,7 @@ Whether the execution succeeded; `null` before execution.
 
 > **modified**: `string`
 
-Defined in: [trackers/safeTracker.ts:42](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L42)
+Defined in: [trackers/safeTracker.ts:43](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L43)
 
 ISO date of the last change.
 
@@ -72,7 +72,7 @@ ISO date of the last change.
 
 > **nonce**: `number`
 
-Defined in: [trackers/safeTracker.ts:44](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L44)
+Defined in: [trackers/safeTracker.ts:45](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L45)
 
 The Safe nonce of the transaction.
 
@@ -82,7 +82,7 @@ The Safe nonce of the transaction.
 
 > **safeTxHash**: `Hex`
 
-Defined in: [trackers/safeTracker.ts:32](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L32)
+Defined in: [trackers/safeTracker.ts:33](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L33)
 
 The Safe transaction hash (the `txKey` of the tracked transaction).
 
@@ -92,7 +92,7 @@ The Safe transaction hash (the `txKey` of the tracked transaction).
 
 > **submissionDate**: `string`
 
-Defined in: [trackers/safeTracker.ts:40](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L40)
+Defined in: [trackers/safeTracker.ts:41](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L41)
 
 ISO date when the transaction was proposed to the service.
 
@@ -102,6 +102,6 @@ ISO date when the transaction was proposed to the service.
 
 > **transactionHash**: `Hex` \| `null`
 
-Defined in: [trackers/safeTracker.ts:30](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L30)
+Defined in: [trackers/safeTracker.ts:31](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L31)
 
 The hash of the executed on-chain transaction, or `null` before execution.

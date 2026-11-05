@@ -15,6 +15,21 @@ type Fees = { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint };
  * estimate has to be enough.
  */
 const lastSentFees = new Map<string, Fees>();
+const STORAGE_KEY_PREFIX = 'pulsar-evm:replacementFees:';
+
+/** `sessionStorage` where it exists: the tab's memory, which a reload keeps. A blocked one only costs that. */
+function readSavedFees(key: string): Fees | undefined {
+  const inMemory = lastSentFees.get(key);
+  if (inMemory) return inMemory;
+  try {
+    const saved = globalThis.sessionStorage?.getItem(STORAGE_KEY_PREFIX + key);
+    if (!saved) return undefined;
+    const { maxFeePerGas, maxPriorityFeePerGas } = JSON.parse(saved) as Record<keyof Fees, string>;
+    return { maxFeePerGas: BigInt(maxFeePerGas), maxPriorityFeePerGas: BigInt(maxPriorityFeePerGas) };
+  } catch {
+    return undefined;
+  }
+}
 
 const slotKey = (tx: Transaction) => {
   const { chainId, from, nonce, sender } = tx as EvmTransaction;
@@ -22,7 +37,11 @@ const slotKey = (tx: Transaction) => {
 };
 
 /** A node's rule is 10%; 15% leaves room. In integers: a fee in wei does not fit a float. */
-const raised = (fee: bigint) => (fee * 115n + 99n) / 100n;
+const raised = (fee: bigint) => {
+  const up = (fee * 115n + 99n) / 100n;
+  // 15% of nothing is nothing, and a node refuses a replacement that does not pay more
+  return up > fee ? up : fee + 1n;
+};
 
 /**
  * Refuses an account that did not send the transaction. Only the owner of a nonce can replace what holds it: from
@@ -46,7 +65,11 @@ export function assertSentBy(account: `0x${string}`, tx: Transaction): void {
  * The fees of a replacement: 15% above the fees last sent for this nonce, and at least the market estimate, since a
  * transaction stuck below the base fee stays stuck with 15% more. Without an estimate the 15% still goes out.
  *
- * Side effects: reads the fees of the chain over RPC (`eth_feeHistory` or `eth_gasPrice`, by viem's estimate).
+ * The fees of a replacement sent by the wallet itself, or from another tab, are not known here: if they are higher, the
+ * node refuses this one and the error says so.
+ *
+ * Side effects: reads the fees of the chain over RPC (`eth_getBlockByNumber` and `eth_maxPriorityFeePerGas`, by viem's
+ * estimate) and the fees last sent from `sessionStorage`.
  *
  * @internal
  * @param config - The wagmi config.
@@ -55,7 +78,7 @@ export function assertSentBy(account: `0x${string}`, tx: Transaction): void {
  */
 export async function replacementFees(config: Config, tx: Transaction): Promise<Fees> {
   const { chainId, maxFeePerGas, maxPriorityFeePerGas } = tx as EvmTransaction;
-  const previous = lastSentFees.get(slotKey(tx)) ?? {
+  const previous = readSavedFees(slotKey(tx)) ?? {
     maxFeePerGas: BigInt(maxFeePerGas as string),
     maxPriorityFeePerGas: BigInt(maxPriorityFeePerGas as string),
   };
@@ -77,12 +100,27 @@ export async function replacementFees(config: Config, tx: Transaction): Promise<
 }
 
 /**
- * Remembers the fees a wallet accepted, so the next replacement of this nonce goes above them.
+ * Remembers the fees a wallet accepted, so the next replacement of this nonce goes above them, also after a reload.
+ *
+ * Side effects: writes `pulsar-evm:replacementFees:<chain>:<sender>:<nonce>` to `sessionStorage`, which holds only the two
+ * fees and goes away with the tab.
  *
  * @internal
  * @param tx - The replaced transaction.
  * @param fees - The fees sent.
  */
 export function rememberSentFees(tx: Transaction, fees: Fees): void {
-  lastSentFees.set(slotKey(tx), fees);
+  const key = slotKey(tx);
+  lastSentFees.set(key, fees);
+  try {
+    globalThis.sessionStorage?.setItem(
+      STORAGE_KEY_PREFIX + key,
+      JSON.stringify({
+        maxFeePerGas: fees.maxFeePerGas.toString(),
+        maxPriorityFeePerGas: fees.maxPriorityFeePerGas.toString(),
+      }),
+    );
+  } catch {
+    // The memory above still serves this page
+  }
 }

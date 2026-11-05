@@ -2,7 +2,7 @@
 
 > **checkAndInitializeTrackerInStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [utils/checkAndInitializeTrackerInStore.ts:50](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts#L50)
+Defined in: [utils/checkAndInitializeTrackerInStore.ts:58](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts#L58)
 
 Starts the tracker named by `tracker` for a transaction of the Pulsar store: [evmTrackerForStore](/packages/pulsar-evm/functions/evmTrackerForStore.md),
 [erc4337TrackerForStore](/packages/pulsar-evm/functions/erc4337TrackerForStore.md), [eip5792TrackerForStore](/packages/pulsar-evm/functions/eip5792TrackerForStore.md), [safeTrackerForStore](/packages/pulsar-evm/functions/safeTrackerForStore.md) or
@@ -30,5 +30,5 @@ The tracker, the transaction, the wagmi config, the store members and the callba
 
 `Promise`\<`void`\>
 
-The promise of the started tracker. For the standard EVM tracker it resolves only when tracking has
-finished; polling trackers resolve once polling has started.
+A promise that resolves once the tracker has started, not when the transaction has finished, as a transaction
+may stay pending for a long time and nothing should wait for that. Read the result from the store.

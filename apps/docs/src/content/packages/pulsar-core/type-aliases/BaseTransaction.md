@@ -2,7 +2,7 @@
 
 > **BaseTransaction** = `object`
 
-Defined in: [types.ts:67](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L67)
+Defined in: [packages/pulsar-core/src/types.ts:67](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L67)
 
 Fields shared by every tracked transaction. Chain-specific transaction types extend it.
 
@@ -12,7 +12,7 @@ Fields shared by every tracked transaction. Chain-specific transaction types ext
 
 > **chainId**: `number` \| `string`
 
-Defined in: [types.ts:74](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L74)
+Defined in: [packages/pulsar-core/src/types.ts:74](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L74)
 
 The chain of the transaction: the numeric chain ID for EVM (for example `1`), or the CAIP-2 chain ID with the
 genesis hash for Solana (for example `solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1` for devnet). `executeTxAction` derives
@@ -25,7 +25,7 @@ keep `solana:<cluster>` (for example `solana:devnet`); the trackers and explorer
 
 > `optional` **confirmations?**: `number` \| `string` \| `null`
 
-Defined in: [types.ts:143](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L143)
+Defined in: [packages/pulsar-core/src/types.ts:143](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L143)
 
 Confirmations reported by the tracker while the transaction is pending. The Solana tracker sets it to `'MAX'` when
 the transaction is finalized. For a Safe transaction it is the number of owners who have confirmed it so far.
@@ -36,7 +36,7 @@ the transaction is finalized. For a Safe transaction it is the number of owners 
 
 > **connectorType**: `string`
 
-Defined in: [types.ts:132](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L132)
+Defined in: [packages/pulsar-core/src/types.ts:132](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L132)
 
 The connector that signed the transaction, for example `evm:metamask` or `solana:phantom`.
 
@@ -46,7 +46,7 @@ The connector that signed the transaction, for example `evm:metamask` or `solana
 
 > `optional` **description?**: `string` \| \[`string`, `string`, `string`, `string`\]
 
-Defined in: [types.ts:86](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L86)
+Defined in: [packages/pulsar-core/src/types.ts:86](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L86)
 
 User-facing description: one string for every state, or a tuple for the `[pending, success, error, replaced]`
 states. Each string must be 300 characters or less and must not contain executable-like patterns such as `eval(`
@@ -66,7 +66,7 @@ description: ['Swapping...', 'Swapped successfully', 'Swap failed', 'Swap replac
 
 > `optional` **error?**: `TuwaErrorState`
 
-Defined in: [types.ts:88](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L88)
+Defined in: [packages/pulsar-core/src/types.ts:88](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L88)
 
 The normalized error of a failed transaction (`normalizeError` from `@tuwaio/orbit-core`).
 
@@ -76,7 +76,7 @@ The normalized error of a failed transaction (`normalizeError` from `@tuwaio/orb
 
 > `optional` **finishedTimestamp?**: `number`
 
-Defined in: [types.ts:93](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L93)
+Defined in: [packages/pulsar-core/src/types.ts:93](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L93)
 
 Unix timestamp (seconds) of the terminal state: the block timestamp for EVM and ERC-4337 transactions confirmed
 on-chain, the execution date for Safe, and the local time otherwise.
@@ -87,7 +87,7 @@ on-chain, the execution date for Safe, and the local time otherwise.
 
 > **from**: `string`
 
-Defined in: [types.ts:95](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L95)
+Defined in: [packages/pulsar-core/src/types.ts:95](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L95)
 
 The address of the wallet that sent the transaction, as reported by the adapter's `getConnectorInfo`.
 
@@ -97,7 +97,7 @@ The address of the wallet that sent the transaction, as reported by the adapter'
 
 > `optional` **isError?**: `boolean`
 
-Defined in: [types.ts:97](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L97)
+Defined in: [packages/pulsar-core/src/types.ts:97](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L97)
 
 `true` when the transaction failed; set by trackers together with `status: Failed`.
 
@@ -107,7 +107,7 @@ Defined in: [types.ts:97](https://github.com/TuwaIO/pulsar-core/blob/main/packag
 
 > `optional` **isTrackedModalOpen?**: `boolean`
 
-Defined in: [types.ts:99](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L99)
+Defined in: [packages/pulsar-core/src/types.ts:99](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L99)
 
 UI flag for a detailed tracking modal. Set from `withTrackedModal`; `closeTxTrackedModal` sets it to `false`.
 
@@ -117,7 +117,7 @@ UI flag for a detailed tracking modal. Set from `withTrackedModal`; `closeTxTrac
 
 > **localTimestamp**: `number`
 
-Defined in: [types.ts:101](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L101)
+Defined in: [packages/pulsar-core/src/types.ts:101](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L101)
 
 Unix timestamp (seconds) when `executeTxAction` started. The pool is ordered and evicted by this value.
 
@@ -127,7 +127,7 @@ Unix timestamp (seconds) when `executeTxAction` started. The pool is ordered and
 
 > `optional` **payload?**: `Record`\<`string`, `string` \| `number`\>
 
-Defined in: [types.ts:106](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L106)
+Defined in: [packages/pulsar-core/src/types.ts:106](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L106)
 
 Custom JSON data of the application. The UTF-8 JSON must be 10 KB or less, and string keys and values must not
 contain executable-like patterns.
@@ -138,7 +138,7 @@ contain executable-like patterns.
 
 > **pending**: `boolean`
 
-Defined in: [types.ts:108](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L108)
+Defined in: [packages/pulsar-core/src/types.ts:108](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L108)
 
 `true` while the transaction is tracked; trackers set it to `false` when it reaches a terminal status.
 
@@ -148,7 +148,7 @@ Defined in: [types.ts:108](https://github.com/TuwaIO/pulsar-core/blob/main/packa
 
 > `optional` **requiredConfirmations?**: `number`
 
-Defined in: [types.ts:138](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L138)
+Defined in: [packages/pulsar-core/src/types.ts:138](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L138)
 
 Number of block confirmations the EVM trackers wait for before marking the transaction successful. Defaults to 1.
 The Solana tracker always waits for the `finalized` commitment instead. For a Safe transaction, the Safe tracker
@@ -160,7 +160,7 @@ writes the number of owner confirmations the Safe needs to execute it (its thres
 
 > `optional` **rpcUrl?**: `string`
 
-Defined in: [types.ts:148](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L148)
+Defined in: [packages/pulsar-core/src/types.ts:148](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L148)
 
 RPC endpoint used by the Solana tracker, also after a page reload. Without it, the tracker uses the public
 endpoint of the cluster in `chainId`.
@@ -171,7 +171,7 @@ endpoint of the cluster in `chainId`.
 
 > `optional` **status?**: [`TransactionStatus`](/packages/pulsar-core/enumerations/TransactionStatus.md)
 
-Defined in: [types.ts:110](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L110)
+Defined in: [packages/pulsar-core/src/types.ts:110](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L110)
 
 The terminal status, set together with `pending: false`.
 
@@ -181,7 +181,7 @@ The terminal status, set together with `pending: false`.
 
 > `optional` **syncStatus?**: `"synced"` \| `"pending-sync"`
 
-Defined in: [types.ts:154](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L154)
+Defined in: [packages/pulsar-core/src/types.ts:154](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L154)
 
 Remote sync state, set only when the store has an `onRemoteCreate` callback: `'pending-sync'` from the moment the
 transaction is added until `onRemoteCreate` resolves (the key is listed in `unsyncedTxKeys` meanwhile and retried
@@ -193,7 +193,7 @@ if the call fails), then `'synced'`.
 
 > `optional` **title?**: `string` \| \[`string`, `string`, `string`, `string`\]
 
-Defined in: [types.ts:121](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L121)
+Defined in: [packages/pulsar-core/src/types.ts:121](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L121)
 
 User-facing title: one string for every state, or a tuple for the `[pending, success, error, replaced]` states.
 Each string must be 100 characters or less and must not contain executable-like patterns such as `eval(` or
@@ -212,7 +212,7 @@ title: ['Processing swap', 'Swap complete', 'Swap error', 'Swap replaced'];
 
 > **tracker**: [`TransactionTracker`](/packages/pulsar-core/enumerations/TransactionTracker.md)
 
-Defined in: [types.ts:123](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L123)
+Defined in: [packages/pulsar-core/src/types.ts:123](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L123)
 
 The tracker that monitors the transaction.
 
@@ -222,7 +222,7 @@ The tracker that monitors the transaction.
 
 > **txKey**: `string`
 
-Defined in: [types.ts:128](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L128)
+Defined in: [packages/pulsar-core/src/types.ts:128](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L128)
 
 The key of the transaction in the pool: the transaction hash, `userOpHash` (ERC-4337), `safeTxHash` (Safe), Gelato
 task ID or Solana signature.
@@ -233,6 +233,6 @@ task ID or Solana signature.
 
 > **type**: `string`
 
-Defined in: [types.ts:130](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L130)
+Defined in: [packages/pulsar-core/src/types.ts:130](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L130)
 
 Application-specific type of the transaction, for example `'SWAP'` or `'APPROVE'`.

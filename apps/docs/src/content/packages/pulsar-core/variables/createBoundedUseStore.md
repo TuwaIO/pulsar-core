@@ -2,7 +2,7 @@
 
 > `const` **createBoundedUseStore**: \<`S`\>(`store`) => \{(): [`ExtractState`](/packages/pulsar-core/type-aliases/ExtractState.md)\<`S`\>; \<`T`\>(`selector`): `T`; \}
 
-Defined in: [utils/createBoundedUseStore.ts:34](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/createBoundedUseStore.ts#L34)
+Defined in: [packages/pulsar-core/src/utils/createBoundedUseStore.ts:34](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/createBoundedUseStore.ts#L34)
 
 Creates a React hook bound to a vanilla Zustand store, so components do not pass the store on every call.
 

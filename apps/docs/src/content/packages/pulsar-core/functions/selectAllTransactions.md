@@ -2,7 +2,7 @@
 
 > **selectAllTransactions**\<`T`\>(`transactionsPool`): `T`[]
 
-Defined in: [store/transactionsSelectors.ts:15](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/transactionsSelectors.ts#L15)
+Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:15](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/transactionsSelectors.ts#L15)
 
 Returns every transaction of the pool, oldest first (by `localTimestamp`).
 

@@ -2,7 +2,7 @@
 
 > **safeTrackerForStore**\<`T`\>(`params`): `void`
 
-Defined in: [trackers/safeTracker.ts:258](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L258)
+Defined in: [trackers/safeTracker.ts:267](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L267)
 
 Tracks a Safe multisig transaction of the Pulsar store with [createSafeFetcher](/packages/pulsar-evm/functions/createSafeFetcher.md) ([safePollingInterval](/packages/pulsar-evm/functions/safePollingInterval.md):
 every 5 s for the first hour, then every 30 s) and writes the results to the
@@ -30,7 +30,7 @@ The application transaction type.
 
 ### params
 
-`Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"updateTxParams"` \| `"removeTxFromPool"` \| `"transactionsPool"`\> & `object` & [`TrackerCallbacks`](/packages/pulsar-core/interfaces/TrackerCallbacks.md)\<`T`\> & [`SafeTrackerOptions`](/packages/pulsar-evm/type-aliases/SafeTrackerOptions.md)
+`Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"updateTxParams"` \| `"removeTxFromPool"` \| `"transactionsPool"`\> & `Partial`\<`Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"isTxTracked"`\>\> & `object` & [`TrackerCallbacks`](/packages/pulsar-core/interfaces/TrackerCallbacks.md)\<`T`\> & [`SafeTrackerOptions`](/packages/pulsar-evm/type-aliases/SafeTrackerOptions.md)
 
 The transaction, the store members and the callbacks.
 

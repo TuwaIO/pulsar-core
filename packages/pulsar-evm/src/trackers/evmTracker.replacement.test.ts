@@ -21,7 +21,7 @@ const OLD_HASH = `0x${'a'.repeat(64)}` as Hex;
 const NEW_HASH = `0x${'b'.repeat(64)}` as Hex;
 const NONCE = 1932;
 const VALUE = 1000n;
-const FIRST_BLOCK = 1_000;
+const FIRST_BLOCK = 100_000;
 const BLOCK_SECONDS = 12;
 
 type Script = {
@@ -45,19 +45,33 @@ type Script = {
   failOnce?: string;
   /** Whether `eth_getBlockByNumber` always fails. */
   unreadableBlocks?: boolean;
+  /** Whether a mined old transaction is still not returned by its hash, while its receipt is. */
+  hideMinedByHash?: boolean;
+  /** Until when, in seconds, reading the old transaction's receipt is an RPC error. */
+  receiptFailsUntil?: number;
+  /** Until when, in seconds, reading the old transaction by its hash is an RPC error. */
+  lookupFailsUntil?: number;
+  /** Reading these blocks by number fails once each, like a rate limit in the middle of a scan. */
+  failBlocksOnce?: number[];
+  /** When the mined transaction drops out with a reorganization. */
+  reorgedAt?: number;
+  /** When, after the reorganization, it is mined again. */
+  minedAgainAt?: number;
+  /** A contract creation: the transactions have no recipient. */
+  contractCreation?: boolean;
 };
 
 const rpcTransaction = (fields: {
   hash: Hex;
   blockNumber: number | null;
-  to?: Address;
+  to?: Address | null;
   value?: bigint;
   input?: Hex;
   from?: Address;
 }) => ({
   hash: fields.hash,
   from: fields.from ?? SENDER,
-  to: fields.to ?? RECIPIENT,
+  to: fields.to === undefined ? RECIPIENT : fields.to,
   nonce: numberToHex(NONCE),
   value: numberToHex(fields.value ?? VALUE),
   input: fields.input ?? '0x',
@@ -104,11 +118,16 @@ function scriptedNode(script: Script) {
 
   const replacementBlock = script.replacementMinedAt === undefined ? null : blockAt(script.replacementMinedAt);
   const ownBlock = script.minedAt === undefined ? null : blockAt(script.minedAt);
+  const againBlock = script.minedAgainAt === undefined ? null : blockAt(script.minedAgainAt);
+  const reorgBlock = script.reorgedAt === undefined ? null : blockAt(script.reorgedAt);
+  const failingBlocks = new Set(script.failBlocksOnce);
+  const recipient = script.contractCreation ? { to: null } : {};
   const spentBlock = script.spentWithoutTransactionAt === undefined ? null : blockAt(script.spentWithoutTransactionAt);
   // A block has one content from the moment it exists, so everything is mined with the block its time falls in
   const reached = (block: number | null) => block !== null && blockAt(now()) >= block;
   const replacementMined = () => reached(replacementBlock);
-  const ownMined = () => reached(ownBlock);
+  const ownMined = () => reached(ownBlock) && (!reached(reorgBlock) || reached(againBlock));
+  const ownMinedIn = () => (reached(againBlock) ? (againBlock as number) : (ownBlock as number));
   const spent = () => reached(spentBlock);
 
   const request = async ({ method, params }: { method: string; params?: unknown }): Promise<unknown> => {
@@ -126,16 +145,24 @@ function scriptedNode(script: Script) {
         return numberToHex(blockAt(now()));
       case 'eth_getTransactionByHash': {
         if (args[0] === NEW_HASH && replacementMined()) {
-          return rpcTransaction({ hash: NEW_HASH, blockNumber: replacementBlock, ...script.replacement });
+          return rpcTransaction({ hash: NEW_HASH, blockNumber: replacementBlock, ...recipient, ...script.replacement });
         }
         if (args[0] !== OLD_HASH) return null;
-        if (ownMined()) return rpcTransaction({ hash: OLD_HASH, blockNumber: ownBlock });
+        if (now() < (script.lookupFailsUntil ?? -Infinity)) throw new Error('Internal JSON-RPC error.');
+        if (ownMined()) {
+          return script.hideMinedByHash ? null : rpcTransaction({ hash: OLD_HASH, blockNumber: ownMinedIn() });
+        }
         if (replacementMined() || spent()) return null;
-        return now() < (script.knownUntil ?? Infinity) ? rpcTransaction({ hash: OLD_HASH, blockNumber: null }) : null;
+        return now() < (script.knownUntil ?? Infinity)
+          ? rpcTransaction({ hash: OLD_HASH, blockNumber: null, ...recipient })
+          : null;
       }
       case 'eth_getTransactionReceipt': {
+        if (args[0] === OLD_HASH && now() < (script.receiptFailsUntil ?? -Infinity)) {
+          throw new Error('Internal JSON-RPC error.');
+        }
         if (args[0] === OLD_HASH && ownMined()) {
-          return rpcReceipt(OLD_HASH, ownBlock as number, script.receiptStatus ?? 'success');
+          return rpcReceipt(OLD_HASH, ownMinedIn(), script.receiptStatus ?? 'success');
         }
         if (args[0] === NEW_HASH && replacementMined()) {
           if (receiptLag > 0) {
@@ -153,16 +180,19 @@ function scriptedNode(script: Script) {
         if (replacementMined()) {
           return rpcTransaction({ hash: NEW_HASH, blockNumber: replacementBlock, ...script.replacement });
         }
-        if (ownMined()) return rpcTransaction({ hash: OLD_HASH, blockNumber: ownBlock });
+        if (ownMined()) return rpcTransaction({ hash: OLD_HASH, blockNumber: ownMinedIn() });
         return null;
       }
       case 'eth_getBlockByNumber': {
         const asked = args[0] === 'latest' ? blockAt(now()) : Number(args[0]);
+        if (failingBlocks.delete(asked)) throw new Error('Too many requests.');
         const transactions: unknown[] = [];
         if (asked === replacementBlock && replacementMined()) {
-          transactions.push(rpcTransaction({ hash: NEW_HASH, blockNumber: asked, ...script.replacement }));
+          transactions.push(
+            rpcTransaction({ hash: NEW_HASH, blockNumber: asked, ...recipient, ...script.replacement }),
+          );
         }
-        if (asked === ownBlock && ownMined()) {
+        if (ownMined() && asked === ownMinedIn()) {
           transactions.push(rpcTransaction({ hash: OLD_HASH, blockNumber: asked }));
         }
         return {
@@ -367,6 +397,226 @@ describe('evmTracker on the real viem', () => {
     });
   });
 
+  describe('what the review of this tracker found', () => {
+    const knownDetails = { from: SENDER, nonce: NONCE, to: RECIPIENT, value: VALUE, input: '0x' as Hex };
+
+    test('an RPC error on the receipt is no answer: a mined transaction does not end as replaced', async () => {
+      // Mined beyond the scan, so nothing can be found for the spent nonce while its receipt cannot be read
+      const tracker = track({ minedAt: -60_000, knownUntil: 0, receiptFailsUntil: 300 }, { knownDetails });
+
+      await pass(600);
+
+      expect(tracker.onFailure).not.toHaveBeenCalled();
+      expect(tracker.onReplaced).not.toHaveBeenCalled();
+      expect(tracker.onSuccess).toHaveBeenCalledOnce();
+    });
+
+    test('a transaction seen in a block is not reported as spent, whatever a node says of its receipt', async () => {
+      const tracker = track({ minedAt: -60_000, receiptFailsUntil: 10_000 });
+
+      await pass(434);
+
+      expect(tracker.onReplaced).not.toHaveBeenCalled();
+      expect((tracker.onFailure.mock.calls[0]?.[0] as Error | undefined)?.name).not.toBe('NonceSlotSpentError');
+    });
+
+    test('a receipt found by the nonce reading finishes tracking, also after the last window', async () => {
+      // Five windows, the last one ending at 350 s. Mined in the block of second 348, after viem's last look
+      const tracker = track({ minedAt: 348 }, { receiptAttempts: 5 });
+
+      await pass(360);
+
+      expect(tracker.onSuccess).toHaveBeenCalledOnce();
+      expect(tracker.onFailure).not.toHaveBeenCalled();
+    });
+
+    test('two trackers of one hash both get the result: the second must not silence the first', async () => {
+      const { config } = setup({ minedAt: 204 });
+      const first = { onSuccess: vi.fn().mockResolvedValue(undefined), onFailure: vi.fn() };
+      const second = { onSuccess: vi.fn().mockResolvedValue(undefined), onFailure: vi.fn() };
+      const start = (callbacks: typeof first) =>
+        void evmTracker({
+          tx: { txKey: OLD_HASH, chainId: sepolia.id },
+          config,
+          onTxDetailsFetched: vi.fn(),
+          onReplaced: vi.fn(),
+          waitForTransactionReceiptParams: { hash: OLD_HASH, timeout: 180_000 },
+          ...callbacks,
+        });
+
+      start(first);
+      await pass(100);
+      start(second);
+      await pass(1300);
+
+      expect(first.onSuccess).toHaveBeenCalledOnce();
+      expect(second.onSuccess).toHaveBeenCalledOnce();
+      expect(first.onFailure).not.toHaveBeenCalled();
+      expect(second.onFailure).not.toHaveBeenCalled();
+    });
+
+    test('a receipt without details is still a success: the node may never show the hash', async () => {
+      const tracker = track({ minedAt: 24, knownUntil: 0, hideMinedByHash: true }, { knownDetails });
+
+      await pass(180);
+
+      expect(tracker.onFailure).not.toHaveBeenCalled();
+      expect(tracker.onSuccess).toHaveBeenCalledOnce();
+      expect(tracker.onSuccess.mock.calls[0][0]).toBeUndefined();
+    });
+
+    test('a server does not wait for confirmations for ever', async () => {
+      const { config } = setup({ minedAt: 12 });
+      const onFailure = vi.fn();
+      const onSuccess = vi.fn();
+      void evmTracker({
+        tx: { txKey: OLD_HASH, chainId: sepolia.id, requiredConfirmations: 1_000_000 },
+        config,
+        onTxDetailsFetched: vi.fn(),
+        onSuccess,
+        onFailure,
+        onReplaced: vi.fn(),
+      });
+
+      await pass(400);
+
+      expect(onSuccess).not.toHaveBeenCalled();
+      expect(onFailure).toHaveBeenCalledOnce();
+      expect((onFailure.mock.calls[0][0] as Error).message).toMatch(/confirmations/);
+    });
+
+    test('a receipt a reorganization dropped goes back to waiting and is not reported as final', async () => {
+      const { config } = setup({ minedAt: 12, reorgedAt: 24, minedAgainAt: 300 });
+      const onSuccess = vi.fn().mockResolvedValue(undefined);
+      void evmTracker({
+        tx: { txKey: OLD_HASH, chainId: sepolia.id, requiredConfirmations: 3 },
+        config,
+        onTxDetailsFetched: vi.fn(),
+        onSuccess,
+        onFailure: vi.fn(),
+        onReplaced: vi.fn(),
+      });
+
+      await pass(200);
+      expect(onSuccess).not.toHaveBeenCalled();
+
+      await pass(250);
+      expect(onSuccess).toHaveBeenCalledOnce();
+      expect(onSuccess.mock.calls[0][1].blockNumber).toBe(BigInt(blockAt(300)));
+    });
+
+    test('the block scan goes on where it stopped, and reads a block once', async () => {
+      // Mined 100 blocks before the restart, and a rate limit stops the scan halfway
+      const tracker = track(
+        { knownUntil: 0, replacementMinedAt: -1200, failBlocksOnce: [FIRST_BLOCK - 50] },
+        { knownDetails },
+      );
+
+      await pass(120);
+
+      expect(tracker.onReplaced).toHaveBeenCalledOnce();
+      const reads = tracker.node.calls.filter((method) => method === 'eth_getBlockByNumber').length;
+      expect(reads).toBeLessThan(130);
+    });
+
+    test('the first block of the scan is read before the first lookup, with a margin', async () => {
+      const tracker = track({ knownUntil: 40, replacementMinedAt: 48 });
+
+      await pass(1);
+
+      expect(tracker.node.calls.indexOf('eth_blockNumber')).toBeLessThan(
+        tracker.node.calls.indexOf('eth_getTransactionByHash'),
+      );
+    });
+
+    test('a sped-up contract creation is a speed-up', async () => {
+      const tracker = track(
+        { knownUntil: 0, replacementMinedAt: -60, contractCreation: true },
+        { knownDetails: { ...knownDetails, to: null } },
+      );
+
+      await pass(60);
+
+      expect(tracker.onReplaced.mock.calls[0][0].reason).toBe('repriced');
+    });
+
+    test('a throwing onFailure is not run twice', async () => {
+      const onFailure = vi.fn().mockRejectedValue(new Error('database down'));
+      const { config } = setup({ knownUntil: 0, spentWithoutTransactionAt: -60 });
+      const finished = evmTracker({
+        tx: { txKey: OLD_HASH, chainId: sepolia.id },
+        config,
+        knownDetails,
+        onTxDetailsFetched: vi.fn(),
+        onSuccess: vi.fn(),
+        onFailure,
+        onReplaced: vi.fn(),
+      }).catch(() => 'rejected');
+
+      await pass(450);
+
+      expect(onFailure).toHaveBeenCalledOnce();
+      await expect(finished).resolves.toBe('rejected');
+    });
+
+    test('a throwing onTxDetailsFetched leaves the sender and nonce known', async () => {
+      const tracker = track(
+        { knownUntil: 60, replacementMinedAt: 72 },
+        {
+          onTxDetailsFetched: () => {
+            throw new Error('app bug');
+          },
+        },
+      );
+
+      await pass(200);
+
+      expect(tracker.onReplaced).toHaveBeenCalledOnce();
+    });
+
+    test('a rejecting onConfirmationsUpdate is caught and the count goes on', async () => {
+      const { config } = setup({ minedAt: 12 });
+      const onSuccess = vi.fn().mockResolvedValue(undefined);
+      void evmTracker({
+        tx: { txKey: OLD_HASH, chainId: sepolia.id, requiredConfirmations: 3 },
+        config,
+        onTxDetailsFetched: vi.fn(),
+        onSuccess,
+        onFailure: vi.fn(),
+        onReplaced: vi.fn(),
+        onConfirmationsUpdate: () => Promise.reject(new Error('redis down')),
+      });
+
+      await pass(400);
+
+      expect(console.warn).toHaveBeenCalled();
+    });
+
+    test('an abandoned transaction stops its tracker with no callback', async () => {
+      let abandoned = false;
+      const tracker = track({}, { isAbandoned: () => abandoned });
+
+      await pass(70);
+      abandoned = true;
+      await pass(100);
+      const calls = tracker.node.calls.length;
+      await pass(600);
+
+      expect(tracker.node.calls.length).toBe(calls);
+      expect(tracker.onFailure).not.toHaveBeenCalled();
+    });
+
+    test('logs carry only the name of an error: viem quotes the RPC URL with its key in the message', async () => {
+      track({}, { receiptAttempts: 2 });
+
+      await pass(200);
+
+      const logged = vi.mocked(console.warn).mock.calls.flat();
+      expect(logged.length).toBeGreaterThan(0);
+      expect(logged.every((part) => typeof part === 'string')).toBe(true);
+    });
+  });
+
   describe('callbacks', () => {
     test('a throwing onReplaced never turns a replacement into a failure', async () => {
       const onReplaced = vi.fn(() => {
@@ -549,6 +799,78 @@ describe('evmTrackerForStore on the real viem', () => {
     await pass(23 * 3600 + 60);
     expect(store.current().status).toBe(TransactionStatus.Failed);
     expect(store.onError).toHaveBeenCalledOnce();
+  });
+
+  test('an RPC error past the day is no answer: only a node saying it has no such hash ends the wait', async () => {
+    const dayAgo = Math.floor(Date.now() / 1000) - 25 * 3600;
+    const store = trackInStore({ minedAt: 200, lookupFailsUntil: 250 }, { localTimestamp: String(dayAgo) });
+
+    await pass(240);
+    expect(store.current().pending).toBe(true);
+    expect(store.current().status).toBeUndefined();
+
+    await pass(120);
+    expect(store.current().status).toBe(TransactionStatus.Success);
+  });
+
+  test('a mined transaction keeps its record: finishing never removes it from the pool', async () => {
+    const store = trackInStore({ minedAt: 24 });
+
+    await pass(60);
+
+    expect(store.current().status).toBe(TransactionStatus.Success);
+    expect(store.pool[OLD_HASH]).toBeDefined();
+  });
+
+  test('callbacks do not say what the store refused: the pool keeps its final result', async () => {
+    const { config } = setup({ minedAt: 24 });
+    const tx = {
+      txKey: OLD_HASH,
+      chainId: sepolia.id,
+      pending: true,
+      from: SENDER,
+      localTimestamp: Math.floor(Date.now() / 1000),
+    } as unknown as Transaction;
+    const onSuccess = vi.fn();
+    void evmTrackerForStore({
+      tx,
+      config,
+      transactionsPool: { [OLD_HASH]: tx },
+      // Another tab has already written another result
+      updateTxParams: () => ({ ...tx, status: TransactionStatus.Replaced, pending: false }) as Transaction,
+      onSuccess,
+    });
+
+    await pass(60);
+
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  test('a transaction the store no longer tracks stops its tracker', async () => {
+    const { config, node } = setup({});
+    const tx = {
+      txKey: OLD_HASH,
+      chainId: sepolia.id,
+      pending: true,
+      from: SENDER,
+      localTimestamp: Math.floor(Date.now() / 1000),
+    } as unknown as Transaction;
+    let tracked = true;
+    void evmTrackerForStore({
+      tx,
+      config,
+      transactionsPool: { [OLD_HASH]: tx },
+      updateTxParams: () => undefined,
+      isTxTracked: () => tracked,
+    });
+
+    await pass(70);
+    tracked = false;
+    await pass(100);
+    const calls = node.calls.length;
+    await pass(600);
+
+    expect(node.calls.length).toBe(calls);
   });
 
   test('an unreadable block does not turn a mined transaction into a failure', async () => {

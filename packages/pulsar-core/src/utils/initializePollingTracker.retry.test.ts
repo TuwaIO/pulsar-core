@@ -4,7 +4,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { initializePollingTracker } from './initializePollingTracker';
+import { FinalPollingError, initializePollingTracker } from './initializePollingTracker';
 
 describe('initializePollingTracker with retryForeverEveryMs', () => {
   beforeEach(() => {
@@ -86,5 +86,75 @@ describe('initializePollingTracker with retryForeverEveryMs', () => {
     await vi.advanceTimersByTimeAsync(3000);
 
     expect(onFailure).toHaveBeenCalledOnce();
+  });
+
+  it('a final error ends tracking at once, also with retryForeverEveryMs', async () => {
+    const onFailure = vi.fn();
+    const fetcher = vi.fn().mockRejectedValue(new FinalPollingError('This chain has no such service.'));
+    initializePollingTracker({
+      tx,
+      fetcher,
+      onSuccess: vi.fn(),
+      onFailure,
+      pollingInterval: 1000,
+      retryForeverEveryMs: 60_000,
+    });
+
+    await vi.advanceTimersByTimeAsync(120_000);
+
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(onFailure).toHaveBeenCalledOnce();
+  });
+
+  it('a throwing callback is not a failed check: the result would be reported again on every tick', async () => {
+    const onSuccess = vi.fn(() => {
+      throw new Error('app bug');
+    });
+    const fetcher = vi.fn(async ({ stopPolling, onSuccess: done }) => {
+      done('ok');
+      stopPolling({ withoutRemoving: true });
+    });
+    initializePollingTracker<string, typeof tx>({ tx, fetcher, onSuccess, onFailure: vi.fn(), pollingInterval: 1000 });
+
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(fetcher).toHaveBeenCalledOnce();
+    expect(onSuccess).toHaveBeenCalledOnce();
+  });
+
+  it('a rejecting callback is logged, not left unhandled', async () => {
+    const onSuccess = vi.fn().mockRejectedValue(new Error('app bug'));
+    const fetcher = vi.fn(async ({ stopPolling, onSuccess: done }) => {
+      done('ok');
+      stopPolling({ withoutRemoving: true });
+    });
+    initializePollingTracker<string, typeof tx>({ tx, fetcher, onSuccess, onFailure: vi.fn(), pollingInterval: 1000 });
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(console.error).toHaveBeenCalled();
+  });
+
+  it('stops without a callback once the transaction is abandoned', async () => {
+    let abandoned = false;
+    const onFailure = vi.fn();
+    const fetcher = vi.fn().mockRejectedValue(new Error('RPC is down'));
+    initializePollingTracker({
+      tx,
+      fetcher,
+      onSuccess: vi.fn(),
+      onFailure,
+      pollingInterval: 1000,
+      retryForeverEveryMs: 1000,
+      isAbandoned: () => abandoned,
+    });
+
+    await vi.advanceTimersByTimeAsync(2000);
+    abandoned = true;
+    const calls = fetcher.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(fetcher.mock.calls.length).toBe(calls);
+    expect(onFailure).not.toHaveBeenCalled();
   });
 });

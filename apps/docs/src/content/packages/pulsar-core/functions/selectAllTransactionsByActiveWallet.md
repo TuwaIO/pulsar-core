@@ -2,7 +2,7 @@
 
 > **selectAllTransactionsByActiveWallet**\<`T`\>(`transactionsPool`, `from`): `T`[]
 
-Defined in: [store/transactionsSelectors.ts:53](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/transactionsSelectors.ts#L53)
+Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:53](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/transactionsSelectors.ts#L53)
 
 Returns the transactions sent by a wallet, oldest first. Addresses are compared case-insensitively.
 

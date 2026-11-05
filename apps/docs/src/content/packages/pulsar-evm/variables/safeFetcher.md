@@ -2,7 +2,7 @@
 
 > `const` **safeFetcher**: (`__namedParameters`) => `Promise`\<`void`\>
 
-Defined in: [trackers/safeTracker.ts:225](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L225)
+Defined in: [trackers/safeTracker.ts:233](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L233)
 
 [createSafeFetcher](/packages/pulsar-evm/functions/createSafeFetcher.md) with the default options: gives up one day after the transaction was proposed.
 

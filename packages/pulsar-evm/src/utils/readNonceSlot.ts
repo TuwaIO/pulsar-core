@@ -12,6 +12,7 @@ import {
   numberToHex,
   ReplacementReason,
   ReplacementReturnType,
+  TransactionReceipt,
 } from 'viem';
 import { getBlock, getBlockNumber, getTransaction, getTransactionCount, getTransactionReceipt } from 'viem/actions';
 
@@ -38,7 +39,7 @@ export type NonceSlot = {
  * What {@link readNonceSlot} found:
  * - `open`: no final answer, ask again. The nonce is free, so the transaction can still land, or the transaction that
  *   spent it has no readable receipt yet.
- * - `ours`: the transaction itself spent the nonce, and its receipt will follow.
+ * - `ours`: the transaction itself spent the nonce. `receipt` is its receipt, when the node has it already.
  * - `replaced`: another transaction spent it, with the same data as viem's `onReplaced` gives.
  * - `spent`: the nonce is spent, so the transaction can never land, and no transaction of this sender could be found for
  *   it: an EIP-7702 authorization in someone else's transaction, a replacement further back than the scan reached, or a
@@ -46,9 +47,20 @@ export type NonceSlot = {
  */
 export type NonceSlotReading =
   | { state: 'open' }
-  | { state: 'ours' }
+  | { state: 'ours'; receipt?: TransactionReceipt }
   | { state: 'replaced'; replacement: ReplacementReturnType }
   | { state: 'spent' };
+
+/**
+ * How far {@link readNonceSlot} has read block bodies. Pass the same object to every reading of one transaction: each
+ * goes on where the last one stopped, so a node that limits requests still gets it to the end, and a block is read once.
+ */
+export type NonceSlotScan = {
+  /** The newest block read. */
+  newest?: bigint;
+  /** The oldest block read. */
+  oldest?: bigint;
+};
 
 /**
  * The error of a tracker when the nonce of its transaction is spent and no transaction could be found for it. The
@@ -68,11 +80,23 @@ export class NonceSlotSpentError extends Error {
 /** viem's rule for a replacement, so a reading here and viem's own `onReplaced` always agree. */
 function replacementReason(slot: NonceSlot, transaction: GetTransactionReturnType): ReplacementReason {
   const sameRecipient =
-    transaction.to && slot.to ? isAddressEqual(transaction.to, slot.to) : transaction.to === (slot.to ?? undefined);
+    transaction.to && slot.to
+      ? isAddressEqual(transaction.to, slot.to)
+      : (transaction.to ?? null) === (slot.to ?? null);
   if (sameRecipient && transaction.value === slot.value && transaction.input === slot.input) return 'repriced';
   return transaction.to && isAddressEqual(transaction.from, transaction.to) && transaction.value === 0n
     ? 'cancelled'
     : 'replaced';
+}
+
+/** A receipt the node does not have is an answer, an RPC error is not: it must not read as "not mined". */
+async function receiptIfAny(client: Client, hash: Hex): Promise<TransactionReceipt | null> {
+  try {
+    return await getTransactionReceipt(client, { hash });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TransactionReceiptNotFoundError') return null;
+    throw error;
+  }
 }
 
 /** The transaction that spent the nonce, or `null` when it could not be found. */
@@ -81,6 +105,7 @@ async function findSpender(
   slot: NonceSlot,
   fromBlock: bigint | undefined,
   maxBlocks: number,
+  scan: NonceSlotScan,
 ): Promise<GetTransactionReturnType | null> {
   // One call where the node has it. Many nodes do not, and an archive-less one refuses old nonces, so a failure only
   // means the scan below runs.
@@ -97,15 +122,29 @@ async function findSpender(
     if (transaction) return transaction;
   }
 
-  // Block bodies, not historical nonces: a pruned node keeps only about the last 128 blocks of state. From the newest
-  // back, because a tracker asks soon after the replacement lands.
+  // Block bodies, not historical nonces: a pruned node keeps only about the last 128 blocks of state
   const latest = await getBlockNumber(client, { cacheTime: 0 });
   const reach = latest - BigInt(maxBlocks) + 1n;
   const lowest = fromBlock !== undefined && fromBlock > reach ? fromBlock : reach > 0n ? reach : 0n;
-  for (let number = latest; number >= lowest; number--) {
-    const block = await getBlock(client, { blockNumber: number, includeTransactions: true });
+  const inBlock = async (blockNumber: bigint) => {
+    const block = await getBlock(client, { blockNumber, includeTransactions: true });
     const found = block.transactions.find((t) => isAddressEqual(t.from, slot.from) && t.nonce === slot.nonce);
-    if (found) return found as GetTransactionReturnType;
+    return (found as GetTransactionReturnType | undefined) ?? null;
+  };
+
+  scan.newest ??= latest;
+  scan.oldest ??= latest + 1n;
+  // Each block is marked read only after it was, so an RPC error here makes the next reading go on from this block
+  while (scan.newest < latest) {
+    const found = await inBlock(scan.newest + 1n);
+    if (found) return found;
+    scan.newest += 1n;
+  }
+  // From the newest back, because a tracker asks soon after the replacement lands
+  while (scan.oldest > lowest) {
+    const found = await inBlock(scan.oldest - 1n);
+    if (found) return found;
+    scan.oldest -= 1n;
   }
   return null;
 }
@@ -113,7 +152,8 @@ async function findSpender(
 /**
  * Reads what became of a transaction from its sender and nonce. It works when the node no longer returns the hash, which
  * a node does once a replacement reaches its mempool, or when it drops a transaction whose fee fell too low, and it does
- * not depend on seeing the block the replacement landed in.
+ * not depend on seeing the block the replacement landed in. On a chain with nonce lanes a sender and nonce do not
+ * identify a transaction, so the reading is always `open` and viem's own detection is left to do the work.
  *
  * RPC calls: `eth_getTransactionCount`, the receipt of `hash`, and, once the nonce is spent,
  * `eth_getTransactionBySenderAndNonce` where the node has it, otherwise up to `maxBlocks` full blocks.
@@ -123,7 +163,8 @@ async function findSpender(
  * @param params.hash - The hash of the tracked transaction.
  * @param params.slot - Its sender and nonce.
  * @param params.fromBlock - A block no replacement can be older than, when known.
- * @param params.maxBlocks - The most blocks to read. Defaults to 1000.
+ * @param params.maxBlocks - The most blocks back from the newest to read. Defaults to 1000.
+ * @param params.scan - The progress of earlier readings of this transaction, updated here.
  * @returns What became of the transaction.
  * @throws The RPC error when the node cannot answer. Nothing is known then, so read it again later.
  *
@@ -135,22 +176,25 @@ async function findSpender(
  */
 export async function readNonceSlot(
   client: Client,
-  params: { hash: Hex; slot: NonceSlot; fromBlock?: bigint; maxBlocks?: number },
+  params: { hash: Hex; slot: NonceSlot; fromBlock?: bigint; maxBlocks?: number; scan?: NonceSlotScan },
 ): Promise<NonceSlotReading> {
-  const { hash, slot, fromBlock, maxBlocks = DEFAULT_MAX_SCANNED_BLOCKS } = params;
+  const { hash, slot, fromBlock, maxBlocks = DEFAULT_MAX_SCANNED_BLOCKS, scan = {} } = params;
+
+  const lanes = (client.chain as { transactionReplacement?: { getKey?: unknown } } | undefined)?.transactionReplacement;
+  if (lanes?.getKey) return { state: 'open' };
 
   const used = await getTransactionCount(client, { address: slot.from, blockTag: 'latest' });
   if (used <= slot.nonce) return { state: 'open' };
 
-  const own = await getTransactionReceipt(client, { hash }).catch(() => null);
-  if (own) return { state: 'ours' };
+  const own = await receiptIfAny(client, hash);
+  if (own) return { state: 'ours', receipt: own };
 
-  const transaction = await findSpender(client, slot, fromBlock, maxBlocks);
+  const transaction = await findSpender(client, slot, fromBlock, maxBlocks, scan);
   if (!transaction) return { state: 'spent' };
   if (transaction.hash.toLowerCase() === hash.toLowerCase()) return { state: 'ours' };
 
   // On a load-balanced RPC the block and the receipt come from different nodes, so no receipt yet says nothing
-  const transactionReceipt = await getTransactionReceipt(client, { hash: transaction.hash }).catch(() => null);
+  const transactionReceipt = await receiptIfAny(client, transaction.hash);
   if (!transactionReceipt) return { state: 'open' };
 
   return {

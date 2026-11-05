@@ -170,6 +170,27 @@ describe('eip5792Tracker', () => {
       );
     });
 
+    test('the on-chain stage waits like the standard tracker: time alone never means Failed', async () => {
+      await eip5792TrackerForStore({
+        ...params,
+        tx: { ...tx, hash: TX_HASH, sender: tx.from as `0x${string}`, nonce: 7, localTimestamp: 1000 },
+      });
+
+      expect(evmTracker).toHaveBeenCalledWith(
+        expect.objectContaining({
+          receiptAttempts: Infinity,
+          notFoundUntil: (1000 + 24 * 60 * 60) * 1000,
+          knownDetails: expect.objectContaining({ from: tx.from, nonce: 7 }),
+        }),
+      );
+    });
+
+    test('starting it does not wait for the transaction', async () => {
+      vi.mocked(evmTracker).mockReturnValueOnce(new Promise(() => {}));
+
+      await expect(eip5792TrackerForStore({ ...params, tx: { ...tx, hash: TX_HASH } })).resolves.toBeUndefined();
+    });
+
     test('resumes on-chain when the hash is already known (after a reload)', async () => {
       await eip5792TrackerForStore({ ...params, tx: { ...tx, hash: TX_HASH } });
       expect(initializePollingTracker).not.toHaveBeenCalled();

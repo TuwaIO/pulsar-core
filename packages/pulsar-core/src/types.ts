@@ -180,13 +180,14 @@ export type EvmTransaction = BaseTransaction & {
   nonce?: number;
   /**
    * The hash of the transaction that replaced this one (set with `status: Replaced`). For Safe transactions it is the
-   * `safeTxHash` of the transaction executed instead.
+   * `safeTxHash` of the transaction executed instead. Absent when `replacedReason` is `unknown`.
    */
   replacedTxHash?: `0x${string}`;
   /**
    * What spent the nonce (set with `status: Replaced`): `repriced` is the same transaction with higher fees (a speed-up),
    * so the money moved in the replacement; `cancelled` is a transfer of nothing to the sender, so it did not; `replaced` is
-   * any other transaction; `unknown` means the nonce was spent by a transaction that could not be found.
+   * any other transaction; `unknown` means the nonce was spent by a transaction that could not be found. Set by the
+   * on-chain trackers, not by the Safe tracker.
    */
   replacedReason?: 'repriced' | 'cancelled' | 'replaced' | 'unknown';
   /**
@@ -488,7 +489,8 @@ export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl
    */
   checkAndInitializeTrackerInStore: (
     params: { tx: T; gelatoApiKey?: string } & TrackerCallbacks<T> &
-      Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>,
+      Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> &
+      Partial<Pick<ITxTrackingStore<T>, 'isTxTracked'>>,
   ) => Promise<void> | void;
   /**
    * Optional: cancels a pending transaction by sending a replacement with the same nonce.
@@ -607,7 +609,7 @@ export interface IInitializeTxTrackingStore<T extends Transaction> {
    * @param txKey - The key of the transaction.
    * @param fields - The fields to merge.
    */
-  updateTxParams: (txKey: string, fields: UpdatableTransactionFields) => void;
+  updateTxParams: (txKey: string, fields: UpdatableTransactionFields) => T | undefined | void;
   /**
    * Removes a transaction from the pool. Does not stop its tracker.
    * @param txKey - The key of the transaction.
@@ -666,9 +668,8 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
    * @param params.onSuccess - Called when the transaction succeeds (see `TrackerCallbacks`).
    * @param params.onError - Called when the transaction fails after it was submitted (see `TrackerCallbacks`).
    * @param params.onReplaced - Called when the transaction is replaced (see `TrackerCallbacks`).
-   * @returns A promise that resolves when the adapter's `checkAndInitializeTrackerInStore` resolves: once polling has
-   * started for polling trackers (Solana, Safe, ERC-4337, Gelato), but only when tracking has finished for standard
-   * EVM transactions (`TransactionTracker.Ethereum`). Read the state from the store instead of awaiting the result.
+   * @returns A promise that resolves once the tracker has started, not when the transaction has finished: it may stay
+   * pending for a long time. Read the state from the store instead of awaiting the result.
    * @throws `PulsarTransactionValidationError` when the metadata is invalid (before `initialTx` is set). Rejects with
    * the underlying error when no adapter is configured, or when the chain check, `beforeTxProcess` (with
    * `abortOnTxError`), `actionFunction` or the tracker start fails; `initialTx.error` is set first.
@@ -685,12 +686,19 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
 
   /**
    * Restarts the trackers of all pending transactions in the pool, for example after a page reload. Pending
-   * transactions that fail validation are removed from the pool. Call it once per page load: every call starts new
-   * trackers. Trackers started here have no `TrackerCallbacks`; `onTxFinished` and `subscribeTxFinished` still run
+   * transactions that fail validation are removed from the pool. A transaction already tracked is not tracked twice, so
+   * it is safe to call this again, as React Strict Mode does. Trackers started here have no `TrackerCallbacks`; `onTxFinished` and `subscribeTxFinished` still run
    * when they finish a transaction.
    * @returns A promise that resolves when all trackers have started.
    */
   initializeTransactionsPool: () => Promise<void>;
+  /**
+   * Whether a tracker of this store is responsible for a transaction. It stops being so when the transaction is removed
+   * from the pool or has a final status, and a tracker that asks stops then.
+   * @param txKey - The key of the transaction.
+   * @returns `true` while a tracker is responsible for it.
+   */
+  isTxTracked: (txKey: string) => boolean;
   /**
    * Adds a listener of the "transaction finished" event (see `TxFinishedListener`). Listeners live in memory, not in
    * storage: add them after every page load, for example in a React effect (`useTxFinished` of

@@ -74,7 +74,7 @@ pulsarStore.subscribe((state) => {
 });
 ```
 
-`executeTxAction` rejects when the metadata is invalid, the wallet is on another chain and does not switch, `beforeTxProcess` throws (unless `abortOnTxError: false`) or the wallet rejects the transaction; `initialTx.error` holds the normalized error. For standard EVM transactions it resolves only when tracking has finished, so drive the UI from the store instead of awaiting it.
+`executeTxAction` rejects when the metadata is invalid, the wallet is on another chain and does not switch, `beforeTxProcess` throws (unless `abortOnTxError: false`) or the wallet rejects the transaction; `initialTx.error` holds the normalized error. It resolves once the tracker has started, not when the transaction has finished, so drive the UI from the store.
 
 The full React setup, with a wallet connector, typed transactions and the Solana variant, is in the **[React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking)**.
 
@@ -193,6 +193,7 @@ Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/
 
 ## Classes
 
+- [FinalPollingError](/packages/pulsar-core/classes/FinalPollingError.md)
 - [PulsarTransactionValidationError](/packages/pulsar-core/classes/PulsarTransactionValidationError.md)
 
 ## Interfaces

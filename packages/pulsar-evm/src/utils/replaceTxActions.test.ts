@@ -132,6 +132,34 @@ describe.each([
     expect(lastSent().maxPriorityFeePerGas).toBe(133n);
   });
 
+  test('a fee of zero still goes up: 15% of nothing would be refused as underpriced', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.mocked(estimateFeesPerGas).mockRejectedValue(new Error('rate limited'));
+
+    await action({ config, tx: pendingTx({ maxPriorityFeePerGas: '0' }) });
+
+    expect(lastSent().maxPriorityFeePerGas).toBe(1n);
+  });
+
+  test('the fees last sent survive a reload, in the memory of the tab', async () => {
+    const saved = new Map<string, string>();
+    vi.stubGlobal('sessionStorage', {
+      getItem: (key: string) => saved.get(key) ?? null,
+      setItem: (key: string, value: string) => saved.set(key, value),
+    });
+    try {
+      const tx = pendingTx();
+      await action({ config, tx });
+      expect(saved.size).toBe(1);
+      // A reload: the same key is read from storage by a page whose memory has only the storage to go on
+      const [[key, value]] = saved;
+      expect(key).toContain('pulsar-evm:replacementFees:');
+      expect(JSON.parse(value)).toEqual({ maxFeePerGas: '1150', maxPriorityFeePerGas: '115' });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   test('a press the wallet refused does not count', async () => {
     const tx = pendingTx();
     vi.mocked(sendTransaction).mockRejectedValueOnce(new Error('User rejected the request.'));

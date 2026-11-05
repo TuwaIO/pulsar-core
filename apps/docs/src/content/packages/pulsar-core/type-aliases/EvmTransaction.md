@@ -2,7 +2,7 @@
 
 > **EvmTransaction** = [`BaseTransaction`](/packages/pulsar-core/type-aliases/BaseTransaction.md) & `object`
 
-Defined in: [types.ts:165](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L165)
+Defined in: [packages/pulsar-core/src/types.ts:165](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L165)
 
 An EVM transaction. Trackers fill the on-chain fields (`hash`, `nonce`, fees, `to`, `value`, `input`) once the
 transaction details are available.
@@ -67,14 +67,15 @@ with the transaction, so tracking can resume after a reload, but never passed to
 
 What spent the nonce (set with `status: Replaced`): `repriced` is the same transaction with higher fees (a speed-up),
 so the money moved in the replacement; `cancelled` is a transfer of nothing to the sender, so it did not; `replaced` is
-any other transaction; `unknown` means the nonce was spent by a transaction that could not be found.
+any other transaction; `unknown` means the nonce was spent by a transaction that could not be found. Set by the
+on-chain trackers, not by the Safe tracker.
 
 ### replacedTxHash?
 
 > `optional` **replacedTxHash?**: `` `0x${string}` ``
 
 The hash of the transaction that replaced this one (set with `status: Replaced`). For Safe transactions it is the
-`safeTxHash` of the transaction executed instead.
+`safeTxHash` of the transaction executed instead. Absent when `replacedReason` is `unknown`.
 
 ### sender?
 

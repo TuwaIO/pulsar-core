@@ -21,18 +21,26 @@ vi.mock('viem/actions', async (importActual) => {
     getBlock: vi.fn(),
     getBlockNumber: vi.fn(),
     getTransactionConfirmations: vi.fn(),
+    getTransactionReceipt: vi.fn(),
   };
 });
 
 // We need to await the mocked module to get the mocked functions.
-const { waitForTransactionReceipt, getTransaction, getBlock, getBlockNumber, getTransactionConfirmations } =
-  await import('viem/actions');
+const {
+  waitForTransactionReceipt,
+  getTransaction,
+  getBlock,
+  getBlockNumber,
+  getTransactionConfirmations,
+  getTransactionReceipt,
+} = await import('viem/actions');
 const viemActions = {
   waitForTransactionReceipt: vi.mocked(waitForTransactionReceipt),
   getTransaction: vi.mocked(getTransaction),
   getBlock: vi.mocked(getBlock),
   getBlockNumber: vi.mocked(getBlockNumber),
   getTransactionConfirmations: vi.mocked(getTransactionConfirmations),
+  getTransactionReceipt: vi.mocked(getTransactionReceipt),
 };
 
 describe('evmTracker Unit Tests', () => {
@@ -172,6 +180,7 @@ describe('evmTracker Unit Tests', () => {
     vi.useFakeTimers();
     const mockReceipt = { status: 'success', transactionHash: baseTrackerParams.tx.txKey } as TransactionReceipt;
     viemActions.waitForTransactionReceipt.mockResolvedValue(mockReceipt);
+    viemActions.getTransactionReceipt.mockResolvedValue(mockReceipt);
 
     // Simulate confirmation progress: 1 -> 2 -> 3
     viemActions.getTransactionConfirmations
@@ -464,7 +473,6 @@ describe('evmTrackerForStore Unit Tests - TrackerCallbacks', () => {
       tx,
       config,
       updateTxParams,
-      // @ts-expect-error - transactionsPool is not typed correctly in tests
       transactionsPool,
       onSuccess: vi.fn(),
     });

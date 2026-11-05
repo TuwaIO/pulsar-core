@@ -51,7 +51,7 @@ export function PulsarInitializer() {
 }
 ```
 
-Every call of `initializeTransactionsPool` starts new trackers, so do not render the initializer more than once. In development, React Strict Mode runs effects twice. The complete setup is in the **[React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking)**.
+A transaction already tracked is not tracked twice, so React Strict Mode, which runs effects twice in development, does no harm. The complete setup is in the **[React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking)**.
 
 React to finished transactions where the data lives, for example to refetch a list once a transaction that changed it succeeds, also after a reload. Use `useTxFinished` for data that must stay correct, and the `onSuccess`, `onError` and `onReplaced` of `executeTxAction` for the interface of the page that sent the transaction (closing a dialog, a message in place); those do not run for transactions resumed after a reload. The comparison is in the [`@tuwaio/pulsar-core` README](https://pulsar.docs.tuwa.io/packages/pulsar-core):
 

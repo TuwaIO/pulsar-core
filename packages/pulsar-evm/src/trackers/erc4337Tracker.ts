@@ -220,12 +220,13 @@ export function erc4337Tracker<T extends Erc4337FetcherTx & Pick<Transaction, 'p
 export type Erc4337TrackerForStoreParams<T extends Transaction> = Pick<
   ITxTrackingStore<T>,
   'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
-> & {
-  /** The transaction to track; `txKey` is the `userOpHash`. */
-  tx: T;
-  /** The wagmi config, used for the on-chain stage. Without it, the transaction succeeds as soon as it is bundled. */
-  config?: Config;
-} & TrackerCallbacks<T>;
+> &
+  Partial<Pick<ITxTrackingStore<T>, 'isTxTracked'>> & {
+    /** The transaction to track; `txKey` is the `userOpHash`. */
+    tx: T;
+    /** The wagmi config, used for the on-chain stage. Without it, the transaction succeeds as soon as it is bundled. */
+    config?: Config;
+  } & TrackerCallbacks<T>;
 
 /**
  * Tracks an ERC-4337 UserOperation of the Pulsar store in two stages and writes the results to the store:
@@ -249,6 +250,7 @@ export async function erc4337TrackerForStore<T extends Transaction>({
   config,
   updateTxParams,
   transactionsPool,
+  isTxTracked,
   onSuccess,
   onError,
   onReplaced,
@@ -256,13 +258,17 @@ export async function erc4337TrackerForStore<T extends Transaction>({
   const updateTx = createTxUpdater({ tx, transactionsPool, updateTxParams });
 
   const runOnChainStage = (txHash: Hex) =>
-    trackOnChainStage({ tx, hash: txHash, config, updateTx, onSuccess, onError, onReplaced });
+    trackOnChainStage({ tx, hash: txHash, config, updateTx, isTxTracked, onSuccess, onError, onReplaced });
 
   const evmTx = tx as unknown as EvmTransaction;
 
   // Session restoration: if tx already has an on-chain hash, skip Stage 1 and resume Stage 2
   if (evmTx.hash) {
-    return runOnChainStage(evmTx.hash);
+    // Not awaited: whoever starts a tracker must not wait for a transaction that may stay pending for long
+    void runOnChainStage(evmTx.hash).catch((error: unknown) => {
+      console.error(`[Pulsar] A tracker stopped with an error: ${error instanceof Error ? error.name : 'Unknown'}.`);
+    });
+    return;
   }
 
   // Stage 1: Bundler Mempool Polling
@@ -274,6 +280,7 @@ export async function erc4337TrackerForStore<T extends Transaction>({
     maxRetries: 60,
     // A bundler that cannot be reached says nothing about the UserOperation
     retryForeverEveryMs: 60_000,
+    isAbandoned: isTxTracked && (() => !isTxTracked(tx.txKey)),
     onSuccess: async (response) => {
       const hash = response.hash;
 

@@ -173,12 +173,14 @@ export function gelatoTrackerForStore<T extends Transaction>({
   gelatoApiKey,
   updateTxParams,
   transactionsPool,
+  isTxTracked,
   onSuccess,
   onError,
-}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> & {
-  tx: T;
-  gelatoApiKey: string;
-} & TrackerCallbacks<T>) {
+}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> &
+  Partial<Pick<ITxTrackingStore<T>, 'isTxTracked'>> & {
+    tx: T;
+    gelatoApiKey: string;
+  } & TrackerCallbacks<T>) {
   const client = createGelatoClient({ apiKey: gelatoApiKey });
   const fetcher = gelatoFetcher(client);
   const updateTx = createTxUpdater({ tx, transactionsPool, updateTxParams });
@@ -188,6 +190,7 @@ export function gelatoTrackerForStore<T extends Transaction>({
     fetcher,
     // A service that cannot be reached says nothing about the task
     retryForeverEveryMs: 60_000,
+    isAbandoned: isTxTracked && (() => !isTxTracked(tx.txKey)),
     // `removeTxFromPool` is not passed: failed transactions stay in the pool as `Failed`.
     onSuccess: (response) => {
       const hash = response.status === GelatoStatusCode.Success ? response.receipt.transactionHash : undefined;

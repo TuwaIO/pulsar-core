@@ -289,9 +289,10 @@ export async function solanaTrackerForStore<T extends Transaction>({
   onSuccess,
   onError,
   ...rest
-}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> & {
-  tx: T;
-} & TrackerCallbacks<T>): Promise<void> {
+}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> &
+  Partial<Pick<ITxTrackingStore<T>, 'isTxTracked'>> & {
+    tx: T;
+  } & TrackerCallbacks<T>): Promise<void> {
   const updateTx = createTxUpdater({
     tx,
     transactionsPool: rest.transactionsPool,
@@ -314,6 +315,7 @@ export async function solanaTrackerForStore<T extends Transaction>({
     maxRetries: 30, // Consecutive RPC errors before it slows down: 30 (about 30 seconds of outage)
     // An RPC outage says nothing about the transaction. The expired blockhash is what ends one that will never land.
     retryForeverEveryMs: 60_000,
+    isAbandoned: rest.isTxTracked && (() => !rest.isTxTracked?.(tx.txKey)),
 
     // Writes the finalized transaction details.
     onSuccess: (response) => {

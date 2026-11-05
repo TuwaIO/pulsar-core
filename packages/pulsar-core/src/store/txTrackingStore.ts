@@ -7,9 +7,17 @@ import { normalizeError, selectAdapterByKey, setChainId } from '@tuwaio/orbit-co
 import dayjs from 'dayjs';
 import { produce } from 'immer';
 import { persist, PersistOptions } from 'zustand/middleware';
-import { createStore } from 'zustand/vanilla';
+import { createStore, StoreApi } from 'zustand/vanilla';
 
-import { ITxTrackingStore, PulsarAdapter, Transaction, TransactionPool } from '../types';
+import {
+  EvmTransaction,
+  ITxTrackingStore,
+  PulsarAdapter,
+  Transaction,
+  TransactionPool,
+  TransactionStatus,
+} from '../types';
+import { mergeTabPools } from '../utils/mergeTabPools';
 import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
 import { validateInitialTransactionParams, validateTransaction } from '../utils/transactionValidation';
 import { createTxFinishedNotifier, isFinishedStatus } from '../utils/txFinished';
@@ -26,8 +34,8 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  * restored synchronously when the store is created. Where
  * `localStorage` is not available (server rendering), nothing is read or written and Zustand logs a warning on
  * updates. Creating the store does not start any tracker: call `initializeTransactionsPool` once on the client.
- * In the browser it listens to `storage` events and reads the saved state again when another tab writes it. Every
- * transaction gets one tracker, however often `initializeTransactionsPool` runs.
+ * In the browser it listens to `storage` events and merges what another tab has saved, by transaction, into this tab's
+ * pool. Every transaction gets one tracker, however often `initializeTransactionsPool` runs.
  *
  * @template T - The application transaction type.
  * @param params - The adapters, the store options and the options of Zustand's `persist` middleware.
@@ -72,7 +80,8 @@ export function createPulsarStore<T extends Transaction>({
   const txFinished = createTxFinishedNotifier<T>(onTxFinished);
 
   // One tracker per transaction: a second one on the same hash joins the viem watcher of the first and goes silent when
-  // the first one's timer stops it. Trackers of a polling kind resolve as soon as they start, so a key stays here.
+  // the first one's timer stops it. A key leaves with the final status or the removal of its transaction, as trackers of
+  // a polling kind resolve as soon as they start, and the same key can come back (a Safe proposes the same hash again).
   const trackedTxKeys = new Set<string>();
   const startTracker = async (txKey: string, start: () => Promise<void> | void) => {
     if (trackedTxKeys.has(txKey)) return;
@@ -93,12 +102,20 @@ export function createPulsarStore<T extends Transaction>({
           maxTransactions,
           retentionDays,
           onRemoteCreate,
-          onTxFinished: txFinished.notify,
+          onTxFinished: (tx) => {
+            trackedTxKeys.delete(tx.txKey);
+            txFinished.notify(tx);
+          },
+          onTxRemoved: (txKey) => {
+            trackedTxKeys.delete(txKey);
+          },
         })(set, get),
 
         getAdapter: () => adapter,
 
         subscribeTxFinished: txFinished.subscribe,
+
+        isTxTracked: (txKey) => trackedTxKeys.has(txKey),
 
         // Restarts the trackers of pending transactions, e.g. after a page reload.
         initializeTransactionsPool: async () => {
@@ -165,17 +182,27 @@ export function createPulsarStore<T extends Transaction>({
 
                 // Case B: Self-healing. Local is stuck on pending, but remote says it's terminal.
                 if (localTx?.pending && isFinishedStatus(remoteTx.status)) {
+                  // A server's Failed can be its own time limit. While this page's tracker runs, the chain answers
+                  if (remoteTx.status === TransactionStatus.Failed && trackedTxKeys.has(remoteTx.txKey)) return;
                   if (!isFinishedStatus(localTx.status)) finishedTxKeys.push(remoteTx.txKey);
                   localTx.status = remoteTx.status;
                   localTx.pending = false;
                   if (remoteTx.txKey) localTx.txKey = remoteTx.txKey;
                   if (remoteTx.finishedTimestamp) localTx.finishedTimestamp = remoteTx.finishedTimestamp;
+                  if (remoteTx.isError !== undefined) localTx.isError = remoteTx.isError;
+                  if (remoteTx.error) localTx.error = remoteTx.error;
+                  const remote = remoteTx as unknown as EvmTransaction;
+                  const local = localTx as unknown as EvmTransaction;
+                  if (remote.hash) local.hash = remote.hash;
+                  if (remote.replacedTxHash) local.replacedTxHash = remote.replacedTxHash;
+                  if (remote.replacedReason) local.replacedReason = remote.replacedReason;
                 }
               });
             }),
           );
 
           for (const txKey of finishedTxKeys) {
+            trackedTxKeys.delete(txKey);
             const finishedTx = get().transactionsPool[txKey];
             if (finishedTx) txFinished.notify(finishedTx);
           }
@@ -377,10 +404,45 @@ export function createPulsarStore<T extends Transaction>({
     ),
   );
 
-  // Every change saves the whole pool, so a tab with an old copy would overwrite what another tab has written
-  if (typeof window !== 'undefined' && options.name) {
+  // Every change saves the whole pool, so a tab with an old copy would overwrite what another tab has written. Merged by
+  // transaction, not rehydrated: see `mergeTabPools`. A function, as a `window` stubbed or in another runtime may lack it.
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function' && options.name) {
+    const readOtherTab = async () => {
+      const saved = await store.persist.getOptions().storage?.getItem(options.name);
+      const theirs = (saved?.state as Partial<ITxTrackingStore<T>> | undefined)?.transactionsPool;
+      if (!theirs) return;
+      const valid = Object.fromEntries(
+        Object.entries(theirs).filter(([, tx]) => {
+          try {
+            validateTransaction(tx);
+            return true;
+          } catch {
+            return false;
+          }
+        }),
+      ) as TransactionPool<T>;
+      const state = store.getState();
+      const { pool, finished, added } = mergeTabPools(state.transactionsPool as TransactionPool<T>, valid);
+      if (pool !== state.transactionsPool)
+        (store as StoreApi<ITxTrackingStore<T>>).setState({ transactionsPool: pool });
+      for (const txKey of finished) {
+        trackedTxKeys.delete(txKey);
+        txFinished.notify(pool[txKey]);
+      }
+      // The tab that sent it may close: this one must then be able to finish it
+      for (const tx of added) {
+        void startTracker(tx.txKey, () =>
+          selectAdapterByKey({ adapterKey: tx.adapter, adapter })?.checkAndInitializeTrackerInStore({
+            tx,
+            gelatoApiKey,
+            ...store.getState(),
+          }),
+        ).catch((error: unknown) => console.error('[Pulsar] Could not track a transaction of another tab:', error));
+      }
+    };
     window.addEventListener('storage', (event) => {
-      if (event.key === options.name) void store.persist.rehydrate();
+      if (event.key !== options.name) return;
+      readOtherTab().catch((error: unknown) => console.error('[Pulsar] Could not read another tab:', error));
     });
   }
 

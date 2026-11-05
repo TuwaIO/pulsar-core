@@ -2,7 +2,7 @@
 
 > **NonceSlot** = `object`
 
-Defined in: [utils/readNonceSlot.ts:24](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L24)
+Defined in: [utils/readNonceSlot.ts:25](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L25)
 
 The sender and nonce of a transaction, and the fields it was sent with, which tell a speed-up from another
 transaction.
@@ -13,7 +13,7 @@ transaction.
 
 > **from**: `Address`
 
-Defined in: [utils/readNonceSlot.ts:26](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L26)
+Defined in: [utils/readNonceSlot.ts:27](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L27)
 
 The sender as the chain knows it: for a relayed transaction the relayer, not the wallet.
 
@@ -23,7 +23,7 @@ The sender as the chain knows it: for a relayed transaction the relayer, not the
 
 > `optional` **input?**: `Hex`
 
-Defined in: [utils/readNonceSlot.ts:34](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L34)
+Defined in: [utils/readNonceSlot.ts:35](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L35)
 
 The calldata.
 
@@ -33,7 +33,7 @@ The calldata.
 
 > **nonce**: `number`
 
-Defined in: [utils/readNonceSlot.ts:28](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L28)
+Defined in: [utils/readNonceSlot.ts:29](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L29)
 
 The nonce of the transaction.
 
@@ -43,7 +43,7 @@ The nonce of the transaction.
 
 > `optional` **to?**: `Address` \| `null`
 
-Defined in: [utils/readNonceSlot.ts:30](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L30)
+Defined in: [utils/readNonceSlot.ts:31](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L31)
 
 The recipient. Without `to`, `value` and `input` a replacement is never reported as `repriced`.
 
@@ -53,6 +53,6 @@ The recipient. Without `to`, `value` and `input` a replacement is never reported
 
 > `optional` **value?**: `bigint`
 
-Defined in: [utils/readNonceSlot.ts:32](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L32)
+Defined in: [utils/readNonceSlot.ts:33](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L33)
 
 The value, in wei.

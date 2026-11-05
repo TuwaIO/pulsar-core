@@ -2,7 +2,7 @@
 
 > **TransactionPool**\<`T`\> = `Record`\<`string`, `T`\>
 
-Defined in: [types.ts:533](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L533)
+Defined in: [packages/pulsar-core/src/types.ts:535](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L535)
 
 The transaction pool: transactions indexed by `txKey`.
 
