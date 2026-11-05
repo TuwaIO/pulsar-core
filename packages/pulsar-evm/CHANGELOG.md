@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.10.1...pulsar-evm-v0.11.0) (2026-11-05)
+
+
+### Features
+
+* a wallet's speed-up is followed to its result, and a slow transaction is not a failed one ([#98](https://github.com/TuwaIO/pulsar-core/issues/98)) ([6740c87](https://github.com/TuwaIO/pulsar-core/commit/6740c87b78280c4e49b0d4cdeb810bf15f03f76c))
+
 ## [0.10.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.10.0...pulsar-evm-v0.10.1) (2026-10-28)
 
 
