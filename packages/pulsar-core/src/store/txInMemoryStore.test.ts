@@ -215,4 +215,49 @@ describe('createTxInMemoryStore: what the local tracker knows and a server does 
 
     expect(store.getState().transactionsPool[key].pending).toBe(true);
   });
+
+  describe('removeTxFromPool', () => {
+    const pendingTx = () => createTransaction({ pending: true, status: undefined });
+
+    it('removes the record: nothing else can finish it once its tracker has been stopped', () => {
+      const store = createTxInMemoryStore<EvmTransaction>({ localTransactionsPool: { '0x1': pendingTx() } });
+
+      store.getState().removeTxFromPool('0x1');
+
+      expect(store.getState().transactionsPool['0x1']).toBeUndefined();
+    });
+
+    it('the next sync does not bring it back', () => {
+      const store = createTxInMemoryStore<EvmTransaction>({ localTransactionsPool: { '0x1': pendingTx() } });
+
+      store.getState().removeTxFromPool('0x1');
+      store.getState().syncWithLocalPool({ '0x1': pendingTx() });
+
+      expect(store.getState().transactionsPool['0x1']).toBeUndefined();
+    });
+
+    it('the next page of the history does not bring it back', async () => {
+      const getHistory = vi.fn().mockResolvedValue({ docs: [pendingTx()], page: 1, hasNextPage: false });
+      const store = createTxInMemoryStore<EvmTransaction>({
+        localTransactionsPool: { '0x1': pendingTx() },
+        getHistory,
+      });
+
+      store.getState().removeTxFromPool('0x1');
+      await store.getState().fetchInitial(wallet);
+
+      expect(store.getState().transactionsPool['0x1']).toBeUndefined();
+    });
+
+    it('leaves the others', () => {
+      const other = createTransaction({ txKey: '0x2' });
+      const store = createTxInMemoryStore<EvmTransaction>({
+        localTransactionsPool: { '0x1': pendingTx(), '0x2': other },
+      });
+
+      store.getState().removeTxFromPool('0x1');
+
+      expect(store.getState().transactionsPool['0x2']).toBe(other);
+    });
+  });
 });

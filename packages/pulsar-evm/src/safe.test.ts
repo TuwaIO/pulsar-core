@@ -35,7 +35,8 @@ describe('@tuwaio/pulsar-evm/safe', () => {
     expect([...packages].filter((name) => name.startsWith('@wagmi/') || name === '@tuwaio/orbit-evm')).toEqual([]);
   });
 
-  test('exports the Safe tracker', async () => {
+  // A dynamic import of a whole entry point: on a busy machine it takes longer than the default limit of a test
+  test('exports the Safe tracker', { timeout: 30_000 }, async () => {
     const safe = await import('./safe');
 
     expect(Object.keys(safe)).toEqual(

@@ -172,7 +172,7 @@ export function createTxInMemoryStore<T extends Transaction>({
         const pool = draft.transactionsPool as TransactionPool<T>;
 
         for (const remoteTx of validDocs) {
-          mergeTransactionIntoPool(pool, remoteTx, 'remote');
+          if (!removedTxKeys.has(remoteTx.txKey)) mergeTransactionIntoPool(pool, remoteTx, 'remote');
         }
 
         draft.currentPage = response.page;
@@ -180,6 +180,10 @@ export function createTxInMemoryStore<T extends Transaction>({
         draft.isLoading = false;
       });
   };
+
+  // Removed here, so the next sync or the next page of the history does not bring them back, frozen on pending: their
+  // tracker has been stopped
+  const removedTxKeys = new Set<string>();
 
   return createStore<ITxInMemoryStore<T>>()((set, get) => ({
     transactionsPool: localTransactionsPool,
@@ -193,8 +197,17 @@ export function createTxInMemoryStore<T extends Transaction>({
         produce(state, (draft) => {
           const pool = draft.transactionsPool as TransactionPool<T>;
           for (const localTx of Object.values(localPool)) {
-            mergeTransactionIntoPool(pool, localTx, 'local');
+            if (!removedTxKeys.has(localTx.txKey)) mergeTransactionIntoPool(pool, localTx, 'local');
           }
+        }),
+      );
+    },
+
+    removeTxFromPool: (txKey) => {
+      removedTxKeys.add(txKey);
+      set((state) =>
+        produce(state, (draft) => {
+          delete (draft.transactionsPool as TransactionPool<T>)[txKey];
         }),
       );
     },

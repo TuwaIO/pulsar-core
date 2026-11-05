@@ -782,6 +782,13 @@ export type ITxInMemoryStore<T extends Transaction> = {
    * @param localPool - The pool of the persistent store, usually from its `subscribe` listener.
    */
   syncWithLocalPool: (localPool: TransactionPool<T>) => void;
+  /**
+   * Removes a transaction for as long as this page lives: later syncs and history pages do not bring it back. Call it next
+   * to `removeTxFromPool` of the persistent store, as when a person stops tracking a transaction that never ends, or the
+   * record stays here, pending for good, with nothing left to finish it.
+   * @param txKey - The key of the transaction.
+   */
+  removeTxFromPool: (txKey: string) => void;
 } & TxInMemoryPagination;
 
 /**

@@ -28,7 +28,8 @@ export const keepsItsResult = (current?: TransactionStatus, next?: TransactionSt
  * - a transaction only this tab knows stays;
  * - a final result is never replaced by a pending copy;
  * - a final result of the other tab replaces this tab's pending copy (and a `Failed`, when the chain said otherwise);
- * - of two pending copies this tab's values win, and it learns the fields only the other tab has.
+ * - of two pending copies this tab's values win, and it learns the fields only the other tab has;
+ * - whether the tracking modal of a transaction is open stays this tab's own: that modal is on this screen.
  *
  * Nothing changes when the saved pool has nothing new, which is what ends the exchange between two tabs: a tab saves only
  * when it has learned something.
@@ -57,7 +58,10 @@ export function mergeTabPools<T extends Transaction>(
       changed = true;
     } else if (isFinishedStatus(theirs.status) && !keepsItsResult(ours.status, theirs.status)) {
       if (ours.status === theirs.status) continue;
-      pool[key] = theirs;
+      pool[key] =
+        ours.isTrackedModalOpen === theirs.isTrackedModalOpen
+          ? theirs
+          : { ...theirs, isTrackedModalOpen: ours.isTrackedModalOpen };
       finished.push(key);
       changed = true;
     } else if (!isFinishedStatus(ours.status) && !isFinishedStatus(theirs.status)) {
