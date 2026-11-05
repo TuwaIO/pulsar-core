@@ -2,7 +2,7 @@
 
 > **initializeTxTrackingStore**\<`T`\>(`params`): [`StoreSlice`](/packages/pulsar-core/type-aliases/StoreSlice.md)\<[`IInitializeTxTrackingStore`](/packages/pulsar-core/interfaces/IInitializeTxTrackingStore.md)\<`T`\>\>
 
-Defined in: [store/initializeTxTrackingStore.ts:47](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/initializeTxTrackingStore.ts#L47)
+Defined in: [store/initializeTxTrackingStore.ts:71](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/initializeTxTrackingStore.ts#L71)
 
 Creates the core slice of the transaction store: `transactionsPool`, `initialTx`, `unsyncedTxKeys` and the actions
 that change them. `createPulsarStore` uses it; call it directly only to compose a custom Zustand store.

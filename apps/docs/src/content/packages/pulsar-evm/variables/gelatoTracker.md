@@ -2,15 +2,15 @@
 
 > `const` **gelatoTracker**: \<`T`\>(`params`) => `void` = `gelatoTrackerForStore`
 
-Defined in: [trackers/gelatoTracker.ts:251](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L251)
+Defined in: [trackers/gelatoTracker.ts:253](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L253)
 
 Alias of [gelatoTrackerForStore](/packages/pulsar-evm/functions/gelatoTrackerForStore.md).
 
-Tracks a Gelato task of the Pulsar store with [gelatoFetcher](/packages/pulsar-evm/functions/gelatoFetcher.md) (every 5 s, up to 10 consecutive failed
-attempts) and writes the results to the store: the transaction `hash` once the task is submitted, then `Success` or
+Tracks a Gelato task of the Pulsar store with [gelatoFetcher](/packages/pulsar-evm/functions/gelatoFetcher.md) (every 5 s, and every minute after 10 consecutive
+failed attempts) and writes the results to the store: the transaction `hash` once the task is submitted, then `Success` or
 `Failed` with the local time as `finishedTimestamp`.
 
-When tracking gives up (10 consecutive failed attempts, or the task still pending after one hour), the transaction
+When tracking gives up (the task still pending after one hour), the transaction
 is marked `Failed` and stays in the pool.
 
 Side effects: sends requests to the Gelato API with `gelatoApiKey` (see [createGelatoClient](/packages/pulsar-evm/functions/createGelatoClient.md)). The callbacks

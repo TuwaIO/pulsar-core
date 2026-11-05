@@ -191,6 +191,18 @@ The `txKey` of the tracked transaction.
 
 ***
 
+### retryForeverEveryMs?
+
+> `optional` **retryForeverEveryMs?**: `number`
+
+Defined in: [utils/initializePollingTracker.ts:104](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L104)
+
+With a delay here, `maxRetries` consecutive failed attempts no longer end tracking: the tracker keeps asking at this
+delay, in milliseconds, until an attempt succeeds. Not being able to ask says nothing about the transaction, so use
+it where a person would otherwise be told that a transaction failed because a service was down.
+
+***
+
 ### tx
 
 > **tx**: `T`

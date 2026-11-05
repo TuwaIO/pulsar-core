@@ -96,6 +96,12 @@ export type PollingTrackerConfig<R, T extends Pick<Transaction, 'txKey' | 'pendi
   pollingInterval?: number | ((elapsedMs: number) => number);
   /** The number of consecutive failed attempts (thrown errors) after which polling stops. Defaults to 10. */
   maxRetries?: number;
+  /**
+   * With a delay here, `maxRetries` consecutive failed attempts no longer end tracking: the tracker keeps asking at this
+   * delay, in milliseconds, until an attempt succeeds. Not being able to ask says nothing about the transaction, so use
+   * it where a person would otherwise be told that a transaction failed because a service was down.
+   */
+  retryForeverEveryMs?: number;
 };
 
 const DEFAULT_POLLING_INTERVAL = 5000;
@@ -108,7 +114,8 @@ const DEFAULT_MAX_RETRIES = 10;
  * `fetcher`. Polling continues until the
  * fetcher calls `stopPolling`. A fetcher that throws counts as a failed attempt; after `maxRetries` consecutive failed
  * attempts the tracker calls `onFailure()` without arguments, logs a warning and stops (which calls
- * `removeTxFromPool`, if configured). A successful attempt resets the count.
+ * `removeTxFromPool`, if configured), or, with `retryForeverEveryMs`, keeps asking at that delay. A successful attempt
+ * resets the count.
  *
  * Side effects: runs a timer loop until it is stopped; there is no way to cancel it from the outside.
  *
@@ -145,6 +152,7 @@ export function initializePollingTracker<R, T extends Pick<Transaction, 'txKey' 
     removeTxFromPool,
     pollingInterval = DEFAULT_POLLING_INTERVAL,
     maxRetries = DEFAULT_MAX_RETRIES,
+    retryForeverEveryMs,
   } = config;
 
   // 1. Early exit if the transaction is no longer pending
@@ -176,9 +184,10 @@ export function initializePollingTracker<R, T extends Pick<Transaction, 'txKey' 
   };
 
   const pollingLoop = async () => {
-    while (isPolling && retriesLeft > 0) {
+    while (isPolling && (retriesLeft > 0 || retryForeverEveryMs !== undefined)) {
       try {
-        await new Promise((resolve) => setTimeout(resolve, nextDelay()));
+        const delay = retriesLeft > 0 ? nextDelay() : (retryForeverEveryMs as number);
+        await new Promise((resolve) => setTimeout(resolve, delay));
         if (!isPolling) break;
 
         // The fetcher's responsibility is to call onSuccess, onFailure, etc., which in turn call stopPolling.
@@ -194,11 +203,11 @@ export function initializePollingTracker<R, T extends Pick<Transaction, 'txKey' 
         retriesLeft = maxRetries;
       } catch (error) {
         console.error(`Polling fetcher for txKey ${tx.txKey} threw an error:`, error);
-        retriesLeft--;
+        retriesLeft = Math.max(0, retriesLeft - 1);
       }
     }
 
-    if (retriesLeft <= 0) {
+    if (isPolling && retriesLeft <= 0) {
       console.warn(`Polling for txKey ${tx.txKey} stopped after reaching the maximum number of retries.`);
       onFailure();
       stopPolling();

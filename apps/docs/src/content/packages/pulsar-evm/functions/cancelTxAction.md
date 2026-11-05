@@ -2,13 +2,16 @@
 
 > **cancelTxAction**\<`T`\>(`params`): `Promise`\<`` `0x${string}` ``\>
 
-Defined in: [utils/cancelTxAction.ts:36](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/cancelTxAction.ts#L36)
+Defined in: [utils/cancelTxAction.ts:37](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/cancelTxAction.ts#L37)
 
 Cancels a pending EVM transaction: asks the connected wallet to send a zero-value transaction to its own address with
-the same nonce and both EIP-1559 fees raised by 15%. When it is mined, the tracker of the original transaction
-reports it as `Replaced`; the cancellation transaction itself is not added to the pool.
+the same nonce and both EIP-1559 fees 15% above the fees last sent for this nonce, and at least at the market estimate,
+since a cancellation stuck below the base fee cancels nothing. When it is mined, the tracker of the original
+transaction reports it as `Replaced` with `replacedReason: 'cancelled'`; the cancellation transaction itself is not
+added to the pool.
 
-Side effects: opens a wallet prompt and broadcasts a transaction.
+Side effects: reads the fees of the chain over RPC, opens a wallet prompt, broadcasts a transaction, and keeps the fees
+sent in memory for the next replacement of this nonce.
 
 ## Type Parameters
 
@@ -46,8 +49,8 @@ The hash of the cancellation transaction.
 ## Throws
 
 `Error` when the transaction is not an EVM transaction or lacks the nonce and fee fields, and
-`Error('Failed to cancel transaction: …')` (with the original error as `cause`) when no account is connected or the
-wallet rejects or fails to send the transaction.
+`Error('Failed to cancel transaction: …')` (with the original error as `cause`) when no account is connected, the
+connected account did not send the transaction, or the wallet rejects or fails to send the transaction.
 
 ## Example
 

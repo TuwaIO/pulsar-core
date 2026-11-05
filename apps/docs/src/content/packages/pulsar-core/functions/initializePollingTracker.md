@@ -2,7 +2,7 @@
 
 > **initializePollingTracker**\<`R`, `T`\>(`config`): `void`
 
-Defined in: [utils/initializePollingTracker.ts:134](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L134)
+Defined in: [utils/initializePollingTracker.ts:141](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L141)
 
 Starts polling a transaction in the background and returns immediately. Does nothing if `tx.pending` is `false`.
 
@@ -10,7 +10,8 @@ Every `pollingInterval` milliseconds (the first attempt also waits; a function i
 `fetcher`. Polling continues until the
 fetcher calls `stopPolling`. A fetcher that throws counts as a failed attempt; after `maxRetries` consecutive failed
 attempts the tracker calls `onFailure()` without arguments, logs a warning and stops (which calls
-`removeTxFromPool`, if configured). A successful attempt resets the count.
+`removeTxFromPool`, if configured), or, with `retryForeverEveryMs`, keeps asking at that delay. A successful attempt
+resets the count.
 
 Side effects: runs a timer loop until it is stopped; there is no way to cancel it from the outside.
 

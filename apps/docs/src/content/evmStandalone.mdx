@@ -12,12 +12,12 @@ Without the store nothing is persisted and nothing is resumed after a restart: y
 
 ## Why `evmTracker` Instead of `waitForTransactionReceipt`
 
-| Situation                            | `waitForTransactionReceipt` (viem)                                        | `evmTracker` (Pulsar)                                                                                               |
-| ------------------------------------ | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **The node has not indexed the tx**  | Waits for the receipt; the transaction details are not fetched.           | Retries `getTransaction` (10 times, 3 s apart by default) and passes the details (nonce, fees, `to`) to a callback. |
-| **Transient RPC errors**             | The call rejects once its timeout or its own retries are exhausted.       | Retries waiting for the receipt up to 5 times with a growing delay, then calls `onFailure`.                         |
-| **Speed-up or cancel in the wallet** | Reported through `onReplaced`; the promise resolves with the new receipt. | Calls `onReplaced` and stops, so the replaced transaction is never reported as successful.                          |
-| **Several confirmations**            | `confirmations` option of the single call.                                | Polls confirmations every 5 s and reports each count through `onConfirmationsUpdate`.                               |
+| Situation                            | `waitForTransactionReceipt` (viem)                                                                                      | `evmTracker` (Pulsar)                                                                                                                                                                                                        |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **The node has not indexed the tx**  | Waits for the receipt; the transaction details are not fetched.                                                         | Retries `getTransaction` (10 times, 3 s apart by default) and passes the details (nonce, fees, `to`) to a callback.                                                                                                          |
+| **Transient RPC errors**             | The call rejects once its timeout or its own retries are exhausted.                                                     | Any error while waiting means no answer yet: waits again up to `receiptAttempts` times with growing pauses (6 by default, 435 s), then calls `onFailure`.                                                                    |
+| **Speed-up or cancel in the wallet** | Reported through `onReplaced`, if the replacement lands while one call runs and that call can identify the transaction. | Reads the sender's nonce after every attempt, so it is reported at any moment, also when the node no longer returns the old hash. Calls `onReplaced` and stops, so the replaced transaction is never reported as successful. |
+| **Several confirmations**            | `confirmations` option of the single call.                                                                              | Polls confirmations every 5 s and reports each count through `onConfirmationsUpdate`.                                                                                                                                        |
 
 `evmTracker` calls `onSuccess` for every mined transaction, including reverted ones: check `receipt.status`.
 
@@ -118,7 +118,7 @@ In the store, return the batch ID from `actionFunction` and pass `tracker: Trans
 
 ## Safe Multisig and Gelato: Polling Fetchers
 
-Safe and Gelato are tracked by polling an API. Pass their fetcher to `initializePollingTracker` from `@tuwaio/pulsar-core`, which calls it every 5 s by default (or on the schedule of a `pollingInterval` function) and gives up after 10 consecutive failed requests (it then calls `onFailure()` without arguments).
+Safe and Gelato are tracked by polling an API. Pass their fetcher to `initializePollingTracker` from `@tuwaio/pulsar-core`, which calls it every 5 s by default (or on the schedule of a `pollingInterval` function) and gives up after 10 consecutive failed requests (it then calls `onFailure()` without arguments), or, with `retryForeverEveryMs`, keeps asking at that delay.
 
 The Safe tracker is also available as `@tuwaio/pulsar-evm/safe`, an entry that loads neither `@wagmi/core` nor `@tuwaio/orbit-evm`: install `@tuwaio/pulsar-evm`, `@tuwaio/pulsar-core`, `@tuwaio/orbit-core`, `viem` and `dayjs`, and an app built on `viem` alone can track Safe transactions.
 
@@ -166,7 +166,8 @@ These fetchers stop with `withoutRemoving: true`, so a `removeTxFromPool` you pa
 ## Helpers
 
 - `checkTransactionsTracker({ actionTxKey, connectorType, tracker })` returns the tracker Pulsar would use for a key: `ERC4337` or `Gelato` only when requested, `Safe` for Safe connectors (`evm:safe`), `Ethereum` otherwise.
-- `speedUpTxAction` and `cancelTxAction` resend a pending EIP-1559 transaction with the same nonce and fees raised by 15%. They need the `nonce` and fee fields the tracker fetched; `evmTracker` then reports the original transaction as replaced.
+- `readNonceSlot(client, { hash, slot: { from, nonce } })` tells what became of a transaction from its sender and nonce, when a node no longer returns its hash: `open`, `ours`, `replaced` (with viem's replacement data) or `spent`. Pass the sender and nonce to `evmTracker` as `knownDetails` after a restart, so it reads them too.
+- `speedUpTxAction` and `cancelTxAction` resend a pending EIP-1559 transaction with the same nonce, 15% above the fees last sent for it and at least at the market estimate, only from the account that sent it. They need the `nonce` and fee fields the tracker fetched; `evmTracker` then reports the original transaction as replaced.
 - `selectEvmTxExplorerLink` builds the block explorer (or Safe app) link of a transaction.
 
 ```typescript

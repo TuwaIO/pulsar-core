@@ -230,9 +230,9 @@ export type Erc4337TrackerForStoreParams<T extends Transaction> = Pick<
 /**
  * Tracks an ERC-4337 UserOperation of the Pulsar store in two stages and writes the results to the store:
  *
- * 1. Bundler: polls {@link erc4337Fetcher} every 2 s (up to 60 consecutive failed attempts). When the UserOperation
- *    is bundled, writes the bundle transaction `hash`. A reverted UserOperation, or 60 failed attempts, marks the
- *    transaction `Failed`.
+ * 1. Bundler: polls {@link erc4337Fetcher} every 2 s, and every minute after 60 consecutive failed attempts, as a bundler
+ *    that cannot be reached says nothing about the UserOperation. When the UserOperation is bundled, writes the bundle
+ *    transaction `hash`. Only a reverted UserOperation marks the transaction `Failed`.
  * 2. On-chain: runs {@link evmTracker} for the bundle transaction and writes the details, confirmations and the final
  *    `Success`, `Failed` or `Replaced` status. Without `config`, the transaction is marked `Success` as soon as it is
  *    bundled.
@@ -272,6 +272,8 @@ export async function erc4337TrackerForStore<T extends Transaction>({
     // CRITICAL: Do NOT pass removeTxFromPool to prevent premature eviction from the store
     pollingInterval: 2000,
     maxRetries: 60,
+    // A bundler that cannot be reached says nothing about the UserOperation
+    retryForeverEveryMs: 60_000,
     onSuccess: async (response) => {
       const hash = response.hash;
 

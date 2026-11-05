@@ -173,9 +173,9 @@ export type Eip5792TrackerForStoreParams<T extends Transaction> = Pick<
 /**
  * Tracks an EIP-5792 call batch of the Pulsar store in two stages and writes the results to the store:
  *
- * 1. Wallet: polls the batch status every 2 s (up to 60 consecutive failed attempts, e.g. while no wallet is
- *    connected). When the wallet has executed the batch, writes the transaction `hash`. A failed batch, or 60 failed
- *    attempts, marks the transaction `Failed`.
+ * 1. Wallet: polls the batch status every 2 s, and every minute after 60 consecutive failed attempts (e.g. while no wallet
+ *    is connected, as the batch may be mined by then). When the wallet has executed the batch, writes the transaction
+ *    `hash`. Only a failed batch marks the transaction `Failed`.
  * 2. On-chain: follows the executing transaction with {@link evmTracker} and writes the details, confirmations and the
  *    final `Success`, `Failed` or `Replaced` status.
  *
@@ -208,6 +208,8 @@ export async function eip5792TrackerForStore<T extends Transaction>({
     // Never removeTxFromPool: a transaction that stops being tracked stays in the pool, marked Failed
     pollingInterval: 2000,
     maxRetries: 60,
+    // A wallet not reconnected yet after a reload says nothing about the batch, which may be mined by now
+    retryForeverEveryMs: 60_000,
     onSuccess: async ({ hash }) => {
       if (!hash) {
         const updatedTx = updateTx({

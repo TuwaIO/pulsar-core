@@ -26,6 +26,8 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  * restored synchronously when the store is created. Where
  * `localStorage` is not available (server rendering), nothing is read or written and Zustand logs a warning on
  * updates. Creating the store does not start any tracker: call `initializeTransactionsPool` once on the client.
+ * In the browser it listens to `storage` events and reads the saved state again when another tab writes it. Every
+ * transaction gets one tracker, however often `initializeTransactionsPool` runs.
  *
  * @template T - The application transaction type.
  * @param params - The adapters, the store options and the options of Zustand's `persist` middleware.
@@ -69,7 +71,21 @@ export function createPulsarStore<T extends Transaction>({
   // Listeners of the "transaction finished" event live in memory: functions cannot be saved with the pool
   const txFinished = createTxFinishedNotifier<T>(onTxFinished);
 
-  return createStore<ITxTrackingStore<T>>()(
+  // One tracker per transaction: a second one on the same hash joins the viem watcher of the first and goes silent when
+  // the first one's timer stops it. Trackers of a polling kind resolve as soon as they start, so a key stays here.
+  const trackedTxKeys = new Set<string>();
+  const startTracker = async (txKey: string, start: () => Promise<void> | void) => {
+    if (trackedTxKeys.has(txKey)) return;
+    trackedTxKeys.add(txKey);
+    try {
+      await start();
+    } catch (error) {
+      trackedTxKeys.delete(txKey);
+      throw error;
+    }
+  };
+
+  const store = createStore<ITxTrackingStore<T>>()(
     persist(
       (set, get) => ({
         // Initialize the base store slice with core state and actions
@@ -106,11 +122,13 @@ export function createPulsarStore<T extends Transaction>({
                 adapter,
               });
               // Delegate tracker initialization to the appropriate adapter
-              return foundAdapter?.checkAndInitializeTrackerInStore({
-                tx,
-                gelatoApiKey,
-                ...get(),
-              });
+              return startTracker(tx.txKey, () =>
+                foundAdapter?.checkAndInitializeTrackerInStore({
+                  tx,
+                  gelatoApiKey,
+                  ...get(),
+                }),
+              );
             }),
           );
         },
@@ -168,12 +186,14 @@ export function createPulsarStore<T extends Transaction>({
               txsToTrack.map((tx) => {
                 const foundAdapter = selectAdapterByKey({ adapterKey: tx.adapter, adapter });
 
-                return foundAdapter?.checkAndInitializeTrackerInStore({
-                  tx,
-                  gelatoApiKey,
-                  // Pass the fresh state after the synchronous set above
-                  ...get(),
-                });
+                return startTracker(tx.txKey, () =>
+                  foundAdapter?.checkAndInitializeTrackerInStore({
+                    tx,
+                    gelatoApiKey,
+                    // Pass the fresh state after the synchronous set above
+                    ...get(),
+                  }),
+                );
               }),
             );
           }
@@ -309,14 +329,16 @@ export function createPulsarStore<T extends Transaction>({
 
             // Step 8: Initialize the background tracker for the transaction.
             const tx = get().transactionsPool[finalTxKey];
-            await foundAdapter.checkAndInitializeTrackerInStore({
-              tx,
-              onSuccess,
-              onError,
-              onReplaced,
-              gelatoApiKey,
-              ...get(),
-            });
+            await startTracker(finalTxKey, () =>
+              foundAdapter.checkAndInitializeTrackerInStore({
+                tx,
+                onSuccess,
+                onError,
+                onReplaced,
+                gelatoApiKey,
+                ...get(),
+              }),
+            );
           } catch (e) {
             handleTxError(e);
             throw e; // Re-throw for external handling if needed.
@@ -354,4 +376,13 @@ export function createPulsarStore<T extends Transaction>({
       },
     ),
   );
+
+  // Every change saves the whole pool, so a tab with an old copy would overwrite what another tab has written
+  if (typeof window !== 'undefined' && options.name) {
+    window.addEventListener('storage', (event) => {
+      if (event.key === options.name) void store.persist.rehydrate();
+    });
+  }
+
+  return store;
 }

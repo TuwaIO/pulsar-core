@@ -35,7 +35,7 @@ Gelato API key; required to run the Gelato tracker.
 > `optional` **safePendingTimeoutMs?**: `number` \| `null`
 
 How long a Safe transaction may stay unexecuted before the Safe tracker gives up (see `SafeTrackerOptions`); `null`
-waits without a limit. Defaults to one day.
+waits without a limit, the default, as collecting the signatures of several owners can take days.
 
 ### tracker
 

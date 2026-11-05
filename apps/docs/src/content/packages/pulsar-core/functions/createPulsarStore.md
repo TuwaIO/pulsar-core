@@ -2,7 +2,7 @@
 
 > **createPulsarStore**\<`T`\>(`params`): `WithPersist`\<`StoreApi`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>\>, [`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>\>
 
-Defined in: [store/txTrackingStore.ts:58](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txTrackingStore.ts#L58)
+Defined in: [store/txTrackingStore.ts:60](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txTrackingStore.ts#L60)
 
 Creates the Pulsar transaction store: a vanilla Zustand store (use it from any framework, or bind it to React with
 `createBoundedUseStore`) that runs transactions through chain adapters and tracks them in the background.
@@ -14,6 +14,8 @@ saved nor restored (pass your own `partialize` and `merge` to change that). In t
 restored synchronously when the store is created. Where
 `localStorage` is not available (server rendering), nothing is read or written and Zustand logs a warning on
 updates. Creating the store does not start any tracker: call `initializeTransactionsPool` once on the client.
+In the browser it listens to `storage` events and reads the saved state again when another tab writes it. Every
+transaction gets one tracker, however often `initializeTransactionsPool` runs.
 
 ## Type Parameters
 

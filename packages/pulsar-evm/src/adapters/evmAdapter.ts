@@ -38,8 +38,8 @@ import { speedUpTxAction } from '../utils/speedUpTxAction';
  * @param appChains - The viem chains of the app, used to build explorer links.
  * @param options - The adapter options.
  * @param options.safePendingTimeoutMs - How long a Safe transaction may stay unexecuted, from when it was proposed,
- * before the Safe tracker marks it `Failed`; `null` waits without a limit. Defaults to one day. As part of the adapter it
- * also applies to trackers restarted after a page reload.
+ * before the Safe tracker marks it `Failed`; `null`, the default, waits without a limit. As part of the adapter it also
+ * applies to trackers restarted after a page reload.
  * @returns The EVM adapter.
  * @throws `Error` when `config` is not provided.
  *

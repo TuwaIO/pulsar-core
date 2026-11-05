@@ -641,3 +641,143 @@ describe('txTrackingStore pool limit', () => {
     );
   });
 });
+
+describe('final statuses and trackers', () => {
+  const pendingTx = (txKey = txHash) =>
+    ({
+      txKey,
+      adapter: OrbitAdapter.EVM,
+      tracker: TransactionTracker.Ethereum,
+      chainId: 1,
+      pending: true,
+      from: '0x0000000000000000000000000000000000000001',
+      type: 'test',
+      localTimestamp: 1_700_000_000,
+      connectorType: 'evm:injected',
+    }) as unknown as EvmTransaction;
+
+  function createTestStore(adapter = createAdapter(), name = 'final-status-test') {
+    return {
+      adapter,
+      store: createPulsarStore<EvmTransaction>({
+        name,
+        adapter,
+        storage: createJSONStorage(() => createMemoryStorage()),
+      }),
+    };
+  }
+
+  it('keeps a final status against a late writer: a tracker that lost sight must not overwrite the result', async () => {
+    const { store } = createTestStore();
+    await store.getState().addTxToPool(pendingTx());
+
+    store.getState().updateTxParams(txHash, {
+      status: TransactionStatus.Replaced,
+      replacedTxHash: '0xabc',
+      replacedReason: 'repriced',
+      pending: false,
+      finishedTimestamp: 1,
+    });
+    store.getState().updateTxParams(txHash, {
+      status: TransactionStatus.Failed,
+      isError: true,
+      pending: true,
+      replacedTxHash: '0xdef',
+      replacedReason: 'unknown',
+      finishedTimestamp: 2,
+      error: { message: 'Timed out' } as never,
+    });
+
+    const tx = store.getState().transactionsPool[txHash] as EvmTransaction;
+    expect(tx.status).toBe(TransactionStatus.Replaced);
+    expect(tx.isError).toBeUndefined();
+    expect(tx.pending).toBe(false);
+    expect(tx.replacedTxHash).toBe('0xabc');
+    expect(tx.replacedReason).toBe('repriced');
+    expect(tx.finishedTimestamp).toBe(1);
+    expect(tx.error).toBeUndefined();
+  });
+
+  it('still writes the other fields of a finished transaction', async () => {
+    const { store } = createTestStore();
+    await store.getState().addTxToPool(pendingTx());
+
+    store.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false });
+    store.getState().updateTxParams(txHash, { isTrackedModalOpen: true, confirmations: 12 });
+
+    const tx = store.getState().transactionsPool[txHash] as EvmTransaction;
+    expect(tx.isTrackedModalOpen).toBe(true);
+    expect(tx.confirmations).toBe(12);
+    expect(tx.status).toBe(TransactionStatus.Success);
+  });
+
+  it('starts one tracker per transaction: a second one would share and then lose the watcher of the first', async () => {
+    const { store, adapter } = createTestStore();
+    await store.getState().addTxToPool(pendingTx());
+
+    await store.getState().initializeTransactionsPool();
+    await store.getState().initializeTransactionsPool();
+
+    expect(adapter.checkAndInitializeTrackerInStore).toHaveBeenCalledOnce();
+  });
+
+  it('starts the tracker again when the first one could not start', async () => {
+    const adapter = createAdapter({
+      checkAndInitializeTrackerInStore: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('wallet not ready'))
+        .mockResolvedValue(undefined),
+    });
+    const { store } = createTestStore(adapter);
+    await store.getState().addTxToPool(pendingTx());
+
+    await expect(store.getState().initializeTransactionsPool()).rejects.toThrow('wallet not ready');
+    await store.getState().initializeTransactionsPool();
+
+    expect(adapter.checkAndInitializeTrackerInStore).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not track twice a transaction injected while it is already tracked', async () => {
+    const { store, adapter } = createTestStore();
+    await store.getState().injectExternalPendingTxs([pendingTx('0xfeed')]);
+    await store.getState().initializeTransactionsPool();
+
+    expect(adapter.checkAndInitializeTrackerInStore).toHaveBeenCalledOnce();
+  });
+
+  it('reads the saved state when another tab of the same store writes it', () => {
+    const listeners: ((event: { key: string | null }) => void)[] = [];
+    vi.stubGlobal('window', {
+      addEventListener: (type: string, listener: (event: { key: string | null }) => void) => {
+        if (type === 'storage') listeners.push(listener);
+      },
+    });
+    try {
+      const memory = createMemoryStorage();
+      const adapter = createAdapter();
+      const store = createPulsarStore<EvmTransaction>({
+        name: 'tabs-test',
+        adapter,
+        storage: createJSONStorage(() => memory),
+      });
+      const otherTab = createPulsarStore<EvmTransaction>({
+        name: 'tabs-test',
+        adapter,
+        storage: createJSONStorage(() => memory),
+      });
+      const rehydrate = vi.spyOn(store.persist, 'rehydrate');
+
+      void otherTab.getState().addTxToPool(pendingTx());
+      expect(store.getState().transactionsPool[txHash]).toBeUndefined();
+
+      listeners[0]({ key: 'another-key' });
+      expect(rehydrate).not.toHaveBeenCalled();
+
+      listeners[0]({ key: 'tabs-test' });
+      expect(rehydrate).toHaveBeenCalledOnce();
+      expect(store.getState().transactionsPool[txHash]).toBeDefined();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});

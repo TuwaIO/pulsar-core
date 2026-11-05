@@ -147,11 +147,11 @@ export function gelatoFetcher(
 // =================================================================================================
 
 /**
- * Tracks a Gelato task of the Pulsar store with {@link gelatoFetcher} (every 5 s, up to 10 consecutive failed
- * attempts) and writes the results to the store: the transaction `hash` once the task is submitted, then `Success` or
+ * Tracks a Gelato task of the Pulsar store with {@link gelatoFetcher} (every 5 s, and every minute after 10 consecutive
+ * failed attempts) and writes the results to the store: the transaction `hash` once the task is submitted, then `Success` or
  * `Failed` with the local time as `finishedTimestamp`.
  *
- * When tracking gives up (10 consecutive failed attempts, or the task still pending after one hour), the transaction
+ * When tracking gives up (the task still pending after one hour), the transaction
  * is marked `Failed` and stays in the pool.
  *
  * Side effects: sends requests to the Gelato API with `gelatoApiKey` (see {@link createGelatoClient}). The callbacks
@@ -186,6 +186,8 @@ export function gelatoTrackerForStore<T extends Transaction>({
   return initializePollingTracker<GelatoTaskStatus, T>({
     tx,
     fetcher,
+    // A service that cannot be reached says nothing about the task
+    retryForeverEveryMs: 60_000,
     // `removeTxFromPool` is not passed: failed transactions stay in the pool as `Failed`.
     onSuccess: (response) => {
       const hash = response.status === GelatoStatusCode.Success ? response.receipt.transactionHash : undefined;

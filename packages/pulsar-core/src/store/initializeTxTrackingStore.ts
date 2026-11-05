@@ -5,7 +5,14 @@
 
 import { produce } from 'immer';
 
-import { IInitializeTxTrackingStore, PulsarAdapter, StoreSlice, Transaction, TransactionPool } from '../types';
+import {
+  IInitializeTxTrackingStore,
+  PulsarAdapter,
+  StoreSlice,
+  Transaction,
+  TransactionPool,
+  UpdatableTransactionFields,
+} from '../types';
 import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
 import { validateTransaction } from '../utils/transactionValidation';
 import { isFinishedStatus } from '../utils/txFinished';
@@ -22,6 +29,23 @@ function omitClientSecrets<T extends Transaction>(tx: T): T {
   delete remoteTx.pimlicoApiKey;
   delete remoteTx.gelatoApiKey;
   return remoteTx;
+}
+
+/** The fields of a final result, kept once a transaction has one. */
+const RESULT_FIELDS: readonly (keyof UpdatableTransactionFields)[] = [
+  'status',
+  'pending',
+  'isError',
+  'error',
+  'finishedTimestamp',
+  'replacedTxHash',
+  'replacedReason',
+];
+
+function withoutResultFields(fields: UpdatableTransactionFields): UpdatableTransactionFields {
+  const rest = { ...fields };
+  for (const field of RESULT_FIELDS) delete rest[field];
+  return rest;
 }
 
 /**
@@ -183,7 +207,9 @@ export function initializeTxTrackingStore<T extends Transaction>({
             const tx = draft.transactionsPool[txKey];
             // Ensure the transaction exists before attempting to update.
             if (tx) {
-              Object.assign(tx, fields);
+              // A final status is the result the chain gave. A late writer (a second tracker, another tab) only lost
+              // sight of the transaction, and must not turn a mined transaction into a failed one.
+              Object.assign(tx, wasFinished ? withoutResultFields(fields) : fields);
             }
           }),
         );
