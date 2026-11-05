@@ -158,7 +158,7 @@ Pass `onRemoteCreate` to send every new transaction to your backend, for example
 
 `onRemoteCreate` receives a copy of the transaction without `pimlicoApiKey` and `gelatoApiKey`: configure provider keys on the backend instead (for Quasar, in the app settings). `bundlerUrl` is sent, so do not put API keys in it.
 
-To show the remote history, `createTxInMemoryStore` merges the pages returned by your `getHistory` with the local pool (a final result is never overwritten by stale data, except a `Failed` that the chain answers otherwise, a server's `Failed` does not replace a transaction still pending, and transactions that fail validation are skipped), and `injectExternalPendingTxs` adds pending transactions from other devices to the local pool and tracks them. The complete Next.js + Quasar integration, with server actions and SIWX sessions, is in the **[Quasar transaction sync guide](https://docs.tuwa.io/guides/quasar-transaction-sync)**.
+To show the remote history, `createTxInMemoryStore` merges the pages returned by your `getHistory` with the local pool (a final result is never overwritten by stale data, except a `Failed` that the chain answers otherwise, a server's `Failed` does not replace a transaction still pending, and transactions that fail validation are skipped), and `injectExternalPendingTxs` adds pending transactions from other devices to the local pool and tracks them. The complete Next.js + Quasar integration, with server actions and SIWX sessions, is in the **[Quasar transaction sync guide](https://docs.tuwa.io/guides/quasar-transaction-sync)**. A person who stops tracking a transaction removes it from both stores: `removeTxFromPool` of each, or the in-memory one keeps it pending for good, as nothing is left to finish it.
 
 ---
 

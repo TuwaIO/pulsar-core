@@ -183,6 +183,19 @@ export function createPulsarStore<T extends Transaction>({
     // Another tab or a remote history has added it, maybe with its result. Its tracker reads the callbacks moved above; if it
     // has already finished, nothing would call them.
     if (known) {
+      // What followed the old record on this screen follows the new one here too, or its modal would close by itself
+      store.setState(
+        produce(before, (draft) => {
+          if (draft.lastAddedTxKey === replaced.txKey) draft.lastAddedTxKey = replacedTxHash;
+          if (draft.initialTx?.lastTxKey === replaced.txKey) draft.initialTx.lastTxKey = replacedTxHash;
+          const old = draft.transactionsPool[replaced.txKey];
+          const next = draft.transactionsPool[replacedTxHash];
+          if (old?.isTrackedModalOpen && next) {
+            next.isTrackedModalOpen = true;
+            old.isTrackedModalOpen = false;
+          }
+        }),
+      );
       if (known.pending && !trackedTxKeys.has(replacedTxHash)) void startRestored(known as unknown as T);
       else if (!known.pending) deliverResult(known as unknown as T);
       return;
@@ -325,7 +338,8 @@ export function createPulsarStore<T extends Transaction>({
                 const localTx = pool[remoteTx.txKey];
 
                 // Case A: Transaction is pending remotely but doesn't exist locally (Cross-device).
-                if (remoteTx.pending && !localTx) {
+                // Not one a person stopped tracking here: the next page of a history must not bring it back, with a new tracker
+                if (remoteTx.pending && !localTx && !removedTxKeys.has(remoteTx.txKey)) {
                   const record = normalizeRemoteTx(remoteTx);
                   pool[remoteTx.txKey] = record as Extract<T, Transaction>;
                   txsToTrack.push(record);

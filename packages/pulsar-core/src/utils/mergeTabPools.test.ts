@@ -24,6 +24,16 @@ describe('keepsItsResult', () => {
 });
 
 describe('mergeTabPools', () => {
+  it('a result of the other tab does not close the tracking modal of this one', () => {
+    const current = pool(tx('a', { isTrackedModalOpen: true }));
+    const saved = pool({ ...done('a', TransactionStatus.Replaced), isTrackedModalOpen: false });
+
+    const merged = mergeTabPools(current, saved).pool.a;
+
+    expect(merged.status).toBe(TransactionStatus.Replaced);
+    expect(merged.isTrackedModalOpen).toBe(true);
+  });
+
   it('keeps a pending transaction the other tab has not saved yet', () => {
     const current = pool(tx('mine'));
     expect(mergeTabPools(current, pool()).pool).toBe(current);

@@ -745,6 +745,18 @@ describe('final statuses and trackers', () => {
     expect(adapter.checkAndInitializeTrackerInStore).toHaveBeenCalledOnce();
   });
 
+  it('a transaction whose tracking was stopped does not come back from a page of the history', async () => {
+    const { store, adapter } = createTestStore();
+    await store.getState().injectExternalPendingTxs([pendingTx('0xfeed')]);
+    vi.mocked(adapter.checkAndInitializeTrackerInStore).mockClear();
+
+    store.getState().removeTxFromPool('0xfeed');
+    await store.getState().injectExternalPendingTxs([pendingTx('0xfeed')]);
+
+    expect(store.getState().transactionsPool['0xfeed']).toBeUndefined();
+    expect(adapter.checkAndInitializeTrackerInStore).not.toHaveBeenCalled();
+  });
+
   function twoTabs() {
     const listeners: ((event: { key: string | null }) => void)[] = [];
     vi.stubGlobal('window', {
@@ -865,6 +877,39 @@ describe('final statuses and trackers', () => {
       const inThisTab = next[next.length - 1][0];
       void inThisTab.onSuccess?.(inThisTab.tx);
       expect(onSuccess).toHaveBeenCalledOnce();
+    });
+
+    it('the modal of this tab goes on with the new record when another tab saw the speed-up first', async () => {
+      const { here, there, hear } = twoTabs();
+      await here.getState().executeTxAction({
+        actionFunction: async () => txHash,
+        params: {
+          adapter: OrbitAdapter.EVM,
+          desiredChainID: 1,
+          title: 't',
+          description: 'd',
+          type: 'T',
+          withTrackedModal: true,
+        },
+      });
+      await there.persist.rehydrate();
+      there.getState().closeTxTrackedModal(txHash);
+
+      there.getState().updateTxParams(txHash, {
+        status: TransactionStatus.Replaced,
+        replacedTxHash: '0xnew' as never,
+        replacedReason: 'repriced',
+        pending: false,
+      });
+      await new Promise((resolve) => setImmediate(resolve));
+      await hear();
+
+      const state = here.getState();
+      expect(state.transactionsPool['0xnew']).toBeDefined();
+      expect(state.initialTx?.lastTxKey).toBe('0xnew');
+      expect(state.lastAddedTxKey).toBe('0xnew');
+      expect(state.transactionsPool['0xnew'].isTrackedModalOpen).toBe(true);
+      expect(state.transactionsPool[txHash].isTrackedModalOpen).toBe(false);
     });
 
     it('a record removed here does not come back from the next save of the other tab', async () => {
