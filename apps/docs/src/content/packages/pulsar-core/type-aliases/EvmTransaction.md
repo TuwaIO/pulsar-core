@@ -2,7 +2,7 @@
 
 > **EvmTransaction** = [`BaseTransaction`](/packages/pulsar-core/type-aliases/BaseTransaction.md) & `object`
 
-Defined in: [types.ts:165](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L165)
+Defined in: [packages/pulsar-core/src/types.ts:168](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L168)
 
 An EVM transaction. Trackers fill the on-chain fields (`hash`, `nonce`, fees, `to`, `value`, `input`) once the
 transaction details are available.
@@ -61,12 +61,35 @@ The nonce of the sender account.
 Pimlico API key used to track an ERC-4337 UserOperation when no `bundlerUrl` is set. Persisted to `localStorage`
 with the transaction, so tracking can resume after a reload, but never passed to `onRemoteCreate`.
 
+### replacedReason?
+
+> `optional` **replacedReason?**: `"repriced"` \| `"cancelled"` \| `"replaced"` \| `"unknown"`
+
+What spent the nonce (set with `status: Replaced`): `repriced` is the same transaction with higher fees (a speed-up),
+so the money moved in the replacement; `cancelled` is a transfer of nothing to the sender, so it did not; `replaced` is
+any other transaction; `unknown` means the nonce was spent by a transaction that could not be found. Set by the
+on-chain trackers, not by the Safe tracker.
+
 ### replacedTxHash?
 
 > `optional` **replacedTxHash?**: `` `0x${string}` ``
 
 The hash of the transaction that replaced this one (set with `status: Replaced`). For Safe transactions it is the
-`safeTxHash` of the transaction executed instead.
+`safeTxHash` of the transaction executed instead. Absent when `replacedReason` is `unknown`.
+
+### replaces?
+
+> `optional` **replaces?**: `` `0x${string}` ``
+
+The hash of the transaction this record replaced, when it is a speed-up: the same operation under a new hash. The
+replaced record stays in the pool as `Replaced`, with this record's hash in `replacedTxHash`.
+
+### sender?
+
+> `optional` **sender?**: `` `0x${string}` ``
+
+The sender as the chain reports it, read by the tracker. It owns `nonce`, so together they tell what became of the
+transaction when a node no longer returns its hash. It differs from `from`, the wallet, for a relayed transaction.
 
 ### to?
 

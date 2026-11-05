@@ -2,7 +2,7 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](/packages/pulsar-core/interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [types.ts:634](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L634)
+Defined in: [packages/pulsar-core/src/types.ts:671](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L671)
 
 The state and actions of the store created by `createPulsarStore`.
 
@@ -37,9 +37,8 @@ The action, its metadata and the callbacks.
 
 `Promise`\<`void`\>
 
-A promise that resolves when the adapter's `checkAndInitializeTrackerInStore` resolves: once polling has
-started for polling trackers (Solana, Safe, ERC-4337, Gelato), but only when tracking has finished for standard
-EVM transactions (`TransactionTracker.Ethereum`). Read the state from the store instead of awaiting the result.
+A promise that resolves once the tracker has started, not when the transaction has finished: it may stay
+pending for a long time. Read the state from the store instead of awaiting the result.
 
 #### Throws
 
@@ -64,8 +63,8 @@ The adapter, or the array of adapters.
 > **initializeTransactionsPool**: () => `Promise`\<`void`\>
 
 Restarts the trackers of all pending transactions in the pool, for example after a page reload. Pending
-transactions that fail validation are removed from the pool. Call it once per page load: every call starts new
-trackers. Trackers started here have no `TrackerCallbacks`; `onTxFinished` and `subscribeTxFinished` still run
+transactions that fail validation are removed from the pool. A transaction already tracked is not tracked twice, so
+it is safe to call this again, as React Strict Mode does. Trackers started here have no `TrackerCallbacks`; `onTxFinished` and `subscribeTxFinished` still run
 when they finish a transaction.
 
 #### Returns
@@ -80,8 +79,9 @@ A promise that resolves when all trackers have started.
 
 Merges transactions from a remote backend into the pool (cross-device sync). Invalid transactions are skipped
 with a warning. Pending remote transactions that are not in the pool are added and tracked. Local pending
-transactions that are terminal remotely take the remote `status`, `txKey` and `finishedTimestamp` and are marked
-not pending.
+transactions that are terminal remotely take the remote result and are marked not pending, and a tracker running on
+them stops. While a tracker runs, a remote `Failed`, or a remote `Replaced` with no `replacedReason`, is ignored: it may
+be a server's time limit, and the chain answers through the tracker. A remote speed-up adds the new record.
 
 #### Parameters
 
@@ -96,6 +96,27 @@ Transactions returned by the backend.
 `Promise`\<`void`\>
 
 A promise that resolves when the trackers of the added transactions have started.
+
+### isTxTracked
+
+> **isTxTracked**: (`txKey`) => `boolean`
+
+Whether a tracker of this store is responsible for a transaction. It stops being so when the transaction is removed
+from the pool or has a final status, and a tracker that asks stops then.
+
+#### Parameters
+
+##### txKey
+
+`string`
+
+The key of the transaction.
+
+#### Returns
+
+`boolean`
+
+`true` while a tracker is responsible for it.
 
 ### subscribeTxFinished
 

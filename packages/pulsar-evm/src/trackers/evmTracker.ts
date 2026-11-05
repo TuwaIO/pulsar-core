@@ -3,94 +3,87 @@
  * `waitForTransactionReceipt`, `getTransactionConfirmations`, `getBlock`) through the wagmi client of the chain.
  */
 
-import { normalizeError } from '@tuwaio/orbit-core';
-import {
-  createTxUpdater,
-  ITxTrackingStore,
-  TrackerCallbacks,
-  Transaction,
-  TransactionStatus,
-} from '@tuwaio/pulsar-core';
+import { createTxUpdater, ITxTrackingStore, TrackerCallbacks, Transaction } from '@tuwaio/pulsar-core';
 import { Config, getClient } from '@wagmi/core';
 import {
   Client,
   GetTransactionReturnType,
   Hex,
-  HttpRequestError,
   ReplacementReturnType,
   TransactionReceipt,
-  TransactionReceiptNotFoundError,
   WaitForTransactionReceiptParameters,
-  WaitForTransactionReceiptTimeoutError,
-  WebSocketRequestError,
   zeroHash,
 } from 'viem';
-import { getBlock, getTransaction, getTransactionConfirmations, waitForTransactionReceipt } from 'viem/actions';
+import {
+  getBlockNumber,
+  getTransaction,
+  getTransactionConfirmations,
+  getTransactionReceipt,
+  waitForTransactionReceipt,
+} from 'viem/actions';
+
+import { NonceSlot, NonceSlotScan, NonceSlotSpentError, readNonceSlot } from '../utils/readNonceSlot';
+import { storeCallbacks, storeTrackerOptions } from './storeCallbacks';
 
 const DEFAULT_RETRY_COUNT = 10;
 const DEFAULT_RETRY_TIMEOUT_MS = 3000;
-const RECEIPT_MAX_RETRIES = 5;
-const RECEIPT_RETRY_DELAY = 5_000; // 5s base delay for outer retries
+/** Once `retryCount` lookups found nothing and the tracker may look for longer. */
+const NOT_FOUND_SLOW_DELAY_MS = 30_000;
+const DEFAULT_RECEIPT_ATTEMPTS = 6;
+const RECEIPT_RETRY_DELAY = 5_000; // 5s base delay between attempts
+const MAX_RECEIPT_RETRY_DELAY = 30_000;
 const CONFIRMATIONS_POLLING_INTERVAL = 5000; // 5s between confirmation checks
-const SINGLE_ATTEMPT_TIMEOUT = 60_000; // 60s timeout per single RPC call
+/** One call of viem's `waitForTransactionReceipt`: the whole wait of one attempt, not one RPC call. */
+const SINGLE_ATTEMPT_TIMEOUT = 60_000;
+/** A spent nonce with no transaction to show can be a node behind its load balancer: it must hold for a few readings. */
+const SPENT_READINGS_TO_BELIEVE = 3;
+/** How far before the block read at the start a replacement is looked for: nodes behind a load balancer disagree. */
+const FROM_BLOCK_MARGIN = 5n;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Checks whether an error thrown while waiting for a receipt is transient: a receipt timeout or "not found" error, an
- * HTTP or WebSocket transport error, or a message about a timeout, rate limit, connection reset or a 502/503/504
- * status. Nested `cause` errors are checked too.
+ * Tells whether an error thrown while waiting for a receipt is transient: a receipt timeout or "not found" error, an HTTP
+ * or WebSocket transport error, or a message about a timeout, rate limit, connection reset or a 502/503/504 status. Nested
+ * `cause` errors are checked too.
  *
+ * @deprecated `evmTracker` no longer uses it: any error while waiting means no answer yet. It will be removed.
  * @param error - The caught error.
- * @returns `true` if waiting for the receipt should be retried.
+ * @returns `true` if the error looks transient.
  */
 export function isRetryableReceiptError(error: unknown): boolean {
-  if (!error) return false;
-
-  const checkSingleError = (err: unknown): boolean => {
-    if (!(err instanceof Error)) return false;
-
-    // Viem explicit receipt errors
-    if (
-      err instanceof WaitForTransactionReceiptTimeoutError ||
-      err instanceof TransactionReceiptNotFoundError ||
-      err.name === 'WaitForTransactionReceiptTimeoutError' ||
-      err.name === 'TransactionReceiptNotFoundError'
-    ) {
-      return true;
-    }
-
-    // Network and transport-level glitches (Alchemy/Infura rate limits, 502/503, connection drops)
-    if (
-      err instanceof HttpRequestError ||
-      err instanceof WebSocketRequestError ||
-      err.name === 'HttpRequestError' ||
-      err.name === 'WebSocketRequestError' ||
-      err.name === 'TimeoutError'
-    ) {
-      return true;
-    }
-
-    const msg = err.message.toLowerCase();
-    return (
-      msg.includes('fetch failed') ||
-      msg.includes('network error') ||
-      msg.includes('timeout') ||
-      msg.includes('timed out') ||
-      msg.includes('econnreset') ||
-      msg.includes('rate limit') ||
-      msg.includes('502') ||
-      msg.includes('503') ||
-      msg.includes('504')
+  if (!(error instanceof Error)) return false;
+  const name = error.name;
+  const message = error.message.toLowerCase();
+  const transient =
+    name === 'WaitForTransactionReceiptTimeoutError' ||
+    name === 'TransactionReceiptNotFoundError' ||
+    name === 'HttpRequestError' ||
+    name === 'WebSocketRequestError' ||
+    name === 'TimeoutError' ||
+    ['fetch failed', 'network error', 'timeout', 'timed out', 'econnreset', 'rate limit', '502', '503', '504'].some(
+      (part) => message.includes(part),
     );
-  };
+  return transient || isRetryableReceiptError(error.cause);
+}
 
-  if (checkSingleError(error)) return true;
+/**
+ * The error of `onFailure` when a mined transaction did not reach its confirmations within `confirmationsTimeout`. The
+ * transaction is mined: `receipt` says how.
+ */
+export class ConfirmationsTimeoutError extends Error {
+  override name = 'ConfirmationsTimeoutError';
+  /** The receipt of the transaction. */
+  readonly receipt: TransactionReceipt;
 
-  // Inspect nested cause for wrapped Viem BaseErrors
-  if (error instanceof Error && 'cause' in error && error.cause) {
-    return isRetryableReceiptError(error.cause);
+  /**
+   * @param receipt - The receipt of the transaction.
+   * @param needed - The confirmations it did not reach.
+   */
+  constructor(receipt: TransactionReceipt, needed: number) {
+    super(`Transaction ${receipt.transactionHash} did not reach ${needed} confirmations in time.`);
+    this.receipt = receipt;
   }
-
-  return false;
 }
 
 /**
@@ -105,6 +98,12 @@ export type EVMTrackerParams = {
   /** The wagmi config; the tracker uses its client for `tx.chainId`. */
   config: Config;
   /**
+   * What an earlier run read of this transaction. A node may no longer return a replaced hash, and then only these can
+   * tell what became of it, so save them when `onTxDetailsFetched` runs and pass them after a reload or a restart.
+   * Use the sender from `getTransaction`: for a relayed transaction it is the relayer, not the wallet.
+   */
+  knownDetails?: NonceSlot;
+  /**
    * Called once with the result of `getTransaction`.
    * @param txDetails - The transaction: nonce, fees, `to`, `value`, `input`.
    */
@@ -112,32 +111,64 @@ export type EVMTrackerParams = {
   /**
    * Called and awaited once the receipt is available and the required confirmations are reached. Also called for
    * reverted transactions: check `receipt.status`.
-   * @param txDetails - The result of `getTransaction`.
+   * @param txDetails - The result of `getTransaction`. With `knownDetails`, when the node kept failing to return a
+   * transaction it has a receipt for, it is built from `knownDetails` and the receipt: the receipt is proof enough.
    * @param receipt - The transaction receipt.
    * @param client - The viem client of the chain, for further RPC calls.
    */
   onSuccess: (txDetails: GetTransactionReturnType, receipt: TransactionReceipt, client: Client) => Promise<void>;
   /**
-   * Called when viem detects that another transaction with the same nonce replaced this one (speed-up or cancel).
-   * @param replacement - viem's replacement data: the `reason` and the replacing `transaction`.
+   * Called and awaited when another transaction spent this one's nonce (speed-up, cancel or any other transaction), as soon
+   * as it is seen in a block. To follow that transaction to its own confirmations, track its hash. An error it throws is
+   * logged.
+   * @param replacement - viem's replacement data: the `reason` (`repriced`, `cancelled`, `replaced`) and the replacing
+   * `transaction` with its receipt.
    */
-  onReplaced: (replacement: ReplacementReturnType) => void;
+  onReplaced: (replacement: ReplacementReturnType) => Promise<void> | void;
   /**
-   * Called once when tracking gives up (see {@link evmTracker}).
-   * @param error - The last error.
+   * Called and awaited once when tracking gives up (see {@link evmTracker}).
+   * @param error - The last error: {@link NonceSlotSpentError} when the transaction can never land, but what spent its
+   * nonce could not be found, so money may have moved, and {@link ConfirmationsTimeoutError} for a mined transaction past
+   * `confirmationsTimeout`.
    */
-  onFailure: (error?: unknown) => void;
+  onFailure: (error?: unknown) => Promise<void> | void;
   /** Called once, before anything else. */
   onInitialize?: () => void;
-  /** Number of `getTransaction` attempts. Defaults to 10. */
+  /** Number of `getTransaction` attempts. With `notFoundUntil` it only sets how many are made 3 s apart. Defaults to 10. */
   retryCount?: number;
   /** Delay between `getTransaction` attempts, in milliseconds. Defaults to 3000. */
   retryTimeout?: number;
   /**
-   * Called while waiting for `requiredConfirmations` (only when it is above 1).
+   * When to stop looking for a hash the node has never shown, in milliseconds since the epoch. Past `retryCount`
+   * attempts it looks every 30 s, and only the node answering that it has no such transaction ends it, not an RPC error.
+   * Defaults to stopping after `retryCount` attempts.
+   */
+  notFoundUntil?: number;
+  /**
+   * How long to wait for the receipt, as a number of attempts of up to the `timeout` of
+   * `waitForTransactionReceiptParams`, with pauses of 5, 10, 15 s and so on, up to 30 s: 6 attempts, the default, are 435 s
+   * with the default `timeout`. It is a limit in time: an attempt ended early by an RPC error is only followed by another.
+   * Between attempts the tracker reads the nonce of the sender. `Infinity` waits until there is a receipt or a replacement:
+   * a slow transaction is not a failed one.
+   */
+  receiptAttempts?: number;
+  /**
+   * How long a mined transaction may wait for its confirmations, in milliseconds, before `onFailure` gets
+   * {@link ConfirmationsTimeoutError}. Defaults to no limit. Set it on a server, or one chain that makes no blocks would hold a
+   * job for good.
+   */
+  confirmationsTimeout?: number;
+  /**
+   * Asked before every lookup and every attempt. `true` ends tracking without any callback: nothing reads the result any
+   * more, for example as the transaction was removed from the pool.
+   * @returns Whether to stop.
+   */
+  isAbandoned?: () => boolean;
+  /**
+   * Called and awaited while waiting for `requiredConfirmations` (only when it is above 1). An error it throws is logged.
    * @param confirmations - The current number of confirmations.
    */
-  onConfirmationsUpdate?: (confirmations: number) => void;
+  onConfirmationsUpdate?: (confirmations: number) => Promise<void> | void;
   /**
    * Options for viem's `waitForTransactionReceipt`, merged over the defaults (`retryCount: 10`, `retryDelay: 3000`,
    * `timeout: 60000`).
@@ -152,13 +183,21 @@ export type EVMTrackerParams = {
  * Steps (all RPC calls go through the wagmi client of `tx.chainId`):
  * 1. Calls `onInitialize`. Fails at once for the zero hash or when there is no client for the chain.
  * 2. Calls `getTransaction` up to `retryCount` times, `retryTimeout` ms apart, so a transaction the node has not
- *    indexed yet is still found; then calls `onTxDetailsFetched`.
- * 3. Waits for the receipt with `waitForTransactionReceipt`, retrying up to 5 times (5, 10, 15, 20 and 25 s apart) when
- *    {@link isRetryableReceiptError} matches. If viem reports a replacement, calls `onReplaced` and stops.
- * 4. If `requiredConfirmations` is above 1, polls `getTransactionConfirmations` every 5 s until it is reached.
+ *    indexed yet is still found; then calls `onTxDetailsFetched`. With `knownDetails` a hash the node does not show is
+ *    no failure: the nonce decides.
+ * 3. Waits for the receipt with `waitForTransactionReceipt`, for as long as `receiptAttempts` says. If viem reports a replacement,
+ *    calls `onReplaced` and stops. After every attempt that ended without an answer, whatever the error, it reads the
+ *    sender's nonce with {@link readNonceSlot} and reports a replacement it finds.
+ * 4. If `requiredConfirmations` is above 1, polls `getTransactionConfirmations` every 5 s until it is reached, reading the
+ *    receipt again each time, so one a reorganization dropped goes back to waiting. `confirmationsTimeout` limits this wait.
  * 5. Awaits `onSuccess`, also for reverted transactions.
  *
- * Any other error, including one thrown by `onSuccess`, is passed to `onFailure`.
+ * Reading the nonce between attempts is what makes a replacement visible at all: viem remembers the transaction only
+ * inside one call, a new call must fetch it by hash, and a node stops returning the hash once the replacement reaches
+ * its mempool. viem then skips the block scan for good, and a block mined between two calls is never read. Do not go
+ * back to one long call either: a slow transaction would fail when it ends.
+ *
+ * An error thrown by `onSuccess` is passed to `onFailure`.
  *
  * @param params - The transaction, the wagmi config and the callbacks.
  * @returns A promise that resolves when tracking has finished.
@@ -179,6 +218,7 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
   const {
     tx,
     config,
+    knownDetails,
     onInitialize,
     onTxDetailsFetched,
     onSuccess,
@@ -186,6 +226,10 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
     onReplaced,
     retryCount = DEFAULT_RETRY_COUNT,
     retryTimeout = DEFAULT_RETRY_TIMEOUT_MS,
+    notFoundUntil,
+    receiptAttempts = DEFAULT_RECEIPT_ATTEMPTS,
+    confirmationsTimeout,
+    isAbandoned,
     onConfirmationsUpdate,
     waitForTransactionReceiptParams,
   } = params;
@@ -202,96 +246,251 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
     return onFailure(new Error(`Could not create a viem client for chainId: ${tx.chainId}`));
   }
 
-  let txDetails: GetTransactionReturnType | null = null;
+  const hash = tx.txKey as Hex;
+  let txDetails: GetTransactionReturnType | undefined;
+  let slot = knownDetails;
+  // Read before the first lookup: a transaction seen pending after this was not replaced before it. The margin is for
+  // nodes behind a load balancer that disagree on the newest block.
+  const startBlock = knownDetails
+    ? undefined
+    : await getBlockNumber(client, { cacheTime: 0 }).then(
+        (block) => (block > FROM_BLOCK_MARGIN ? block - FROM_BLOCK_MARGIN : 0n),
+        () => undefined,
+      );
+  let fromBlock: bigint | undefined;
+  const scan: NonceSlotScan = {};
+  let spentReadings = 0;
+  let lastError: unknown;
 
-  // 1. Retry loop to fetch the transaction details.
-  for (let i = 0; i < retryCount; i++) {
+  // viem quotes the RPC URL, which can hold a key, in its errors: logs get the name only
+  const describe = (error: unknown) => (error instanceof Error ? error.name : 'Unknown');
+
+  /**
+   * Waits for the required confirmations, reading the receipt again on every round: by height alone, a receipt a
+   * reorganization has dropped would count as final.
+   */
+  const waitForConfirmations = async (
+    receipt: TransactionReceipt,
+  ): Promise<{ state: 'confirmed' | 'timedOut'; receipt: TransactionReceipt } | { state: 'reorged' }> => {
+    const needed = requiredConfirmations ?? 1;
+    if (needed <= 1) return { state: 'confirmed', receipt };
+    const deadline = confirmationsTimeout === undefined ? Infinity : Date.now() + confirmationsTimeout;
+    let current = receipt;
+    while (true) {
+      try {
+        current = await getTransactionReceipt(client, { hash: receipt.transactionHash });
+        const confirmations = Number(await getTransactionConfirmations(client, { transactionReceipt: current }));
+        await onConfirmationsUpdate?.(confirmations);
+        if (confirmations >= needed) return { state: 'confirmed', receipt: current };
+      } catch (error) {
+        if (error instanceof Error && error.name === 'TransactionReceiptNotFoundError') return { state: 'reorged' };
+        console.warn(
+          `[evmTracker] Error fetching confirmations for ${tx.txKey} on chain ${tx.chainId}: ${describe(error)}.`,
+        );
+      }
+      if (Date.now() >= deadline) return { state: 'timedOut', receipt: current };
+      await sleep(CONFIRMATIONS_POLLING_INTERVAL);
+    }
+  };
+
+  /**
+   * Ends tracking with the replacement, at once: the confirmations are for whatever follows the replacing transaction, and
+   * the record of a replacement must not wait for them, or a restart in that time would lose it.
+   */
+  const finishReplaced = async (replacement: ReplacementReturnType): Promise<void> => {
     try {
-      txDetails = await getTransaction(client, { hash: tx.txKey as Hex });
-      onTxDetailsFetched(txDetails);
-      break;
+      await onReplaced(replacement);
     } catch (error) {
-      if (i === retryCount - 1) {
-        console.error(`[evmTracker] Fatal error fetching transaction ${tx.txKey} on chain ${tx.chainId}:`, error);
+      console.error(`[evmTracker] onReplaced threw for ${tx.txKey} on chain ${tx.chainId}: ${describe(error)}.`);
+    }
+  };
+
+  /** What is known of a mined transaction the node will not show: only with `knownDetails` can it come to this. */
+  const detailsFromReceipt = (receipt: TransactionReceipt) =>
+    ({
+      ...slot,
+      hash,
+      blockHash: receipt.blockHash,
+      blockNumber: receipt.blockNumber,
+      transactionIndex: receipt.transactionIndex,
+      type: receipt.type,
+    }) as unknown as GetTransactionReturnType;
+
+  /** Ends tracking with the receipt. Returns `false` when a reorganization took it back. */
+  const finishMined = async (receipt: TransactionReceipt): Promise<boolean> => {
+    try {
+      // Without details so far (`knownDetails`) the node should have them now. A receipt is proof enough without them:
+      // failing here would turn a mined transaction into a failed one.
+      for (let lookup = 0; !txDetails && lookup < retryCount; lookup++) {
+        try {
+          txDetails = await getTransaction(client, { hash });
+          onTxDetailsFetched(txDetails);
+        } catch {
+          if (lookup < retryCount - 1) await sleep(retryTimeout);
+        }
+      }
+      // 3. Wait for required confirmations if specified.
+      const confirmed = await waitForConfirmations(receipt);
+      if (confirmed.state === 'reorged') return false;
+      if (confirmed.state === 'timedOut') {
+        await onFailure(new ConfirmationsTimeoutError(confirmed.receipt, requiredConfirmations ?? 1));
+        return true;
+      }
+      await onSuccess(txDetails ?? detailsFromReceipt(confirmed.receipt), confirmed.receipt, client);
+    } catch (error) {
+      await onFailure(error);
+    }
+    return true;
+  };
+
+  /** Reads the sender's nonce. Returns `true` when that ended tracking. */
+  const readSlot = async (): Promise<boolean> => {
+    if (!slot) return false;
+    let reading;
+    try {
+      reading = await readNonceSlot(client, { hash, slot, fromBlock, scan });
+    } catch (error) {
+      console.warn(`[evmTracker] Could not read the nonce of ${tx.txKey} on chain ${tx.chainId}: ${describe(error)}.`);
+      return false;
+    }
+    if (reading.state === 'replaced') {
+      await finishReplaced(reading.replacement);
+      return true;
+    }
+    if (reading.state === 'ours') {
+      spentReadings = 0;
+      // viem may not get this receipt: two trackers of one hash share its watcher, and the first one's timer stops it
+      return reading.receipt ? finishMined(reading.receipt) : false;
+    }
+    if (reading.state === 'open') {
+      spentReadings = 0;
+      return false;
+    }
+    // Seen in a block, it holds its own nonce, so this only says the node's parts disagree
+    if (txDetails?.blockNumber) return false;
+    spentReadings += 1;
+    if (spentReadings < SPENT_READINGS_TO_BELIEVE) return false;
+    await onFailure(new NonceSlotSpentError(hash));
+    return true;
+  };
+
+  // 1. Fetch the transaction details.
+  for (let lookup = 0; !txDetails; lookup++) {
+    if (isAbandoned?.()) return;
+    try {
+      txDetails = await getTransaction(client, { hash });
+    } catch (error) {
+      // Known from an earlier run: a hash the node does not show is what a replaced transaction looks like
+      if (slot) break;
+      // An RPC error is no answer: past the limit, only the node saying it has no such transaction ends the wait
+      const notFound = error instanceof Error && error.name === 'TransactionNotFoundError';
+      const gaveUp =
+        lookup >= retryCount - 1 && (notFoundUntil === undefined || (notFound && Date.now() >= notFoundUntil));
+      if (gaveUp) {
+        console.error(
+          `[evmTracker] Fatal error fetching transaction ${tx.txKey} on chain ${tx.chainId}: ${describe(error)}.`,
+        );
         return onFailure(error);
       }
-      console.warn(
-        `[evmTracker] Error fetching transaction ${tx.txKey} on chain ${tx.chainId} (attempt ${i + 1}/${retryCount}):`,
-        error,
+      const inFirstLookups = lookup < retryCount - 1;
+      if (inFirstLookups) {
+        console.warn(
+          `[evmTracker] Error fetching transaction ${tx.txKey} on chain ${tx.chainId} (attempt ${lookup + 1}/${retryCount}): ${describe(error)}.`,
+        );
+      }
+      await sleep(inFirstLookups ? retryTimeout : NOT_FOUND_SLOW_DELAY_MS);
+      continue;
+    }
+    // Before the callback: an error in it must not leave the tracker without the sender and nonce
+    slot = {
+      from: txDetails.from,
+      nonce: txDetails.nonce,
+      to: txDetails.to,
+      value: txDetails.value,
+      input: txDetails.input,
+    };
+    fromBlock = txDetails.blockNumber ?? startBlock;
+    try {
+      onTxDetailsFetched(txDetails);
+    } catch (error) {
+      console.error(
+        `[evmTracker] onTxDetailsFetched threw for ${tx.txKey} on chain ${tx.chainId}: ${describe(error)}.`,
       );
-      await new Promise((resolve) => setTimeout(resolve, retryTimeout));
     }
   }
 
-  if (!txDetails) {
-    return onFailure(new Error('Transaction details could not be fetched.'));
-  }
+  // The replacement may have landed while nothing was tracking: no need to wait a whole attempt to say so
+  if (!txDetails && (await readSlot())) return;
 
-  // 2. Wait for the transaction to be mined and get the receipt.
-  let wasReplaced = false;
-  for (let attempt = 0; attempt <= RECEIPT_MAX_RETRIES; attempt++) {
+  // 2. Wait for the transaction to be mined and get the receipt. The limit is in time, not in attempts: an attempt ended
+  // early by an RPC error must not use up what a slow transaction is owed, or 75 s of errors would end 7 minutes of waiting.
+  const pauseAfter = (attempt: number) => Math.min(RECEIPT_RETRY_DELAY * (attempt + 1), MAX_RECEIPT_RETRY_DELAY);
+  let waitBudget = Infinity;
+  if (Number.isFinite(receiptAttempts)) {
+    waitBudget = receiptAttempts * (waitForTransactionReceiptParams?.timeout ?? SINGLE_ATTEMPT_TIMEOUT);
+    for (let attempt = 0; attempt < receiptAttempts - 1; attempt++) waitBudget += pauseAfter(attempt);
+  }
+  const waitUntil = Date.now() + waitBudget;
+
+  for (let attempt = 0; Date.now() < waitUntil; attempt++) {
+    if (isAbandoned?.()) return;
+    let receipt: TransactionReceipt | undefined;
+    let replacement: ReplacementReturnType | undefined;
     try {
-      const receipt = await waitForTransactionReceipt(client, {
-        hash: txDetails.hash,
-        onReplaced: (replacement) => {
-          wasReplaced = true;
-          onReplaced(replacement);
+      receipt = await waitForTransactionReceipt(client, {
+        hash,
+        onReplaced: (found) => {
+          replacement = found;
         },
         retryCount: DEFAULT_RETRY_COUNT,
         retryDelay: DEFAULT_RETRY_TIMEOUT_MS,
         timeout: SINGLE_ATTEMPT_TIMEOUT,
+        // Ignored by a viem older than 2.57.12; the reading between attempts then does the work alone
+        ...(slot && { replacement: slot }),
         ...waitForTransactionReceiptParams,
       });
-
-      if (!wasReplaced) {
-        // 3. Wait for required confirmations if specified.
-        const needed = requiredConfirmations ?? 1;
-        if (needed > 1) {
-          while (true) {
-            try {
-              const confirmations = await getTransactionConfirmations(client, {
-                transactionReceipt: receipt,
-              });
-              const current = Number(confirmations);
-              onConfirmationsUpdate?.(current);
-
-              if (current >= needed) break;
-            } catch (error) {
-              console.warn(`[evmTracker] Error fetching confirmations for ${tx.txKey} on chain ${tx.chainId}:`, error);
-            }
-            await new Promise((resolve) => setTimeout(resolve, CONFIRMATIONS_POLLING_INTERVAL));
-          }
-        }
-        await onSuccess(txDetails, receipt, client);
-      }
-      return;
     } catch (error) {
-      const isRetryable = isRetryableReceiptError(error);
+      // Whatever it was (a timeout, an RPC error, a receipt behind its block), nothing is known about the transaction
+      lastError = error;
+      console.warn(
+        `[evmTracker] No result yet for ${tx.txKey} on chain ${tx.chainId} (attempt ${attempt + 1}): ${describe(error)}.`,
+      );
+    }
 
-      if (isRetryable && !wasReplaced && attempt < RECEIPT_MAX_RETRIES) {
-        console.warn(
-          `[evmTracker] Transient error for ${tx.txKey} on chain ${tx.chainId} (attempt ${attempt + 1}/${RECEIPT_MAX_RETRIES}). Error: ${
-            error instanceof Error ? error.name : 'Unknown'
-          }. Retrying...`,
-        );
-        await new Promise((r) => setTimeout(r, RECEIPT_RETRY_DELAY * (attempt + 1)));
-        continue;
-      }
-
-      onFailure(error);
+    // viem's callback only records it: a throwing application callback inside viem would look like an RPC error
+    // A viem older than 2.57.7 can report a transaction as replaced by itself: a receipt behind its block on another node
+    const replacing = (replacement as ReplacementReturnType | undefined)?.transaction.hash.toLowerCase();
+    if (replacement && replacing !== hash.toLowerCase()) {
+      return finishReplaced(replacement);
+    } else if (receipt) {
+      if (await finishMined(receipt)) return;
+    } else if (await readSlot()) {
       return;
     }
+
+    const left = waitUntil - Date.now();
+    if (left > 0) await sleep(Math.min(pauseAfter(attempt), left));
   }
+
+  await onFailure(lastError);
 }
 
 /**
  * Runs {@link evmTracker} for a transaction of the Pulsar store and writes the results to it through
- * `updateTxParams`: `hash` at start, the transaction details, `confirmations`, and finally `status` `Success`/`Failed`
- * with `pending: false` and the block timestamp, `Replaced` with `replacedTxHash`, or `Failed` with the normalized
- * error. The transaction is never removed from the pool.
+ * `updateTxParams`: the on-chain sender and the other details at start, `confirmations`, and finally `status`
+ * `Success`/`Failed` with `pending: false` and the block timestamp, or `Replaced` with `replacedTxHash` and
+ * `replacedReason`. The transaction is never removed from the pool. After a speed-up (`repriced`) `createPulsarStore` adds a
+ * new record that tracks the new hash to its own result. Another transaction in the nonce that reverted is `Replaced` with
+ * `isError: true`.
+ *
+ * Time alone never means `Failed`: the transaction stays `pending` until it has a receipt or its nonce is spent, as in a
+ * wallet. A reload reads the saved sender and nonce, so a replacement that landed meanwhile is found. A nonce spent by a
+ * transaction that cannot be found is `Replaced` with `replacedReason: 'unknown'`. Only a hash that no node has ever shown,
+ * with nothing saved to read instead, fails: 24 hours after `localTimestamp`.
  *
  * The callbacks receive the transaction with every update written by the tracker (`createTxUpdater` from
- * `@tuwaio/pulsar-core`). A reverted transaction calls `onError` with `Error('Transaction reverted')`.
+ * `@tuwaio/pulsar-core`). A reverted transaction calls `onError` with `Error('Transaction reverted')`. An error thrown
+ * by a callback is logged and does not change the status.
  *
  * @template T - The application transaction type.
  * @param params - The transaction, the wagmi config, the store members and the callbacks.
@@ -299,73 +498,21 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
  */
 export async function evmTrackerForStore<T extends Transaction>(
   params: Pick<EVMTrackerParams, 'config'> &
-    Pick<ITxTrackingStore<T>, 'updateTxParams' | 'transactionsPool'> & {
+    Pick<ITxTrackingStore<T>, 'updateTxParams' | 'transactionsPool'> &
+    Partial<Pick<ITxTrackingStore<T>, 'isTxTracked'>> & {
       tx: T;
     } & TrackerCallbacks<T>,
 ) {
-  const { tx, config, updateTxParams, transactionsPool, onSuccess, onError, onReplaced } = params;
+  const { tx, config, updateTxParams, transactionsPool, isTxTracked, onSuccess, onError, onReplaced } = params;
   const updateTx = createTxUpdater({ tx, transactionsPool, updateTxParams });
 
   return evmTracker({
     tx,
     config,
+    ...storeTrackerOptions(tx, isTxTracked),
     onInitialize: () => {
       updateTx({ hash: tx.txKey as Hex });
     },
-    onTxDetailsFetched: (txDetails) => {
-      updateTx({
-        to: txDetails.to ?? undefined,
-        input: txDetails.input,
-        value: txDetails.value?.toString(),
-        nonce: txDetails.nonce,
-        maxFeePerGas: txDetails.maxFeePerGas?.toString(),
-        maxPriorityFeePerGas: txDetails.maxPriorityFeePerGas?.toString(),
-      });
-    },
-    onConfirmationsUpdate: (confirmations) => {
-      updateTx({ confirmations });
-    },
-    onSuccess: async (txDetails, receipt, client) => {
-      const block = await getBlock(client, { blockNumber: receipt.blockNumber });
-      const timestamp = Number(block.timestamp);
-      const isSuccess = receipt.status === 'success';
-
-      const updatedTx = updateTx({
-        status: isSuccess ? TransactionStatus.Success : TransactionStatus.Failed,
-        isError: !isSuccess,
-        pending: false,
-        finishedTimestamp: timestamp,
-      });
-
-      if (isSuccess && onSuccess && updatedTx) {
-        onSuccess(updatedTx);
-      }
-      if (!isSuccess && onError && updatedTx) {
-        onError(new Error('Transaction reverted'), updatedTx);
-      }
-    },
-    onReplaced: (replacement) => {
-      const updatedTx = updateTx({
-        status: TransactionStatus.Replaced,
-        replacedTxHash: replacement.transaction.hash,
-        pending: false,
-      });
-
-      if (onReplaced && updatedTx) {
-        onReplaced(updatedTx, tx);
-      }
-    },
-    onFailure: (error) => {
-      const updatedTx = updateTx({
-        status: TransactionStatus.Failed,
-        pending: false,
-        isError: true,
-        error: normalizeError(error),
-      });
-
-      if (onError && updatedTx) {
-        onError(error, updatedTx);
-      }
-    },
+    ...storeCallbacks({ tx, config, updateTx, revertMessage: 'Transaction reverted', onSuccess, onError, onReplaced }),
   });
 }

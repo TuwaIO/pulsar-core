@@ -34,6 +34,7 @@ describe('checkAndInitializeTrackerInStore', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(evmTrackerForStore).mockResolvedValue(undefined);
     mockTx = {
       txKey: '0x1111111111111111111111111111111111111111111111111111111111111111',
       chainId: 1,
@@ -45,6 +46,39 @@ describe('checkAndInitializeTrackerInStore', () => {
       adapter: OrbitAdapter.EVM,
       localTimestamp: 1700000000,
     };
+  });
+
+  test('resolves once the tracker has started: nothing should wait for a transaction that may stay pending', async () => {
+    vi.mocked(evmTrackerForStore).mockReturnValue(new Promise(() => {}));
+
+    await expect(
+      checkAndInitializeTrackerInStore({
+        tracker: TransactionTracker.Ethereum,
+        tx: mockTx,
+        config: mockConfig,
+        transactionsPool: {},
+        updateTxParams: vi.fn(),
+        removeTxFromPool: vi.fn(),
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  test('an error of the tracker running in the background is logged, not left unhandled', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(evmTrackerForStore).mockRejectedValue(new TypeError('bug'));
+
+    await checkAndInitializeTrackerInStore({
+      tracker: TransactionTracker.Ethereum,
+      tx: mockTx,
+      config: mockConfig,
+      transactionsPool: {},
+      updateTxParams: vi.fn(),
+      removeTxFromPool: vi.fn(),
+    });
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('TypeError'));
+    error.mockRestore();
   });
 
   test('should delegate to evmTrackerForStore for Ethereum tracker', async () => {

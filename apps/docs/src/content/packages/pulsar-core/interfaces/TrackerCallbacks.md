@@ -1,6 +1,6 @@
 # TrackerCallbacks\<T\>
 
-Defined in: [types.ts:322](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L322)
+Defined in: [packages/pulsar-core/src/types.ts:342](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L342)
 
 Callbacks passed to `executeTxAction` and forwarded to the tracker of that transaction. They are not stored:
 trackers restarted by `initializeTransactionsPool` or `injectExternalPendingTxs` (for example after a page reload)
@@ -21,9 +21,10 @@ The application transaction type.
 
 > `optional` **onError?**: (`error`, `tx?`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [types.ts:333](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L333)
+Defined in: [packages/pulsar-core/src/types.ts:354](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L354)
 
-Called when the transaction fails: it reverted, was rejected, or tracking gave up.
+Called when the transaction fails: it reverted, was rejected, or tracking gave up. Also, with `status: Replaced`, for
+another transaction in its nonce that reverted.
 
 #### Parameters
 
@@ -49,9 +50,10 @@ The transaction after the update.
 
 > `optional` **onReplaced?**: (`newTx`, `oldTx`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [types.ts:339](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L339)
+Defined in: [packages/pulsar-core/src/types.ts:362](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L362)
 
-Called when the transaction is replaced by another one with the same nonce.
+Called when the transaction is replaced by another one with the same nonce. After a speed-up (`replacedReason:
+'repriced'`) the operation goes on: a new record tracks the new hash, and `onSuccess` or `onError` run for it.
 
 #### Parameters
 
@@ -59,7 +61,8 @@ Called when the transaction is replaced by another one with the same nonce.
 
 `T`
 
-The tracked transaction after the update (`status: Replaced`, `replacedTxHash` set).
+The tracked transaction after the update (`status: Replaced`, `replacedTxHash` set unless
+`replacedReason` is `unknown`).
 
 ##### oldTx
 
@@ -77,7 +80,7 @@ The transaction as tracking started.
 
 > `optional` **onSuccess?**: (`tx`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [types.ts:327](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L327)
+Defined in: [packages/pulsar-core/src/types.ts:347](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L347)
 
 Called when the tracker marks the transaction `Success`.
 

@@ -5,7 +5,15 @@
 
 import { produce } from 'immer';
 
-import { IInitializeTxTrackingStore, PulsarAdapter, StoreSlice, Transaction, TransactionPool } from '../types';
+import {
+  IInitializeTxTrackingStore,
+  PulsarAdapter,
+  StoreSlice,
+  Transaction,
+  TransactionPool,
+  UpdatableTransactionFields,
+} from '../types';
+import { keepsItsResult } from '../utils/mergeTabPools';
 import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
 import { validateTransaction } from '../utils/transactionValidation';
 import { isFinishedStatus } from '../utils/txFinished';
@@ -24,6 +32,23 @@ function omitClientSecrets<T extends Transaction>(tx: T): T {
   return remoteTx;
 }
 
+/** The fields of a final result, kept once a transaction has one. */
+const RESULT_FIELDS: readonly (keyof UpdatableTransactionFields)[] = [
+  'status',
+  'pending',
+  'isError',
+  'error',
+  'finishedTimestamp',
+  'replacedTxHash',
+  'replacedReason',
+];
+
+function withoutResultFields(fields: UpdatableTransactionFields): UpdatableTransactionFields {
+  const rest = { ...fields };
+  for (const field of RESULT_FIELDS) delete rest[field];
+  return rest;
+}
+
 /**
  * Creates the core slice of the transaction store: `transactionsPool`, `initialTx`, `unsyncedTxKeys` and the actions
  * that change them. `createPulsarStore` uses it; call it directly only to compose a custom Zustand store.
@@ -39,8 +64,8 @@ function omitClientSecrets<T extends Transaction>(tx: T): T {
  * first. `null` keeps them without a term. Defaults to 30.
  * @param params.onRemoteCreate - Optional remote sync callback, called in the background by `addTxToPool` (see
  * `SyncCallbacks`).
- * @param params.onTxFinished - Called by `updateTxParams` once when it moves a transaction from a non-final to a final
- * status (see `TxFinishedListener`). `createPulsarStore` passes a function that runs its `onTxFinished` option and the
+ * @param params.onTxFinished - Called by `updateTxParams` when it moves a transaction from a non-final to a final status,
+ * and again when the chain corrects a `Failed` (see `TxFinishedListener`). `createPulsarStore` passes a function that runs its `onTxFinished` option and the
  * listeners of `subscribeTxFinished`; it must not throw.
  * @returns A slice creator for Zustand's `create` / `createStore`.
  */
@@ -49,8 +74,10 @@ export function initializeTxTrackingStore<T extends Transaction>({
   retentionDays = DEFAULT_RETENTION_DAYS,
   onRemoteCreate,
   onTxFinished,
+  onTxRemoved,
 }: Pick<PulsarAdapter<T>, 'onRemoteCreate' | 'retentionDays' | 'onTxFinished'> & {
   maxTransactions: number;
+  onTxRemoved?: (txKey: string) => void;
 }): StoreSlice<IInitializeTxTrackingStore<T>> {
   let isReconciling = false;
   // Keys whose `onRemoteCreate` call is in flight, so a reconciliation run does not send them twice.
@@ -119,15 +146,16 @@ export function initializeTxTrackingStore<T extends Transaction>({
         }
       },
 
-      addTxToPool: (tx) => {
+      addTxToPool: (tx, options) => {
         validateTransaction(tx);
+        const syncIt = !!onRemoteCreate && !options?.withoutSync;
 
         const newTx = {
           ...tx,
           pending: true, // Ensure all new transactions start as pending.
           // Synced only once `onRemoteCreate` resolves; until then the key is listed in `unsyncedTxKeys`, so an
           // interrupted sync (for example a closed tab) is retried later.
-          ...(onRemoteCreate && { syncStatus: 'pending-sync' as const }),
+          ...(syncIt && { syncStatus: 'pending-sync' as const }),
         };
 
         set((state) =>
@@ -135,7 +163,7 @@ export function initializeTxTrackingStore<T extends Transaction>({
             draft.lastAddedTxKey = tx.txKey;
 
             if (tx.txKey) {
-              if (onRemoteCreate) {
+              if (syncIt) {
                 if (!draft.unsyncedTxKeys) {
                   draft.unsyncedTxKeys = {};
                 }
@@ -169,7 +197,7 @@ export function initializeTxTrackingStore<T extends Transaction>({
         );
 
         // The remote sync runs in the background, so a slow or unreachable backend never delays tracking.
-        if (onRemoteCreate && tx.txKey) {
+        if (syncIt && tx.txKey) {
           void syncTransaction(tx.txKey, '[Pulsar] onRemoteCreate failed, transaction queued for background sync:');
         }
 
@@ -177,20 +205,27 @@ export function initializeTxTrackingStore<T extends Transaction>({
       },
 
       updateTxParams: (txKey, fields) => {
-        const wasFinished = isFinishedStatus(get().transactionsPool[txKey]?.status);
+        const before = get().transactionsPool[txKey]?.status;
+        const wasFinished = isFinishedStatus(before);
+        const keepsResult = keepsItsResult(before, fields.status);
         set((state) =>
           produce(state, (draft) => {
             const tx = draft.transactionsPool[txKey];
             // Ensure the transaction exists before attempting to update.
             if (tx) {
-              Object.assign(tx, fields);
+              // A final status is the result the chain gave. A late writer (a second tracker, another tab) only lost
+              // sight of the transaction, and must not turn a mined transaction into a failed one. A Failed can be taken
+              // back by the chain's answer: it may have come from a server's time limit.
+              Object.assign(tx, keepsResult ? withoutResultFields(fields) : fields);
+              if (wasFinished && !keepsResult) (tx as { error?: unknown }).error = undefined;
             }
           }),
         );
 
-        // The "transaction finished" event: once, on the move from a non-final to a final status
+        // The "transaction finished" event: on the move from a non-final to a final status, and again when the chain
+        // corrects a Failed, as whoever heard it was told something false
         const updatedTx = get().transactionsPool[txKey];
-        if (onTxFinished && updatedTx && !wasFinished && isFinishedStatus(updatedTx.status)) {
+        if (onTxFinished && updatedTx && isFinishedStatus(updatedTx.status) && updatedTx.status !== before) {
           onTxFinished(updatedTx);
         }
 
@@ -205,9 +240,12 @@ export function initializeTxTrackingStore<T extends Transaction>({
               });
           }
         }
+
+        return updatedTx;
       },
 
       removeTxFromPool: (txKey) => {
+        onTxRemoved?.(txKey);
         set((state) =>
           produce(state, (draft) => {
             delete draft.transactionsPool[txKey];

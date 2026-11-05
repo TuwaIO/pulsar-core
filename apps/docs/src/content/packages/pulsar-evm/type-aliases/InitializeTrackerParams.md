@@ -1,6 +1,6 @@
 # InitializeTrackerParams\<T\>
 
-> **InitializeTrackerParams**\<`T`\> = `Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"updateTxParams"` \| `"removeTxFromPool"` \| `"transactionsPool"`\> & `object` & [`TrackerCallbacks`](/packages/pulsar-core/interfaces/TrackerCallbacks.md)\<`T`\>
+> **InitializeTrackerParams**\<`T`\> = `Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"updateTxParams"` \| `"removeTxFromPool"` \| `"transactionsPool"`\> & `Partial`\<`Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"isTxTracked"`\>\> & `object` & [`TrackerCallbacks`](/packages/pulsar-core/interfaces/TrackerCallbacks.md)\<`T`\>
 
 Defined in: [utils/checkAndInitializeTrackerInStore.ts:19](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/checkAndInitializeTrackerInStore.ts#L19)
 
@@ -35,7 +35,7 @@ Gelato API key; required to run the Gelato tracker.
 > `optional` **safePendingTimeoutMs?**: `number` \| `null`
 
 How long a Safe transaction may stay unexecuted before the Safe tracker gives up (see `SafeTrackerOptions`); `null`
-waits without a limit. Defaults to one day.
+waits without a limit, the default, as collecting the signatures of several owners can take days.
 
 ### tracker
 

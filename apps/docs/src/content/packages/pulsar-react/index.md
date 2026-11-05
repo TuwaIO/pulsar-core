@@ -9,7 +9,7 @@
 - **Resume after reload:** `useInitializeTransactionsPool` calls the store's `initializeTransactionsPool` in an effect, on the client and after the store has restored its pool from `localStorage`, so transactions that were pending before a reload are tracked again.
 - **Runs once:** the effect depends only on `initializeTransactionsPool`, and the latest `onError` is read without re-running it, so an inline `onError` does not start new trackers on every render.
 - **Errors:** a rejected initialization goes to `onError`, or to `console.error` by default; nothing is reported after unmount.
-- **Finished transactions:** `useTxFinished` subscribes to the store's "transaction finished" event while the component is mounted and calls `onFinished` once for every transaction that reaches `Success`, `Failed` or `Replaced`, also for transactions resumed after a reload, which no longer have the `onSuccess` of `executeTxAction`. The latest `onFinished` is used without subscribing again.
+- **Finished transactions:** `useTxFinished` subscribes to the store's "transaction finished" event while the component is mounted and calls `onFinished` for every transaction that reaches `Success`, `Failed` or `Replaced`, also for transactions resumed after a reload, which no longer have the `onSuccess` of `executeTxAction`. The latest `onFinished` is used without subscribing again.
 
 ---
 
@@ -48,7 +48,7 @@ export function PulsarInitializer() {
 }
 ```
 
-Every call of `initializeTransactionsPool` starts new trackers, so do not render the initializer more than once. In development, React Strict Mode runs effects twice. The complete setup is in the **[React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking)**.
+With `@tuwaio/pulsar-core` 0.12 and later a transaction already tracked is not tracked twice, so React Strict Mode, which runs effects twice in development, does no harm. The complete setup is in the **[React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking)**.
 
 React to finished transactions where the data lives, for example to refetch a list once a transaction that changed it succeeds, also after a reload. Use `useTxFinished` for data that must stay correct, and the `onSuccess`, `onError` and `onReplaced` of `executeTxAction` for the interface of the page that sent the transaction (closing a dialog, a message in place); those do not run for transactions resumed after a reload. The comparison is in the [`@tuwaio/pulsar-core` README](https://pulsar.docs.tuwa.io/packages/pulsar-core):
 

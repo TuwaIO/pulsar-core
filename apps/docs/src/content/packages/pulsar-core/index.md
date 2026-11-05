@@ -9,11 +9,12 @@
 - **Transaction store:** `createPulsarStore` returns a vanilla Zustand store. Its `executeTxAction` validates the metadata, sets `initialTx` for immediate UI feedback, checks the wallet's chain, runs the `beforeTxProcess` preflight, calls your `actionFunction` to sign and submit, adds the transaction to `transactionsPool` and starts its tracker.
 - **Chain adapters:** pass one adapter or an array. Each transaction goes to the adapter whose `key` matches its `adapter` (the first adapter when none matches). Adapters implement the `TxAdapter` contract, so other chains can be added.
 - **Persistence and resume:** the pool is saved to `localStorage` (see Browser Storage below). After a reload, `initializeTransactionsPool` restarts the trackers of pending transactions. The pool keeps at most `maxTransactions` (default 50) by evicting the oldest finished transactions; a transaction still pending is never evicted, so the pool can hold more while many are pending. A finished transaction is dropped `retentionDays` (default 30) after it finished.
+- **Final results:** once a transaction has `Success`, `Failed` or `Replaced`, a later write cannot change its result, so a tracker that only lost sight of it cannot turn a mined transaction into a failed one. Every transaction gets one tracker, however often `initializeTransactionsPool` runs, and tabs merge what the others have saved, transaction by transaction. A finished transaction stays in the pool. After a speed-up the old record stays as `Replaced` and a new record under the new hash, linked by `replaces`, goes on to its own result with the same callbacks. `removeTxFromPool` deletes a transaction and stops its tracker.
 - **Metadata safety:** each `title` string is limited to 100 characters, each `description` string to 300 and the JSON of `payload` to 10 KB, and strings must not contain executable-like patterns (`eval(`, `Function(`, `setTimeout`/`setInterval` with a string, `javascript:`). Invalid metadata throws `PulsarTransactionValidationError` before anything runs; invalid restored or remote transactions are dropped. This is a defensive gate, not a replacement for escaping output in your UI.
 - **Remote sync:** `onRemoteCreate` sends every new transaction to your backend (for example Quasar) in the background, without its API keys, retries unconfirmed syncs later, and never delays or blocks tracking. `injectExternalPendingTxs` and `createTxInMemoryStore` bring the remote history back into the app; both drop transactions that fail validation.
-- **Transaction finished event:** the `onTxFinished` option of `createPulsarStore` and the store's `subscribeTxFinished` are called once when a transaction reaches `Success`, `Failed` or `Replaced`, whatever finished it: its tracker, a tracker restarted after a page reload (which no longer has the `onSuccess`, `onError` and `onReplaced` of `executeTxAction`), or remote sync. Use them for reactions that must also happen after a reload, such as refetching balances; in React, `useTxFinished` of [`@tuwaio/pulsar-react`](https://pulsar.docs.tuwa.io/packages/pulsar-react).
+- **Transaction finished event:** the `onTxFinished` option of `createPulsarStore` and the store's `subscribeTxFinished` are called when a transaction reaches `Success`, `Failed` or `Replaced`, and again if the chain corrects a `Failed`, per open tab, so key anything with side effects on `txKey` and `status`, whatever finished it: its tracker, a tracker restarted after a page reload (which no longer has the `onSuccess`, `onError` and `onReplaced` of `executeTxAction`), or remote sync. Use them for reactions that must also happen after a reload, such as refetching balances; in React, `useTxFinished` of [`@tuwaio/pulsar-react`](https://pulsar.docs.tuwa.io/packages/pulsar-react).
 - **Selectors and React binding:** `selectAllTransactions`, `selectPendingTransactions`, `selectTxByKey` and the `…ByActiveWallet` variants; `createBoundedUseStore` turns the store into a typed React hook.
-- **Tracker building blocks:** `initializePollingTracker` (a polling loop with consecutive-failure retries; its `pollingInterval` can be a function of the time since polling started, to poll less often over time) and `createTxUpdater` (keeps a tracker's copy of the transaction in sync with its store updates) for custom trackers.
+- **Tracker building blocks:** `initializePollingTracker` (a polling loop with consecutive-failure retries; its `pollingInterval` can be a function of the time since polling started, to poll less often over time, and with `retryForeverEveryMs` a service that cannot be reached never ends tracking) and `createTxUpdater` (keeps a tracker's copy of the transaction in sync with its store updates) for custom trackers.
 
 ---
 
@@ -73,7 +74,7 @@ pulsarStore.subscribe((state) => {
 });
 ```
 
-`executeTxAction` rejects when the metadata is invalid, the wallet is on another chain and does not switch, `beforeTxProcess` throws (unless `abortOnTxError: false`) or the wallet rejects the transaction; `initialTx.error` holds the normalized error. For standard EVM transactions it resolves only when tracking has finished, so drive the UI from the store instead of awaiting it.
+`executeTxAction` rejects when the metadata is invalid, the wallet is on another chain and does not switch, `beforeTxProcess` throws (unless `abortOnTxError: false`) or the wallet rejects the transaction; `initialTx.error` holds the normalized error. It resolves once the tracker has started, not when the transaction has finished, so drive the UI from the store.
 
 The full React setup, with a wallet connector, typed transactions and the Solana variant, is in the **[React transaction tracking guide](https://docs.tuwa.io/guides/react-transaction-tracking)**.
 
@@ -140,7 +141,7 @@ A transaction that was already final when the store restored it from storage doe
 
 |                     | `onTxFinished`, `subscribeTxFinished`, `useTxFinished`                                     | `onSuccess`, `onError`, `onReplaced` of `executeTxAction`                                                     |
 | ------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| Runs for            | Every transaction of the store, once, whatever finished it                                 | The one transaction of that call                                                                              |
+| Runs for            | Every transaction of the store, per open tab, whatever finished it                         | The one transaction of that call                                                                              |
 | After a page reload | Yes                                                                                        | No: the page that started the transaction is gone                                                             |
 | Receives            | The transaction with its final `status` (and `error` when it failed)                       | The transaction; `onError` also the raw error, `onReplaced` also the transaction as tracking started          |
 | Use it for          | Data that must stay correct: refetching balances or lists, analytics, telling your backend | The interface of the current page: closing a dialog, showing a message in place, navigating to a success page |
@@ -157,7 +158,7 @@ Pass `onRemoteCreate` to send every new transaction to your backend, for example
 
 `onRemoteCreate` receives a copy of the transaction without `pimlicoApiKey` and `gelatoApiKey`: configure provider keys on the backend instead (for Quasar, in the app settings). `bundlerUrl` is sent, so do not put API keys in it.
 
-To show the remote history, `createTxInMemoryStore` merges the pages returned by your `getHistory` with the local pool (terminal transactions are never overwritten by stale data, and transactions that fail validation are skipped), and `injectExternalPendingTxs` adds pending transactions from other devices to the local pool and tracks them. The complete Next.js + Quasar integration, with server actions and SIWX sessions, is in the **[Quasar transaction sync guide](https://docs.tuwa.io/guides/quasar-transaction-sync)**.
+To show the remote history, `createTxInMemoryStore` merges the pages returned by your `getHistory` with the local pool (a final result is never overwritten by stale data, except a `Failed` that the chain answers otherwise, a server's `Failed` does not replace a transaction still pending, and transactions that fail validation are skipped), and `injectExternalPendingTxs` adds pending transactions from other devices to the local pool and tracks them. The complete Next.js + Quasar integration, with server actions and SIWX sessions, is in the **[Quasar transaction sync guide](https://docs.tuwa.io/guides/quasar-transaction-sync)**.
 
 ---
 
@@ -192,6 +193,7 @@ Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/
 
 ## Classes
 
+- [FinalPollingError](/packages/pulsar-core/classes/FinalPollingError.md)
 - [PulsarTransactionValidationError](/packages/pulsar-core/classes/PulsarTransactionValidationError.md)
 
 ## Interfaces
@@ -235,6 +237,7 @@ Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/
 
 ## Functions
 
+- [createAbandonCheck](/packages/pulsar-core/functions/createAbandonCheck.md)
 - [createPulsarStore](/packages/pulsar-core/functions/createPulsarStore.md)
 - [createTxInMemoryStore](/packages/pulsar-core/functions/createTxInMemoryStore.md)
 - [createTxUpdater](/packages/pulsar-core/functions/createTxUpdater.md)

@@ -2,7 +2,7 @@
 
 > **eip5792Tracker**\<`T`\>(`params`): `void`
 
-Defined in: [trackers/eip5792Tracker.ts:145](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L145)
+Defined in: [trackers/eip5792Tracker.ts:146](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L146)
 
 Starts polling an EIP-5792 call batch in the background without a store: the wallet's status every 2 s by default,
 giving up after 60 consecutive failed attempts. It does not wait for block confirmations of the executing transaction

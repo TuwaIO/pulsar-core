@@ -96,7 +96,43 @@ export type PollingTrackerConfig<R, T extends Pick<Transaction, 'txKey' | 'pendi
   pollingInterval?: number | ((elapsedMs: number) => number);
   /** The number of consecutive failed attempts (thrown errors) after which polling stops. Defaults to 10. */
   maxRetries?: number;
+  /**
+   * With a delay here, `maxRetries` consecutive failed attempts no longer end tracking: the tracker keeps asking at this
+   * delay, in milliseconds, until an attempt succeeds. Not being able to ask says nothing about the transaction, so use
+   * it where a person would otherwise be told that a transaction failed because a service was down.
+   */
+  retryForeverEveryMs?: number;
+  /**
+   * Asked before every check. `true` stops polling without any callback: nothing reads the result any more, for example
+   * as the transaction was removed from the pool.
+   * @returns Whether to stop.
+   */
+  isAbandoned?: () => boolean;
 };
+
+/**
+ * Thrown by a fetcher when no later check can change the answer, such as a chain the service does not cover: the tracker
+ * calls `onFailure()` and stops at once, also with `retryForeverEveryMs`. Any other error counts as a failed attempt.
+ */
+export class FinalPollingError extends Error {
+  override name = 'FinalPollingError';
+}
+
+/**
+ * The stop check of a store tracker: `true` once the store stopped tracking a transaction it was tracking. A tracker
+ * started by hand on a transaction the store never tracked (`isTxTracked` says no from the start) goes on as before.
+ *
+ * @param isTxTracked - `isTxTracked` of the store, when the tracker has it.
+ * @param txKey - The key of the transaction.
+ * @returns The function to pass as `isAbandoned`, or `undefined` when there is nothing to check.
+ */
+export function createAbandonCheck(
+  isTxTracked: ((txKey: string) => boolean) | undefined,
+  txKey: string,
+): (() => boolean) | undefined {
+  if (!isTxTracked?.(txKey)) return undefined;
+  return () => !isTxTracked(txKey);
+}
 
 const DEFAULT_POLLING_INTERVAL = 5000;
 const DEFAULT_MAX_RETRIES = 10;
@@ -108,9 +144,11 @@ const DEFAULT_MAX_RETRIES = 10;
  * `fetcher`. Polling continues until the
  * fetcher calls `stopPolling`. A fetcher that throws counts as a failed attempt; after `maxRetries` consecutive failed
  * attempts the tracker calls `onFailure()` without arguments, logs a warning and stops (which calls
- * `removeTxFromPool`, if configured). A successful attempt resets the count.
+ * `removeTxFromPool`, if configured), or, with `retryForeverEveryMs`, keeps asking at that delay. A successful attempt
+ * resets the count. A {@link FinalPollingError} ends it at once. An error thrown by a callback is logged and is not a
+ * failed attempt, as the fetcher would then report the same result again on the next tick.
  *
- * Side effects: runs a timer loop until it is stopped; there is no way to cancel it from the outside.
+ * Side effects: runs a timer loop until it is stopped; from the outside only `isAbandoned` can end it.
  *
  * @template R - The response type the fetcher reports.
  * @template T - The tracked transaction type.
@@ -145,6 +183,8 @@ export function initializePollingTracker<R, T extends Pick<Transaction, 'txKey' 
     removeTxFromPool,
     pollingInterval = DEFAULT_POLLING_INTERVAL,
     maxRetries = DEFAULT_MAX_RETRIES,
+    retryForeverEveryMs,
+    isAbandoned,
   } = config;
 
   // 1. Early exit if the transaction is no longer pending
@@ -175,32 +215,53 @@ export function initializePollingTracker<R, T extends Pick<Transaction, 'txKey' 
     }
   };
 
-  const pollingLoop = async () => {
-    while (isPolling && retriesLeft > 0) {
+  const guarded = <A extends unknown[]>(name: string, callback: ((...args: A) => unknown) | undefined) =>
+    ((...args: A) => {
+      const log = (error: unknown) => console.error(`[Pulsar] ${name} callback threw for ${tx.txKey}:`, error);
       try {
-        await new Promise((resolve) => setTimeout(resolve, nextDelay()));
+        void Promise.resolve(callback?.(...args)).catch(log);
+      } catch (error) {
+        log(error);
+      }
+    }) as (...args: A) => void;
+  const fail = guarded('onFailure', onFailure) as (response?: R) => void;
+
+  const pollingLoop = async () => {
+    while (isPolling && (retriesLeft > 0 || retryForeverEveryMs !== undefined)) {
+      try {
+        const delay = retriesLeft > 0 ? nextDelay() : (retryForeverEveryMs as number);
+        await new Promise((resolve) => setTimeout(resolve, delay));
         if (!isPolling) break;
+        if (isAbandoned?.()) {
+          isPolling = false;
+          break;
+        }
 
         // The fetcher's responsibility is to call onSuccess, onFailure, etc., which in turn call stopPolling.
         await fetcher({
           tx,
           stopPolling,
-          onSuccess,
-          onFailure,
-          onIntervalTick,
-          onReplaced,
+          onSuccess: guarded('onSuccess', onSuccess),
+          onFailure: fail,
+          onIntervalTick: guarded('onIntervalTick', onIntervalTick),
+          onReplaced: guarded('onReplaced', onReplaced),
         });
         // Only consecutive failures count towards `maxRetries`.
         retriesLeft = maxRetries;
       } catch (error) {
         console.error(`Polling fetcher for txKey ${tx.txKey} threw an error:`, error);
-        retriesLeft--;
+        if (error instanceof FinalPollingError) {
+          fail();
+          stopPolling();
+          return;
+        }
+        retriesLeft = Math.max(0, retriesLeft - 1);
       }
     }
 
-    if (retriesLeft <= 0) {
+    if (isPolling && retriesLeft <= 0) {
       console.warn(`Polling for txKey ${tx.txKey} stopped after reaching the maximum number of retries.`);
-      onFailure();
+      fail();
       stopPolling();
     }
   };

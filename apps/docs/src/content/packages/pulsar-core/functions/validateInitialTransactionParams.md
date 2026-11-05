@@ -2,7 +2,7 @@
 
 > **validateInitialTransactionParams**(`params`): `void`
 
-Defined in: [utils/transactionValidation.ts:54](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/transactionValidation.ts#L54)
+Defined in: [packages/pulsar-core/src/utils/transactionValidation.ts:54](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/transactionValidation.ts#L54)
 
 Validates the metadata passed to `executeTxAction` before anything else runs.
 

@@ -12,12 +12,12 @@
 
 ## 为什么使用 `evmTracker` 而不是 `waitForTransactionReceipt` [#why-evmtracker-instead-of-waitfortransactionreceipt]
 
-| 场景                   | `waitForTransactionReceipt` (viem)                         | `evmTracker` (Pulsar)                                                                     |
-| ---------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| **节点尚未索引该交易** | 等待收据；不获取交易详情。                                 | 重试 `getTransaction`（默认 10 次，间隔 3 秒），并将详情（nonce、手续费、`to`）传给回调。 |
-| **RPC 临时错误**       | 超时或自身重试次数用尽后，调用被拒绝 (reject)。            | 以递增的延迟最多重试 5 次等待收据，然后调用 `onFailure`。                                 |
-| **在钱包中加速或取消** | 通过 `onReplaced` 报告；Promise 以新的收据完成 (resolve)。 | 调用 `onReplaced` 并停止，因此被替换的交易永远不会被报告为成功。                          |
-| **多次区块确认**       | 单次调用的 `confirmations` 选项。                          | 每 5 秒轮询一次确认数，并通过 `onConfirmationsUpdate` 报告每个数值。                      |
+| 场景                   | `waitForTransactionReceipt` (viem)                                               | `evmTracker` (Pulsar)                                                                                                                          |
+| ---------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **节点尚未索引该交易** | 等待收据；不获取交易详情。                                                       | 重试 `getTransaction`（默认 10 次，间隔 3 秒），并将详情（nonce、手续费、`to`）传给回调。                                                      |
+| **RPC 临时错误**       | 超时或自身重试次数用尽后，调用被拒绝 (reject)。                                  | 等待期间的任何错误都表示尚无结果：以递增的间隔再次等待，最多 `receiptAttempts` 次（默认 6 次，共 435 秒），然后调用 `onFailure`。              |
+| **在钱包中加速或取消** | 通过 `onReplaced` 报告，前提是替换交易在某次调用期间上链，且该调用能识别原交易。 | 每次尝试后读取发送方的 nonce，因此任何时刻都能报告，即使节点已不再返回旧哈希。调用 `onReplaced` 并停止，因此被替换的交易永远不会被报告为成功。 |
+| **多次区块确认**       | 单次调用的 `confirmations` 选项。                                                | 每 5 秒轮询一次确认数，并通过 `onConfirmationsUpdate` 报告每个数值。                                                                           |
 
 `evmTracker` 会为每一笔已打包上链的交易调用 `onSuccess`，包括执行回滚 (reverted) 的交易：请检查 `receipt.status`。
 
@@ -118,7 +118,7 @@ export async function payInOneBatch(token: Address, to: Address, amount: bigint)
 
 ## Safe 多签与 Gelato：轮询获取器 [#safe-multisig-and-gelato-polling-fetchers]
 
-Safe 与 Gelato 通过轮询 API 进行追踪。将它们的获取器 (fetcher) 传给 `@tuwaio/pulsar-core` 的 `initializePollingTracker`，它默认每 5 秒调用一次获取器（或按 `pollingInterval` 函数给出的间隔），连续 10 次请求失败后放弃（此时会不带参数调用 `onFailure()`）。
+Safe 与 Gelato 通过轮询 API 进行追踪。将它们的获取器 (fetcher) 传给 `@tuwaio/pulsar-core` 的 `initializePollingTracker`，它默认每 5 秒调用一次获取器（或按 `pollingInterval` 函数给出的间隔），连续 10 次请求失败后放弃（此时会不带参数调用 `onFailure()`），或者在设置 `retryForeverEveryMs` 时按该间隔继续询问。
 
 Safe 追踪器也可以通过 `@tuwaio/pulsar-evm/safe` 使用，该入口既不加载 `@wagmi/core` 也不加载 `@tuwaio/orbit-evm`：安装 `@tuwaio/pulsar-evm`、`@tuwaio/pulsar-core`、`@tuwaio/orbit-core`、`viem` 与 `dayjs` 后，仅基于 `viem` 构建的应用也能追踪 Safe 交易。
 
@@ -159,14 +159,15 @@ export function trackGelatoTask(taskId: string, apiKey: string) {
 - **Safe：** 获取器会调用该链的 Safe Transaction Service（支持的链见 `SafeTransactionServiceUrls`），并将每次检查结果连同已收集的所有者确认 (`confirmations`) 与阈值 (`confirmationsRequired`) 报告给 `onIntervalTick`。404 响应会不带响应地调用 `onFailure()` 并停止。交易在提议后经过 `pendingTimeoutMs`（`safeFetcher` 与默认值均为一天）仍处于挂起状态时，会以其状态调用 `onFailure` 并停止；`createSafeFetcher({ pendingTimeoutMs: null })` 则无限期等待。
 - **Gelato：** 任务在创建一小时后仍处于挂起状态时，会以其状态调用 `onFailure` 并停止。
 
-这些获取器以 `withoutRemoving: true` 停止，因此传给 `initializePollingTracker` 的 `removeTxFromPool` 只会在轮询连续 `maxRetries` 次出错而放弃时被调用。
+这些获取器以 `withoutRemoving: true` 停止，因此传给 `initializePollingTracker` 的 `removeTxFromPool` 只会在轮询放弃时被调用：连续 `maxRetries` 次出错后，或遇到 `FinalPollingError` 时。
 
 ---
 
 ## 辅助函数 [#helpers]
 
 - `checkTransactionsTracker({ actionTxKey, connectorType, tracker })` 返回 Pulsar 会为某个交易键使用的追踪器：`ERC4337` 或 `Gelato` 仅在显式请求时返回，Safe 连接器 (`evm:safe`) 返回 `Safe`，其他情况返回 `Ethereum`。
-- `speedUpTxAction` 与 `cancelTxAction` 以相同的 nonce 重新发送一笔挂起的 EIP-1559 交易，并将手续费提高 15%。它们需要追踪器获取到的 `nonce` 与手续费字段；随后 `evmTracker` 会将原交易报告为已替换。
+- `readNonceSlot(client, { hash, slot: { from, nonce } })` 在节点不再返回交易哈希时，根据发送方与 nonce 判断交易的结果：`open`、`ours`、`replaced`（附 viem 的替换数据）或 `spent`。重启后将发送方与 nonce 作为 `knownDetails` 传给 `evmTracker`，它也会读取这些信息。
+- `speedUpTxAction` 与 `cancelTxAction` 以相同的 nonce 重新发送一笔挂起的 EIP-1559 交易，手续费比上次发送时高 15%，且不低于市场估算，只能由发送该交易的账户操作。它们需要追踪器获取到的 `nonce` 与手续费字段；随后 `evmTracker` 会将原交易报告为已替换。
 - `selectEvmTxExplorerLink` 生成交易在区块浏览器（或 Safe 应用）中的链接。
 
 ```typescript

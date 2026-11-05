@@ -2,7 +2,7 @@
 
 > **gelatoFetcher**(`client`): (`params`) => `Promise`\<`void`\>
 
-Defined in: [trackers/gelatoTracker.ts:113](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L113)
+Defined in: [trackers/gelatoTracker.ts:114](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L114)
 
 Creates a fetcher for `initializePollingTracker` from `@tuwaio/pulsar-core` that checks a Gelato task (`tx.txKey`)
 once through `relayer_getStatus`.

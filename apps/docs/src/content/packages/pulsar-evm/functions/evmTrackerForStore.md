@@ -2,15 +2,23 @@
 
 > **evmTrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/evmTracker.ts:300](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L300)
+Defined in: [trackers/evmTracker.ts:499](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L499)
 
 Runs [evmTracker](/packages/pulsar-evm/functions/evmTracker.md) for a transaction of the Pulsar store and writes the results to it through
-`updateTxParams`: `hash` at start, the transaction details, `confirmations`, and finally `status` `Success`/`Failed`
-with `pending: false` and the block timestamp, `Replaced` with `replacedTxHash`, or `Failed` with the normalized
-error. The transaction is never removed from the pool.
+`updateTxParams`: the on-chain sender and the other details at start, `confirmations`, and finally `status`
+`Success`/`Failed` with `pending: false` and the block timestamp, or `Replaced` with `replacedTxHash` and
+`replacedReason`. The transaction is never removed from the pool. After a speed-up (`repriced`) `createPulsarStore` adds a
+new record that tracks the new hash to its own result. Another transaction in the nonce that reverted is `Replaced` with
+`isError: true`.
+
+Time alone never means `Failed`: the transaction stays `pending` until it has a receipt or its nonce is spent, as in a
+wallet. A reload reads the saved sender and nonce, so a replacement that landed meanwhile is found. A nonce spent by a
+transaction that cannot be found is `Replaced` with `replacedReason: 'unknown'`. Only a hash that no node has ever shown,
+with nothing saved to read instead, fails: 24 hours after `localTimestamp`.
 
 The callbacks receive the transaction with every update written by the tracker (`createTxUpdater` from
-`@tuwaio/pulsar-core`). A reverted transaction calls `onError` with `Error('Transaction reverted')`.
+`@tuwaio/pulsar-core`). A reverted transaction calls `onError` with `Error('Transaction reverted')`. An error thrown
+by a callback is logged and does not change the status.
 
 ## Type Parameters
 
@@ -24,7 +32,7 @@ The application transaction type.
 
 ### params
 
-`Pick`\<[`EVMTrackerParams`](/packages/pulsar-evm/type-aliases/EVMTrackerParams.md), `"config"`\> & `Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"updateTxParams"` \| `"transactionsPool"`\> & `object` & [`TrackerCallbacks`](/packages/pulsar-core/interfaces/TrackerCallbacks.md)\<`T`\>
+`Pick`\<[`EVMTrackerParams`](/packages/pulsar-evm/type-aliases/EVMTrackerParams.md), `"config"`\> & `Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"updateTxParams"` \| `"transactionsPool"`\> & `Partial`\<`Pick`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>, `"isTxTracked"`\>\> & `object` & [`TrackerCallbacks`](/packages/pulsar-core/interfaces/TrackerCallbacks.md)\<`T`\>
 
 The transaction, the wagmi config, the store members and the callbacks.
 

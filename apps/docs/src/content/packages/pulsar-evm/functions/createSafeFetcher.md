@@ -2,7 +2,7 @@
 
 > **createSafeFetcher**(`options?`): (`__namedParameters`) => `Promise`\<`void`\>
 
-Defined in: [trackers/safeTracker.ts:131](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L131)
+Defined in: [trackers/safeTracker.ts:147](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L147)
 
 Creates a fetcher for `initializePollingTracker` from `@tuwaio/pulsar-core` that checks a Safe multisig transaction once
 through the Safe Transaction Service API of `tx.chainId` ([SafeTransactionServiceUrls](/packages/pulsar-evm/variables/SafeTransactionServiceUrls.md)). `tx.txKey` is the
@@ -16,8 +16,10 @@ Requests: `GET <service>/multisig-transactions/<safeTxHash>/`, and while it is n
   transaction.
 - Still pending `pendingTimeoutMs` after `submissionDate` (one day by default): calls `onFailure` with the status
   and stops polling, keeping the transaction. Without a timeout (`null`) it keeps waiting.
-- The service returns 404: calls `onFailure()` without a response and stops polling, keeping the transaction.
-- An unsupported chain or another failed request throws, so the polling tracker counts it as a failed attempt.
+- The service returns 404 past `notFoundGraceMs`: calls `onFailure()` without a response and stops polling, keeping the
+  transaction. Within it, a 404 throws like a failed request.
+- An unsupported chain throws `FinalPollingError` from `@tuwaio/pulsar-core`, so the polling tracker fails at once.
+  Another failed request throws, so it counts as a failed attempt.
 
 ## Parameters
 

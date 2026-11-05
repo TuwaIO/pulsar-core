@@ -6,6 +6,7 @@
  */
 
 import {
+  FinalPollingError,
   initializePollingTracker,
   ITxTrackingStore,
   PollingFetcherParams,
@@ -254,6 +255,72 @@ describe('safeFetcher', () => {
 
     expect(pollingCallbacks.onFailure).toHaveBeenCalledWith();
     expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
+  });
+
+  test('a 404 inside the grace counts as a failed attempt: a new proposal is indexed with a delay', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetcher = createSafeFetcher({ notFoundGraceMs: 600_000 });
+      vi.mocked(fetch).mockResolvedValue({ ok: false, status: 404 } as Response);
+
+      await expect(fetcher({ tx: mockTx, ...pollingCallbacks })).rejects.toThrow(/does not know/);
+      expect(pollingCallbacks.onFailure).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(599_000);
+      await expect(fetcher({ tx: mockTx, ...pollingCallbacks })).rejects.toThrow(/does not know/);
+
+      await vi.advanceTimersByTimeAsync(2_000);
+      await fetcher({ tx: mockTx, ...pollingCallbacks });
+      expect(pollingCallbacks.onFailure).toHaveBeenCalledWith();
+      expect(pollingCallbacks.stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('one late 404 after the service knew the transaction starts its own grace', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetcher = createSafeFetcher({ notFoundGraceMs: 600_000 });
+      const pending = createMockSafeResponse({ isExecuted: false });
+      vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 404 } as Response);
+      await expect(fetcher({ tx: mockTx, ...pollingCallbacks })).rejects.toThrow(/does not know/);
+
+      vi.mocked(fetch)
+        .mockResolvedValueOnce({ ok: true, json: async () => pending } as Response)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ results: [] }) } as Response);
+      await fetcher({ tx: mockTx, ...pollingCallbacks });
+
+      await vi.advanceTimersByTimeAsync(3 * 24 * 60 * 60 * 1000);
+      vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 404 } as Response);
+      await expect(fetcher({ tx: mockTx, ...pollingCallbacks })).rejects.toThrow(/does not know/);
+      expect(pollingCallbacks.onFailure).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('a chain the service does not cover is final: no later check can change it', async () => {
+    await expect(safeFetcher({ tx: { ...mockTx, chainId: 424242 }, ...pollingCallbacks })).rejects.toBeInstanceOf(
+      FinalPollingError,
+    );
+  });
+
+  test('its own execution between the two requests is not a replacement', async () => {
+    const primaryResponse = createMockSafeResponse({ isExecuted: false });
+    const own = createMockSafeResponse({
+      isExecuted: true,
+      isSuccessful: true,
+      safeTxHash: mockTx.txKey.toUpperCase().replace('0X', '0x') as Hex,
+    });
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({ ok: true, json: async () => primaryResponse } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ results: [own] }) } as Response);
+
+    await safeFetcher({ tx: mockTx, ...pollingCallbacks });
+
+    expect(pollingCallbacks.onReplaced).not.toHaveBeenCalled();
+    expect(pollingCallbacks.stopPolling).not.toHaveBeenCalled();
   });
 
   test('should throw an error if the primary fetch fails', async () => {

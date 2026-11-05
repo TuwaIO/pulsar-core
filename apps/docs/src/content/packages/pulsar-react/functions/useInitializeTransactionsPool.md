@@ -8,9 +8,9 @@ Calls `initializeTransactionsPool` in an effect after the component mounts, so t
 were pending before a page reload start again. It runs on the client only, after the store has restored its state
 from `localStorage`.
 
-Use it once, in a component that stays mounted (a root layout or provider): every run starts new trackers. The
-effect runs again only when `initializeTransactionsPool` changes. In development, React Strict Mode runs effects
-twice, so pending transactions get two trackers there.
+Use it in a component that stays mounted (a root layout or provider). The effect runs again only when
+`initializeTransactionsPool` changes. A transaction already tracked is not tracked twice, so React Strict Mode, which
+runs effects twice in development, does no harm.
 
 ## Parameters
 

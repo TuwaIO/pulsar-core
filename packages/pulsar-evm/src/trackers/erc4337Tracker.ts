@@ -6,6 +6,7 @@
 import { normalizeError } from '@tuwaio/orbit-core';
 import { createBundlerRpcClient } from '@tuwaio/orbit-evm';
 import {
+  createAbandonCheck,
   createTxUpdater,
   EvmTransaction,
   initializePollingTracker,
@@ -220,19 +221,20 @@ export function erc4337Tracker<T extends Erc4337FetcherTx & Pick<Transaction, 'p
 export type Erc4337TrackerForStoreParams<T extends Transaction> = Pick<
   ITxTrackingStore<T>,
   'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'
-> & {
-  /** The transaction to track; `txKey` is the `userOpHash`. */
-  tx: T;
-  /** The wagmi config, used for the on-chain stage. Without it, the transaction succeeds as soon as it is bundled. */
-  config?: Config;
-} & TrackerCallbacks<T>;
+> &
+  Partial<Pick<ITxTrackingStore<T>, 'isTxTracked'>> & {
+    /** The transaction to track; `txKey` is the `userOpHash`. */
+    tx: T;
+    /** The wagmi config, used for the on-chain stage. Without it, the transaction succeeds as soon as it is bundled. */
+    config?: Config;
+  } & TrackerCallbacks<T>;
 
 /**
  * Tracks an ERC-4337 UserOperation of the Pulsar store in two stages and writes the results to the store:
  *
- * 1. Bundler: polls {@link erc4337Fetcher} every 2 s (up to 60 consecutive failed attempts). When the UserOperation
- *    is bundled, writes the bundle transaction `hash`. A reverted UserOperation, or 60 failed attempts, marks the
- *    transaction `Failed`.
+ * 1. Bundler: polls {@link erc4337Fetcher} every 2 s, and every minute after 60 consecutive failed attempts, as a bundler
+ *    that cannot be reached says nothing about the UserOperation. When the UserOperation is bundled, writes the bundle
+ *    transaction `hash`. Only a reverted UserOperation marks the transaction `Failed`.
  * 2. On-chain: runs {@link evmTracker} for the bundle transaction and writes the details, confirmations and the final
  *    `Success`, `Failed` or `Replaced` status. Without `config`, the transaction is marked `Success` as soon as it is
  *    bundled.
@@ -242,13 +244,14 @@ export type Erc4337TrackerForStoreParams<T extends Transaction> = Pick<
  *
  * @template T - The application transaction type.
  * @param params - The transaction, the wagmi config, the store members and the callbacks.
- * @returns A promise that resolves once stage 1 has started, or when stage 2 has finished if it started directly.
+ * @returns A promise that resolves once tracking has started, whichever stage it starts at.
  */
 export async function erc4337TrackerForStore<T extends Transaction>({
   tx,
   config,
   updateTxParams,
   transactionsPool,
+  isTxTracked,
   onSuccess,
   onError,
   onReplaced,
@@ -256,13 +259,17 @@ export async function erc4337TrackerForStore<T extends Transaction>({
   const updateTx = createTxUpdater({ tx, transactionsPool, updateTxParams });
 
   const runOnChainStage = (txHash: Hex) =>
-    trackOnChainStage({ tx, hash: txHash, config, updateTx, onSuccess, onError, onReplaced });
+    trackOnChainStage({ tx, hash: txHash, config, updateTx, isTxTracked, onSuccess, onError, onReplaced });
 
   const evmTx = tx as unknown as EvmTransaction;
 
   // Session restoration: if tx already has an on-chain hash, skip Stage 1 and resume Stage 2
   if (evmTx.hash) {
-    return runOnChainStage(evmTx.hash);
+    // Not awaited: whoever starts a tracker must not wait for a transaction that may stay pending for long
+    void runOnChainStage(evmTx.hash).catch((error: unknown) => {
+      console.error(`[Pulsar] A tracker stopped with an error: ${error instanceof Error ? error.name : 'Unknown'}.`);
+    });
+    return;
   }
 
   // Stage 1: Bundler Mempool Polling
@@ -272,6 +279,9 @@ export async function erc4337TrackerForStore<T extends Transaction>({
     // CRITICAL: Do NOT pass removeTxFromPool to prevent premature eviction from the store
     pollingInterval: 2000,
     maxRetries: 60,
+    // A bundler that cannot be reached says nothing about the UserOperation
+    retryForeverEveryMs: 60_000,
+    isAbandoned: createAbandonCheck(isTxTracked, tx.txKey),
     onSuccess: async (response) => {
       const hash = response.hash;
 

@@ -2,7 +2,7 @@
 
 > **PollingTrackerConfig**\<`R`, `T`\> = `object`
 
-Defined in: [utils/initializePollingTracker.ts:55](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L55)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:55](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L55)
 
 The configuration of `initializePollingTracker`.
 
@@ -26,7 +26,7 @@ The tracked transaction type; only `txKey` and `pending` are required.
 
 > **fetcher**: (`params`) => `Promise`\<`void`\>
 
-Defined in: [utils/initializePollingTracker.ts:63](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L63)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:63](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L63)
 
 Checks the transaction once per tick and reports through the callbacks it receives. It must call `stopPolling` on a
 terminal result. A thrown error counts as a failed attempt.
@@ -45,11 +45,28 @@ The transaction, `stopPolling` and the callbacks.
 
 ***
 
+### isAbandoned?
+
+> `optional` **isAbandoned?**: () => `boolean`
+
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:110](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L110)
+
+Asked before every check. `true` stops polling without any callback: nothing reads the result any more, for example
+as the transaction was removed from the pool.
+
+#### Returns
+
+`boolean`
+
+Whether to stop.
+
+***
+
 ### maxRetries?
 
 > `optional` **maxRetries?**: `number`
 
-Defined in: [utils/initializePollingTracker.ts:98](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L98)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:98](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L98)
 
 The number of consecutive failed attempts (thrown errors) after which polling stops. Defaults to 10.
 
@@ -59,7 +76,7 @@ The number of consecutive failed attempts (thrown errors) after which polling st
 
 > **onFailure**: (`response?`) => `void`
 
-Defined in: [utils/initializePollingTracker.ts:74](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L74)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:74](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L74)
 
 Called by the fetcher when the transaction failed, and without arguments by the tracker after `maxRetries`
 consecutive failed attempts.
@@ -82,7 +99,7 @@ The result reported by the fetcher, if any.
 
 > `optional` **onInitialize?**: () => `void`
 
-Defined in: [utils/initializePollingTracker.ts:76](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L76)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:76](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L76)
 
 Called once, synchronously, when polling starts.
 
@@ -96,7 +113,7 @@ Called once, synchronously, when polling starts.
 
 > `optional` **onIntervalTick?**: (`response`) => `void`
 
-Defined in: [utils/initializePollingTracker.ts:81](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L81)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:81](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L81)
 
 Called by the fetcher with intermediate results.
 
@@ -118,7 +135,7 @@ The intermediate result.
 
 > `optional` **onReplaced?**: (`response`) => `void`
 
-Defined in: [utils/initializePollingTracker.ts:86](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L86)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:86](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L86)
 
 Called by the fetcher when the transaction was replaced.
 
@@ -140,7 +157,7 @@ The result describing the replacement.
 
 > **onSuccess**: (`response`) => `void`
 
-Defined in: [utils/initializePollingTracker.ts:68](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L68)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:68](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L68)
 
 Called by the fetcher when the transaction succeeded.
 
@@ -162,7 +179,7 @@ The result reported by the fetcher.
 
 > `optional` **pollingInterval?**: `number` \| ((`elapsedMs`) => `number`)
 
-Defined in: [utils/initializePollingTracker.ts:96](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L96)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:96](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L96)
 
 The delay before each attempt, in milliseconds, or a function that returns it from the milliseconds elapsed since
 polling started, to poll less often over time. Defaults to 5000.
@@ -173,7 +190,7 @@ polling started, to poll less often over time. Defaults to 5000.
 
 > `optional` **removeTxFromPool?**: (`txKey`) => `void`
 
-Defined in: [utils/initializePollingTracker.ts:91](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L91)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:91](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L91)
 
 Called when polling stops, unless it was stopped with `withoutRemoving: true`.
 
@@ -191,10 +208,22 @@ The `txKey` of the tracked transaction.
 
 ***
 
+### retryForeverEveryMs?
+
+> `optional` **retryForeverEveryMs?**: `number`
+
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:104](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L104)
+
+With a delay here, `maxRetries` consecutive failed attempts no longer end tracking: the tracker keeps asking at this
+delay, in milliseconds, until an attempt succeeds. Not being able to ask says nothing about the transaction, so use
+it where a person would otherwise be told that a transaction failed because a service was down.
+
+***
+
 ### tx
 
 > **tx**: `T`
 
-Defined in: [utils/initializePollingTracker.ts:57](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L57)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:57](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L57)
 
 The transaction to track. Polling starts only if `pending` is `true`.

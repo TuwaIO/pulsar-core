@@ -2,7 +2,7 @@
 
 > **Eip5792TrackerConfig**\<`T`\> = `object`
 
-Defined in: [trackers/eip5792Tracker.ts:99](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L99)
+Defined in: [trackers/eip5792Tracker.ts:100](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L100)
 
 The configuration of [eip5792Tracker](/packages/pulsar-evm/functions/eip5792Tracker.md).
 
@@ -20,7 +20,7 @@ The tracked transaction type.
 
 > **config**: `Config`
 
-Defined in: [trackers/eip5792Tracker.ts:103](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L103)
+Defined in: [trackers/eip5792Tracker.ts:104](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L104)
 
 The wagmi config with the wallet that sent the batch.
 
@@ -30,7 +30,7 @@ The wagmi config with the wallet that sent the batch.
 
 > `optional` **maxRetries?**: `number`
 
-Defined in: [trackers/eip5792Tracker.ts:122](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L122)
+Defined in: [trackers/eip5792Tracker.ts:123](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L123)
 
 The number of consecutive failed attempts after which polling stops. Defaults to 60.
 
@@ -40,7 +40,7 @@ The number of consecutive failed attempts after which polling stops. Defaults to
 
 > **onFailure**: (`result?`) => `void`
 
-Defined in: [trackers/eip5792Tracker.ts:113](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L113)
+Defined in: [trackers/eip5792Tracker.ts:114](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L114)
 
 Called when the batch failed, and without arguments after `maxRetries` consecutive failed attempts.
 
@@ -62,7 +62,7 @@ The result with the failure `reason`, if any.
 
 > `optional` **onIntervalTick?**: (`result`) => `void`
 
-Defined in: [trackers/eip5792Tracker.ts:118](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L118)
+Defined in: [trackers/eip5792Tracker.ts:119](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L119)
 
 Called on every tick while the batch is pending.
 
@@ -84,7 +84,7 @@ The pending result.
 
 > **onSuccess**: (`result`) => `void`
 
-Defined in: [trackers/eip5792Tracker.ts:108](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L108)
+Defined in: [trackers/eip5792Tracker.ts:109](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L109)
 
 Called when the batch was executed.
 
@@ -106,7 +106,7 @@ The result; `hash` is the transaction that executed it.
 
 > `optional` **pollingInterval?**: `number`
 
-Defined in: [trackers/eip5792Tracker.ts:120](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L120)
+Defined in: [trackers/eip5792Tracker.ts:121](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L121)
 
 The delay before each attempt, in milliseconds. Defaults to 2000.
 
@@ -116,6 +116,6 @@ The delay before each attempt, in milliseconds. Defaults to 2000.
 
 > **tx**: `T`
 
-Defined in: [trackers/eip5792Tracker.ts:101](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L101)
+Defined in: [trackers/eip5792Tracker.ts:102](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/eip5792Tracker.ts#L102)
 
 The batch to track; `txKey` is the batch ID. Polling starts only if `pending` is `true`.

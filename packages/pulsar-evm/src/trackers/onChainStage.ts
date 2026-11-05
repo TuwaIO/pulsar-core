@@ -3,14 +3,13 @@
  * EIP-5792 call batches.
  */
 
-import { normalizeError } from '@tuwaio/orbit-core';
 import { TrackerCallbacks, Transaction, TransactionStatus, UpdatableTransactionFields } from '@tuwaio/pulsar-core';
 import { Config } from '@wagmi/core';
 import dayjs from 'dayjs';
 import { Hex } from 'viem';
-import { getBlock } from 'viem/actions';
 
 import { evmTracker } from './evmTracker';
+import { storeCallbacks, storeTrackerOptions } from './storeCallbacks';
 
 /**
  * Follows the transaction `hash` of a tracked transaction on-chain with {@link evmTracker} and writes the details,
@@ -24,6 +23,7 @@ import { evmTracker } from './evmTracker';
  * @param params.hash - The hash of the transaction that executed it.
  * @param params.config - The wagmi config; without it the transaction succeeds at once.
  * @param params.updateTx - The updater from `createTxUpdater` of `@tuwaio/pulsar-core`.
+ * @param params.isTxTracked - `isTxTracked` of the store, when it has one.
  * @returns A promise that resolves when the on-chain tracking has finished.
  */
 export async function trackOnChainStage<T extends Transaction>({
@@ -31,6 +31,7 @@ export async function trackOnChainStage<T extends Transaction>({
   hash,
   config,
   updateTx,
+  isTxTracked,
   onSuccess,
   onError,
   onReplaced,
@@ -39,6 +40,7 @@ export async function trackOnChainStage<T extends Transaction>({
   hash: Hex;
   config?: Config;
   updateTx: (fields: UpdatableTransactionFields) => T | undefined;
+  isTxTracked?: (txKey: string) => boolean;
 } & TrackerCallbacks<T>): Promise<void> {
   if (config) {
     return evmTracker({
@@ -48,64 +50,17 @@ export async function trackOnChainStage<T extends Transaction>({
         requiredConfirmations: tx.requiredConfirmations,
       },
       config,
-      onTxDetailsFetched: (txDetails) => {
-        updateTx({
-          to: txDetails.to ?? undefined,
-          input: txDetails.input,
-          value: txDetails.value?.toString(),
-          nonce: txDetails.nonce,
-          maxFeePerGas: txDetails.maxFeePerGas?.toString(),
-          maxPriorityFeePerGas: txDetails.maxPriorityFeePerGas?.toString(),
-        });
-      },
-      onConfirmationsUpdate: (confirmations) => {
-        updateTx({ confirmations });
-      },
-      onSuccess: async (_txDetails, receipt, client) => {
-        const block = await getBlock(client, { blockNumber: receipt.blockNumber });
-        const timestamp = Number(block.timestamp);
-        const isSuccess = receipt.status === 'success';
-
-        const updatedTx = updateTx({
-          status: isSuccess ? TransactionStatus.Success : TransactionStatus.Failed,
-          isError: !isSuccess,
-          pending: false,
-          hash,
-          finishedTimestamp: timestamp,
-        });
-
-        if (isSuccess && onSuccess && updatedTx) {
-          onSuccess(updatedTx);
-        }
-        if (!isSuccess && onError && updatedTx) {
-          onError(new Error('Transaction reverted on-chain.'), updatedTx);
-        }
-      },
-      onFailure: (error) => {
-        const updatedTx = updateTx({
-          status: TransactionStatus.Failed,
-          pending: false,
-          isError: true,
-          hash,
-          error: normalizeError(error),
-          finishedTimestamp: dayjs().unix(),
-        });
-
-        if (onError && updatedTx) {
-          onError(error, updatedTx);
-        }
-      },
-      onReplaced: (replacement) => {
-        const updatedTx = updateTx({
-          status: TransactionStatus.Replaced,
-          replacedTxHash: replacement.transaction.hash,
-          pending: false,
-        });
-
-        if (onReplaced && updatedTx) {
-          onReplaced(updatedTx, tx);
-        }
-      },
+      ...storeTrackerOptions(tx, isTxTracked),
+      ...storeCallbacks({
+        tx,
+        config,
+        updateTx,
+        revertMessage: 'Transaction reverted on-chain.',
+        resultFields: { hash },
+        onSuccess,
+        onError,
+        onReplaced,
+      }),
     });
   }
 

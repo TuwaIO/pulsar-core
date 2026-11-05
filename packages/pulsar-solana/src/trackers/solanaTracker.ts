@@ -7,6 +7,7 @@ import type { Signature, TransactionError } from '@solana/kit';
 import { normalizeError, OrbitAdapter } from '@tuwaio/orbit-core';
 import { createSolanaRPC, getCluster } from '@tuwaio/orbit-solana';
 import {
+  createAbandonCheck,
   createTxUpdater,
   initializePollingTracker,
   ITxTrackingStore,
@@ -256,8 +257,8 @@ export async function solanaFetcher({
 }
 
 /**
- * Tracks a Solana transaction of the Pulsar store with {@link solanaFetcher} (every second, up to 30 consecutive status
- * errors) and writes the results to the store: `confirmationStatus` (`processed`, then `confirmed`, usually within a
+ * Tracks a Solana transaction of the Pulsar store with {@link solanaFetcher} (every second, and every minute after 30
+ * consecutive status errors) and writes the results to the store: `confirmationStatus` (`processed`, then `confirmed`, usually within a
  * second of sending), `confirmations`, `slot`, `fee`, `instructions` and `recentBlockhash` while pending, then
  * `Success` with `confirmationStatus: 'finalized'` and `confirmations: 'MAX'`, or `Failed` with the normalized error,
  * and the local time as `finishedTimestamp`. The details (`fee`, `instructions`, `recentBlockhash`) are optional: when
@@ -268,8 +269,9 @@ export async function solanaFetcher({
  * `lastValidBlockHeight`: when the chain passes it without the transaction, it is marked `Failed` with an "expired"
  * error, within seconds instead of an hour.
  *
- * When tracking gives up (30 consecutive errors of `getSignatureStatuses` or `getBlockHeight`, or not finalized one
- * hour after `localTimestamp`), the transaction is marked `Failed` and stays in the pool. The callbacks receive the
+ * An RPC outage says nothing about the transaction, so errors of `getSignatureStatuses` or `getBlockHeight` never end
+ * tracking. When it is not finalized one hour after `localTimestamp`, long past any blockhash lifetime, the transaction is
+ * marked `Failed` and stays in the pool. The callbacks receive the
  * transaction with every update written by the tracker; `onError` receives the on-chain error, or an `Error` when the
  * transaction expired or tracking timed out.
  *
@@ -288,9 +290,10 @@ export async function solanaTrackerForStore<T extends Transaction>({
   onSuccess,
   onError,
   ...rest
-}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> & {
-  tx: T;
-} & TrackerCallbacks<T>): Promise<void> {
+}: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> &
+  Partial<Pick<ITxTrackingStore<T>, 'isTxTracked'>> & {
+    tx: T;
+  } & TrackerCallbacks<T>): Promise<void> {
   const updateTx = createTxUpdater({
     tx,
     transactionsPool: rest.transactionsPool,
@@ -310,7 +313,10 @@ export async function solanaTrackerForStore<T extends Transaction>({
     fetcher: solanaFetcher,
     // `removeTxFromPool` is not passed: failed transactions stay in the pool as `Failed`.
     pollingInterval: 1000, // Polling interval: 1 second, so `confirmed` shows up quickly
-    maxRetries: 30, // Max consecutive RPC errors: 30 (about 30 seconds of outage)
+    maxRetries: 30, // Consecutive RPC errors before it slows down: 30 (about 30 seconds of outage)
+    // An RPC outage says nothing about the transaction. The expired blockhash is what ends one that will never land.
+    retryForeverEveryMs: 60_000,
+    isAbandoned: createAbandonCheck(rest.isTxTracked, tx.txKey),
 
     // Writes the finalized transaction details.
     onSuccess: (response) => {

@@ -53,8 +53,8 @@ The adapter options.
 `number` \| `null`
 
 How long a Safe transaction may stay unexecuted, from when it was proposed,
-before the Safe tracker marks it `Failed`; `null` waits without a limit. Defaults to one day. As part of the adapter it
-also applies to trackers restarted after a page reload.
+before the Safe tracker marks it `Failed`; `null`, the default, waits without a limit. As part of the adapter it also
+applies to trackers restarted after a page reload.
 
 ## Returns
 

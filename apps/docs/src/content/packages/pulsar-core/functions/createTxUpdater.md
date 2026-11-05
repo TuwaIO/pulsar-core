@@ -2,7 +2,7 @@
 
 > **createTxUpdater**\<`T`\>(`params`): (`fields`) => `T` \| `undefined`
 
-Defined in: [utils/createTxUpdater.ts:31](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/createTxUpdater.ts#L31)
+Defined in: [packages/pulsar-core/src/utils/createTxUpdater.ts:32](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/createTxUpdater.ts#L32)
 
 Creates an updater for a store-connected tracker: it writes fields to the store with `updateTxParams` and returns the
 tracked transaction with every update applied so far.
@@ -30,8 +30,9 @@ The tracked transaction and the store members used by trackers.
 
 ## Returns
 
-A function that calls `updateTxParams(tx.txKey, fields)` and returns the updated transaction, or `undefined`
-when the transaction was not in the pool when tracking started. The snapshot is not mutated.
+A function that calls `updateTxParams(tx.txKey, fields)` and returns the updated transaction as the store
+holds it, which differs from `fields` when the store kept a final result. It returns `undefined` when the transaction
+was not in the pool when tracking started. The snapshot is not mutated.
 
 (`fields`) => `T` \| `undefined`
 

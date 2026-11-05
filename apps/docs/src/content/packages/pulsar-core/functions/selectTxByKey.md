@@ -2,7 +2,7 @@
 
 > **selectTxByKey**\<`T`\>(`transactionsPool`, `key`): `T` \| `undefined`
 
-Defined in: [store/transactionsSelectors.ts:38](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/transactionsSelectors.ts#L38)
+Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:38](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/transactionsSelectors.ts#L38)
 
 Returns the transaction stored under a `txKey`.
 

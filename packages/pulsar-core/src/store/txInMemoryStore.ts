@@ -6,12 +6,14 @@ import { Immer } from 'immer';
 import { createStore } from 'zustand/vanilla';
 
 import {
+  EvmTransaction,
   ITxInMemoryStore,
   ITxInMemoryStoreParameters,
   Transaction,
   TransactionPool,
   TransactionStatus,
 } from '../types';
+import { keepsItsResult } from '../utils/mergeTabPools';
 import { validateTransaction } from '../utils/transactionValidation';
 
 /**
@@ -50,28 +52,44 @@ const isTerminalStatus = (status?: TransactionStatus): boolean =>
   status === TransactionStatus.Success || status === TransactionStatus.Failed || status === TransactionStatus.Replaced;
 
 /**
- * Safely merges a transaction into the in-memory pool.
- *
- * The merge is intentionally conservative:
- * - existing terminal transactions are preserved
- * - non-terminal or missing entries can be replaced
+ * Safely merges a transaction into the in-memory pool:
+ * - a final result stays, except a `Failed` that the chain now answers otherwise, as it may be a server's time limit;
+ * - of a pending copy, a local record wins with its fields (the nonce and fees that speed-up and cancel need), and a remote
+ *   one only with more confirmations or a result;
+ * - a server's `Failed`, or its `Replaced` with no reason, does not replace a pending copy: only the tracker can tell then.
+ *   When the tracker finishes, its result arrives here through `syncWithLocalPool`.
  *
  * @template T The transaction type.
  * @param pool The target transaction pool.
  * @param tx The transaction to merge into the pool.
+ * @param source Where it comes from: the local pool or the remote history.
  * @returns `true` if the transaction was written to the pool; otherwise, `false`.
  */
-const mergeTransactionIntoPool = <T extends Transaction>(pool: TransactionPool<T>, tx: T): boolean => {
+const mergeTransactionIntoPool = <T extends Transaction>(
+  pool: TransactionPool<T>,
+  tx: T,
+  source: 'local' | 'remote',
+): boolean => {
   const existingTx = pool[tx.txKey];
 
   if (existingTx) {
     if (isTerminalStatus(existingTx.status)) {
-      return false;
+      if (keepsItsResult(existingTx.status, tx.status)) return false;
+      pool[tx.txKey] = { ...existingTx, ...tx, error: tx.error };
+      return true;
     }
 
     if (existingTx.pending) {
-      // If the incoming tx is terminal (Success/Failed/Replaced), it wins.
+      if (source === 'local') {
+        pool[tx.txKey] = { ...existingTx, ...tx };
+        return true;
+      }
+
       if (isTerminalStatus(tx.status)) {
+        const says = tx as unknown as EvmTransaction;
+        const provesNothing =
+          tx.status === TransactionStatus.Failed || (tx.status === TransactionStatus.Replaced && !says.replacedReason);
+        if (provesNothing) return false;
         pool[tx.txKey] = { ...existingTx, ...tx };
         return true;
       }
@@ -98,8 +116,10 @@ const mergeTransactionIntoPool = <T extends Transaction>(pool: TransactionPool<T
  * with the local pool of the persistent store. Nothing in it is persisted. Keep it in sync with the persistent store by
  * calling `syncWithLocalPool` from that store's `subscribe` listener.
  *
- * Merge rules: a transaction that is `Success`, `Failed` or `Replaced` in memory is never overwritten; a pending one
- * is overwritten only by a terminal transaction or by one with more confirmations; any other one is overwritten.
+ * Merge rules: a transaction that is `Success` or `Replaced` in memory is never overwritten, and a `Failed` one only by
+ * `Success` or `Replaced`, as a server's `Failed` may be its own time limit. A pending one is overwritten by a record of the
+ * local pool, and by a remote one with a result or more confirmations; a remote `Failed`, or a remote `Replaced` with no
+ * `replacedReason`, leaves it pending until its tracker answers. Any other one is overwritten.
  *
  * History pages are validated like `injectExternalPendingTxs` does: transactions whose title, description or payload
  * break the safety limits are skipped with a warning and are not passed to `onHistoryFetched`.
@@ -152,7 +172,7 @@ export function createTxInMemoryStore<T extends Transaction>({
         const pool = draft.transactionsPool as TransactionPool<T>;
 
         for (const remoteTx of validDocs) {
-          mergeTransactionIntoPool(pool, remoteTx);
+          mergeTransactionIntoPool(pool, remoteTx, 'remote');
         }
 
         draft.currentPage = response.page;
@@ -173,7 +193,7 @@ export function createTxInMemoryStore<T extends Transaction>({
         produce(state, (draft) => {
           const pool = draft.transactionsPool as TransactionPool<T>;
           for (const localTx of Object.values(localPool)) {
-            mergeTransactionIntoPool(pool, localTx);
+            mergeTransactionIntoPool(pool, localTx, 'local');
           }
         }),
       );

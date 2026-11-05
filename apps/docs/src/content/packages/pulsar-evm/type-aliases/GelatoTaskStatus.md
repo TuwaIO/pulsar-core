@@ -2,7 +2,7 @@
 
 > **GelatoTaskStatus** = [`GelatoBaseStatus`](/packages/pulsar-evm/type-aliases/GelatoBaseStatus.md) & `object` \| [`GelatoBaseStatus`](/packages/pulsar-evm/type-aliases/GelatoBaseStatus.md) & `object` \| [`GelatoBaseStatus`](/packages/pulsar-evm/type-aliases/GelatoBaseStatus.md) & `object` \| [`GelatoBaseStatus`](/packages/pulsar-evm/type-aliases/GelatoBaseStatus.md) & `object` \| [`GelatoBaseStatus`](/packages/pulsar-evm/type-aliases/GelatoBaseStatus.md) & `object`
 
-Defined in: [trackers/gelatoTracker.ts:63](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L63)
+Defined in: [trackers/gelatoTracker.ts:64](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/gelatoTracker.ts#L64)
 
 A Gelato task status response, discriminated by `status` ([GelatoStatusCode](/packages/pulsar-evm/enumerations/GelatoStatusCode.md)).
 

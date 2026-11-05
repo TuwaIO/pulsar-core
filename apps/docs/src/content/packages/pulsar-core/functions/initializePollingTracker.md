@@ -2,7 +2,7 @@
 
 > **initializePollingTracker**\<`R`, `T`\>(`config`): `void`
 
-Defined in: [utils/initializePollingTracker.ts:134](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L134)
+Defined in: [packages/pulsar-core/src/utils/initializePollingTracker.ts:172](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/utils/initializePollingTracker.ts#L172)
 
 Starts polling a transaction in the background and returns immediately. Does nothing if `tx.pending` is `false`.
 
@@ -10,9 +10,11 @@ Every `pollingInterval` milliseconds (the first attempt also waits; a function i
 `fetcher`. Polling continues until the
 fetcher calls `stopPolling`. A fetcher that throws counts as a failed attempt; after `maxRetries` consecutive failed
 attempts the tracker calls `onFailure()` without arguments, logs a warning and stops (which calls
-`removeTxFromPool`, if configured). A successful attempt resets the count.
+`removeTxFromPool`, if configured), or, with `retryForeverEveryMs`, keeps asking at that delay. A successful attempt
+resets the count. A [FinalPollingError](/packages/pulsar-core/classes/FinalPollingError.md) ends it at once. An error thrown by a callback is logged and is not a
+failed attempt, as the fetcher would then report the same result again on the next tick.
 
-Side effects: runs a timer loop until it is stopped; there is no way to cancel it from the outside.
+Side effects: runs a timer loop until it is stopped; from the outside only `isAbandoned` can end it.
 
 ## Type Parameters
 

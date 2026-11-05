@@ -2,13 +2,17 @@
 
 > **speedUpTxAction**\<`T`\>(`params`): `Promise`\<`` `0x${string}` ``\>
 
-Defined in: [utils/speedUpTxAction.ts:36](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/speedUpTxAction.ts#L36)
+Defined in: [utils/speedUpTxAction.ts:39](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/speedUpTxAction.ts#L39)
 
 Speeds up a pending EVM transaction: asks the connected wallet to resend it (same `to`, `value`, `input` and nonce)
-with both EIP-1559 fees raised by 15%. When it is mined, the tracker of the original transaction reports it as
-`Replaced`; the new transaction itself is not added to the pool.
+with both EIP-1559 fees 15% above the fees last sent for this nonce, and at least at the market estimate, since a
+transaction stuck below the base fee stays stuck with 15% more. When it is mined, the tracker of the original
+transaction reports it as `Replaced` with `replacedReason: 'repriced'`. In a `createPulsarStore` store a new record under
+the new hash, linked by `replaces`, then goes on to the result: do not add the returned hash to the pool yourself.
 
-Side effects: opens a wallet prompt and broadcasts a transaction.
+Side effects: reads the fees of the chain over RPC, opens a wallet prompt, broadcasts a transaction, and keeps the fees
+sent for the next replacement of this nonce, in memory and in `sessionStorage` under
+`pulsar-evm:replacementFees:<chain>:<sender>:<nonce>`.
 
 ## Type Parameters
 
@@ -46,8 +50,9 @@ The hash of the replacement transaction.
 ## Throws
 
 `Error` when the transaction is not an EVM transaction or lacks the required fields, and
-`Error('Failed to speed up transaction: …')` (with the original error as `cause`) when no account is connected or
-the wallet rejects or fails to send the transaction.
+`Error('Failed to speed up transaction: …')` (with the original error as `cause`) when no account is connected, the
+connected account did not send the transaction (from another account the same transfer would be sent a second time),
+or the wallet rejects or fails to send the transaction.
 
 ## Example
 

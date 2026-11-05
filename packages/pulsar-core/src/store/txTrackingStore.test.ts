@@ -1,5 +1,5 @@
 import { OrbitAdapter } from '@tuwaio/orbit-core';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createJSONStorage, StateStorage } from 'zustand/middleware';
 
 import {
@@ -640,4 +640,713 @@ describe('txTrackingStore pool limit', () => {
       expect.objectContaining({ txKey: 'a', status: TransactionStatus.Success }),
     );
   });
+});
+
+describe('final statuses and trackers', () => {
+  const pendingTx = (txKey = txHash) =>
+    ({
+      txKey,
+      adapter: OrbitAdapter.EVM,
+      tracker: TransactionTracker.Ethereum,
+      chainId: 1,
+      pending: true,
+      from: '0x0000000000000000000000000000000000000001',
+      type: 'test',
+      localTimestamp: Math.floor(Date.now() / 1000),
+      connectorType: 'evm:injected',
+    }) as unknown as EvmTransaction;
+
+  function createTestStore(adapter = createAdapter(), name = 'final-status-test') {
+    return {
+      adapter,
+      store: createPulsarStore<EvmTransaction>({
+        name,
+        adapter,
+        storage: createJSONStorage(() => createMemoryStorage()),
+      }),
+    };
+  }
+
+  it('keeps a final status against a late writer: a tracker that lost sight must not overwrite the result', async () => {
+    const { store } = createTestStore();
+    await store.getState().addTxToPool(pendingTx());
+
+    store.getState().updateTxParams(txHash, {
+      status: TransactionStatus.Replaced,
+      replacedTxHash: '0xabc',
+      replacedReason: 'repriced',
+      pending: false,
+      finishedTimestamp: 2_000_000_000,
+    });
+    store.getState().updateTxParams(txHash, {
+      status: TransactionStatus.Failed,
+      isError: true,
+      pending: true,
+      replacedTxHash: '0xdef',
+      replacedReason: 'unknown',
+      finishedTimestamp: 2_000_000_001,
+      error: { message: 'Timed out' } as never,
+    });
+
+    const tx = store.getState().transactionsPool[txHash] as EvmTransaction;
+    expect(tx.status).toBe(TransactionStatus.Replaced);
+    expect(tx.isError).toBeUndefined();
+    expect(tx.pending).toBe(false);
+    expect(tx.replacedTxHash).toBe('0xabc');
+    expect(tx.replacedReason).toBe('repriced');
+    expect(tx.finishedTimestamp).toBe(2_000_000_000);
+    expect(tx.error).toBeUndefined();
+  });
+
+  it('still writes the other fields of a finished transaction', async () => {
+    const { store } = createTestStore();
+    await store.getState().addTxToPool(pendingTx());
+
+    store.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false });
+    store.getState().updateTxParams(txHash, { isTrackedModalOpen: true, confirmations: 12 });
+
+    const tx = store.getState().transactionsPool[txHash] as EvmTransaction;
+    expect(tx.isTrackedModalOpen).toBe(true);
+    expect(tx.confirmations).toBe(12);
+    expect(tx.status).toBe(TransactionStatus.Success);
+  });
+
+  it('starts one tracker per transaction: a second one would share and then lose the watcher of the first', async () => {
+    const { store, adapter } = createTestStore();
+    await store.getState().addTxToPool(pendingTx());
+
+    await store.getState().initializeTransactionsPool();
+    await store.getState().initializeTransactionsPool();
+
+    expect(adapter.checkAndInitializeTrackerInStore).toHaveBeenCalledOnce();
+  });
+
+  it('starts the tracker again when the first one could not start', async () => {
+    const adapter = createAdapter({
+      checkAndInitializeTrackerInStore: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('wallet not ready'))
+        .mockResolvedValue(undefined),
+    });
+    const { store } = createTestStore(adapter);
+    await store.getState().addTxToPool(pendingTx());
+
+    await expect(store.getState().initializeTransactionsPool()).rejects.toThrow('wallet not ready');
+    await store.getState().initializeTransactionsPool();
+
+    expect(adapter.checkAndInitializeTrackerInStore).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not track twice a transaction injected while it is already tracked', async () => {
+    const { store, adapter } = createTestStore();
+    await store.getState().injectExternalPendingTxs([pendingTx('0xfeed')]);
+    await store.getState().initializeTransactionsPool();
+
+    expect(adapter.checkAndInitializeTrackerInStore).toHaveBeenCalledOnce();
+  });
+
+  function twoTabs() {
+    const listeners: ((event: { key: string | null }) => void)[] = [];
+    vi.stubGlobal('window', {
+      addEventListener: (type: string, listener: (event: { key: string | null }) => void) => {
+        if (type === 'storage') listeners.push(listener);
+      },
+    });
+    const memory = createMemoryStorage();
+    const adapter = createAdapter();
+    const make = () =>
+      createPulsarStore<EvmTransaction>({ name: 'tabs-test', adapter, storage: createJSONStorage(() => memory) });
+    const here = make();
+    const there = make();
+    const hear = async (key: string | null = 'tabs-test') => {
+      listeners[0]({ key });
+      await new Promise((resolve) => setImmediate(resolve));
+    };
+    return { here, there, adapter, hear };
+  }
+
+  describe('another tab of the same store', () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('learns what the other tab added, and tracks what is pending', async () => {
+      const { here, there, adapter, hear } = twoTabs();
+      await there.getState().addTxToPool(pendingTx());
+
+      await hear('another-key');
+      expect(here.getState().transactionsPool[txHash]).toBeUndefined();
+
+      await hear();
+      expect(here.getState().transactionsPool[txHash]).toBeDefined();
+      expect(adapter.checkAndInitializeTrackerInStore).toHaveBeenCalledOnce();
+    });
+
+    it('keeps its own pending transaction when a stale copy of the pool lacks it', async () => {
+      const { here, there, hear } = twoTabs();
+      await there.getState().addTxToPool(pendingTx('0xother'));
+      await here.getState().addTxToPool(pendingTx('0xmine'));
+
+      // The other tab saves its copy, written before it heard of 0xmine
+      there.getState().updateTxParams('0xother', { nonce: 5 });
+      await hear();
+
+      expect(here.getState().transactionsPool['0xmine']?.pending).toBe(true);
+    });
+
+    it('does not take a final status back to pending from a stale copy', async () => {
+      const { here, there, hear } = twoTabs();
+      await there.getState().addTxToPool(pendingTx());
+      await hear();
+      here.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false });
+
+      there.getState().updateTxParams(txHash, { nonce: 5 });
+      await hear();
+
+      expect(here.getState().transactionsPool[txHash]?.status).toBe(TransactionStatus.Success);
+    });
+
+    it('fires the finished event once for a result that came from the other tab', async () => {
+      const { here, there, hear } = twoTabs();
+      const listener = vi.fn();
+      here.getState().subscribeTxFinished(listener);
+      await there.getState().addTxToPool(pendingTx());
+      await hear();
+
+      there.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false });
+      await hear();
+      expect(listener).toHaveBeenCalledOnce();
+
+      // Its own tracker gets the same receipt a poll later
+      here.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false });
+      expect(listener).toHaveBeenCalledOnce();
+    });
+
+    it('runs the callbacks of the sending tab for a result another tab read first', async () => {
+      const { here, there, adapter, hear } = twoTabs();
+      const onSuccess = vi.fn();
+      await here.getState().executeTxAction({
+        actionFunction: async () => txHash,
+        params: { adapter: OrbitAdapter.EVM, desiredChainID: 1, title: 't', description: 'd', type: 'T' },
+        onSuccess,
+      });
+      const started = vi.mocked(adapter.checkAndInitializeTrackerInStore).mock.calls[0][0];
+      await there.persist.rehydrate();
+
+      there.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false });
+      await hear();
+      expect(onSuccess).toHaveBeenCalledOnce();
+
+      // Its own tracker reports the same receipt a moment later: the callback does not run twice
+      void started.onSuccess?.(started.tx);
+      expect(onSuccess).toHaveBeenCalledOnce();
+    });
+
+    it('hands the callbacks to the new record when another tab saw the speed-up first', async () => {
+      const { here, there, adapter, hear } = twoTabs();
+      const onSuccess = vi.fn();
+      await here.getState().executeTxAction({
+        actionFunction: async () => txHash,
+        params: { adapter: OrbitAdapter.EVM, desiredChainID: 1, title: 't', description: 'd', type: 'T' },
+        onSuccess,
+      });
+      await there.persist.rehydrate();
+
+      there.getState().updateTxParams(txHash, {
+        status: TransactionStatus.Replaced,
+        replacedTxHash: '0xnew' as never,
+        replacedReason: 'repriced',
+        pending: false,
+      });
+      await new Promise((resolve) => setImmediate(resolve));
+      await hear();
+
+      const next = vi
+        .mocked(adapter.checkAndInitializeTrackerInStore)
+        .mock.calls.filter((c) => c[0].tx.txKey === '0xnew');
+      const inThisTab = next[next.length - 1][0];
+      void inThisTab.onSuccess?.(inThisTab.tx);
+      expect(onSuccess).toHaveBeenCalledOnce();
+    });
+
+    it('a record removed here does not come back from the next save of the other tab', async () => {
+      const { here, there, hear } = twoTabs();
+      await there.getState().addTxToPool(pendingTx());
+      await hear();
+      here.getState().removeTxFromPool(txHash);
+
+      there.getState().updateTxParams(txHash, { nonce: 5 });
+      await hear();
+
+      expect(here.getState().transactionsPool[txHash]).toBeUndefined();
+    });
+
+    it('does not take the last added key of the other tab: this tab follows its own transaction', async () => {
+      const { here, there, hear } = twoTabs();
+      await here.getState().addTxToPool(pendingTx('0xmine'));
+      await there.getState().addTxToPool(pendingTx('0xother'));
+
+      await hear();
+
+      expect(here.getState().getLastTxKey()).toBe('0xmine');
+    });
+  });
+
+  it('works where window has no addEventListener', () => {
+    vi.stubGlobal('window', { localStorage: {} });
+    try {
+      expect(() => createTestStore(createAdapter(), 'no-listener-test')).not.toThrow();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('lets the chain correct a Failed, and says so again', async () => {
+    const onTxFinished = vi.fn();
+    const store = createStore({ onTxFinished });
+    await store.getState().addTxToPool(pendingTx());
+
+    store.getState().updateTxParams(txHash, {
+      status: TransactionStatus.Failed,
+      pending: false,
+      isError: true,
+      error: { message: 'Timed out' } as never,
+    });
+    store.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false, isError: false });
+
+    const tx = store.getState().transactionsPool[txHash] as EvmTransaction;
+    expect(tx.status).toBe(TransactionStatus.Success);
+    expect(tx.error).toBeUndefined();
+    expect(onTxFinished).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not copy a server Failed over a running tracker: the chain answers it', async () => {
+    const { store } = createTestStore();
+    await store.getState().addTxToPool(pendingTx());
+    await store.getState().initializeTransactionsPool();
+
+    await store
+      .getState()
+      .injectExternalPendingTxs([{ ...pendingTx(), pending: false, status: TransactionStatus.Failed }]);
+
+    expect(store.getState().transactionsPool[txHash]?.pending).toBe(true);
+    store.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false });
+    expect(store.getState().transactionsPool[txHash]?.status).toBe(TransactionStatus.Success);
+  });
+
+  it('copies the result of a server onto a transaction nothing tracks', async () => {
+    const { store } = createTestStore();
+    await store.getState().addTxToPool(pendingTx());
+
+    await store.getState().injectExternalPendingTxs([
+      {
+        ...pendingTx(),
+        pending: false,
+        status: TransactionStatus.Replaced,
+        replacedTxHash: '0xabc',
+        replacedReason: 'repriced',
+      } as EvmTransaction,
+    ]);
+
+    const tx = store.getState().transactionsPool[txHash] as EvmTransaction;
+    expect(tx.status).toBe(TransactionStatus.Replaced);
+    expect(tx.replacedTxHash).toBe('0xabc');
+    expect(tx.replacedReason).toBe('repriced');
+  });
+
+  it('tracks a key again once its transaction has finished: a Safe can propose the same hash again', async () => {
+    const { store, adapter } = createTestStore();
+    await store.getState().addTxToPool(pendingTx());
+    await store.getState().initializeTransactionsPool();
+    store.getState().updateTxParams(txHash, { status: TransactionStatus.Failed, pending: false });
+    expect(store.getState().isTxTracked(txHash)).toBe(false);
+
+    await store.getState().addTxToPool(pendingTx());
+    await store.getState().initializeTransactionsPool();
+
+    expect(adapter.checkAndInitializeTrackerInStore).toHaveBeenCalledTimes(2);
+  });
+
+  it('removing a transaction still deletes it from the pool, and only that stops its tracker', async () => {
+    const { store } = createTestStore();
+    await store.getState().addTxToPool(pendingTx());
+    await store.getState().initializeTransactionsPool();
+
+    store.getState().removeTxFromPool(txHash);
+
+    expect(store.getState().transactionsPool[txHash]).toBeUndefined();
+    expect(store.getState().isTxTracked(txHash)).toBe(false);
+  });
+
+  it('a replaced record older than the retention term is dropped like any other, and the new record stays', async () => {
+    const { store } = createTestStore();
+    await store.getState().addTxToPool({ ...pendingTx(), localTimestamp: 1_000_000_000 });
+
+    store.getState().updateTxParams(txHash, {
+      status: TransactionStatus.Replaced,
+      replacedTxHash: '0xnew',
+      replacedReason: 'repriced',
+      pending: false,
+    });
+
+    expect(store.getState().transactionsPool['0xnew']?.pending).toBe(true);
+  });
+
+  it('a finished transaction stays in the pool: finishing releases the tracker, never the record', async () => {
+    const { store } = createTestStore();
+    await store.getState().addTxToPool(pendingTx());
+    await store.getState().initializeTransactionsPool();
+
+    store.getState().updateTxParams(txHash, { status: TransactionStatus.Success, pending: false });
+
+    expect(store.getState().transactionsPool[txHash]?.status).toBe(TransactionStatus.Success);
+    expect(store.getState().isTxTracked(txHash)).toBe(false);
+  });
+
+  it('a removed transaction is no longer tracked, so its tracker can stop', async () => {
+    const { store } = createTestStore();
+    await store.getState().addTxToPool(pendingTx());
+    await store.getState().initializeTransactionsPool();
+    expect(store.getState().isTxTracked(txHash)).toBe(true);
+
+    store.getState().removeTxFromPool(txHash);
+
+    expect(store.getState().isTxTracked(txHash)).toBe(false);
+  });
+});
+
+describe('a speed-up continues in a new record', () => {
+  const OLD = '0xold';
+  const NEW = '0xnew';
+  const WALLET = '0x0000000000000000000000000000000000000001';
+
+  const original = (fields: Partial<EvmTransaction> = {}) =>
+    ({
+      txKey: OLD,
+      hash: OLD,
+      adapter: OrbitAdapter.EVM,
+      tracker: TransactionTracker.Ethereum,
+      chainId: 1,
+      pending: true,
+      from: WALLET,
+      sender: WALLET,
+      nonce: 7,
+      type: 'SWAP',
+      title: 'Swap',
+      description: 'Swap tokens',
+      localTimestamp: Math.floor(Date.now() / 1000),
+      connectorType: 'evm:metamask',
+      ...fields,
+    }) as unknown as EvmTransaction;
+
+  const spedUp = {
+    status: TransactionStatus.Replaced,
+    replacedTxHash: NEW,
+    replacedReason: 'repriced',
+    pending: false,
+  };
+
+  async function tracked(overrides: Partial<StoreConfig> = {}) {
+    const adapter = createAdapter();
+    const store = createStore({ adapter, ...overrides });
+    await store.getState().addTxToPool(original());
+    await store.getState().initializeTransactionsPool();
+    return { store, adapter };
+  }
+
+  it('keeps the old record as Replaced and adds the new one, pending, with the same meaning', async () => {
+    const { store } = await tracked();
+
+    store.getState().updateTxParams(OLD, spedUp as never);
+
+    const pool = store.getState().transactionsPool as Record<string, EvmTransaction>;
+    expect(pool[OLD].status).toBe(TransactionStatus.Replaced);
+    expect(pool[OLD].replacedTxHash).toBe(NEW);
+    expect(pool[NEW].pending).toBe(true);
+    expect(pool[NEW].status).toBeUndefined();
+    expect(pool[NEW].hash).toBe(NEW);
+    expect(pool[NEW].replaces).toBe(OLD);
+    expect(pool[NEW].title).toBe('Swap');
+    expect(pool[NEW].type).toBe('SWAP');
+    expect(pool[NEW].replacedTxHash).toBeUndefined();
+    expect(pool[NEW].replacedReason).toBeUndefined();
+    expect(pool[NEW].tracker).toBe(TransactionTracker.Ethereum);
+  });
+
+  it('tracks the new record to its own result', async () => {
+    const { store, adapter } = await tracked();
+
+    store.getState().updateTxParams(OLD, spedUp as never);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(adapter.checkAndInitializeTrackerInStore).toHaveBeenCalledTimes(2);
+    const started = vi.mocked(adapter.checkAndInitializeTrackerInStore).mock.lastCall?.[0];
+    expect(started?.tx.txKey).toBe(NEW);
+    expect(store.getState().isTxTracked(NEW)).toBe(true);
+    expect(store.getState().isTxTracked(OLD)).toBe(false);
+  });
+
+  it('hands the callbacks of executeTxAction on: onSuccess must fire when the operation really succeeded', async () => {
+    const adapter = createAdapter();
+    const store = createStore({ adapter });
+    const onSuccess = vi.fn();
+    const onError = vi.fn();
+    await store.getState().executeTxAction({
+      actionFunction: async () => OLD,
+      params: createValidParams(),
+      onSuccess,
+      onError,
+    });
+
+    store.getState().updateTxParams(OLD, spedUp as never);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const started = vi.mocked(adapter.checkAndInitializeTrackerInStore).mock.lastCall?.[0];
+    expect(started?.tx.txKey).toBe(NEW);
+    void started?.onSuccess?.(started.tx);
+    expect(onSuccess).toHaveBeenCalledOnce();
+    expect(onSuccess.mock.calls[0][0].txKey).toBe(NEW);
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('the replaced record still gets onReplaced, once', async () => {
+    const adapter = createAdapter();
+    const store = createStore({ adapter });
+    const onReplaced = vi.fn();
+    await store
+      .getState()
+      .executeTxAction({ actionFunction: async () => OLD, params: createValidParams(), onReplaced });
+    const first = vi.mocked(adapter.checkAndInitializeTrackerInStore).mock.calls[0][0];
+
+    store.getState().updateTxParams(OLD, spedUp as never);
+    void first.onReplaced?.(store.getState().transactionsPool[OLD], first.tx);
+    void first.onReplaced?.(store.getState().transactionsPool[OLD], first.tx);
+
+    expect(onReplaced).toHaveBeenCalledOnce();
+  });
+
+  it('a callback runs once though its result reaches this tab twice', async () => {
+    const adapter = createAdapter();
+    const store = createStore({ adapter });
+    const onSuccess = vi.fn();
+    await store.getState().executeTxAction({ actionFunction: async () => OLD, params: createValidParams(), onSuccess });
+    const started = vi.mocked(adapter.checkAndInitializeTrackerInStore).mock.calls[0][0];
+
+    await store
+      .getState()
+      .injectExternalPendingTxs([
+        { ...original(), pending: false, status: TransactionStatus.Success } as unknown as EvmTransaction,
+      ]);
+    void started.onSuccess?.(started.tx);
+
+    expect(onSuccess).toHaveBeenCalledOnce();
+  });
+
+  it('a throwing callback is logged and changes nothing', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const adapter = createAdapter();
+    const store = createStore({ adapter });
+    await store.getState().executeTxAction({
+      actionFunction: async () => OLD,
+      params: createValidParams(),
+      onSuccess: () => {
+        throw new Error('app bug');
+      },
+    });
+    const started = vi.mocked(adapter.checkAndInitializeTrackerInStore).mock.calls[0][0];
+
+    expect(() => started.onSuccess?.(started.tx)).not.toThrow();
+    expect(error).toHaveBeenCalled();
+    error.mockRestore();
+  });
+
+  it('a reason-less Replaced from a server does not end a running tracker: the chain says whether a speed-up follows', async () => {
+    const { store } = await tracked();
+
+    await store.getState().injectExternalPendingTxs([
+      {
+        ...original(),
+        pending: false,
+        status: TransactionStatus.Replaced,
+        replacedTxHash: NEW,
+      } as unknown as EvmTransaction,
+    ]);
+
+    expect(store.getState().transactionsPool[OLD]?.pending).toBe(true);
+    expect(store.getState().isTxTracked(OLD)).toBe(true);
+
+    store.getState().updateTxParams(OLD, spedUp as never);
+    expect(store.getState().transactionsPool[NEW]?.pending).toBe(true);
+  });
+
+  it('a record that never went to the backend has no row to continue: its successor is not synced', async () => {
+    const onRemoteCreate = vi.fn().mockResolvedValue(undefined);
+    const adapter = createAdapter();
+    const store = createStore({ adapter, onRemoteCreate });
+    setStoreState(store, { transactionsPool: { [OLD]: original() } });
+    await store.getState().initializeTransactionsPool();
+
+    store.getState().updateTxParams(OLD, spedUp as never);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(onRemoteCreate).not.toHaveBeenCalled();
+    expect((store.getState().transactionsPool[NEW] as EvmTransaction).syncStatus).toBeUndefined();
+  });
+
+  it('the new record says it is in a block, so speed-up and cancel are not offered on it', async () => {
+    const { store } = await tracked();
+
+    store.getState().updateTxParams(OLD, spedUp as never);
+
+    expect((store.getState().transactionsPool[NEW] as EvmTransaction).confirmations).toBe(1);
+  });
+
+  it('a reorganization that brings the original back reopens it: no two records replaced by each other', async () => {
+    const { store, adapter } = await tracked();
+    store.getState().updateTxParams(OLD, spedUp as never);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    store.getState().updateTxParams(NEW, {
+      status: TransactionStatus.Replaced,
+      replacedTxHash: OLD as never,
+      replacedReason: 'repriced',
+      pending: false,
+    });
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const pool = store.getState().transactionsPool as Record<string, EvmTransaction>;
+    expect(pool[OLD].pending).toBe(true);
+    expect(pool[OLD].status).toBeUndefined();
+    expect(pool[OLD].replacedTxHash).toBeUndefined();
+    expect(pool[NEW].status).toBe(TransactionStatus.Replaced);
+    expect(vi.mocked(adapter.checkAndInitializeTrackerInStore).mock.lastCall?.[0].tx.txKey).toBe(OLD);
+  });
+
+  it('a pending transaction from a remote history is normalized: strings would be refused when sent back', async () => {
+    const store = createStore({ adapter: createAdapter() });
+
+    await store
+      .getState()
+      .injectExternalPendingTxs([
+        { ...original(), localTimestamp: '1700000000', appInvoiceId: null } as unknown as EvmTransaction,
+      ]);
+
+    const tx = store.getState().transactionsPool[OLD] as unknown as Record<string, unknown>;
+    expect(tx.localTimestamp).toBe(1_700_000_000);
+    expect('appInvoiceId' in tx).toBe(false);
+  });
+
+  it.each([
+    ['a cancel: a transfer of nothing to oneself is not the operation', 'cancelled'],
+    ['another transaction in the same nonce', 'replaced'],
+    ['a spender that could not be found', 'unknown'],
+  ])('adds nothing for %s', async (_name, replacedReason) => {
+    const { store, adapter } = await tracked();
+
+    store.getState().updateTxParams(OLD, { ...spedUp, replacedReason } as never);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(store.getState().transactionsPool[NEW]).toBeUndefined();
+    expect(adapter.checkAndInitializeTrackerInStore).toHaveBeenCalledOnce();
+  });
+
+  it('adds nothing for a Safe transaction, whose replacement is a safeTxHash with no reason', async () => {
+    const { store } = await tracked();
+
+    store.getState().updateTxParams(OLD, { status: TransactionStatus.Replaced, replacedTxHash: NEW, pending: false });
+
+    expect(store.getState().transactionsPool[NEW]).toBeUndefined();
+  });
+
+  it('moves the last added key only if it pointed at the old record', async () => {
+    const first = await tracked();
+    first.store.getState().updateTxParams(OLD, spedUp as never);
+    expect(first.store.getState().getLastTxKey()).toBe(NEW);
+
+    const second = await tracked();
+    await second.store.getState().addTxToPool(original({ txKey: '0xlater', hash: '0xlater' }));
+    second.store.getState().updateTxParams(OLD, spedUp as never);
+    expect(second.store.getState().getLastTxKey()).toBe('0xlater');
+  });
+
+  it('moves the tracking modal to the new record', async () => {
+    const adapter = createAdapter();
+    const store = createStore({ adapter });
+    await store.getState().executeTxAction({
+      actionFunction: async () => OLD,
+      params: { ...createValidParams(), withTrackedModal: true } as never,
+    });
+    expect(store.getState().initialTx?.lastTxKey).toBe(OLD);
+
+    store.getState().updateTxParams(OLD, spedUp as never);
+
+    expect(store.getState().initialTx?.lastTxKey).toBe(NEW);
+    expect(store.getState().transactionsPool[NEW]?.isTrackedModalOpen).toBe(true);
+    expect(store.getState().transactionsPool[OLD]?.isTrackedModalOpen).toBe(false);
+  });
+
+  it('fires the finished event for each record: the replaced one now, the new one at its result', async () => {
+    const onTxFinished = vi.fn();
+    const { store } = await tracked({ onTxFinished });
+
+    store.getState().updateTxParams(OLD, spedUp as never);
+    expect(onTxFinished).toHaveBeenCalledOnce();
+    expect(onTxFinished.mock.calls[0][0].txKey).toBe(OLD);
+
+    store.getState().updateTxParams(NEW, { status: TransactionStatus.Success, pending: false });
+    expect(onTxFinished).toHaveBeenCalledTimes(2);
+    expect(onTxFinished.mock.calls[1][0].txKey).toBe(NEW);
+  });
+
+  it('sends the new record to the remote history too', async () => {
+    const onRemoteCreate = vi.fn().mockResolvedValue(undefined);
+    const { store } = await tracked({ onRemoteCreate });
+
+    store.getState().updateTxParams(OLD, spedUp as never);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(onRemoteCreate).toHaveBeenCalledWith(expect.objectContaining({ txKey: NEW, replaces: OLD }));
+  });
+
+  it('does not overwrite a record another tab has already added or finished', async () => {
+    const { store, adapter } = await tracked();
+    await store.getState().addTxToPool(original({ txKey: NEW, hash: NEW }));
+    store.getState().updateTxParams(NEW, { status: TransactionStatus.Success, pending: false });
+    const calls = vi.mocked(adapter.checkAndInitializeTrackerInStore).mock.calls.length;
+
+    store.getState().updateTxParams(OLD, spedUp as never);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(store.getState().transactionsPool[NEW]?.status).toBe(TransactionStatus.Success);
+    expect(vi.mocked(adapter.checkAndInitializeTrackerInStore).mock.calls.length).toBe(calls);
+  });
+
+  it('after a reload only the new record is tracked again', async () => {
+    const adapter = createAdapter();
+    const memory = createMemoryStorage();
+    const make = () =>
+      createPulsarStore<EvmTransaction>({ name: 'follow-reload', adapter, storage: createJSONStorage(() => memory) });
+    const before = make();
+    await before.getState().addTxToPool(original());
+    before.getState().updateTxParams(OLD, spedUp as never);
+    vi.mocked(adapter.checkAndInitializeTrackerInStore).mockClear();
+
+    const after = make();
+    await after.getState().initializeTransactionsPool();
+
+    expect(adapter.checkAndInitializeTrackerInStore).toHaveBeenCalledOnce();
+    expect(vi.mocked(adapter.checkAndInitializeTrackerInStore).mock.lastCall?.[0].tx.txKey).toBe(NEW);
+  });
+
+  it('a result a server reports as a speed-up continues the same way', async () => {
+    const { store } = await createStoreWithPending();
+    await store.getState().injectExternalPendingTxs([{ ...original(), ...spedUp } as unknown as EvmTransaction]);
+
+    expect(store.getState().transactionsPool[NEW]?.pending).toBe(true);
+    expect((store.getState().transactionsPool[NEW] as EvmTransaction).replaces).toBe(OLD);
+  });
+
+  async function createStoreWithPending() {
+    const store = createStore({ adapter: createAdapter() });
+    await store.getState().addTxToPool(original());
+    return { store };
+  }
 });
