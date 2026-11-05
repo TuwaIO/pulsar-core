@@ -78,8 +78,9 @@ export type EVMTrackerParams = {
     client: Client,
   ) => Promise<void>;
   /**
-   * Called and awaited when another transaction spent this one's nonce (speed-up, cancel or any other transaction), once
-   * that transaction has the required confirmations. An error it throws is logged.
+   * Called and awaited when another transaction spent this one's nonce (speed-up, cancel or any other transaction), as soon
+   * as it is seen in a block. To follow that transaction to its own confirmations, track its hash. An error it throws is
+   * logged.
    * @param replacement - viem's replacement data: the `reason` (`repriced`, `cancelled`, `replaced`) and the replacing
    * `transaction` with its receipt.
    */
@@ -140,10 +141,9 @@ export type EVMTrackerParams = {
  * 3. Waits for the receipt with `waitForTransactionReceipt`, for as long as `receiptAttempts` says. If viem reports a replacement,
  *    calls `onReplaced` and stops. After every attempt that ended without an answer, whatever the error, it reads the
  *    sender's nonce with {@link readNonceSlot} and reports a replacement it finds.
- * 4. If `requiredConfirmations` is above 1, polls `getTransactionConfirmations` every 5 s until it is reached, for the
- *    replacement too, reading the receipt again each time, so one a reorganization dropped goes back to waiting. With a
- *    finite `receiptAttempts` it stops after `receiptAttempts` times the `timeout`: `onFailure` for the transaction, and
- *    `onReplaced` for a replacement, whose nonce is spent anyway.
+ * 4. If `requiredConfirmations` is above 1, polls `getTransactionConfirmations` every 5 s until it is reached, reading the
+ *    receipt again each time, so one a reorganization dropped goes back to waiting. With a finite `receiptAttempts` it stops
+ *    after `receiptAttempts` times the `timeout` and calls `onFailure`.
  * 5. Awaits `onSuccess`, also for reverted transactions.
  *
  * Reading the nonce between attempts is what makes a replacement visible at all: viem remembers the transaction only
@@ -248,17 +248,16 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
     }
   };
 
-  /** Ends tracking with the replacement. Returns `false` when a reorganization took it back. */
-  const finishReplaced = async (replacement: ReplacementReturnType): Promise<boolean> => {
-    const confirmed = await waitForConfirmations(replacement.transactionReceipt);
-    if (confirmed.state === 'reorged') return false;
+  /**
+   * Ends tracking with the replacement, at once: the confirmations are for whatever follows the replacing transaction, and
+   * the record of a replacement must not wait for them, or a restart in that time would lose it.
+   */
+  const finishReplaced = async (replacement: ReplacementReturnType): Promise<void> => {
     try {
-      // Past the limit it stays a replacement: the nonce is spent, only the count did not arrive
-      await onReplaced({ ...replacement, transactionReceipt: confirmed.receipt });
+      await onReplaced(replacement);
     } catch (error) {
       console.error(`[evmTracker] onReplaced threw for ${tx.txKey} on chain ${tx.chainId}: ${describe(error)}.`);
     }
-    return true;
   };
 
   /** Ends tracking with the receipt. Returns `false` when a reorganization took it back. */
@@ -300,7 +299,10 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
       console.warn(`[evmTracker] Could not read the nonce of ${tx.txKey} on chain ${tx.chainId}: ${describe(error)}.`);
       return false;
     }
-    if (reading.state === 'replaced') return finishReplaced(reading.replacement);
+    if (reading.state === 'replaced') {
+      await finishReplaced(reading.replacement);
+      return true;
+    }
     if (reading.state === 'ours') {
       spentReadings = 0;
       // viem may not get this receipt: two trackers of one hash share its watcher, and the first one's timer stops it
@@ -403,7 +405,7 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
 
     // viem's callback only records it: a throwing application callback inside viem would look like an RPC error
     if (replacement) {
-      if (await finishReplaced(replacement)) return;
+      return finishReplaced(replacement);
     } else if (receipt) {
       if (await finishMined(receipt)) return;
     } else if (await readSlot()) {
@@ -421,8 +423,9 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
  * Runs {@link evmTracker} for a transaction of the Pulsar store and writes the results to it through
  * `updateTxParams`: the on-chain sender and the other details at start, `confirmations`, and finally `status`
  * `Success`/`Failed` with `pending: false` and the block timestamp, or `Replaced` with `replacedTxHash` and
- * `replacedReason`. A replacement that reverted is `Replaced` with `isError: true`. The transaction is never removed
- * from the pool.
+ * `replacedReason`. The transaction is never removed from the pool. After a speed-up (`repriced`) `createPulsarStore` adds a
+ * new record that tracks the new hash to its own result. Another transaction in the nonce that reverted is `Replaced` with
+ * `isError: true`.
  *
  * Time alone never means `Failed`: the transaction stays `pending` until it has a receipt or its nonce is spent, as in a
  * wallet. A reload reads the saved sender and nonce, so a replacement that landed meanwhile is found. A nonce spent by a

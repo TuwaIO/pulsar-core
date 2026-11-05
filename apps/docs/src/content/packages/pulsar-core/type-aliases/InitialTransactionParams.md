@@ -2,7 +2,7 @@
 
 > **InitialTransactionParams** = `Pick`\<[`BaseTransaction`](/packages/pulsar-core/type-aliases/BaseTransaction.md), `"description"` \| `"title"` \| `"type"` \| `"requiredConfirmations"` \| `"rpcUrl"` \| `"payload"`\> & `Pick`\<[`EvmTransaction`](/packages/pulsar-core/type-aliases/EvmTransaction.md), `"bundlerUrl"` \| `"pimlicoApiKey"`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:272](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L272)
+Defined in: [packages/pulsar-core/src/types.ts:280](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L280)
 
 The metadata of a transaction passed to `executeTxAction` (as `params`, without `actionFunction`) and kept in
 `initialTx`.

@@ -2,7 +2,7 @@
 
 > **createPulsarStore**\<`T`\>(`params`): `WithPersist`\<`StoreApi`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>\>, [`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>\>
 
-Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:68](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txTrackingStore.ts#L68)
+Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:72](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txTrackingStore.ts#L72)
 
 Creates the Pulsar transaction store: a vanilla Zustand store (use it from any framework, or bind it to React with
 `createBoundedUseStore`) that runs transactions through chain adapters and tracks them in the background.
@@ -15,7 +15,9 @@ restored synchronously when the store is created. Where
 `localStorage` is not available (server rendering), nothing is read or written and Zustand logs a warning on
 updates. Creating the store does not start any tracker: call `initializeTransactionsPool` once on the client.
 In the browser it listens to `storage` events and merges what another tab has saved, by transaction, into this tab's
-pool. Every transaction gets one tracker, however often `initializeTransactionsPool` runs.
+pool. Every transaction gets one tracker, however often `initializeTransactionsPool` runs. A speed-up made in the wallet or
+through `speedUpTxAction` continues in a new record: the old one ends as `Replaced`, and a new one under the new hash, linked
+by `replaces`, goes on to the result with the same callbacks.
 
 ## Type Parameters
 

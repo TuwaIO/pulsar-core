@@ -15,10 +15,9 @@ Steps (all RPC calls go through the wagmi client of `tx.chainId`):
 3. Waits for the receipt with `waitForTransactionReceipt`, for as long as `receiptAttempts` says. If viem reports a replacement,
    calls `onReplaced` and stops. After every attempt that ended without an answer, whatever the error, it reads the
    sender's nonce with [readNonceSlot](/packages/pulsar-evm/functions/readNonceSlot.md) and reports a replacement it finds.
-4. If `requiredConfirmations` is above 1, polls `getTransactionConfirmations` every 5 s until it is reached, for the
-   replacement too, reading the receipt again each time, so one a reorganization dropped goes back to waiting. With a
-   finite `receiptAttempts` it stops after `receiptAttempts` times the `timeout`: `onFailure` for the transaction, and
-   `onReplaced` for a replacement, whose nonce is spent anyway.
+4. If `requiredConfirmations` is above 1, polls `getTransactionConfirmations` every 5 s until it is reached, reading the
+   receipt again each time, so one a reorganization dropped goes back to waiting. With a finite `receiptAttempts` it stops
+   after `receiptAttempts` times the `timeout` and calls `onFailure`.
 5. Awaits `onSuccess`, also for reverted transactions.
 
 Reading the nonce between attempts is what makes a replacement visible at all: viem remembers the transaction only

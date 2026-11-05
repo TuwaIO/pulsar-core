@@ -2,7 +2,7 @@
 
 > **TxInMemoryPagination** = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:724](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L724)
+Defined in: [packages/pulsar-core/src/types.ts:733](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L733)
 
 The pagination state and action of the in-memory history store, as consumed by UI components.
 
@@ -12,7 +12,7 @@ The pagination state and action of the in-memory history store, as consumed by U
 
 > **currentPage**: `number`
 
-Defined in: [packages/pulsar-core/src/types.ts:732](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L732)
+Defined in: [packages/pulsar-core/src/types.ts:741](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L741)
 
 The last loaded page number.
 
@@ -22,7 +22,7 @@ The last loaded page number.
 
 > **fetchNextPage**: (`walletAddress`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:738](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L738)
+Defined in: [packages/pulsar-core/src/types.ts:747](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L747)
 
 Loads the page after `currentPage` and merges it into the pool. Does nothing while loading, when `hasMore` is
 `false`, or without `getHistory`.
@@ -45,7 +45,7 @@ The wallet whose history is loaded.
 
 > **hasMore**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:730](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L730)
+Defined in: [packages/pulsar-core/src/types.ts:739](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L739)
 
 `true` when the last loaded page reported a next page.
 
@@ -55,7 +55,7 @@ Defined in: [packages/pulsar-core/src/types.ts:730](https://github.com/TuwaIO/pu
 
 > **isError**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:728](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L728)
+Defined in: [packages/pulsar-core/src/types.ts:737](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L737)
 
 `true` when the last history request failed.
 
@@ -65,6 +65,6 @@ Defined in: [packages/pulsar-core/src/types.ts:728](https://github.com/TuwaIO/pu
 
 > **isLoading**: `boolean`
 
-Defined in: [packages/pulsar-core/src/types.ts:726](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L726)
+Defined in: [packages/pulsar-core/src/types.ts:735](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L735)
 
 `true` while a history page is loading.

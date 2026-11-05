@@ -2,13 +2,14 @@
 
 > **evmTrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/evmTracker.ts:440](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L440)
+Defined in: [trackers/evmTracker.ts:443](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L443)
 
 Runs [evmTracker](/packages/pulsar-evm/functions/evmTracker.md) for a transaction of the Pulsar store and writes the results to it through
 `updateTxParams`: the on-chain sender and the other details at start, `confirmations`, and finally `status`
 `Success`/`Failed` with `pending: false` and the block timestamp, or `Replaced` with `replacedTxHash` and
-`replacedReason`. A replacement that reverted is `Replaced` with `isError: true`. The transaction is never removed
-from the pool.
+`replacedReason`. The transaction is never removed from the pool. After a speed-up (`repriced`) `createPulsarStore` adds a
+new record that tracks the new hash to its own result. Another transaction in the nonce that reverted is `Replaced` with
+`isError: true`.
 
 Time alone never means `Failed`: the transaction stays `pending` until it has a receipt or its nonce is spent, as in a
 wallet. A reload reads the saved sender and nonce, so a replacement that landed meanwhile is found. A nonce spent by a

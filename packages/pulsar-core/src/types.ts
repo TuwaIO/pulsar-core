@@ -50,7 +50,10 @@ export enum TransactionStatus {
   Failed = 'Failed',
   /** The transaction was included on-chain and executed successfully. */
   Success = 'Success',
-  /** Another transaction with the same nonce was mined instead (a wallet speed-up or cancel). */
+  /**
+   * Another transaction with the same nonce was mined instead (a wallet speed-up or cancel). The record stays. After a
+   * speed-up the operation goes on in a new record under the new hash (`replaces`), which has its own result.
+   */
   Replaced = 'Replaced',
 }
 
@@ -190,6 +193,11 @@ export type EvmTransaction = BaseTransaction & {
    * on-chain trackers, not by the Safe tracker.
    */
   replacedReason?: 'repriced' | 'cancelled' | 'replaced' | 'unknown';
+  /**
+   * The hash of the transaction this record replaced, when it is a speed-up: the same operation under a new hash. The
+   * replaced record stays in the pool as `Replaced`, with this record's hash in `replacedTxHash`.
+   */
+  replaces?: `0x${string}`;
   /**
    * The sender as the chain reports it, read by the tracker. It owns `nonce`, so together they tell what became of the
    * transaction when a node no longer returns its hash. It differs from `from`, the wallet, for a relayed transaction.
@@ -344,7 +352,8 @@ export interface TrackerCallbacks<T extends Transaction> {
    */
   onError?: (error: unknown, tx?: T) => Promise<void> | void;
   /**
-   * Called when the transaction is replaced by another one with the same nonce.
+   * Called when the transaction is replaced by another one with the same nonce. After a speed-up (`replacedReason:
+   * 'repriced'`) the operation goes on: a new record tracks the new hash, and `onSuccess` or `onError` run for it.
    * @param newTx - The tracked transaction after the update (`status: Replaced`, `replacedTxHash` set).
    * @param oldTx - The transaction as tracking started.
    */

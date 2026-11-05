@@ -2,7 +2,7 @@
 
 > **TxFinishedListener**\<`T`\> = (`tx`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:368](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L368)
+Defined in: [packages/pulsar-core/src/types.ts:377](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L377)
 
 A listener of the "transaction finished" event: `onTxFinished` of `createPulsarStore` and `subscribeTxFinished` of
 the store.

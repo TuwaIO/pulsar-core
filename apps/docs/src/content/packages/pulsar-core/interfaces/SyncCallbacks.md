@@ -1,6 +1,6 @@
 # SyncCallbacks\<T\>
 
-Defined in: [packages/pulsar-core/src/types.ts:376](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L376)
+Defined in: [packages/pulsar-core/src/types.ts:385](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L385)
 
 Callbacks that synchronize the local pool with a remote backend (for example Quasar). Passed to
 `createPulsarStore`.
@@ -19,7 +19,7 @@ The application transaction type.
 
 > `optional` **onRemoteCreate?**: (`tx`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:385](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L385)
+Defined in: [packages/pulsar-core/src/types.ts:394](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L394)
 
 Called in the background with every new transaction, right after `addTxToPool` has written it to the pool with
 `syncStatus: 'pending-sync'` and listed its key in `unsyncedTxKeys`. It never delays or blocks tracking. Resolving

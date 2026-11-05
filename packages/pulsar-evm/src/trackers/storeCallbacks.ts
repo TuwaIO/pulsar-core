@@ -139,7 +139,8 @@ export function storeCallbacks<T extends Transaction>({
       else await callSafely('onError', () => onError?.(new Error(revertMessage), updatedTx));
     },
     onReplaced: async (replacement: ReplacementReturnType) => {
-      const reverted = replacement.transactionReceipt.status === 'reverted';
+      // A speed-up goes on in a new record, whose own result reports a revert. Nothing follows anything else.
+      const reverted = replacement.reason !== 'repriced' && replacement.transactionReceipt.status === 'reverted';
       const updatedTx = updateTx({
         ...resultFields,
         status: TransactionStatus.Replaced,

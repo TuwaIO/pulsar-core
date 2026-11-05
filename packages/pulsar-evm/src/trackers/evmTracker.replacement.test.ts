@@ -7,12 +7,21 @@
  * tracking; the windows of the default tracker are 0-60, 65-125, 135-195, 210-270, 290-350 and 375-435.
  */
 
-import { Transaction, TransactionStatus } from '@tuwaio/pulsar-core';
+import { OrbitAdapter } from '@tuwaio/orbit-core';
+import {
+  createPulsarStore,
+  EvmTransaction,
+  Transaction,
+  TransactionStatus,
+  TransactionTracker,
+} from '@tuwaio/pulsar-core';
 import { createConfig } from '@wagmi/core';
 import { Address, createClient, custom, Hex, numberToHex, WaitForTransactionReceiptTimeoutError } from 'viem';
 import { sepolia } from 'viem/chains';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { createJSONStorage } from 'zustand/middleware';
 
+import { pulsarEvmAdapter } from '../adapters/evmAdapter';
 import { evmTracker, evmTrackerForStore } from './evmTracker';
 
 const SENDER = '0xad9a211d227d2d9c1b5573f73cda0284b758ac0c' as Address;
@@ -630,26 +639,20 @@ describe('evmTracker on the real viem', () => {
       expect(tracker.onFailure).not.toHaveBeenCalled();
     });
 
-    test('a replacement waits for the required confirmations, like the transaction it replaced', async () => {
-      const onConfirmationsUpdate = vi.fn();
+    test('a replacement is reported at once: what follows it waits for the confirmations, not the report', async () => {
       const { config } = setup({ knownUntil: 40, replacementMinedAt: 48 });
       const onReplaced = vi.fn();
       void evmTracker({
-        tx: { txKey: OLD_HASH, chainId: sepolia.id, requiredConfirmations: 3 },
+        tx: { txKey: OLD_HASH, chainId: sepolia.id, requiredConfirmations: 12 },
         config,
         onTxDetailsFetched: vi.fn(),
         onSuccess: vi.fn(),
         onFailure: vi.fn(),
         onReplaced,
-        onConfirmationsUpdate,
       });
 
-      // Mined in the block of second 48: the third confirmation comes with the block of second 72
       await pass(60);
-      expect(onReplaced).not.toHaveBeenCalled();
 
-      await pass(30);
-      expect(onConfirmationsUpdate).toHaveBeenCalled();
       expect(onReplaced).toHaveBeenCalledOnce();
     });
   });
@@ -740,13 +743,29 @@ describe('evmTrackerForStore on the real viem', () => {
     expect(store.current().replacedReason).toBe('cancelled');
   });
 
-  test('a speed-up that reverted is an error', async () => {
-    const store = trackInStore({ knownUntil: 100, replacementMinedAt: 108, receiptStatus: 'reverted' });
+  test('another transaction in the nonce that reverted is an error, as nothing follows it', async () => {
+    const store = trackInStore({
+      knownUntil: 100,
+      replacementMinedAt: 108,
+      receiptStatus: 'reverted',
+      replacement: { to: SENDER, value: 5n },
+    });
 
     await pass(300);
 
     expect(store.current().status).toBe(TransactionStatus.Replaced);
     expect(store.current().isError).toBe(true);
+    expect(store.onError).toHaveBeenCalledOnce();
+  });
+
+  test('a speed-up that reverted is not an error of the replaced record: the new record reports it', async () => {
+    const store = trackInStore({ knownUntil: 100, replacementMinedAt: 108, receiptStatus: 'reverted' });
+
+    await pass(300);
+
+    expect(store.current().status).toBe(TransactionStatus.Replaced);
+    expect(store.current().isError).toBe(false);
+    expect(store.onError).not.toHaveBeenCalled();
   });
 
   test('a reload after the speed-up landed reports it, from the saved sender and nonce', async () => {
@@ -915,5 +934,103 @@ describe('evmTrackerForStore on the real viem', () => {
 
     expect(onSuccess).toHaveBeenCalledOnce();
     expect(pool[OLD_HASH].status).toBe(TransactionStatus.Success);
+  });
+});
+
+describe('a speed-up through the real store, adapter and viem', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  function storeOn(script: Script) {
+    const { config } = setup(script);
+    const saved = new Map<string, string>();
+    const store = createPulsarStore<EvmTransaction>({
+      name: 'real-viem',
+      // The block times of the scripted node are from 2023
+      retentionDays: null,
+      adapter: pulsarEvmAdapter<EvmTransaction>(config, [sepolia]),
+      storage: createJSONStorage(() => ({
+        getItem: (key) => saved.get(key) ?? null,
+        setItem: (key, value) => void saved.set(key, value),
+        removeItem: (key) => void saved.delete(key),
+      })),
+    });
+    return store;
+  }
+
+  const sent = {
+    txKey: OLD_HASH,
+    adapter: OrbitAdapter.EVM,
+    tracker: TransactionTracker.Ethereum,
+    chainId: sepolia.id,
+    from: SENDER,
+    type: 'REFUND',
+    title: 'Refund',
+    localTimestamp: 1_700_000_000,
+    connectorType: 'evm:metamask',
+  } as unknown as EvmTransaction;
+
+  test('the old record ends as Replaced, and the new one goes on to its own result', async () => {
+    const store = storeOn({ knownUntil: 120, replacementMinedAt: 132 });
+    await store.getState().addTxToPool(sent);
+    await store.getState().initializeTransactionsPool();
+
+    await pass(300);
+
+    const pool = store.getState().transactionsPool as Record<string, EvmTransaction>;
+    expect(pool[OLD_HASH].status).toBe(TransactionStatus.Replaced);
+    expect(pool[OLD_HASH].replacedTxHash).toBe(NEW_HASH);
+    expect(pool[NEW_HASH].status).toBe(TransactionStatus.Success);
+    expect(pool[NEW_HASH].replaces).toBe(OLD_HASH);
+    expect(pool[NEW_HASH].title).toBe('Refund');
+    expect(pool[NEW_HASH].pending).toBe(false);
+  });
+
+  test('a speed-up that reverted ends the new record as Failed', async () => {
+    const store = storeOn({ knownUntil: 120, replacementMinedAt: 132, receiptStatus: 'reverted' });
+    await store.getState().addTxToPool(sent);
+    await store.getState().initializeTransactionsPool();
+
+    await pass(300);
+
+    const pool = store.getState().transactionsPool as Record<string, EvmTransaction>;
+    expect(pool[OLD_HASH].status).toBe(TransactionStatus.Replaced);
+    expect(pool[NEW_HASH].status).toBe(TransactionStatus.Failed);
+    expect(pool[NEW_HASH].isError).toBe(true);
+  });
+
+  test('the new record waits for the confirmations the operation asked for', async () => {
+    const store = storeOn({ knownUntil: 120, replacementMinedAt: 132 });
+    await store.getState().addTxToPool({ ...sent, requiredConfirmations: 3 });
+    await store.getState().initializeTransactionsPool();
+
+    // Mined at 132 s, its third confirmation is the block of second 156
+    await pass(145);
+    const pool = () => store.getState().transactionsPool as Record<string, EvmTransaction>;
+    expect(pool()[OLD_HASH].status).toBe(TransactionStatus.Replaced);
+    expect(pool()[NEW_HASH].pending).toBe(true);
+
+    await pass(100);
+    expect(pool()[NEW_HASH].status).toBe(TransactionStatus.Success);
+  });
+
+  test('a cancel adds no record', async () => {
+    const store = storeOn({ knownUntil: 120, replacementMinedAt: 132, replacement: { to: SENDER, value: 0n } });
+    await store.getState().addTxToPool(sent);
+    await store.getState().initializeTransactionsPool();
+
+    await pass(300);
+
+    const pool = store.getState().transactionsPool as Record<string, EvmTransaction>;
+    expect(pool[OLD_HASH].replacedReason).toBe('cancelled');
+    expect(pool[NEW_HASH]).toBeUndefined();
   });
 });

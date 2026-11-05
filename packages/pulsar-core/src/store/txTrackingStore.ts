@@ -13,9 +13,11 @@ import {
   EvmTransaction,
   ITxTrackingStore,
   PulsarAdapter,
+  TrackerCallbacks,
   Transaction,
   TransactionPool,
   TransactionStatus,
+  TransactionTracker,
 } from '../types';
 import { mergeTabPools } from '../utils/mergeTabPools';
 import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
@@ -35,7 +37,9 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  * `localStorage` is not available (server rendering), nothing is read or written and Zustand logs a warning on
  * updates. Creating the store does not start any tracker: call `initializeTransactionsPool` once on the client.
  * In the browser it listens to `storage` events and merges what another tab has saved, by transaction, into this tab's
- * pool. Every transaction gets one tracker, however often `initializeTransactionsPool` runs.
+ * pool. Every transaction gets one tracker, however often `initializeTransactionsPool` runs. A speed-up made in the wallet or
+ * through `speedUpTxAction` continues in a new record: the old one ends as `Replaced`, and a new one under the new hash, linked
+ * by `replaces`, goes on to the result with the same callbacks.
  *
  * @template T - The application transaction type.
  * @param params - The adapters, the store options and the options of Zustand's `persist` middleware.
@@ -94,6 +98,65 @@ export function createPulsarStore<T extends Transaction>({
     }
   };
 
+  // What executeTxAction was given, in memory as functions cannot be saved: a speed-up hands it on to the new record
+  const trackerCallbacks = new Map<string, TrackerCallbacks<T>>();
+
+  /**
+   * A speed-up is the same operation under a new hash: the old record ends as `Replaced`, and a new record goes on to the
+   * result, linked by `replaces`. Only for `repriced`: a cancel or another transaction in the nonce is not this operation,
+   * and "Success" on a transfer of nothing to oneself would be false.
+   */
+  const followSpeedUp = (replaced: T) => {
+    const { replacedTxHash, replacedReason } = replaced as unknown as EvmTransaction;
+    if (replaced.status !== TransactionStatus.Replaced || replacedReason !== 'repriced' || !replacedTxHash) return;
+
+    const callbacks = trackerCallbacks.get(replaced.txKey);
+    trackerCallbacks.delete(replaced.txKey);
+    const before = store.getState();
+    // Another tab or a remote history may have added it, with a result this one must not overwrite
+    if (before.transactionsPool[replacedTxHash]) return;
+
+    const next = {
+      ...replaced,
+      txKey: replacedTxHash,
+      hash: replacedTxHash,
+      tracker: TransactionTracker.Ethereum,
+      replaces: replaced.txKey,
+    } as unknown as T & Partial<EvmTransaction>;
+    for (const field of ['status', 'isError', 'error', 'finishedTimestamp', 'confirmations', 'syncStatus'] as const) {
+      delete next[field as keyof typeof next];
+    }
+    delete next.replacedTxHash;
+    delete next.replacedReason;
+
+    void before.addTxToPool(next).catch((error: unknown) => {
+      console.error('[Pulsar] Could not add the transaction that replaced another:', error);
+    });
+    store.setState(
+      produce(store.getState(), (draft) => {
+        // Whatever followed the old record follows the new one, unless a later transaction has taken over
+        if (before.lastAddedTxKey !== replaced.txKey) draft.lastAddedTxKey = before.lastAddedTxKey;
+        if (draft.initialTx?.lastTxKey === replaced.txKey) draft.initialTx.lastTxKey = replacedTxHash;
+        const old = draft.transactionsPool[replaced.txKey];
+        if (old) old.isTrackedModalOpen = false;
+      }),
+    );
+
+    if (callbacks) trackerCallbacks.set(replacedTxHash, callbacks);
+    const tx = store.getState().transactionsPool[replacedTxHash];
+    if (!tx) return;
+    void startTracker(replacedTxHash, () =>
+      selectAdapterByKey({ adapterKey: tx.adapter, adapter })?.checkAndInitializeTrackerInStore({
+        tx,
+        gelatoApiKey,
+        ...callbacks,
+        ...store.getState(),
+      }),
+    ).catch((error: unknown) => {
+      console.error('[Pulsar] Could not track the transaction that replaced another:', error);
+    });
+  };
+
   const store = createStore<ITxTrackingStore<T>>()(
     persist(
       (set, get) => ({
@@ -104,10 +167,13 @@ export function createPulsarStore<T extends Transaction>({
           onRemoteCreate,
           onTxFinished: (tx) => {
             trackedTxKeys.delete(tx.txKey);
+            followSpeedUp(tx);
+            trackerCallbacks.delete(tx.txKey);
             txFinished.notify(tx);
           },
           onTxRemoved: (txKey) => {
             trackedTxKeys.delete(txKey);
+            trackerCallbacks.delete(txKey);
           },
         })(set, get),
 
@@ -204,7 +270,11 @@ export function createPulsarStore<T extends Transaction>({
           for (const txKey of finishedTxKeys) {
             trackedTxKeys.delete(txKey);
             const finishedTx = get().transactionsPool[txKey];
-            if (finishedTx) txFinished.notify(finishedTx);
+            if (finishedTx) {
+              followSpeedUp(finishedTx);
+              trackerCallbacks.delete(txKey);
+              txFinished.notify(finishedTx);
+            }
           }
 
           // 2. Asynchronously start trackers for the newly injected pending transactions
@@ -356,6 +426,7 @@ export function createPulsarStore<T extends Transaction>({
 
             // Step 8: Initialize the background tracker for the transaction.
             const tx = get().transactionsPool[finalTxKey];
+            trackerCallbacks.set(finalTxKey, { onSuccess, onError, onReplaced });
             await startTracker(finalTxKey, () =>
               foundAdapter.checkAndInitializeTrackerInStore({
                 tx,

@@ -2,7 +2,7 @@
 
 > **StarknetTransaction** = [`BaseTransaction`](/packages/pulsar-core/type-aliases/BaseTransaction.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:247](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L247)
+Defined in: [packages/pulsar-core/src/types.ts:255](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L255)
 
 A Starknet transaction. Reserved for a Starknet adapter; Pulsar does not ship one.
 

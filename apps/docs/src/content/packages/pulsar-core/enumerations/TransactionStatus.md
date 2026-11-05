@@ -20,9 +20,10 @@ The transaction reverted, was rejected, or tracking failed (for example, it was 
 
 > **Replaced**: `"Replaced"`
 
-Defined in: [packages/pulsar-core/src/types.ts:54](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L54)
+Defined in: [packages/pulsar-core/src/types.ts:57](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L57)
 
-Another transaction with the same nonce was mined instead (a wallet speed-up or cancel).
+Another transaction with the same nonce was mined instead (a wallet speed-up or cancel). The record stays. After a
+speed-up the operation goes on in a new record under the new hash (`replaces`), which has its own result.
 
 ***
 
