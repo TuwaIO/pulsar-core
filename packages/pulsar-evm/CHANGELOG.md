@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.13.0...pulsar-evm-v0.13.1) (2026-11-06)
+
+
+### Bug Fixes
+
+* **pulsar-evm:** a spent nonce is found from the sender's count, not by reading every block ([#106](https://github.com/TuwaIO/pulsar-core/issues/106)) ([8fb403a](https://github.com/TuwaIO/pulsar-core/commit/8fb403af95d7222d1007e99ed4dc3c48e4e92452))
+
 ## [0.13.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.12.0...pulsar-evm-v0.13.0) (2026-11-06)
 
 
