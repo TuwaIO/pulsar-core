@@ -36,3 +36,13 @@ The newest block read.
 Defined in: [utils/readNonceSlot.ts:71](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L71)
 
 The oldest block read.
+
+***
+
+### spentIn?
+
+> `optional` **spentIn?**: `bigint`
+
+Defined in: [utils/readNonceSlot.ts:75](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L75)
+
+The block whose count shows the nonce spent, when the node has old state: the only block that needs reading.
