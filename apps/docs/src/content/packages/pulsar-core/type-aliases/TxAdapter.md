@@ -2,7 +2,7 @@
 
 > **TxAdapter**\<`T`\> = `Pick`\<`BaseAdapter`, `"getExplorerUrl"`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:456](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L456)
+Defined in: [packages/pulsar-core/src/types.ts:451](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L451)
 
 The contract a chain adapter implements to plug into the Pulsar store. `@tuwaio/pulsar-evm` and
 `@tuwaio/pulsar-solana` provide implementations.

@@ -2,7 +2,7 @@
 
 > **pulsarSolanaAdapter**\<`T`\>(`config`): [`TxAdapter`](/packages/pulsar-core/type-aliases/TxAdapter.md)\<`T`\>
 
-Defined in: [adapters/solanaAdapter.ts:69](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/adapters/solanaAdapter.ts#L69)
+Defined in: [adapters/solanaAdapter.ts:68](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/adapters/solanaAdapter.ts#L68)
 
 Creates the Solana adapter for `createPulsarStore` from `@tuwaio/pulsar-core`. Pass it alone or in the adapter array.
 
@@ -21,7 +21,7 @@ matching Wallet Standard wallet with `getConnectedSolanaConnector` from `@tuwaio
 - `getExplorerUrl` and `getExplorerTxUrl` build Solana Explorer links with `getSolanaExplorerLink` from
   `@tuwaio/orbit-solana`.
 - `retryTxAction` closes the modal and runs `executeTxAction` again with `tx.actionFunction({ client, ...tx.payload })`,
-  where `client` is a cached RPC client for `tx.rpcUrl` or the cluster of `desiredChainID`. It throws when no wallet
+  where `client` is a cached RPC client for the URL of the cluster of `desiredChainID` in `rpcUrls`, or its public endpoint. It throws when no wallet
   is connected or `executeTxAction` is missing.
 
 There is no `cancelTxAction` or `speedUpTxAction` for Solana.

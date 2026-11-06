@@ -583,8 +583,16 @@ export function createPulsarStore<T extends Transaction>({
                 initialTx: currentState.initialTx,
               };
           const expired = expiredTransactionKeys(merged.transactionsPool ?? {}, retentionDays);
-          if (expired.length === 0) return merged;
           const transactionsPool = { ...merged.transactionsPool };
+          // What older versions saved with a record and nothing reads any more: an endpoint or a key left in `localStorage` for good
+          for (const [key, tx] of Object.entries(transactionsPool)) {
+            if ('rpcUrl' in tx || 'gelatoApiKey' in tx) {
+              const kept = { ...tx } as T & { rpcUrl?: string; gelatoApiKey?: string };
+              delete kept.rpcUrl;
+              delete kept.gelatoApiKey;
+              transactionsPool[key] = kept as unknown as (typeof transactionsPool)[string];
+            }
+          }
           const unsyncedTxKeys = merged.unsyncedTxKeys ? { ...merged.unsyncedTxKeys } : merged.unsyncedTxKeys;
           for (const key of expired) {
             delete transactionsPool[key];

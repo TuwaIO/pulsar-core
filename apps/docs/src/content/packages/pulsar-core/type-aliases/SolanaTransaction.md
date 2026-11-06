@@ -2,7 +2,7 @@
 
 > **SolanaTransaction** = [`BaseTransaction`](/packages/pulsar-core/type-aliases/BaseTransaction.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:221](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L221)
+Defined in: [packages/pulsar-core/src/types.ts:216](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L216)
 
 A Solana transaction. The Solana tracker fills the on-chain fields once the transaction is found.
 

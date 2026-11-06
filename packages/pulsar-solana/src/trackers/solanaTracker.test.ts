@@ -62,7 +62,6 @@ describe('solanaTrackerForStore', () => {
     mockTx = {
       adapter: OrbitAdapter.SOLANA,
       txKey: 'mockedTxKey',
-      rpcUrl: 'https://api.mainnet-beta.solana.com',
       localTimestamp: dayjs().unix(),
       pending: true,
       from: 'mockAddress',
@@ -94,8 +93,24 @@ describe('solanaTrackerForStore', () => {
     expect(initializePollingTracker).toHaveBeenCalled();
     const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
     expect(config.tx).toBe(mockTx);
-    expect(config.pollingInterval).toBe(1000);
     expect(config.maxRetries).toBe(30);
+  });
+
+  // Every second while it can still land, so `confirmed` shows as fast as it did; an old one need not cost 3600 calls an hour
+  test('reads every second for two minutes after sending, then every 15 seconds', async () => {
+    await solanaTrackerForStore(mockParams);
+    const fresh = vi.mocked(initializePollingTracker).mock.calls[0][0].pollingInterval as () => number;
+    expect(fresh()).toBe(1000);
+    vi.mocked(initializePollingTracker).mockClear();
+    await solanaTrackerForStore({ ...mockParams, tx: { ...mockTx, localTimestamp: dayjs().unix() - 121 } });
+    const old = vi.mocked(initializePollingTracker).mock.calls[0][0].pollingInterval as () => number;
+    expect(old()).toBe(15_000);
+  });
+
+  test('reads through the endpoint it is given, and writes it to no record', async () => {
+    await solanaTrackerForStore({ ...mockParams, rpcUrl: 'https://rpc.example/key' });
+    expect(vi.mocked(initializePollingTracker).mock.calls[0][0].tx).toMatchObject({ rpcUrl: 'https://rpc.example/key' });
+    for (const call of vi.mocked(mockParams.updateTxParams).mock.calls) expect(call[1]).not.toHaveProperty('rpcUrl');
   });
 
   test('should call updateTxParams with SUCCESS on onSuccess callback', () => {

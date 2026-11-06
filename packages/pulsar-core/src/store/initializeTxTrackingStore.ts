@@ -20,16 +20,16 @@ import { isFinishedStatus } from '../utils/txFinished';
 
 /**
  * Returns a copy of a transaction without the API keys that the client needs to resume tracking but a backend must
- * not receive (`pimlicoApiKey`; `gelatoApiKey` on a record an older version saved), and `rpcUrl`, which can hold one.
+ * not receive (`pimlicoApiKey`; `gelatoApiKey` and `rpcUrl` on a record an older version saved).
  *
  * @param tx - The transaction.
  * @returns A shallow copy without the API keys.
  */
 function omitClientSecrets<T extends Transaction>(tx: T): T {
-  const remoteTx: T & { pimlicoApiKey?: string; gelatoApiKey?: string } = { ...tx };
+  const remoteTx: T & { pimlicoApiKey?: string; gelatoApiKey?: string; rpcUrl?: string } = { ...tx };
   delete remoteTx.pimlicoApiKey;
   delete remoteTx.gelatoApiKey;
-  // Can hold a key. A backend tracks through its own settings: Quasar stores none, and the record keeps it for this client
+  // On a record an older version saved: an endpoint can hold a key
   delete remoteTx.rpcUrl;
   return remoteTx;
 }

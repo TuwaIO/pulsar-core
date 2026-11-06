@@ -156,17 +156,6 @@ writes the number of owner confirmations the Safe needs to execute it (its thres
 
 ***
 
-### rpcUrl?
-
-> `optional` **rpcUrl?**: `string`
-
-Defined in: [packages/pulsar-core/src/types.ts:146](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L146)
-
-RPC endpoint used by the Solana tracker, also after a page reload. Without it, the tracker uses the public
-endpoint of the cluster in `chainId`.
-
-***
-
 ### status?
 
 > `optional` **status?**: [`TransactionStatus`](/packages/pulsar-core/enumerations/TransactionStatus.md)
@@ -181,7 +170,7 @@ The terminal status, set together with `pending: false`.
 
 > `optional` **syncStatus?**: `"synced"` \| `"pending-sync"`
 
-Defined in: [packages/pulsar-core/src/types.ts:152](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L152)
+Defined in: [packages/pulsar-core/src/types.ts:147](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L147)
 
 Remote sync state, set only when the store has an `onRemoteCreate` callback: `'pending-sync'` from the moment the
 transaction is added until `onRemoteCreate` resolves (the key is listed in `unsyncedTxKeys` meanwhile and retried

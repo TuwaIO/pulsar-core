@@ -54,7 +54,6 @@ export async function send(account: UiWalletAccount, instruction: Instruction) {
     params: {
       adapter: OrbitAdapter.SOLANA,
       desiredChainID: 'devnet', // the cluster of the connected wallet; saved as chainId 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1'
-      rpcUrl: rpcUrls.devnet, // saved with the transaction, so tracking resumes on the same RPC after a reload
       type: 'transfer',
       title: 'Transfer',
     },
@@ -70,8 +69,8 @@ The step-by-step React setup, with Nova Connect and a Codama-generated program c
 
 | Helper                | Host                                                                                                     | Purpose                                                       |
 | --------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Signature tracker     | The transaction's `rpcUrl`, else the public endpoint of its cluster (`api.<cluster>.solana.com`)         | `getSignatureStatuses` and `getTransaction` for the signature |
-| `retryTxAction`       | The transaction's `rpcUrl`, else the URL of its cluster in `rpcUrls`, else `api.mainnet-beta.solana.com` | The RPC client passed to your `actionFunction`                |
+| Signature tracker     | The URL of its cluster in `rpcUrls`, else the public endpoint of the cluster (`api.<cluster>.solana.com`) | `getSignatureStatuses` and `getTransaction` for the signature |
+| `retryTxAction`       | The URL of its cluster in `rpcUrls`, else the public endpoint of the cluster                              | The RPC client passed to your `actionFunction`                |
 | `signAndSendSolanaTx` | The client you pass                                                                                      | `getLatestBlockhash`; the signer sends the transaction        |
 
 The public `api.*.solana.com` endpoints are rate-limited; pass your own RPC URLs in production. Explorer links point to `explorer.solana.com` and are not requested by the package.

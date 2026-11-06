@@ -140,11 +140,6 @@ export type BaseTransaction = {
    */
   confirmations?: number | string | null;
   /**
-   * RPC endpoint used by the Solana tracker, also after a page reload. Without it, the tracker uses the public
-   * endpoint of the cluster in `chainId`.
-   */
-  rpcUrl?: string;
-  /**
    * Remote sync state, set only when the store has an `onRemoteCreate` callback: `'pending-sync'` from the moment the
    * transaction is added until `onRemoteCreate` resolves (the key is listed in `unsyncedTxKeys` meanwhile and retried
    * if the call fails), then `'synced'`.
@@ -274,7 +269,7 @@ export type Transaction = EvmTransaction | SolanaTransaction | StarknetTransacti
  */
 export type InitialTransactionParams = Pick<
   BaseTransaction,
-  'description' | 'title' | 'type' | 'requiredConfirmations' | 'rpcUrl' | 'payload'
+  'description' | 'title' | 'type' | 'requiredConfirmations' | 'payload'
 > &
   Pick<EvmTransaction, 'bundlerUrl' | 'pimlicoApiKey'> & {
     /** The adapter that handles the transaction. When no configured adapter has this key, the first one is used. */
@@ -382,7 +377,7 @@ export interface SyncCallbacks<T extends Transaction> {
    * marks the transaction `'synced'` and removes the key; rejecting logs a warning and leaves the key for
    * `reconcileUnsyncedTransactions`, also across reloads. Reject (throw) on failure: a resolved promise counts as
    * synced. A transaction is never sent twice at the same time.
-   * @param tx - A copy of the pooled transaction without `pimlicoApiKey` and `rpcUrl`.
+   * @param tx - A copy of the pooled transaction without `pimlicoApiKey`.
    */
   onRemoteCreate?: (tx: T) => Promise<void>;
 }
@@ -570,7 +565,6 @@ export type UpdatableTransactionFields = Partial<
       | 'fee'
       | 'instructions'
       | 'recentBlockhash'
-      | 'rpcUrl'
       | 'confirmationStatus'
       | 'lastValidBlockHeight'
     >

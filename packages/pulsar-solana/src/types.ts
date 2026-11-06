@@ -9,8 +9,8 @@ import type { SolanaClusterMoniker } from '@tuwaio/orbit-solana';
  */
 export interface SolanaAdapterConfig {
   /**
-   * RPC URLs by cluster moniker (`mainnet`, `devnet`, `testnet`, `localnet`), used by `retryTxAction` when the
-   * transaction has no `rpcUrl`. Clusters without a URL fall back to the public mainnet-beta endpoint.
+   * RPC URLs by cluster moniker (`mainnet`, `devnet`, `testnet`, `localnet`), the one source of the tracker's and
+   * `retryTxAction`'s endpoint. A cluster without a URL uses its public endpoint.
    */
   rpcUrls: Partial<Record<SolanaClusterMoniker, string>>;
 }

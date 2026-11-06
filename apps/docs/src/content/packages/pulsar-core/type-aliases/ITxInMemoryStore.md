@@ -2,7 +2,7 @@
 
 > **ITxInMemoryStore**\<`T`\> = `object` & [`TxInMemoryPagination`](/packages/pulsar-core/type-aliases/TxInMemoryPagination.md)
 
-Defined in: [packages/pulsar-core/src/types.ts:756](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L756)
+Defined in: [packages/pulsar-core/src/types.ts:750](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L750)
 
 The state and actions of the store created by `createTxInMemoryStore`: a paginated remote history merged with the
 local pool. Nothing in it is persisted.

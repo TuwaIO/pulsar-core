@@ -303,9 +303,8 @@ describe('txTrackingStore remote sync', () => {
     const sentTx = onRemoteCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(sentTx).not.toHaveProperty('pimlicoApiKey');
     expect(sentTx).not.toHaveProperty('gelatoApiKey');
-    // An endpoint can hold a key: the server stores none and tracks through its own settings, and the record keeps it for this client
+    // On a record an older version saved: an endpoint can hold a key
     expect(sentTx).not.toHaveProperty('rpcUrl');
-    expect(Object.values(store.getState().transactionsPool)[0]).toHaveProperty('rpcUrl');
     expect(sentTx.bundlerUrl).toBe('https://bundler.example');
     // The local copy keeps the key, so tracking can resume after a reload.
     expect(store.getState().transactionsPool[txHash].pimlicoApiKey).toBe('pim_secret');
@@ -1449,6 +1448,25 @@ describe('what the audit found in the store', () => {
       createTransaction({ txKey: '0xfail', status: TransactionStatus.Replaced, pending: false }),
     ]);
     expect(store.getState().transactionsPool['0xfail'].status).toBe(TransactionStatus.Failed);
+  });
+
+  it('clears the endpoints and keys older versions saved in localStorage', async () => {
+    const storage = createMemoryStorage();
+    storage.setItem(
+      'old-records',
+      JSON.stringify({
+        state: {
+          transactionsPool: {
+            '0xa': { ...createTransaction({ txKey: '0xa' }), rpcUrl: 'https://rpc/key', gelatoApiKey: 'secret' },
+          },
+        },
+        version: 0,
+      }),
+    );
+    const store = createStore({ name: 'old-records', storage: createJSONStorage(() => storage) });
+    expect(store.getState().transactionsPool['0xa']).toBeDefined();
+    expect(store.getState().transactionsPool['0xa']).not.toHaveProperty('rpcUrl');
+    expect(store.getState().transactionsPool['0xa']).not.toHaveProperty('gelatoApiKey');
   });
 
   // Every save writes the list of unsynced keys last-writer-wins, and a second tab erased it: the sync was never tried again

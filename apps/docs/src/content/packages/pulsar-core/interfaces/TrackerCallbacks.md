@@ -1,6 +1,6 @@
 # TrackerCallbacks\<T\>
 
-Defined in: [packages/pulsar-core/src/types.ts:332](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L332)
+Defined in: [packages/pulsar-core/src/types.ts:327](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L327)
 
 Callbacks passed to `executeTxAction` and forwarded to the tracker of that transaction. They are not stored:
 trackers restarted by `initializeTransactionsPool` or `injectExternalPendingTxs` (for example after a page reload)
@@ -21,7 +21,7 @@ The application transaction type.
 
 > `optional` **onError?**: (`error`, `tx?`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:344](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L344)
+Defined in: [packages/pulsar-core/src/types.ts:339](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L339)
 
 Called when the transaction fails: it reverted, was rejected, or tracking gave up. Also, with `status: Replaced`, for
 another transaction in its nonce that reverted.
@@ -50,7 +50,7 @@ The transaction after the update.
 
 > `optional` **onReplaced?**: (`newTx`, `oldTx`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:352](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L352)
+Defined in: [packages/pulsar-core/src/types.ts:347](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L347)
 
 Called when the transaction is replaced by another one with the same nonce. After a speed-up (`replacedReason:
 'repriced'`) the operation goes on: a new record tracks the new hash, and `onSuccess` or `onError` run for it.
@@ -80,7 +80,7 @@ The transaction as tracking started.
 
 > `optional` **onSuccess?**: (`tx`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:337](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L337)
+Defined in: [packages/pulsar-core/src/types.ts:332](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L332)
 
 Called when the tracker marks the transaction `Success`.
 

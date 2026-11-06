@@ -354,10 +354,14 @@ describe('solanaFetcher', () => {
 
   test('fails an unknown signature once the chain passes the last valid block height of its blockhash', async () => {
     getSignatureStatuses.mockResolvedValue({ value: [null] });
-    getBlockHeight.mockResolvedValue(101n);
     const callbacks = createCallbacks();
+    const tx = createTx({ lastValidBlockHeight: 100 });
+    getBlockHeight.mockResolvedValueOnce(100n);
+    await solanaFetcher({ tx, ...callbacks });
+    getSignatureStatuses.mockClear();
+    getBlockHeight.mockResolvedValueOnce(133n);
 
-    await solanaFetcher({ tx: createTx({ lastValidBlockHeight: 100 }), ...callbacks });
+    await solanaFetcher({ tx, ...callbacks });
 
     // the signature is checked again after the block height, so a last-moment landing is not missed
     expect(getSignatureStatuses).toHaveBeenCalledTimes(2);
@@ -381,7 +385,7 @@ describe('solanaFetcher', () => {
     getSignatureStatuses
       .mockResolvedValueOnce({ value: [null] })
       .mockResolvedValueOnce({ value: [{ slot: 10n, confirmations: 1n, err: null, confirmationStatus: 'confirmed' }] });
-    getBlockHeight.mockResolvedValue(101n);
+    getBlockHeight.mockResolvedValue(133n);
     getTransaction.mockResolvedValue(txDetails);
     const callbacks = createCallbacks();
 
@@ -389,6 +393,66 @@ describe('solanaFetcher', () => {
 
     expect(callbacks.onFailure).not.toHaveBeenCalled();
     expect(callbacks.onIntervalTick).toHaveBeenCalledWith(expect.objectContaining({ confirmationStatus: 'confirmed' }));
+  });
+
+  // Audit: one read of a lagging node, or of one with no old statuses, told of a transaction that had landed "It was not executed;
+  // send it again", with Retry: the money would have gone twice. @solana/kit has no margin either, but it never decides this late
+  describe('the verdict on an expired blockhash', () => {
+    const LAST_VALID = 1000n;
+
+    test('waits for a margin past the last valid block height, as a node may lag behind it', async () => {
+      getSignatureStatuses.mockResolvedValue({ value: [null] });
+      getBlockHeight.mockResolvedValue(LAST_VALID + 32n);
+      const callbacks = createCallbacks();
+      await solanaFetcher({ tx: createTx({ lastValidBlockHeight: Number(LAST_VALID) }), ...callbacks } as never);
+      expect(callbacks.onFailure).not.toHaveBeenCalled();
+      expect(callbacks.stopPolling).not.toHaveBeenCalled();
+    });
+
+    test('says it was not executed when this run watched the blockhash run out', async () => {
+      getSignatureStatuses.mockResolvedValue({ value: [null] });
+      const callbacks = createCallbacks();
+      const tx = createTx({ lastValidBlockHeight: Number(LAST_VALID) });
+      getBlockHeight.mockResolvedValueOnce(LAST_VALID - 10n);
+      await solanaFetcher({ tx, ...callbacks } as never);
+      getBlockHeight.mockResolvedValueOnce(LAST_VALID + 33n);
+      await solanaFetcher({ tx, ...callbacks } as never);
+      expect(callbacks.onFailure).toHaveBeenCalledWith(expect.objectContaining({ expired: true }));
+    });
+
+    test('claims nothing when it comes back long after, on a node that may keep no old statuses', async () => {
+      getSignatureStatuses.mockResolvedValue({ value: [null] });
+      getBlockHeight.mockResolvedValue(LAST_VALID + 5000n);
+      const callbacks = createCallbacks();
+      await solanaFetcher({ tx: createTx({ lastValidBlockHeight: Number(LAST_VALID) }), ...callbacks } as never);
+      expect(callbacks.onFailure).toHaveBeenCalledWith(expect.objectContaining({ expired: false }));
+      expect(callbacks.stopPolling).toHaveBeenCalledWith({ withoutRemoving: true });
+    });
+  });
+
+  test('an error seen only at processed is not final yet', async () => {
+    getSignatureStatuses.mockResolvedValue({
+      value: [{ slot: 1n, confirmations: 0n, err: { InstructionError: [0, 'Custom'] }, confirmationStatus: 'processed' }],
+    });
+    getTransaction.mockResolvedValue(null);
+    const callbacks = createCallbacks();
+    await solanaFetcher({ tx: createTx(), ...callbacks } as never);
+    expect(callbacks.onFailure).not.toHaveBeenCalled();
+    expect(callbacks.stopPolling).not.toHaveBeenCalled();
+  });
+
+  test('searches the history on the first check of a run and once the blockhash can have run out, not on every second', async () => {
+    getSignatureStatuses.mockResolvedValue({ value: [null] });
+    const tx = createTx();
+    const callbacks = createCallbacks();
+    await solanaFetcher({ tx, ...callbacks } as never);
+    await solanaFetcher({ tx, ...callbacks } as never);
+    expect(getSignatureStatuses.mock.calls[0][1]).toEqual({ searchTransactionHistory: true });
+    expect(getSignatureStatuses.mock.calls[1][1]).toEqual({});
+    const old = createTx({ localTimestamp: dayjs().unix() - 120 });
+    await solanaFetcher({ tx: old, ...callbacks } as never);
+    await solanaFetcher({ tx: old, ...callbacks } as never);
+    expect(getSignatureStatuses.mock.calls[3][1]).toEqual({ searchTransactionHistory: true });
   });
 
   test('does not ask the block height without a last valid block height', async () => {
@@ -402,10 +466,13 @@ describe('solanaFetcher', () => {
   test('uses the last valid block height recorded by signAndSendSolanaTx when the transaction has none', async () => {
     rememberSolanaTxLifetime('sent-by-helper', 100);
     getSignatureStatuses.mockResolvedValue({ value: [null] });
-    getBlockHeight.mockResolvedValue(101n);
     const callbacks = createCallbacks();
+    const tx = createTx({ txKey: 'sent-by-helper' });
+    getBlockHeight.mockResolvedValueOnce(100n);
+    await solanaFetcher({ tx, ...callbacks });
+    getBlockHeight.mockResolvedValueOnce(133n);
 
-    await solanaFetcher({ tx: createTx({ txKey: 'sent-by-helper' }), ...callbacks });
+    await solanaFetcher({ tx, ...callbacks });
 
     expect(callbacks.onFailure).toHaveBeenCalledWith(expect.objectContaining({ expired: true }));
   });
