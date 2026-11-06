@@ -325,6 +325,114 @@ describe('evmTracker on the real viem', () => {
     });
   });
 
+  // Live on Sepolia, a fee below what public nodes keep: only the wallet's own RPC held `0xc8e3…`. No one learned its nonce, so
+  // its speed-up in the wallet went unseen, and the toast of a transaction that had landed spun for as long as the tab was open
+  describe('a hash only the connected wallet holds', () => {
+    const walletOn = (chainId: number, request: (args: { method: string; params?: unknown }) => Promise<unknown>) => ({
+      accounts: [SENDER] as readonly [Address],
+      chainId,
+      connector: { getProvider: async () => ({ request }) },
+    });
+    const holding = () =>
+      vi.fn(async ({ method, params }: { method: string; params?: unknown }) => {
+        expect(method).toBe('eth_getTransactionByHash');
+        return (params as unknown[])[0] === OLD_HASH ? rpcTransaction({ hash: OLD_HASH, blockNumber: null }) : null;
+      });
+    function trackWith(script: Script, connection: ReturnType<typeof walletOn>) {
+      const { config } = setup(script);
+      config.setState((state) => ({
+        ...state,
+        connections: new Map([['wallet', connection]]) as never,
+        current: 'wallet',
+        status: 'connected',
+      }));
+      const callbacks = {
+        onTxDetailsFetched: vi.fn(),
+        onSuccess: vi.fn().mockResolvedValue(undefined),
+        onFailure: vi.fn(),
+        onReplaced: vi.fn(),
+      };
+      void evmTracker({ tx: { txKey: OLD_HASH, chainId: sepolia.id }, config, ...callbacks });
+      return callbacks;
+    }
+
+    test('learns its nonce from the wallet and sees the speed-up', async () => {
+      const tracker = trackWith({ knownUntil: 0, replacementMinedAt: 120 }, walletOn(sepolia.id, holding()));
+
+      await pass(5);
+      expect(tracker.onTxDetailsFetched).toHaveBeenCalledOnce();
+      expect(tracker.onTxDetailsFetched.mock.calls[0][0]).toMatchObject({ hash: OLD_HASH, nonce: NONCE, from: SENDER });
+
+      await pass(450);
+      expect(tracker.onFailure).not.toHaveBeenCalled();
+      expect(tracker.onReplaced).toHaveBeenCalledOnce();
+      expect(tracker.onReplaced.mock.calls[0][0]).toMatchObject({ reason: 'repriced' });
+      expect(tracker.onReplaced.mock.calls[0][0].transaction.hash).toBe(NEW_HASH);
+    });
+
+    test('asks nothing of the wallet while a node shows the hash', async () => {
+      const wallet = holding();
+      const tracker = trackWith({ knownUntil: 450, minedAt: 60 }, walletOn(sepolia.id, wallet));
+
+      await pass(100);
+
+      expect(wallet).not.toHaveBeenCalled();
+      expect(tracker.onSuccess).toHaveBeenCalledOnce();
+    });
+
+    test('asks nothing of a wallet on another network: the hash means nothing there', async () => {
+      const wallet = holding();
+      const tracker = trackWith({ knownUntil: 0 }, walletOn(1, wallet));
+
+      await pass(28);
+
+      expect(wallet).not.toHaveBeenCalled();
+      expect(tracker.onFailure).toHaveBeenCalledOnce();
+    });
+
+    test.each([
+      ['says it has no such transaction', async () => null],
+      [
+        'fails',
+        async () => {
+          throw new Error('Unauthorized');
+        },
+      ],
+    ])('ends as before when the wallet %s', async (_name, answer) => {
+      const tracker = trackWith({ knownUntil: 0 }, walletOn(sepolia.id, vi.fn(answer)));
+
+      await pass(26);
+      expect(tracker.onFailure).not.toHaveBeenCalled();
+      await pass(2);
+      expect(tracker.onFailure).toHaveBeenCalledOnce();
+      expect(tracker.onTxDetailsFetched).not.toHaveBeenCalled();
+    });
+
+    test('is not held up by a wallet that never answers', async () => {
+      const tracker = trackWith(
+        { knownUntil: 0 },
+        walletOn(
+          sepolia.id,
+          vi.fn(() => new Promise(() => {})),
+        ),
+      );
+
+      await pass(70);
+
+      expect(tracker.onFailure).toHaveBeenCalledOnce();
+    });
+
+    test('goes by what a node shows once it does', async () => {
+      const wallet = vi.fn(async () => null);
+      const tracker = trackWith({ knownUntil: 450, minedAt: 60 }, walletOn(sepolia.id, wallet));
+
+      await pass(100);
+
+      expect(tracker.onTxDetailsFetched).toHaveBeenCalledOnce();
+      expect(tracker.onSuccess).toHaveBeenCalledOnce();
+    });
+  });
+
   describe('what it knows from an earlier run', () => {
     const knownDetails = { from: SENDER, nonce: NONCE, to: RECIPIENT, value: VALUE, input: '0x' as Hex };
 
