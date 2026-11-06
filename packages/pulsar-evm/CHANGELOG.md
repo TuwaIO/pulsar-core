@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.12.0...pulsar-evm-v0.13.0) (2026-11-06)
+
+
+### Features
+
+* **pulsar-evm:** evmTracker asks the connected wallet for a hash no node shows ([#104](https://github.com/TuwaIO/pulsar-core/issues/104)) ([bae4972](https://github.com/TuwaIO/pulsar-core/commit/bae497218dd062c9b762621cfb3ceda06951f27f))
+
 ## [0.12.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.11.1...pulsar-evm-v0.12.0) (2026-11-06)
 
 
