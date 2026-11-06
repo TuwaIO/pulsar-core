@@ -123,7 +123,6 @@ Safe 通过轮询 API 进行追踪。将其获取器 (fetcher) 传给 `@tuwaio/p
 
 Safe 追踪器也可以通过 `@tuwaio/pulsar-evm/safe` 使用，该入口既不加载 `@wagmi/core` 也不加载 `@tuwaio/orbit-evm`：安装 `@tuwaio/pulsar-evm`、`@tuwaio/pulsar-core`、`@tuwaio/orbit-core`、`viem` 与 `dayjs` 后，仅基于 `viem` 构建的应用也能追踪 Safe 交易。
 
-
 ```typescript
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
 import { createSafeFetcher, safePollingInterval } from '@tuwaio/pulsar-evm/safe';

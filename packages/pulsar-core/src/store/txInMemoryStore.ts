@@ -76,7 +76,11 @@ const mergeTransactionIntoPool = <T extends Transaction>(
     if (isTerminalStatus(existingTx.status)) {
       // The local pool is this device's answer from the chain: after a reorganization the original landed, with no trace of the
       // replacement to keep
-      if (source === 'local' && existingTx.status === TransactionStatus.Replaced && tx.status === TransactionStatus.Success) {
+      if (
+        source === 'local' &&
+        existingTx.status === TransactionStatus.Replaced &&
+        tx.status === TransactionStatus.Success
+      ) {
         pool[tx.txKey] = tx;
         return true;
       }

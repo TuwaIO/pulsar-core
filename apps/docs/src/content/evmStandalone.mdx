@@ -123,7 +123,6 @@ Safe is tracked by polling an API. Pass its fetcher to `initializePollingTracker
 
 The Safe tracker is also available as `@tuwaio/pulsar-evm/safe`, an entry that loads neither `@wagmi/core` nor `@tuwaio/orbit-evm`: install `@tuwaio/pulsar-evm`, `@tuwaio/pulsar-core`, `@tuwaio/orbit-core`, `viem` and `dayjs`, and an app built on `viem` alone can track Safe transactions.
 
-
 ```typescript
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
 import { createSafeFetcher, safePollingInterval } from '@tuwaio/pulsar-evm/safe';

@@ -105,7 +105,9 @@ describe('mergeTabPools', () => {
   it('learns that the other tab has synced a transaction', () => {
     const ours = { '0xa': { txKey: '0xa', pending: true, syncStatus: 'pending-sync' } } as never;
     const theirs = { '0xa': { txKey: '0xa', pending: true, syncStatus: 'synced' } } as never;
-    expect((mergeTabPools(ours, theirs).pool as Record<string, { syncStatus: string }>)['0xa'].syncStatus).toBe('synced');
+    expect((mergeTabPools(ours, theirs).pool as Record<string, { syncStatus: string }>)['0xa'].syncStatus).toBe(
+      'synced',
+    );
   });
 
   // A field held as an own undefined counted as learned and was not taken, so the tab kept rewriting storage without it

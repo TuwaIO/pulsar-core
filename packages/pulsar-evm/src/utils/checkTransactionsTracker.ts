@@ -48,9 +48,7 @@ export function checkTransactionsTracker({ actionTxKey, connectorType, tracker }
   // This check adds robustness in case of type mismatches.
   if (!isHex(actionTxKey)) {
     throw new Error(
-      `Invalid transaction key format. Expected a Hex string, but received: ${JSON.stringify(
-        actionTxKey,
-      )}`,
+      `Invalid transaction key format. Expected a Hex string, but received: ${JSON.stringify(actionTxKey)}`,
     );
   }
 

@@ -432,7 +432,9 @@ describe('solanaFetcher', () => {
 
   test('an error seen only at processed is not final yet', async () => {
     getSignatureStatuses.mockResolvedValue({
-      value: [{ slot: 1n, confirmations: 0n, err: { InstructionError: [0, 'Custom'] }, confirmationStatus: 'processed' }],
+      value: [
+        { slot: 1n, confirmations: 0n, err: { InstructionError: [0, 'Custom'] }, confirmationStatus: 'processed' },
+      ],
     });
     getTransaction.mockResolvedValue(null);
     const callbacks = createCallbacks();

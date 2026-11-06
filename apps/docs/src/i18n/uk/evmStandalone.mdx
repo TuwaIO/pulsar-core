@@ -123,7 +123,6 @@ Safe відстежується опитуванням API. Передайте �
 
 Трекер Safe також доступний як `@tuwaio/pulsar-evm/safe` — точка входу, яка не завантажує ні `@wagmi/core`, ні `@tuwaio/orbit-evm`: встановіть `@tuwaio/pulsar-evm`, `@tuwaio/pulsar-core`, `@tuwaio/orbit-core`, `viem` і `dayjs`, і застосунок, побудований лише на `viem`, зможе відстежувати транзакції Safe.
 
-
 ```typescript
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
 import { createSafeFetcher, safePollingInterval } from '@tuwaio/pulsar-evm/safe';

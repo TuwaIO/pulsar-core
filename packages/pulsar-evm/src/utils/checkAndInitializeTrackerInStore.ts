@@ -2,7 +2,13 @@
  * @file Routes an EVM transaction of the Pulsar store to the tracker named by its `tracker` field.
  */
 
-import { ITxTrackingStore, TrackerCallbacks, Transaction, TransactionStatus, TransactionTracker } from '@tuwaio/pulsar-core';
+import {
+  ITxTrackingStore,
+  TrackerCallbacks,
+  Transaction,
+  TransactionStatus,
+  TransactionTracker,
+} from '@tuwaio/pulsar-core';
 import { Config } from '@wagmi/core';
 import dayjs from 'dayjs';
 
@@ -95,7 +101,8 @@ export async function checkAndInitializeTrackerInStore<T extends Transaction>({
     // It logs a warning and treats them as standard EVM transactions.
     default:
       if ((tracker as string) === REMOVED_GELATO_TRACKER) {
-        const message = 'Gelato relay tasks are no longer followed. Check the result in your wallet or a block explorer.';
+        const message =
+          'Gelato relay tasks are no longer followed. Check the result in your wallet or a block explorer.';
         rest.updateTxParams(tx.txKey, {
           status: TransactionStatus.Failed,
           pending: false,

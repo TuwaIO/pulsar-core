@@ -175,21 +175,42 @@ describe('readNonceSlot', () => {
     const contractCall = { ...slot, to: SENDER, input: '0xa9059cbb' as Hex };
 
     it('finds a recent spend from the counts of what it keeps, with one full block', async () => {
-      const { node, client } = nodeOf({ head: 100_000n, spentIn: 99_950n, spender: OTHER, receipt: true, pruned: true, stateWindow: 128n });
+      const { node, client } = nodeOf({
+        head: 100_000n,
+        spentIn: 99_950n,
+        spender: OTHER,
+        receipt: true,
+        pruned: true,
+        stateWindow: 128n,
+      });
       expect(await readNonceSlot(client, { hash: OWN, slot, scan: {} })).toMatchObject({ state: 'replaced' });
       expect(node.blocksRead).toEqual([99_950n]);
       expect(node.countsRead).toBeLessThan(20);
     });
 
     it('goes down from where the counts stopped, as nothing newer can hold it', async () => {
-      const { node, client } = nodeOf({ head: 100_000n, spentIn: 99_860n, spender: OTHER, receipt: true, pruned: true, stateWindow: 128n });
+      const { node, client } = nodeOf({
+        head: 100_000n,
+        spentIn: 99_860n,
+        spender: OTHER,
+        receipt: true,
+        pruned: true,
+        stateWindow: 128n,
+      });
       expect(await readNonceSlot(client, { hash: OWN, slot, scan: {} })).toMatchObject({ state: 'replaced' });
       expect(node.blocksRead.length).toBeLessThanOrEqual(32);
       expect(node.blocksRead[0]).toBeLessThan(99_880n);
     });
 
     it('costs no more than its budget in full blocks, over all readings of a transaction', async () => {
-      const { node, client } = nodeOf({ head: 100_000n, spentIn: 5n, spender: OTHER, receipt: true, pruned: true, stateWindow: 128n });
+      const { node, client } = nodeOf({
+        head: 100_000n,
+        spentIn: 5n,
+        spender: OTHER,
+        receipt: true,
+        pruned: true,
+        stateWindow: 128n,
+      });
       const scan: NonceSlotScan = {};
       expect(await readNonceSlot(client, { hash: OWN, slot, scan })).toEqual({ state: 'spent' });
       const counts = node.countsRead;
@@ -221,7 +242,9 @@ describe('readNonceSlot', () => {
         stateWindow: 128n,
         logs: [{ transactionHash: OTHER }],
       });
-      expect(await readNonceSlot(client, { hash: OWN, slot: contractCall, scan: {} })).toMatchObject({ state: 'replaced' });
+      expect(await readNonceSlot(client, { hash: OWN, slot: contractCall, scan: {} })).toMatchObject({
+        state: 'replaced',
+      });
       expect(node.blocksRead).toEqual([]);
       expect(node.logReads).toHaveLength(1);
     });
@@ -287,7 +310,9 @@ describe('readNonceSlot', () => {
 
     it('reads no block when the nonce was spent before the transaction could have been replaced', async () => {
       const { node, client } = nodeOf({ head: 100_000n, spentIn: 98_000n, spender: OTHER, receipt: true });
-      expect(await readNonceSlot(client, { hash: OWN, slot, fromBlock: 99_000n, scan: {} })).toEqual({ state: 'spent' });
+      expect(await readNonceSlot(client, { hash: OWN, slot, fromBlock: 99_000n, scan: {} })).toEqual({
+        state: 'spent',
+      });
       expect(node.blocksRead).toEqual([]);
     });
 

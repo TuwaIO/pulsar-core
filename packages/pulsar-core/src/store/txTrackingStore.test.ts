@@ -838,7 +838,9 @@ describe('final statuses and trackers', () => {
       const here = make(2);
       const there = make(50);
       for (const [index, key] of ['0x1', '0x2', '0x3'].entries()) {
-        await there.getState().addTxToPool(createTransaction({ txKey: key, localTimestamp: Math.floor(Date.now() / 1000) + index }));
+        await there
+          .getState()
+          .addTxToPool(createTransaction({ txKey: key, localTimestamp: Math.floor(Date.now() / 1000) + index }));
         there.getState().updateTxParams(key, { status: TransactionStatus.Success, pending: false });
       }
       listeners[0]({ key: 'tabs-limit' });
@@ -1456,7 +1458,13 @@ describe('what the audit found in the store', () => {
   // never showed, was never tracked and never healed
   it('takes a history row with empty columns, and its numbers as numbers', async () => {
     const store = createStore();
-    const row = { ...createTransaction({ txKey: '0xrow' }), title: null, description: null, nonce: '7', localTimestamp: '100' };
+    const row = {
+      ...createTransaction({ txKey: '0xrow' }),
+      title: null,
+      description: null,
+      nonce: '7',
+      localTimestamp: '100',
+    };
     await store.getState().injectExternalPendingTxs([row as unknown as EvmTransaction]);
     const saved = store.getState().transactionsPool['0xrow'] as EvmTransaction;
     expect(saved).toBeDefined();
@@ -1484,7 +1492,9 @@ describe('what the audit found in the store', () => {
     store.getState().subscribeTxFinished(finished);
     await store
       .getState()
-      .injectExternalPendingTxs([createTransaction({ txKey: '0xfail', status: TransactionStatus.Success, pending: false })]);
+      .injectExternalPendingTxs([
+        createTransaction({ txKey: '0xfail', status: TransactionStatus.Success, pending: false }),
+      ]);
     expect(store.getState().transactionsPool['0xfail']).toMatchObject({
       status: TransactionStatus.Success,
       pending: false,
@@ -1496,9 +1506,11 @@ describe('what the audit found in the store', () => {
 
   it('keeps a local Failed against a server that proves nothing more', async () => {
     const store = await failedHere();
-    await store.getState().injectExternalPendingTxs([
-      createTransaction({ txKey: '0xfail', status: TransactionStatus.Replaced, pending: false }),
-    ]);
+    await store
+      .getState()
+      .injectExternalPendingTxs([
+        createTransaction({ txKey: '0xfail', status: TransactionStatus.Replaced, pending: false }),
+      ]);
     expect(store.getState().transactionsPool['0xfail'].status).toBe(TransactionStatus.Failed);
   });
 

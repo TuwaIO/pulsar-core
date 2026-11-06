@@ -640,7 +640,9 @@ export function createPulsarStore<T extends Transaction>({
       const { finished, added } = merged;
       // The limits hold whatever the other tab saved: it brought back what this one had evicted, and the pool grew past them
       const expired = expiredTransactionKeys(merged.pool, retentionDays);
-      const kept = Object.fromEntries(Object.entries(merged.pool).filter(([key]) => !expired.includes(key))) as TransactionPool<T>;
+      const kept = Object.fromEntries(
+        Object.entries(merged.pool).filter(([key]) => !expired.includes(key)),
+      ) as TransactionPool<T>;
       const evicted = evictedTransactionKeys(kept, maxTransactions);
       for (const key of evicted) delete kept[key];
       const pool = expired.length + evicted.length > 0 ? kept : merged.pool;

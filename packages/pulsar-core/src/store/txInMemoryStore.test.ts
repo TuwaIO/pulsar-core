@@ -285,7 +285,13 @@ describe('createTxInMemoryStore: what the local tracker knows and a server does 
     await new Promise((resolve) => setImmediate(resolve));
     answers[1]({ docs: [], page: 1, hasNextPage: false, totalDocs: 0, totalPages: 1 });
     await second;
-    answers[0]({ docs: [createTransaction({ txKey: '0xold' })], page: 7, hasNextPage: true, totalDocs: 1, totalPages: 9 });
+    answers[0]({
+      docs: [createTransaction({ txKey: '0xold' })],
+      page: 7,
+      hasNextPage: true,
+      totalDocs: 1,
+      totalPages: 9,
+    });
     await first;
     expect(store.getState().currentPage).toBe(1);
     expect(store.getState().hasMore).toBe(false);

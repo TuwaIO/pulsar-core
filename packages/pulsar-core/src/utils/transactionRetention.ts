@@ -18,7 +18,10 @@ export const DEFAULT_RETENTION_DAYS = 30;
  * @returns The keys to drop.
  * @internal
  */
-export function evictedTransactionKeys<T extends Transaction>(pool: TransactionPool<T>, maxTransactions: number): string[] {
+export function evictedTransactionKeys<T extends Transaction>(
+  pool: TransactionPool<T>,
+  maxTransactions: number,
+): string[] {
   const over = Object.keys(pool).length - maxTransactions;
   if (over <= 0) return [];
   return Object.values(pool)
