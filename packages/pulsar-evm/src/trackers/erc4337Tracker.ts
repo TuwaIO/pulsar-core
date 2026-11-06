@@ -277,7 +277,8 @@ export async function erc4337TrackerForStore<T extends Transaction>({
     tx,
     fetcher: erc4337Fetcher,
     // CRITICAL: Do NOT pass removeTxFromPool to prevent premature eviction from the store
-    pollingInterval: 2000,
+    // Every 2 s for what a person watches; a dropped UserOperation asked that for as long as the page stayed open
+    pollingInterval: () => (Date.now() - Number(tx.localTimestamp) * 1000 < 5 * 60_000 ? 2000 : 30_000),
     maxRetries: 60,
     // A bundler that cannot be reached says nothing about the UserOperation
     retryForeverEveryMs: 60_000,
