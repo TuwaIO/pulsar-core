@@ -4,7 +4,17 @@
 
 import { Transaction } from '../types';
 
-const NUMERIC_FIELDS = ['localTimestamp', 'finishedTimestamp', 'requiredConfirmations', 'confirmations'] as const;
+const NUMERIC_FIELDS = [
+  'localTimestamp',
+  'finishedTimestamp',
+  'requiredConfirmations',
+  'confirmations',
+  // A nonce as a string never matched the one in a block, and the record ended Replaced with no reason
+  'nonce',
+  'fee',
+  'slot',
+  'lastValidBlockHeight',
+] as const;
 
 /**
  * A database row is not a pool record: its numbers can come as strings and its empty columns as `null`. Kept as they are,

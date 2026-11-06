@@ -6,7 +6,7 @@
 import { normalizeError, selectAdapterByKey, setChainId } from '@tuwaio/orbit-core';
 import dayjs from 'dayjs';
 import { produce } from 'immer';
-import { persist, PersistOptions } from 'zustand/middleware';
+import { createJSONStorage, persist, PersistOptions, PersistStorage } from 'zustand/middleware';
 import { createStore, StoreApi } from 'zustand/vanilla';
 
 import {
@@ -19,12 +19,29 @@ import {
   TransactionStatus,
   TransactionTracker,
 } from '../types';
-import { mergeTabPools } from '../utils/mergeTabPools';
+import { keepsItsResult, mergeTabPools } from '../utils/mergeTabPools';
 import { normalizeRemoteTx } from '../utils/normalizeRemoteTx';
 import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
 import { validateInitialTransactionParams, validateTransaction } from '../utils/transactionValidation';
 import { createTxFinishedNotifier, isFinishedStatus } from '../utils/txFinished';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
+
+/** A storage whose failed save is logged, not thrown: the state in memory goes on, and the next save tries again. */
+function withoutFailingSaves<S>(storage: PersistStorage<S> | undefined): PersistStorage<S> | undefined {
+  if (!storage) return storage;
+  const logged = (error: unknown) => console.warn('[Pulsar] The transactions could not be saved:', error);
+  return {
+    ...storage,
+    setItem: (name, value) => {
+      try {
+        const saved = storage.setItem(name, value);
+        return saved instanceof Promise ? saved.catch(logged) : saved;
+      } catch (error) {
+        logged(error);
+      }
+    },
+  };
+}
 
 /**
  * Creates the Pulsar transaction store: a vanilla Zustand store (use it from any framework, or bind it to React with
@@ -315,7 +332,8 @@ export function createPulsarStore<T extends Transaction>({
           const txsToTrack: T[] = [];
           // Local transactions that the remote backend reports as finished, for the "transaction finished" event
           const finishedTxKeys: string[] = [];
-          const validRemoteTxs = remoteTxs.filter((remoteTx) => {
+          // Normalized first: a row brings its empty columns as `null` and its numbers as strings
+          const validRemoteTxs = remoteTxs.map(normalizeRemoteTx).filter((remoteTx) => {
             try {
               validateTransaction(remoteTx);
               return true;
@@ -341,16 +359,25 @@ export function createPulsarStore<T extends Transaction>({
                   txsToTrack.push(record);
                 }
 
-                // Case B: Self-healing. Local is stuck on pending, but remote says it's terminal.
-                if (localTx?.pending && isFinishedStatus(remoteTx.status)) {
+                // Case B: Self-healing. Local is stuck on pending, or holds a `Failed` the chain answers otherwise, and remote
+                // says it's terminal.
+                const correctable =
+                  localTx && !isFinishedStatus(localTx.status)
+                    ? localTx.pending
+                    : localTx?.status !== remoteTx.status && !keepsItsResult(localTx?.status, remoteTx.status);
+                if (localTx && correctable && isFinishedStatus(remoteTx.status)) {
                   // A server's Failed can be its own time limit, and its Replaced may not say why, when a speed-up is what
                   // decides whether a new record follows. While this page's tracker runs, the chain answers
                   const remoteReason = (remoteTx as unknown as EvmTransaction).replacedReason;
                   const provesNothing =
                     remoteTx.status === TransactionStatus.Failed ||
                     (remoteTx.status === TransactionStatus.Replaced && !remoteReason);
-                  if (provesNothing && trackedTxKeys.has(remoteTx.txKey)) return;
-                  if (!isFinishedStatus(localTx.status)) finishedTxKeys.push(remoteTx.txKey);
+                  if (provesNothing && (trackedTxKeys.has(remoteTx.txKey) || isFinishedStatus(localTx.status))) return;
+                  finishedTxKeys.push(remoteTx.txKey);
+                  if (remoteTx.status === TransactionStatus.Success) {
+                    localTx.isError = false;
+                    delete localTx.error;
+                  }
                   localTx.status = remoteTx.status;
                   localTx.pending = false;
                   if (remoteTx.txKey) localTx.txKey = remoteTx.txKey;
@@ -544,6 +571,8 @@ export function createPulsarStore<T extends Transaction>({
           return persistedState;
         },
         ...options, // Merges user-provided persistence options.
+        // A save may fail (`localStorage` full): the money has gone by then, and a throw here read as a failed send, with Retry
+        storage: withoutFailingSaves(options.storage ?? createJSONStorage<ITxTrackingStore<T>>(() => localStorage)),
         // The saved state comes back without the finished transactions past their term, whatever `merge` the app passes
         merge: (persistedState, currentState) => {
           const merged = options.merge
@@ -586,7 +615,9 @@ export function createPulsarStore<T extends Transaction>({
         }),
       ) as TransactionPool<T>;
       const state = store.getState();
-      const { pool, finished, added } = mergeTabPools(state.transactionsPool as TransactionPool<T>, valid);
+      const { pool, finished, added } = mergeTabPools(state.transactionsPool as TransactionPool<T>, valid, (txKey) =>
+        trackedTxKeys.has(txKey),
+      );
       if (pool !== state.transactionsPool)
         (store as StoreApi<ITxTrackingStore<T>>).setState({ transactionsPool: pool });
       // Finished first: a speed-up hands its callbacks on, and the new record among `added` must start with them

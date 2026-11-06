@@ -92,6 +92,20 @@ describe('createTxInMemoryStore', () => {
     expect(store.getState().transactionsPool['0x1']).toEqual(terminal);
   });
 
+  // After a reorganization the original is the one that landed: the history kept both as replaced by each other, for good
+  it("takes this device's Success over a Replaced, but no server's", () => {
+    const replaced = createTransaction({
+      txKey: '0x1',
+      status: TransactionStatus.Replaced,
+      pending: false,
+      replacedTxHash: '0x2',
+    });
+    const store = createTxInMemoryStore<EvmTransaction>({ localTransactionsPool: { '0x1': replaced } });
+    const success = createTransaction({ txKey: '0x1', status: TransactionStatus.Success, pending: false });
+    store.getState().syncWithLocalPool({ '0x1': success });
+    expect(store.getState().transactionsPool['0x1']).toEqual(success);
+  });
+
   it('moves a pending transaction to Failed when the local pool reports the failure', () => {
     const pending = createTransaction({ txKey: '0x1', status: undefined, pending: true });
     const store = createTxInMemoryStore<EvmTransaction>({ localTransactionsPool: { '0x1': pending } });

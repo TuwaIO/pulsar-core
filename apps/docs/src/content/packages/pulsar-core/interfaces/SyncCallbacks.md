@@ -33,7 +33,7 @@ synced. A transaction is never sent twice at the same time.
 
 `T`
 
-A copy of the pooled transaction without `pimlicoApiKey`.
+A copy of the pooled transaction without `pimlicoApiKey` and `rpcUrl`.
 
 #### Returns
 

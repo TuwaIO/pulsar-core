@@ -94,10 +94,11 @@ function validateTextField({
   maxLength,
 }: {
   field: string;
-  value?: string | [string, string, string, string];
+  value?: string | [string, string, string, string] | null;
   maxLength: number;
 }) {
-  if (value === undefined) return;
+  // A history row brings `null` for what was not given: refused here, it never showed, was never tracked and never healed
+  if (value === undefined || value === null) return;
 
   const values = Array.isArray(value) ? value : [value];
 

@@ -296,12 +296,16 @@ describe('txTrackingStore remote sync', () => {
       pimlicoApiKey: 'pim_secret',
       bundlerUrl: 'https://bundler.example',
       gelatoApiKey: 'gelato_secret',
+      rpcUrl: 'https://rpc.example/secret-key',
     } as EvmTransaction);
 
     await vi.waitFor(() => expect(onRemoteCreate).toHaveBeenCalledTimes(1));
     const sentTx = onRemoteCreate.mock.calls[0][0] as Record<string, unknown>;
     expect(sentTx).not.toHaveProperty('pimlicoApiKey');
     expect(sentTx).not.toHaveProperty('gelatoApiKey');
+    // An endpoint can hold a key: the server stores none and tracks through its own settings, and the record keeps it for this client
+    expect(sentTx).not.toHaveProperty('rpcUrl');
+    expect(Object.values(store.getState().transactionsPool)[0]).toHaveProperty('rpcUrl');
     expect(sentTx.bundlerUrl).toBe('https://bundler.example');
     // The local copy keeps the key, so tracking can resume after a reload.
     expect(store.getState().transactionsPool[txHash].pimlicoApiKey).toBe('pim_secret');
@@ -1394,4 +1398,98 @@ describe('a speed-up continues in a new record', () => {
     await store.getState().addTxToPool(original());
     return { store };
   }
+});
+
+describe('what the audit found in the store', () => {
+  // A transaction with no description came back from the history with `description: null`, was refused as invalid, and so
+  // never showed, was never tracked and never healed
+  it('takes a history row with empty columns, and its numbers as numbers', async () => {
+    const store = createStore();
+    const row = { ...createTransaction({ txKey: '0xrow' }), title: null, description: null, nonce: '7', localTimestamp: '100' };
+    await store.getState().injectExternalPendingTxs([row as unknown as EvmTransaction]);
+    const saved = store.getState().transactionsPool['0xrow'] as EvmTransaction;
+    expect(saved).toBeDefined();
+    expect(saved.title).toBeUndefined();
+    expect(saved.nonce).toBe(7);
+    expect(saved.localTimestamp).toBe(100);
+  });
+
+  const failedHere = async () => {
+    const store = createStore();
+    await store.getState().addTxToPool(createTransaction({ txKey: '0xfail' }));
+    store.getState().updateTxParams('0xfail', {
+      status: TransactionStatus.Failed,
+      pending: false,
+      isError: true,
+      error: { message: 'lost sight' },
+    } as never);
+    return store;
+  };
+
+  // The history pool said Success and the persistent one Failed, for good: only a pending record was ever corrected
+  it("corrects a local Failed with a server's Success", async () => {
+    const store = await failedHere();
+    const finished = vi.fn();
+    store.getState().subscribeTxFinished(finished);
+    await store
+      .getState()
+      .injectExternalPendingTxs([createTransaction({ txKey: '0xfail', status: TransactionStatus.Success, pending: false })]);
+    expect(store.getState().transactionsPool['0xfail']).toMatchObject({
+      status: TransactionStatus.Success,
+      pending: false,
+      isError: false,
+    });
+    expect(store.getState().transactionsPool['0xfail'].error).toBeUndefined();
+    expect(finished).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a local Failed against a server that proves nothing more', async () => {
+    const store = await failedHere();
+    await store.getState().injectExternalPendingTxs([
+      createTransaction({ txKey: '0xfail', status: TransactionStatus.Replaced, pending: false }),
+    ]);
+    expect(store.getState().transactionsPool['0xfail'].status).toBe(TransactionStatus.Failed);
+  });
+
+  // Every save writes the list of unsynced keys last-writer-wins, and a second tab erased it: the sync was never tried again
+  it('finds what is still unsynced from the records themselves', async () => {
+    const storage = createMemoryStorage();
+    storage.setItem(
+      'unsynced',
+      JSON.stringify({
+        state: { transactionsPool: { '0xa': createTransaction({ txKey: '0xa', syncStatus: 'pending-sync' }) } },
+        version: 0,
+      }),
+    );
+    const onRemoteCreate = vi.fn(async () => undefined);
+    const store = createStore({ name: 'unsynced', storage: createJSONStorage(() => storage), onRemoteCreate });
+    await store.getState().reconcileUnsyncedTransactions();
+    expect(onRemoteCreate).toHaveBeenCalledTimes(1);
+  });
+
+  // localStorage nearly full: the send worked, the save did not, and the page said the send had failed and offered Retry
+  it('a save that fails never reads as a failed send', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const checkAndInitializeTrackerInStore = vi.fn();
+    const full: StateStorage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('QuotaExceededError');
+      },
+      removeItem: () => undefined,
+    };
+    const store = createStore({
+      adapter: createAdapter({ checkAndInitializeTrackerInStore }),
+      storage: createJSONStorage(() => full),
+    });
+    await store.getState().executeTxAction({
+      actionFunction: async () => txHash,
+      params: createValidParams(),
+      defaultTracker: TransactionTracker.Ethereum,
+    } as never);
+    expect(store.getState().initialTx?.error).toBeUndefined();
+    expect(store.getState().initialTx?.lastTxKey).toBe(txHash);
+    expect(checkAndInitializeTrackerInStore).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
 });

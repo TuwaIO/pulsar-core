@@ -20,7 +20,7 @@ import { isFinishedStatus } from '../utils/txFinished';
 
 /**
  * Returns a copy of a transaction without the API keys that the client needs to resume tracking but a backend must
- * not receive (`pimlicoApiKey`; `gelatoApiKey` on a record an older version saved).
+ * not receive (`pimlicoApiKey`; `gelatoApiKey` on a record an older version saved), and `rpcUrl`, which can hold one.
  *
  * @param tx - The transaction.
  * @returns A shallow copy without the API keys.
@@ -29,6 +29,8 @@ function omitClientSecrets<T extends Transaction>(tx: T): T {
   const remoteTx: T & { pimlicoApiKey?: string; gelatoApiKey?: string } = { ...tx };
   delete remoteTx.pimlicoApiKey;
   delete remoteTx.gelatoApiKey;
+  // Can hold a key. A backend tracks through its own settings: Quasar stores none, and the record keeps it for this client
+  delete remoteTx.rpcUrl;
   return remoteTx;
 }
 
@@ -122,7 +124,11 @@ export function initializeTxTrackingStore<T extends Transaction>({
       reconcileUnsyncedTransactions: async () => {
         if (!onRemoteCreate || isReconciling) return;
 
-        const unsyncedKeys = Object.keys(get().unsyncedTxKeys || {});
+        // From the records too: every save writes the list last-writer-wins, and a second tab erased it for good
+        const fromRecords = Object.values(get().transactionsPool)
+          .filter((tx) => tx.syncStatus === 'pending-sync')
+          .map((tx) => tx.txKey);
+        const unsyncedKeys = [...new Set([...Object.keys(get().unsyncedTxKeys || {}), ...fromRecords])];
         if (unsyncedKeys.length === 0) return;
 
         isReconciling = true;

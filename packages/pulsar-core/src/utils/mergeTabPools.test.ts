@@ -89,4 +89,29 @@ describe('mergeTabPools', () => {
     expect(result.finished).toEqual([]);
     expect(result.added).toEqual([]);
   });
+
+  // Another tab's tracker may only have lost sight of it, and a healthy tracker here stopped on its word
+  it("keeps tracking here against another tab's Failed or Replaced with no reason", () => {
+    const ours = { '0xa': { txKey: '0xa', pending: true } } as never;
+    const failed = { '0xa': { txKey: '0xa', pending: false, status: TransactionStatus.Failed } } as never;
+    const noReason = { '0xa': { txKey: '0xa', pending: false, status: TransactionStatus.Replaced } } as never;
+    expect(mergeTabPools(ours, failed, () => true).finished).toEqual([]);
+    expect(mergeTabPools(ours, noReason, () => true).finished).toEqual([]);
+    expect(mergeTabPools(ours, failed, () => false).finished).toEqual(['0xa']);
+    const proved = { '0xa': { txKey: '0xa', pending: false, status: TransactionStatus.Success } } as never;
+    expect(mergeTabPools(ours, proved, () => true).finished).toEqual(['0xa']);
+  });
+
+  it('learns that the other tab has synced a transaction', () => {
+    const ours = { '0xa': { txKey: '0xa', pending: true, syncStatus: 'pending-sync' } } as never;
+    const theirs = { '0xa': { txKey: '0xa', pending: true, syncStatus: 'synced' } } as never;
+    expect((mergeTabPools(ours, theirs).pool as Record<string, { syncStatus: string }>)['0xa'].syncStatus).toBe('synced');
+  });
+
+  // A field held as an own undefined counted as learned and was not taken, so the tab kept rewriting storage without it
+  it('takes what the other tab knows over an own undefined here', () => {
+    const ours = { '0xa': { txKey: '0xa', pending: true, hash: undefined } } as never;
+    const theirs = { '0xa': { txKey: '0xa', pending: true, hash: '0xh' } } as never;
+    expect((mergeTabPools(ours, theirs).pool as Record<string, { hash: string }>)['0xa'].hash).toBe('0xh');
+  });
 });

@@ -382,7 +382,7 @@ export interface SyncCallbacks<T extends Transaction> {
    * marks the transaction `'synced'` and removes the key; rejecting logs a warning and leaves the key for
    * `reconcileUnsyncedTransactions`, also across reloads. Reject (throw) on failure: a resolved promise counts as
    * synced. A transaction is never sent twice at the same time.
-   * @param tx - A copy of the pooled transaction without `pimlicoApiKey`.
+   * @param tx - A copy of the pooled transaction without `pimlicoApiKey` and `rpcUrl`.
    */
   onRemoteCreate?: (tx: T) => Promise<void>;
 }

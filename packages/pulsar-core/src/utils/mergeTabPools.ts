@@ -27,7 +27,9 @@ export const keepsItsResult = (current?: TransactionStatus, next?: TransactionSt
  * transaction, or take a final status back to pending:
  * - a transaction only this tab knows stays;
  * - a final result is never replaced by a pending copy;
- * - a final result of the other tab replaces this tab's pending copy (and a `Failed`, when the chain said otherwise);
+ * - a final result of the other tab replaces this tab's pending copy (and a `Failed`, when the chain said otherwise), unless
+ *   it proves nothing (a `Failed`, or a `Replaced` with no reason, may be a tracker that lost sight) and this tab's tracker runs:
+ *   that one answers from the chain;
  * - of two pending copies this tab's values win, and it learns the fields only the other tab has;
  * - whether the tracking modal of a transaction is open stays this tab's own: that modal is on this screen.
  *
@@ -38,12 +40,14 @@ export const keepsItsResult = (current?: TransactionStatus, next?: TransactionSt
  * @template T - The application transaction type.
  * @param current - This tab's pool.
  * @param saved - The pool another tab saved.
+ * @param isTracked - Whether this tab's tracker follows a key.
  * @returns The merged pool (`current` itself when nothing changed), the keys that have just become final here, and
  * the pending transactions this tab did not know.
  */
 export function mergeTabPools<T extends Transaction>(
   current: TransactionPool<T>,
   saved: TransactionPool<T>,
+  isTracked?: (txKey: string) => boolean,
 ): { pool: TransactionPool<T>; finished: string[]; added: T[] } {
   const pool: TransactionPool<T> = { ...current };
   const finished: string[] = [];
@@ -58,6 +62,10 @@ export function mergeTabPools<T extends Transaction>(
       changed = true;
     } else if (isFinishedStatus(theirs.status) && !keepsItsResult(ours.status, theirs.status)) {
       if (ours.status === theirs.status) continue;
+      const provesNothing =
+        theirs.status === TransactionStatus.Failed ||
+        (theirs.status === TransactionStatus.Replaced && !(theirs as { replacedReason?: unknown }).replacedReason);
+      if (provesNothing && isTracked?.(key)) continue;
       pool[key] =
         ours.isTrackedModalOpen === theirs.isTrackedModalOpen
           ? theirs
@@ -68,8 +76,11 @@ export function mergeTabPools<T extends Transaction>(
       const learned = Object.entries(theirs).some(
         ([field, value]) => value !== undefined && ours[field as keyof T] === undefined,
       );
-      if (learned) {
-        pool[key] = { ...theirs, ...ours };
+      const syncedThere = theirs.syncStatus === 'synced' && ours.syncStatus === 'pending-sync';
+      if (learned || syncedThere) {
+        // Only what this tab has a value for wins: an own `undefined` must not take back what the other tab knows
+        const known = Object.fromEntries(Object.entries(ours).filter(([, value]) => value !== undefined));
+        pool[key] = { ...theirs, ...known, ...(syncedThere && { syncStatus: 'synced' }) } as T;
         changed = true;
       }
     }
