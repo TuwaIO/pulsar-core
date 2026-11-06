@@ -166,7 +166,7 @@ These fetchers stop with `withoutRemoving: true`, so a `removeTxFromPool` you pa
 ## Helpers
 
 - `checkTransactionsTracker({ actionTxKey, connectorType, tracker })` returns the tracker Pulsar would use for a key: `ERC4337` or `Gelato` only when requested, `Safe` for Safe connectors (`evm:safe`), `Ethereum` otherwise.
-- `readNonceSlot(client, { hash, slot: { from, nonce } })` tells what became of a transaction from its sender and nonce, when a node no longer returns its hash: `open`, `ours`, `replaced` (with viem's replacement data) or `spent`. Pass the sender and nonce to `evmTracker` as `knownDetails` after a restart, so it reads them too.
+- `readNonceSlot(client, { hash, slot: { from, nonce } })` tells what became of a transaction from its sender and nonce, when a node no longer returns its hash: `open` (the nonce is free), `spender_found` (another transaction spent it, and its receipt is not readable yet), `ours`, `replaced` (with viem's replacement data) or `spent`. Pass the sender and nonce to `evmTracker` as `knownDetails` after a restart, so it reads them too.
 - `speedUpTxAction` and `cancelTxAction` resend a pending EIP-1559 transaction with the same nonce, 15% above the fees last sent for it and at least at the market estimate, only from the account that sent it. They need the `nonce` and fee fields the tracker fetched; `evmTracker` then reports the original transaction as replaced.
 - `selectEvmTxExplorerLink` builds the block explorer (or Safe app) link of a transaction.
 

@@ -166,7 +166,7 @@ export function trackGelatoTask(taskId: string, apiKey: string) {
 ## Помічники [#helpers]
 
 - `checkTransactionsTracker({ actionTxKey, connectorType, tracker })` повертає трекер, який Pulsar використав би для ключа: `ERC4337` або `Gelato` лише на запит, `Safe` для конекторів Safe (`evm:safe`), інакше `Ethereum`.
-- `readNonceSlot(client, { hash, slot: { from, nonce } })` за відправником і nonce показує, що сталося з транзакцією, коли вузол уже не повертає її хеш: `open`, `ours`, `replaced` (з даними заміни від viem) або `spent`. Після перезапуску передайте відправника й nonce в `evmTracker` як `knownDetails`, щоб він теж їх читав.
+- `readNonceSlot(client, { hash, slot: { from, nonce } })` за відправником і nonce показує, що сталося з транзакцією, коли вузол уже не повертає її хеш: `open` (nonce вільний), `spender_found` (його використала інша транзакція, а її чек ще не читається), `ours`, `replaced` (з даними заміни від viem) або `spent`. Після перезапуску передайте відправника й nonce в `evmTracker` як `knownDetails`, щоб він теж їх читав.
 - `speedUpTxAction` і `cancelTxAction` повторно надсилають EIP-1559-транзакцію, що очікує, з тим самим nonce, на 15% вище за комісії, надіслані для неї востаннє, і не нижче за ринкову оцінку, лише з рахунку, який її надіслав. Їм потрібні `nonce` і поля комісій, які отримав трекер; після цього `evmTracker` повідомляє, що вихідну транзакцію замінено.
 - `selectEvmTxExplorerLink` будує посилання на транзакцію в експлорері блоків (або в застосунку Safe).
 

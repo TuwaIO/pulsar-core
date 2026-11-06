@@ -362,7 +362,8 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
       // viem may not get this receipt: two trackers of one hash share its watcher, and the first one's timer stops it
       return reading.receipt ? finishMined(reading.receipt) : false;
     }
-    if (reading.state === 'open') {
+    // A spender found is no spent nonce with nothing to explain it: its receipt is on the way, and with it this is `replaced`
+    if (reading.state === 'open' || reading.state === 'spender_found') {
       spentReadings = 0;
       return false;
     }
