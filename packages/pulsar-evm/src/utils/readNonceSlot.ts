@@ -71,6 +71,8 @@ export type NonceSlotScan = {
   oldest?: bigint;
   /** The newest block it reads, fixed by the first reading of a spent nonce. */
   highest?: bigint;
+  /** The block whose count shows the nonce spent, when the node has old state: the only block that needs reading. */
+  spentIn?: bigint;
 };
 
 /**
@@ -110,6 +112,47 @@ async function receiptIfAny(client: Client, hash: Hex): Promise<TransactionRecei
   }
 }
 
+/**
+ * The block that spent the nonce, from the sender's count at past blocks: from the newest back in growing steps, as a tracker asks
+ * soon after a replacement lands, then halving what is left. About two calls per doubling of the distance, where the scan below
+ * reads every block in between, and full blocks are what a paid RPC bills and a public one stops answering for.
+ *
+ * @returns The block; `null` when the nonce was spent before `lowest`; `undefined` when the node cannot say, as it keeps no old
+ *   state, or lags behind the one that gave the newest block: the scan decides then.
+ */
+async function blockThatSpent(
+  client: Client,
+  slot: NonceSlot,
+  latest: bigint,
+  lowest: bigint,
+): Promise<bigint | null | undefined> {
+  const spentBy = async (blockNumber: bigint) =>
+    (await getTransactionCount(client, { address: slot.from, blockNumber })) > slot.nonce;
+  const below = lowest > 0n ? lowest - 1n : 0n;
+  try {
+    if (!(await spentBy(latest))) return undefined;
+    if (await spentBy(below)) return null;
+    let spent = latest;
+    let free = below;
+    for (let step = 1n; spent - step > below; step *= 2n) {
+      const at = spent - step;
+      if (!(await spentBy(at))) {
+        free = at;
+        break;
+      }
+      spent = at;
+    }
+    while (spent - free > 1n) {
+      const middle = (spent + free) / 2n;
+      if (await spentBy(middle)) spent = middle;
+      else free = middle;
+    }
+    return spent;
+  } catch {
+    return undefined;
+  }
+}
+
 /** The transaction that spent the nonce, or `null` when it could not be found. */
 async function findSpender(
   client: Client,
@@ -133,7 +176,6 @@ async function findSpender(
     if (transaction) return transaction;
   }
 
-  // Block bodies, not historical nonces: a pruned node keeps only about the last 128 blocks of state
   const latest = await getBlockNumber(client, { cacheTime: 0 });
   const reach = latest - BigInt(maxBlocks) + 1n;
   const lowest = fromBlock !== undefined && fromBlock > reach ? fromBlock : reach > 0n ? reach : 0n;
@@ -143,6 +185,33 @@ async function findSpender(
     return (found as GetTransactionReturnType | undefined) ?? null;
   };
 
+  // Everything was looked at, as far back as this reading may go
+  const read = scan.oldest !== undefined && scan.oldest <= lowest && scan.newest !== undefined;
+  if (read && scan.highest !== undefined && scan.newest !== undefined && scan.newest >= scan.highest) return null;
+
+  // What an earlier reading found, while its receipt is on the way. Gone from there, a reorganization moved it
+  const known = scan.spentIn;
+  if (known !== undefined) {
+    const found = await inBlock(known);
+    if (found) return found;
+    scan.spentIn = undefined;
+  }
+  const located = await blockThatSpent(client, slot, latest, lowest);
+  if (located !== undefined) {
+    if (located !== null) {
+      scan.spentIn = located;
+      const found = located === known ? null : await inBlock(located);
+      if (found) return found;
+    }
+    // Nothing of the sender in the block that spent the nonce (an EIP-7702 authorization in someone else's transaction), or spent
+    // before this reach: no other block can hold it
+    scan.oldest = scan.oldest !== undefined && scan.oldest < lowest ? scan.oldest : lowest;
+    scan.newest = scan.newest !== undefined && scan.newest > latest ? scan.newest : latest;
+    scan.highest = scan.newest;
+    return null;
+  }
+
+  // A node without old state, which keeps only about the last 128 blocks of it: block bodies are all it can answer with
   scan.newest ??= latest;
   scan.oldest ??= latest + 1n;
   scan.highest ??= latest + NODE_LAG_BLOCKS;
@@ -169,8 +238,9 @@ async function findSpender(
  * identify a transaction, so the reading is always `open` and viem's own detection is left to do the work.
  *
  * RPC calls: `eth_getTransactionCount`, the receipt of `hash`, and, once the nonce is spent,
- * `eth_getTransactionBySenderAndNonce` where the node has it, otherwise up to `maxBlocks` full blocks back from the newest, and
- * 16 above it for nodes that disagree on the newest one.
+ * `eth_getTransactionBySenderAndNonce` where the node has it, otherwise `eth_getTransactionCount` at past blocks to find the block
+ * that spent it, about two calls per doubling of its distance, and that one full block. Only a node without old state is read
+ * block by block, up to `maxBlocks` full blocks back from the newest, and 16 above it for nodes that disagree on the newest one.
  *
  * @param client - The viem client of the chain.
  * @param params - The transaction and how far back to look.

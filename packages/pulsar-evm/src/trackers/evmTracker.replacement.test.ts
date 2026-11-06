@@ -68,6 +68,8 @@ type Script = {
   minedAgainAt?: number;
   /** A contract creation: the transactions have no recipient. */
   contractCreation?: boolean;
+  /** A node without old state, which answers the sender's count at the newest block only. */
+  noOldState?: boolean;
 };
 
 const rpcTransaction = (fields: {
@@ -182,8 +184,15 @@ function scriptedNode(script: Script) {
         }
         return null;
       }
-      case 'eth_getTransactionCount':
-        return numberToHex(NONCE + (replacementMined() || ownMined() || spent() ? 1 : 0));
+      case 'eth_getTransactionCount': {
+        const at = args[1] as string;
+        if (script.noOldState && at !== 'latest') throw new Error('missing trie node');
+        const block = at === 'latest' ? blockAt(now()) : Number(BigInt(at));
+        const by = (mined: boolean, minedIn: number | null) => mined && minedIn !== null && block >= minedIn;
+        const used =
+          by(replacementMined(), replacementBlock) || by(spent(), spentBlock) || (ownMined() && block >= ownMinedIn());
+        return numberToHex(NONCE + (used ? 1 : 0));
+      }
       case 'eth_getTransactionBySenderAndNonce': {
         if (!script.slotMethod) throw Object.assign(new Error('the method does not exist'), { code: -32601 });
         if (replacementMined()) {
@@ -671,7 +680,7 @@ describe('evmTracker on the real viem', () => {
     test('the block scan goes on where it stopped, and reads a block once', async () => {
       // Mined 100 blocks before the restart, and a rate limit stops the scan halfway
       const tracker = track(
-        { knownUntil: 0, replacementMinedAt: -1200, failBlocksOnce: [FIRST_BLOCK - 50] },
+        { knownUntil: 0, replacementMinedAt: -1200, failBlocksOnce: [FIRST_BLOCK - 50], noOldState: true },
         { knownDetails },
       );
 
@@ -680,6 +689,22 @@ describe('evmTracker on the real viem', () => {
       expect(tracker.onReplaced).toHaveBeenCalledOnce();
       const reads = tracker.node.calls.filter((method) => method === 'eth_getBlockByNumber').length;
       expect(reads).toBeLessThan(130);
+    });
+
+    // Every block since, for each replaced transaction on each wallet and server tracking one: a paid RPC bills them, and a
+    // public one stops answering
+    test('a node with old state reads the one block that spent the nonce', async () => {
+      const scan = track({ knownUntil: 0, replacementMinedAt: -1200, noOldState: true }, { knownDetails });
+      await pass(120);
+      const tracker = track({ knownUntil: 0, replacementMinedAt: -1200 }, { knownDetails });
+      await pass(120);
+
+      expect(tracker.onReplaced).toHaveBeenCalledOnce();
+      expect(tracker.onReplaced.mock.calls[0][0].transaction.hash).toBe(NEW_HASH);
+      const fullBlocks = (node: typeof tracker.node) =>
+        node.calls.filter((method) => method === 'eth_getBlockByNumber').length;
+      expect(fullBlocks(scan.node)).toBeGreaterThan(90);
+      expect(fullBlocks(tracker.node)).toBeLessThan(10);
     });
 
     test('the first block of the scan is read before the first lookup, with a margin', async () => {

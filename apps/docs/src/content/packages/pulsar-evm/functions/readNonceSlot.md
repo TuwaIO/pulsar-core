@@ -2,7 +2,7 @@
 
 > **readNonceSlot**(`client`, `params`): `Promise`\<[`NonceSlotReading`](/packages/pulsar-evm/type-aliases/NonceSlotReading.md)\>
 
-Defined in: [utils/readNonceSlot.ts:191](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L191)
+Defined in: [utils/readNonceSlot.ts:261](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L261)
 
 Reads what became of a transaction from its sender and nonce. It works when the node no longer returns the hash, which
 a node does once a replacement reaches its mempool, or when it drops a transaction whose fee fell too low, and it does
@@ -10,8 +10,9 @@ not depend on seeing the block the replacement landed in. On a chain with nonce 
 identify a transaction, so the reading is always `open` and viem's own detection is left to do the work.
 
 RPC calls: `eth_getTransactionCount`, the receipt of `hash`, and, once the nonce is spent,
-`eth_getTransactionBySenderAndNonce` where the node has it, otherwise up to `maxBlocks` full blocks back from the newest, and
-16 above it for nodes that disagree on the newest one.
+`eth_getTransactionBySenderAndNonce` where the node has it, otherwise `eth_getTransactionCount` at past blocks to find the block
+that spent it, about two calls per doubling of its distance, and that one full block. Only a node without old state is read
+block by block, up to `maxBlocks` full blocks back from the newest, and 16 above it for nodes that disagree on the newest one.
 
 ## Parameters
 
