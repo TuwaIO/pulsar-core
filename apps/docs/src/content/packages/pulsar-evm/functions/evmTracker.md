@@ -2,7 +2,7 @@
 
 > **evmTracker**(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/evmTracker.ts:254](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L254)
+Defined in: [trackers/evmTracker.ts:229](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L229)
 
 Tracks a standard EVM transaction by its hash, without a store. Use it to track transactions in your own state or on
 a server.

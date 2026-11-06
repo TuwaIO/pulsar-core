@@ -25,7 +25,7 @@ Inside the monorepo, packages are split into two layers:
 
 ### Layer 4: Chains and React (L4)
 
-- **[`@tuwaio/pulsar-evm`](./packages/pulsar-evm)**: the EVM adapter and trackers for standard transactions, ERC-4337 UserOperations, Safe multisig transactions and Gelato relay tasks (deprecated), plus speed-up and cancel actions; `@tuwaio/pulsar-evm/safe` is the Safe tracker alone, without wagmi. Peer dependencies: `viem`, and for the main entry `@tuwaio/orbit-evm` and `@wagmi/core`.
+- **[`@tuwaio/pulsar-evm`](./packages/pulsar-evm)**: the EVM adapter and trackers for standard transactions, ERC-4337 UserOperations and Safe multisig transactions, plus speed-up and cancel actions; `@tuwaio/pulsar-evm/safe` is the Safe tracker alone, without wagmi. Peer dependencies: `viem`, and for the main entry `@tuwaio/orbit-evm` and `@wagmi/core`.
 - **[`@tuwaio/pulsar-solana`](./packages/pulsar-solana)**: the Solana adapter, the signature tracker and `signAndSendSolanaTx`. Peer dependencies: `@tuwaio/orbit-solana`, `@solana/kit` (plus the `@wallet-standard` peers of `@tuwaio/orbit-solana`).
 - **[`@tuwaio/pulsar-react`](./packages/pulsar-react)**: the `useInitializeTransactionsPool` hook that resumes tracking after a reload and the `useTxFinished` hook that reacts to every finished transaction. Peer dependency: `react`.
 

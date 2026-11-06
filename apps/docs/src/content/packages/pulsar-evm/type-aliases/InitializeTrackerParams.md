@@ -22,14 +22,6 @@ The application transaction type.
 
 The wagmi config of the app.
 
-### ~~gelatoApiKey?~~
-
-> `optional` **gelatoApiKey?**: `string`
-
-#### Deprecated
-
-Gelato API key; required to run the Gelato tracker.
-
 ### safePendingTimeoutMs?
 
 > `optional` **safePendingTimeoutMs?**: `number` \| `null`

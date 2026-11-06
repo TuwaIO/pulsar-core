@@ -4,7 +4,7 @@
   "private": false,
   "author": "Oleksandr Tkach",
   "license": "Apache-2.0",
-  "description": "L4 EVM package of Pulsar (TUWA): transaction adapter and trackers for standard transactions, ERC-4337 UserOperations, EIP-5792 call batches, Safe multisig and Gelato relay, which see a speed-up or cancel made in the wallet at any moment, with speed-up and cancel actions, built on viem and @wagmi/core.",
+  "description": "L4 EVM package of Pulsar (TUWA): transaction adapter and trackers for standard transactions, ERC-4337 UserOperations, EIP-5792 call batches and Safe multisig, which see a speed-up or cancel made in the wallet at any moment, with speed-up and cancel actions, built on viem and @wagmi/core.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

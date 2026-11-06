@@ -49,31 +49,6 @@ const WALLET_READ_TIMEOUT_MS = 3000;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Tells whether an error thrown while waiting for a receipt is transient: a receipt timeout or "not found" error, an HTTP
- * or WebSocket transport error, or a message about a timeout, rate limit, connection reset or a 502/503/504 status. Nested
- * `cause` errors are checked too.
- *
- * @deprecated `evmTracker` no longer uses it: any error while waiting means no answer yet. It will be removed.
- * @param error - The caught error.
- * @returns `true` if the error looks transient.
- */
-export function isRetryableReceiptError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  const name = error.name;
-  const message = error.message.toLowerCase();
-  const transient =
-    name === 'WaitForTransactionReceiptTimeoutError' ||
-    name === 'TransactionReceiptNotFoundError' ||
-    name === 'HttpRequestError' ||
-    name === 'WebSocketRequestError' ||
-    name === 'TimeoutError' ||
-    ['fetch failed', 'network error', 'timeout', 'timed out', 'econnreset', 'rate limit', '502', '503', '504'].some(
-      (part) => message.includes(part),
-    );
-  return transient || isRetryableReceiptError(error.cause);
-}
-
-/**
  * The error of `onFailure` when a mined transaction did not reach its confirmations within `confirmationsTimeout`. The
  * transaction is mined: `receipt` says how.
  */

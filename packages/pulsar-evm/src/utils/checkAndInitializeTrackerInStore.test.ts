@@ -3,22 +3,18 @@
  */
 
 import { OrbitAdapter } from '@tuwaio/orbit-core';
-import { EvmTransaction, TransactionTracker } from '@tuwaio/pulsar-core';
+import { EvmTransaction, TransactionStatus, TransactionTracker } from '@tuwaio/pulsar-core';
 import { Config } from '@wagmi/core';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { eip5792TrackerForStore } from '../trackers/eip5792Tracker';
 import { erc4337TrackerForStore } from '../trackers/erc4337Tracker';
 import { evmTrackerForStore } from '../trackers/evmTracker';
-import { gelatoTrackerForStore } from '../trackers/gelatoTracker';
 import { safeTrackerForStore } from '../trackers/safeTracker';
 import { checkAndInitializeTrackerInStore } from './checkAndInitializeTrackerInStore';
 
 vi.mock('../trackers/evmTracker', () => ({
   evmTrackerForStore: vi.fn(),
-}));
-vi.mock('../trackers/gelatoTracker', () => ({
-  gelatoTrackerForStore: vi.fn(),
 }));
 vi.mock('../trackers/safeTracker', () => ({
   safeTrackerForStore: vi.fn(),
@@ -120,31 +116,28 @@ describe('checkAndInitializeTrackerInStore', () => {
     expect(eip5792TrackerForStore).toHaveBeenCalledWith(expect.objectContaining({ config: mockConfig }));
   });
 
-  test('should delegate to gelatoTrackerForStore for Gelato tracker when apiKey is present', async () => {
+  // Pulsar no longer reads Gelato. A task ID is no hash: followed by the EVM tracker, a task an older version saved stayed pending for good
+  test('should end a Gelato relay task an older version saved, saying why', async () => {
+    const updateTxParams = vi.fn();
     await checkAndInitializeTrackerInStore({
-      tracker: TransactionTracker.Gelato,
-      tx: { ...mockTx, tracker: TransactionTracker.Gelato },
+      tracker: 'gelato' as TransactionTracker,
+      tx: { ...mockTx, tracker: 'gelato' as TransactionTracker },
       config: mockConfig,
       transactionsPool: {},
-      updateTxParams: vi.fn(),
-      removeTxFromPool: vi.fn(),
-      gelatoApiKey: 'key-123',
-    });
-
-    expect(gelatoTrackerForStore).toHaveBeenCalled();
-  });
-
-  test('should fallback to evmTrackerForStore if Gelato tracker requested without apiKey', async () => {
-    await checkAndInitializeTrackerInStore({
-      tracker: TransactionTracker.Gelato,
-      tx: { ...mockTx, tracker: TransactionTracker.Gelato },
-      config: mockConfig,
-      transactionsPool: {},
-      updateTxParams: vi.fn(),
+      updateTxParams,
       removeTxFromPool: vi.fn(),
     });
 
-    expect(evmTrackerForStore).toHaveBeenCalled();
+    expect(evmTrackerForStore).not.toHaveBeenCalled();
+    expect(updateTxParams).toHaveBeenCalledWith(
+      mockTx.txKey,
+      expect.objectContaining({
+        status: TransactionStatus.Failed,
+        pending: false,
+        isError: true,
+        error: { message: expect.stringContaining('Gelato') },
+      }),
+    );
   });
 
   test('should delegate to safeTrackerForStore for Safe tracker', async () => {

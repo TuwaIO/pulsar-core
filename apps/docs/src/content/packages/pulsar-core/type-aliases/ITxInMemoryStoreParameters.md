@@ -2,7 +2,7 @@
 
 > **ITxInMemoryStoreParameters**\<`T`\> = `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:799](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L799)
+Defined in: [packages/pulsar-core/src/types.ts:785](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L785)
 
 The configuration of `createTxInMemoryStore`.
 
@@ -23,7 +23,7 @@ The application transaction type.
     walletAddress,
   }`) => `Promise`\<\{ `docs`: `T`[]; `hasNextPage`: `boolean`; `hasPrevPage`: `boolean`; `page`: `number`; `totalDocs`: `number`; `totalPages`: `number`; \} \| `null`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:814](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L814)
+Defined in: [packages/pulsar-core/src/types.ts:800](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L800)
 
 Loads one page of the remote history of a wallet. Return `null` when there is no history to show (for example,
 the user is not signed in); throw on errors to set `isError`.
@@ -61,7 +61,7 @@ The wallet whose history is requested.
 
 > **localTransactionsPool**: [`TransactionPool`](/packages/pulsar-core/type-aliases/TransactionPool.md)\<`T`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:801](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L801)
+Defined in: [packages/pulsar-core/src/types.ts:787](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L787)
 
 The initial pool, usually `transactionsPool` of the persistent store.
 
@@ -71,7 +71,7 @@ The initial pool, usually `transactionsPool` of the persistent store.
 
 > `optional` **onHistoryFetched?**: (`remoteTxs`) => `void`
 
-Defined in: [packages/pulsar-core/src/types.ts:809](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L809)
+Defined in: [packages/pulsar-core/src/types.ts:795](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L795)
 
 Called in a microtask with the valid transactions of every loaded page, usually to pass them to the store's
 `injectExternalPendingTxs`.
@@ -94,7 +94,7 @@ The transactions of the loaded page.
 
 > `optional` **reconcileUnsyncedTransactions?**: () => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:803](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L803)
+Defined in: [packages/pulsar-core/src/types.ts:789](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L789)
 
 Called by `fetchInitial` before the first page is loaded, usually the store's `reconcileUnsyncedTransactions`.
 

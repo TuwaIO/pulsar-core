@@ -117,18 +117,15 @@ export async function payInOneBatch(token: Address, to: Address, amount: bigint)
 
 ---
 
-## Мультипідпис Safe і Gelato: фетчери з опитуванням [#safe-multisig-and-gelato-polling-fetchers]
+## Мультипідпис Safe: фетчер з опитуванням [#safe-multisig-polling-fetcher]
 
-Safe і Gelato відстежуються опитуванням API. Передайте їхній фетчер у `initializePollingTracker` з `@tuwaio/pulsar-core`, який за замовчуванням викликає його кожні 5 с (або за розкладом функції `pollingInterval`) і припиняє спроби після 10 невдалих запитів поспіль (тоді він викликає `onFailure()` без аргументів), або, з `retryForeverEveryMs`, продовжує запитувати з цією затримкою.
+Safe відстежується опитуванням API. Передайте його фетчер у `initializePollingTracker` з `@tuwaio/pulsar-core`, який за замовчуванням викликає його кожні 5 с (або за розкладом функції `pollingInterval`) і припиняє спроби після 10 невдалих запитів поспіль (тоді він викликає `onFailure()` без аргументів), або, з `retryForeverEveryMs`, продовжує запитувати з цією затримкою.
 
 Трекер Safe також доступний як `@tuwaio/pulsar-evm/safe` — точка входу, яка не завантажує ні `@wagmi/core`, ні `@tuwaio/orbit-evm`: встановіть `@tuwaio/pulsar-evm`, `@tuwaio/pulsar-core`, `@tuwaio/orbit-core`, `viem` і `dayjs`, і застосунок, побудований лише на `viem`, зможе відстежувати транзакції Safe.
 
-> [!NOTE]
-> Релей Gelato застарів. Натомість використовуйте UserOperations ERC-4337 з `@tuwaio/orbit-evm` і `erc4337Tracker`.
 
 ```typescript
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
-import { createGelatoClient, gelatoFetcher } from '@tuwaio/pulsar-evm';
 import { createSafeFetcher, safePollingInterval } from '@tuwaio/pulsar-evm/safe';
 
 // Safe: txKey is the safeTxHash, from is the Safe address. Without a timeout it waits until the owners act.
@@ -145,20 +142,9 @@ export function trackSafeTransaction(safeTxHash: `0x${string}`, safeAddress: `0x
       console.warn('Another transaction with the same nonce was executed:', executed.safeTxHash),
   });
 }
-
-// Gelato (deprecated): txKey is the task ID.
-export function trackGelatoTask(taskId: string, apiKey: string) {
-  initializePollingTracker({
-    tx: { txKey: taskId, pending: true },
-    fetcher: gelatoFetcher(createGelatoClient({ apiKey })),
-    onSuccess: (status) => console.log('Task succeeded', status),
-    onFailure: (status) => console.error('Task failed', status),
-  });
-}
 ```
 
 - **Safe:** фетчер звертається до Safe Transaction Service мережі (підтримувані мережі перелічено в `SafeTransactionServiceUrls`) і передає кожну перевірку в `onIntervalTick` разом із зібраними підтвердженнями власників (`confirmations`) і порогом (`confirmationsRequired`). Відповідь 404 викликає `onFailure()` без відповіді й зупиняє відстеження. Транзакція, що все ще очікує через `pendingTimeoutMs` після того, як її запропонували (один день для `safeFetcher` і за замовчуванням), викликає `onFailure` зі своїм статусом і зупиняє відстеження; `createSafeFetcher({ pendingTimeoutMs: null })` чекає без обмеження.
-- **Gelato:** завдання, що все ще очікує через годину після створення, викликає `onFailure` зі своїм статусом і зупиняє відстеження.
 
 Ці фетчери зупиняються з `withoutRemoving: true`, тому `removeTxFromPool`, переданий у `initializePollingTracker`, викликається лише тоді, коли опитування припиняється: після `maxRetries` помилок поспіль або через `FinalPollingError`.
 
@@ -166,7 +152,7 @@ export function trackGelatoTask(taskId: string, apiKey: string) {
 
 ## Помічники [#helpers]
 
-- `checkTransactionsTracker({ actionTxKey, connectorType, tracker })` повертає трекер, який Pulsar використав би для ключа: `ERC4337` або `Gelato` лише на запит, `Safe` для конекторів Safe (`evm:safe`), інакше `Ethereum`.
+- `checkTransactionsTracker({ actionTxKey, connectorType, tracker })` повертає трекер, який Pulsar використав би для ключа: `ERC4337` лише на запит, `Safe` для конекторів Safe (`evm:safe`), інакше `Ethereum`.
 - `readNonceSlot(client, { hash, slot: { from, nonce } })` за відправником і nonce показує, що сталося з транзакцією, коли вузол уже не повертає її хеш: `open` (nonce вільний), `spender_found` (його використала інша транзакція, а її чек ще не читається), `ours`, `replaced` (з даними заміни від viem) або `spent`. Після перезапуску передайте відправника й nonce в `evmTracker` як `knownDetails`, щоб він теж їх читав.
 - `speedUpTxAction` і `cancelTxAction` повторно надсилають EIP-1559-транзакцію, що очікує, з тим самим nonce, на 15% вище за комісії, надіслані для неї востаннє, і не нижче за ринкову оцінку, лише з рахунку, який її надіслав. Їм потрібні `nonce` і поля комісій, які отримав трекер; після цього `evmTracker` повідомляє, що вихідну транзакцію замінено.
 - `selectEvmTxExplorerLink` будує посилання на транзакцію в експлорері блоків (або в застосунку Safe).

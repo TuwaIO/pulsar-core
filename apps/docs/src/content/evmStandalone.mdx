@@ -117,18 +117,15 @@ In the store, return the batch ID from `actionFunction` and pass `tracker: Trans
 
 ---
 
-## Safe Multisig and Gelato: Polling Fetchers
+## Safe Multisig: Polling Fetcher
 
-Safe and Gelato are tracked by polling an API. Pass their fetcher to `initializePollingTracker` from `@tuwaio/pulsar-core`, which calls it every 5 s by default (or on the schedule of a `pollingInterval` function) and gives up after 10 consecutive failed requests (it then calls `onFailure()` without arguments), or, with `retryForeverEveryMs`, keeps asking at that delay.
+Safe is tracked by polling an API. Pass its fetcher to `initializePollingTracker` from `@tuwaio/pulsar-core`, which calls it every 5 s by default (or on the schedule of a `pollingInterval` function) and gives up after 10 consecutive failed requests (it then calls `onFailure()` without arguments), or, with `retryForeverEveryMs`, keeps asking at that delay.
 
 The Safe tracker is also available as `@tuwaio/pulsar-evm/safe`, an entry that loads neither `@wagmi/core` nor `@tuwaio/orbit-evm`: install `@tuwaio/pulsar-evm`, `@tuwaio/pulsar-core`, `@tuwaio/orbit-core`, `viem` and `dayjs`, and an app built on `viem` alone can track Safe transactions.
 
-> [!NOTE]
-> Gelato relay is deprecated. Use ERC-4337 UserOperations with `@tuwaio/orbit-evm` and `erc4337Tracker` instead.
 
 ```typescript
 import { initializePollingTracker } from '@tuwaio/pulsar-core';
-import { createGelatoClient, gelatoFetcher } from '@tuwaio/pulsar-evm';
 import { createSafeFetcher, safePollingInterval } from '@tuwaio/pulsar-evm/safe';
 
 // Safe: txKey is the safeTxHash, from is the Safe address. Without a timeout it waits until the owners act.
@@ -145,28 +142,17 @@ export function trackSafeTransaction(safeTxHash: `0x${string}`, safeAddress: `0x
       console.warn('Another transaction with the same nonce was executed:', executed.safeTxHash),
   });
 }
-
-// Gelato (deprecated): txKey is the task ID.
-export function trackGelatoTask(taskId: string, apiKey: string) {
-  initializePollingTracker({
-    tx: { txKey: taskId, pending: true },
-    fetcher: gelatoFetcher(createGelatoClient({ apiKey })),
-    onSuccess: (status) => console.log('Task succeeded', status),
-    onFailure: (status) => console.error('Task failed', status),
-  });
-}
 ```
 
 - **Safe:** the fetcher calls the Safe Transaction Service of the chain (see `SafeTransactionServiceUrls` for the supported chains) and reports each check to `onIntervalTick`, with the owner confirmations collected (`confirmations`) and the threshold (`confirmationsRequired`). A 404 response calls `onFailure()` without a response and stops. A transaction still pending `pendingTimeoutMs` after it was proposed (one day for `safeFetcher` and by default) calls `onFailure` with its status and stops; `createSafeFetcher({ pendingTimeoutMs: null })` waits without a limit.
-- **Gelato:** a task still pending one hour after it was created calls `onFailure` with its status and stops.
 
-These fetchers stop with `withoutRemoving: true`, so a `removeTxFromPool` you pass to `initializePollingTracker` is called only when polling gives up: after `maxRetries` consecutive errors, or on a `FinalPollingError`.
+This fetcher stops with `withoutRemoving: true`, so a `removeTxFromPool` you pass to `initializePollingTracker` is called only when polling gives up: after `maxRetries` consecutive errors, or on a `FinalPollingError`.
 
 ---
 
 ## Helpers
 
-- `checkTransactionsTracker({ actionTxKey, connectorType, tracker })` returns the tracker Pulsar would use for a key: `ERC4337` or `Gelato` only when requested, `Safe` for Safe connectors (`evm:safe`), `Ethereum` otherwise.
+- `checkTransactionsTracker({ actionTxKey, connectorType, tracker })` returns the tracker Pulsar would use for a key: `ERC4337` only when requested, `Safe` for Safe connectors (`evm:safe`), `Ethereum` otherwise.
 - `readNonceSlot(client, { hash, slot: { from, nonce } })` tells what became of a transaction from its sender and nonce, when a node no longer returns its hash: `open` (the nonce is free), `spender_found` (another transaction spent it, and its receipt is not readable yet), `ours`, `replaced` (with viem's replacement data) or `spent`. Pass the sender and nonce to `evmTracker` as `knownDetails` after a restart, so it reads them too.
 - `speedUpTxAction` and `cancelTxAction` resend a pending EIP-1559 transaction with the same nonce, 15% above the fees last sent for it and at least at the market estimate, only from the account that sent it. They need the `nonce` and fee fields the tracker fetched; `evmTracker` then reports the original transaction as replaced.
 - `selectEvmTxExplorerLink` builds the block explorer (or Safe app) link of a transaction.

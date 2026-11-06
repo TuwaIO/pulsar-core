@@ -287,7 +287,7 @@ describe('txTrackingStore remote sync', () => {
     expect(store.getState().unsyncedTxKeys?.[txHash]).toBeUndefined();
   });
 
-  it('never sends pimlicoApiKey or gelatoApiKey to onRemoteCreate', async () => {
+  it('never sends pimlicoApiKey, or the gelatoApiKey of a record an older version saved, to onRemoteCreate', async () => {
     const onRemoteCreate = vi.fn().mockResolvedValue(undefined);
     const store = createStore({ onRemoteCreate });
 

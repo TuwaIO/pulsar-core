@@ -2,7 +2,7 @@
 
 > **PulsarAdapter**\<`T`\> = `OrbitGenericAdapter`\<[`TxAdapter`](/packages/pulsar-core/type-aliases/TxAdapter.md)\<`T`\>\> & `object` & [`SyncCallbacks`](/packages/pulsar-core/interfaces/SyncCallbacks.md)\<`T`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:415](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L415)
+Defined in: [packages/pulsar-core/src/types.ts:405](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L405)
 
 The configuration of `createPulsarStore`: one or more chain adapters and the store options.
 
@@ -28,14 +28,6 @@ Whether an error thrown by `beforeTxProcess` aborts the transaction. Defaults to
 > `optional` **beforeTxProcess?**: [`BeforeTxProcess`](/packages/pulsar-core/type-aliases/BeforeTxProcess.md)
 
 Global preflight callback run before every transaction. A `beforeTxProcess` passed to `executeTxAction` replaces it.
-
-### ~~gelatoApiKey?~~
-
-> `optional` **gelatoApiKey?**: `string`
-
-#### Deprecated
-
-Gelato relay is deprecated. Gelato API key used to track `TransactionTracker.Gelato` transactions.
 
 ### maxTransactions?
 

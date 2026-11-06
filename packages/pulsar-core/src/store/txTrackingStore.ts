@@ -53,7 +53,6 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  *   ones are dropped when the saved state is restored and when a transaction is added. `null` keeps them without a
  *   term. Defaults to 30.
  * @param params.onRemoteCreate - Remote sync callback (see `SyncCallbacks`).
- * @param params.gelatoApiKey - Deprecated Gelato API key, passed to the trackers.
  * @param params.beforeTxProcess - Global preflight callback (see `BeforeTxProcess`).
  * @param params.abortOnTxError - Whether a `beforeTxProcess` error aborts the transaction. Defaults to `true`.
  * @param params.onTxFinished - Called when a transaction finishes, also after a page reload, per open tab (see
@@ -77,7 +76,6 @@ export function createPulsarStore<T extends Transaction>({
   maxTransactions = 50,
   retentionDays = DEFAULT_RETENTION_DAYS,
   onRemoteCreate,
-  gelatoApiKey,
   beforeTxProcess,
   abortOnTxError,
   onTxFinished,
@@ -132,7 +130,6 @@ export function createPulsarStore<T extends Transaction>({
     startTracker(tx.txKey, () =>
       selectAdapterByKey({ adapterKey: tx.adapter, adapter })?.checkAndInitializeTrackerInStore({
         tx,
-        gelatoApiKey,
         ...callbacksOf(tx.txKey),
         ...store.getState(),
       }),
@@ -304,7 +301,6 @@ export function createPulsarStore<T extends Transaction>({
               return startTracker(tx.txKey, () =>
                 foundAdapter?.checkAndInitializeTrackerInStore({
                   tx,
-                  gelatoApiKey,
                   ...callbacksOf(tx.txKey),
                   ...get(),
                 }),
@@ -385,7 +381,6 @@ export function createPulsarStore<T extends Transaction>({
                 return startTracker(tx.txKey, () =>
                   foundAdapter?.checkAndInitializeTrackerInStore({
                     tx,
-                    gelatoApiKey,
                     ...callbacksOf(tx.txKey),
                     // Pass the fresh state after the synchronous set above
                     ...get(),
@@ -489,7 +484,6 @@ export function createPulsarStore<T extends Transaction>({
               actionTxKey: txKeyFromAction,
               connectorType,
               tracker,
-              gelatoApiKey: params.gelatoApiKey ?? gelatoApiKey,
               bundlerUrl: params.bundlerUrl,
               pimlicoApiKey: params.pimlicoApiKey,
             });
@@ -532,7 +526,6 @@ export function createPulsarStore<T extends Transaction>({
               foundAdapter.checkAndInitializeTrackerInStore({
                 tx,
                 ...callbacksOf(finalTxKey),
-                gelatoApiKey,
                 ...get(),
               }),
             );

@@ -20,7 +20,7 @@ import { isFinishedStatus } from '../utils/txFinished';
 
 /**
  * Returns a copy of a transaction without the API keys that the client needs to resume tracking but a backend must
- * not receive (`pimlicoApiKey`, `gelatoApiKey`).
+ * not receive (`pimlicoApiKey`; `gelatoApiKey` on a record an older version saved).
  *
  * @param tx - The transaction.
  * @returns A shallow copy without the API keys.

@@ -26,11 +26,6 @@ export enum TransactionTracker {
   Ethereum = 'ethereum',
   /** A Safe multisig transaction, tracked by its `safeTxHash` through the Safe Transaction Service API. */
   Safe = 'safe',
-  /**
-   * A meta-transaction relayed by Gelato, tracked by its task ID through the Gelato API.
-   * @deprecated Gelato relay is deprecated. Use `TransactionTracker.ERC4337` instead.
-   */
-  Gelato = 'gelato',
   /** A Solana transaction, tracked by its signature through RPC (`@tuwaio/pulsar-solana`). */
   Solana = 'solana',
   /** An ERC-4337 UserOperation, tracked by its `userOpHash` through a bundler RPC and then on-chain. */
@@ -59,7 +54,7 @@ export enum TransactionStatus {
 
 /**
  * The identifier returned by an `actionFunction` once the transaction is submitted: an EVM transaction hash, an
- * ERC-4337 `userOpHash`, a Safe `safeTxHash`, a Gelato task ID or a Solana signature. The adapter uses it to pick the
+ * ERC-4337 `userOpHash`, a Safe `safeTxHash` or a Solana signature. The adapter uses it to pick the
  * tracker and the `txKey` of the transaction.
  */
 export type ActionTxKey = `0x${string}` | string;
@@ -125,8 +120,8 @@ export type BaseTransaction = {
   /** The tracker that monitors the transaction. */
   tracker: TransactionTracker;
   /**
-   * The key of the transaction in the pool: the transaction hash, `userOpHash` (ERC-4337), `safeTxHash` (Safe), Gelato
-   * task ID or Solana signature.
+   * The key of the transaction in the pool: the transaction hash, `userOpHash` (ERC-4337), `safeTxHash` (Safe) or
+   * Solana signature.
    */
   txKey: string;
   /** Application-specific type of the transaction, for example `'SWAP'` or `'APPROVE'`. */
@@ -170,7 +165,7 @@ export type EvmTransaction = BaseTransaction & {
   adapter: OrbitAdapter.EVM;
   /**
    * The on-chain transaction hash: the `txKey` for standard transactions, and the hash of the mined transaction for
-   * ERC-4337, Safe and Gelato once it is known.
+   * ERC-4337 and Safe once it is known.
    */
   hash?: `0x${string}`;
   /** The calldata of the transaction. */
@@ -301,15 +296,10 @@ export type InitialTransactionParams = Pick<
     withTrackedModal?: boolean;
     /**
      * Forces a tracker. Required for ERC-4337 (`TransactionTracker.ERC4337`), EIP-5792 batches
-     * (`TransactionTracker.EIP5792`, the action returns the batch ID) and Gelato; otherwise the adapter picks one from
+     * (`TransactionTracker.EIP5792`, the action returns the batch ID); otherwise the adapter picks one from
      * the returned key and the connector.
      */
     tracker?: TransactionTracker;
-    /**
-     * Stored with the transaction and persisted to `localStorage`, but never passed to `onRemoteCreate`.
-     * @deprecated Gelato relay is deprecated. Use ERC-4337 with `bundlerUrl` or `pimlicoApiKey` instead.
-     */
-    gelatoApiKey?: string;
   };
 
 /**
@@ -392,7 +382,7 @@ export interface SyncCallbacks<T extends Transaction> {
    * marks the transaction `'synced'` and removes the key; rejecting logs a warning and leaves the key for
    * `reconcileUnsyncedTransactions`, also across reloads. Reject (throw) on failure: a resolved promise counts as
    * synced. A transaction is never sent twice at the same time.
-   * @param tx - A copy of the pooled transaction without `pimlicoApiKey` and `gelatoApiKey`.
+   * @param tx - A copy of the pooled transaction without `pimlicoApiKey`.
    */
   onRemoteCreate?: (tx: T) => Promise<void>;
 }
@@ -428,8 +418,6 @@ export type PulsarAdapter<T extends Transaction> = OrbitGenericAdapter<TxAdapter
    * Defaults to 30.
    */
   retentionDays?: number | null;
-  /** @deprecated Gelato relay is deprecated. Gelato API key used to track `TransactionTracker.Gelato` transactions. */
-  gelatoApiKey?: string;
   /**
    * Whether an error thrown by `beforeTxProcess` aborts the transaction. Defaults to `true`. It does not apply to
    * `onRemoteCreate`, whose errors never abort the transaction.
@@ -453,8 +441,6 @@ export type CheckTxTracker = {
   connectorType: string;
   /** The tracker requested in `executeTxAction` params, if any. */
   tracker?: TransactionTracker;
-  /** @deprecated Gelato relay is deprecated. Use `bundlerUrl` / `pimlicoApiKey` with ERC-4337 instead. */
-  gelatoApiKey?: string;
   /** Custom bundler RPC URL for ERC-4337 UserOperation tracking. */
   bundlerUrl?: string;
   /** Pimlico API key for ERC-4337 UserOperation tracking. */
@@ -500,10 +486,10 @@ export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl
    * and should stop when `isTxTracked` turns false. A tracker that ends with no final status leaves the transaction marked as
    * tracked, so a later `initializeTransactionsPool` does not restart it. The
    * built-in trackers keep failed transactions in the pool; `removeTxFromPool` is available to custom trackers.
-   * @param params - The transaction, the Gelato API key, the callbacks and the store members used by trackers.
+   * @param params - The transaction, the callbacks and the store members used by trackers.
    */
   checkAndInitializeTrackerInStore: (
-    params: { tx: T; gelatoApiKey?: string } & TrackerCallbacks<T> &
+    params: { tx: T } & TrackerCallbacks<T> &
       Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> &
       Partial<Pick<ITxTrackingStore<T>, 'isTxTracked'>>,
   ) => Promise<void> | void;

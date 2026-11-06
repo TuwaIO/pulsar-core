@@ -2,7 +2,7 @@
 
 > **InitialTransactionParams** = `Pick`\<[`BaseTransaction`](/packages/pulsar-core/type-aliases/BaseTransaction.md), `"description"` \| `"title"` \| `"type"` \| `"requiredConfirmations"` \| `"rpcUrl"` \| `"payload"`\> & `Pick`\<[`EvmTransaction`](/packages/pulsar-core/type-aliases/EvmTransaction.md), `"bundlerUrl"` \| `"pimlicoApiKey"`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:280](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L280)
+Defined in: [packages/pulsar-core/src/types.ts:275](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L275)
 
 The metadata of a transaction passed to `executeTxAction` (as `params`, without `actionFunction`) and kept in
 `initialTx`.
@@ -43,22 +43,12 @@ The chain the transaction must be sent on: a numeric chain ID for EVM (the walle
 or a Solana cluster (compared with the cluster of the connected wallet) as a moniker such as `'devnet'`, a Wallet
 Standard chain such as `'solana:devnet'` or a CAIP-2 chain ID with the genesis hash.
 
-### ~~gelatoApiKey?~~
-
-> `optional` **gelatoApiKey?**: `string`
-
-Stored with the transaction and persisted to `localStorage`, but never passed to `onRemoteCreate`.
-
-#### Deprecated
-
-Gelato relay is deprecated. Use ERC-4337 with `bundlerUrl` or `pimlicoApiKey` instead.
-
 ### tracker?
 
 > `optional` **tracker?**: [`TransactionTracker`](/packages/pulsar-core/enumerations/TransactionTracker.md)
 
 Forces a tracker. Required for ERC-4337 (`TransactionTracker.ERC4337`), EIP-5792 batches
-(`TransactionTracker.EIP5792`, the action returns the batch ID) and Gelato; otherwise the adapter picks one from
+(`TransactionTracker.EIP5792`, the action returns the batch ID); otherwise the adapter picks one from
 the returned key and the connector.
 
 ### withTrackedModal?
