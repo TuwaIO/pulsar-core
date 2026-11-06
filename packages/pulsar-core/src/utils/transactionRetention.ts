@@ -10,6 +10,25 @@ import { Transaction, TransactionPool } from '../types';
 export const DEFAULT_RETENTION_DAYS = 30;
 
 /**
+ * The keys of the oldest finished transactions over the limit of the pool. Pending ones are never evicted, so a tracker can always
+ * record its result.
+ *
+ * @param pool - The transactions by `txKey`.
+ * @param maxTransactions - The limit of the pool.
+ * @returns The keys to drop.
+ * @internal
+ */
+export function evictedTransactionKeys<T extends Transaction>(pool: TransactionPool<T>, maxTransactions: number): string[] {
+  const over = Object.keys(pool).length - maxTransactions;
+  if (over <= 0) return [];
+  return Object.values(pool)
+    .filter((tx) => !tx.pending)
+    .sort((a, b) => Number(a.localTimestamp) - Number(b.localTimestamp))
+    .slice(0, over)
+    .map((tx) => tx.txKey);
+}
+
+/**
  * The keys of the finished transactions whose term has run: `retentionDays` after `finishedTimestamp`, or after
  * `localTimestamp` when a transaction has none. Pending transactions are never expired.
  *

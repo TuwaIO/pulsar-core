@@ -21,7 +21,7 @@ import {
 } from '../types';
 import { keepsItsResult, mergeTabPools } from '../utils/mergeTabPools';
 import { normalizeRemoteTx } from '../utils/normalizeRemoteTx';
-import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
+import { DEFAULT_RETENTION_DAYS, evictedTransactionKeys, expiredTransactionKeys } from '../utils/transactionRetention';
 import { validateInitialTransactionParams, validateTransaction } from '../utils/transactionValidation';
 import { createTxFinishedNotifier, isFinishedStatus } from '../utils/txFinished';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
@@ -211,7 +211,11 @@ export function createPulsarStore<T extends Transaction>({
         }),
       );
       if (known.pending && !trackedTxKeys.has(replacedTxHash)) void startRestored(known as unknown as T);
-      else if (!known.pending) deliverResult(known as unknown as T);
+      else if (!known.pending) {
+        // Sped up again already: the callbacks go on to the last record, or nothing calls them with the real result
+        followSpeedUp(known as unknown as T);
+        deliverResult(known as unknown as T);
+      }
       return;
     }
 
@@ -256,7 +260,13 @@ export function createPulsarStore<T extends Transaction>({
     if (tx.status === TransactionStatus.Success) runCallback(tx.txKey, 'onSuccess', tx);
     else if (tx.status === TransactionStatus.Failed) {
       runCallback(tx.txKey, 'onError', new Error(tx.error?.message ?? 'The transaction failed.'), tx);
-    } else if (tx.status === TransactionStatus.Replaced) runCallback(tx.txKey, 'onReplaced', tx, tx);
+    } else if (tx.status === TransactionStatus.Replaced) {
+      runCallback(tx.txKey, 'onReplaced', tx, tx);
+      // As this tab's own tracker does: another transaction in the nonce that reverted
+      if (tx.isError) {
+        runCallback(tx.txKey, 'onError', new Error(tx.error?.message ?? 'The transaction failed.'), tx);
+      }
+    }
   };
 
   /** A final result that did not come through this tab's tracker, which stops at its next check. */
@@ -459,7 +469,7 @@ export function createPulsarStore<T extends Transaction>({
           const handleTxError = (e: unknown) => {
             set((state) =>
               produce(state, (draft) => {
-                if (draft.initialTx) {
+                if (draft.initialTx?.actionFunction === actionFunction) {
                   draft.initialTx.isInitializing = false;
                   draft.initialTx.error = normalizeError(e);
                 }
@@ -502,7 +512,7 @@ export function createPulsarStore<T extends Transaction>({
 
             // If `txKeyFromAction` is undefined, it indicates the user cancelled the action.
             if (!txKeyFromAction) {
-              set({ initialTx: undefined });
+              if (get().initialTx?.actionFunction === actionFunction) set({ initialTx: undefined });
               return;
             }
 
@@ -538,7 +548,8 @@ export function createPulsarStore<T extends Transaction>({
             // Step 7: Update the initial state to link it with the newly created transaction.
             set((state) =>
               produce(state, (draft) => {
-                if (draft.initialTx) {
+                // A later action may have taken this one slot while the wallet was asked about this one
+                if (draft.initialTx?.actionFunction === actionFunction) {
                   draft.initialTx.isInitializing = false;
                   draft.initialTx.lastTxKey = finalTxKey;
                 }
@@ -623,13 +634,20 @@ export function createPulsarStore<T extends Transaction>({
         }),
       ) as TransactionPool<T>;
       const state = store.getState();
-      const { pool, finished, added } = mergeTabPools(state.transactionsPool as TransactionPool<T>, valid, (txKey) =>
+      const merged = mergeTabPools(state.transactionsPool as TransactionPool<T>, valid, (txKey) =>
         trackedTxKeys.has(txKey),
       );
+      const { finished, added } = merged;
+      // The limits hold whatever the other tab saved: it brought back what this one had evicted, and the pool grew past them
+      const expired = expiredTransactionKeys(merged.pool, retentionDays);
+      const kept = Object.fromEntries(Object.entries(merged.pool).filter(([key]) => !expired.includes(key))) as TransactionPool<T>;
+      const evicted = evictedTransactionKeys(kept, maxTransactions);
+      for (const key of evicted) delete kept[key];
+      const pool = expired.length + evicted.length > 0 ? kept : merged.pool;
       if (pool !== state.transactionsPool)
         (store as StoreApi<ITxTrackingStore<T>>).setState({ transactionsPool: pool });
       // Finished first: a speed-up hands its callbacks on, and the new record among `added` must start with them
-      for (const txKey of finished) finishedElsewhere(pool[txKey]);
+      for (const txKey of finished) if (pool[txKey]) finishedElsewhere(pool[txKey]);
       // The tab that sent it may close: this one must then be able to finish it
       for (const tx of added) void startRestored(tx);
     };

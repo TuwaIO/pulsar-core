@@ -819,6 +819,58 @@ describe('final statuses and trackers', () => {
       expect(here.getState().transactionsPool[txHash]?.status).toBe(TransactionStatus.Success);
     });
 
+    // The pool grew past maxTransactions: a tab brought back what another had evicted
+    it('keeps the pool within its limit when the other tab brings more', async () => {
+      const listeners: ((event: { key: string | null }) => void)[] = [];
+      vi.stubGlobal('window', {
+        addEventListener: (type: string, listener: (event: { key: string | null }) => void) => {
+          if (type === 'storage') listeners.push(listener);
+        },
+      });
+      const memory = createMemoryStorage();
+      const make = (maxTransactions: number) =>
+        createPulsarStore<EvmTransaction>({
+          name: 'tabs-limit',
+          adapter: createAdapter(),
+          maxTransactions,
+          storage: createJSONStorage(() => memory),
+        });
+      const here = make(2);
+      const there = make(50);
+      for (const [index, key] of ['0x1', '0x2', '0x3'].entries()) {
+        await there.getState().addTxToPool(createTransaction({ txKey: key, localTimestamp: Math.floor(Date.now() / 1000) + index }));
+        there.getState().updateTxParams(key, { status: TransactionStatus.Success, pending: false });
+      }
+      listeners[0]({ key: 'tabs-limit' });
+      await new Promise((resolve) => setImmediate(resolve));
+      expect(Object.keys(here.getState().transactionsPool).sort()).toEqual(['0x2', '0x3']);
+    });
+
+    it('a reverted replacement heard from the other tab calls onError too', async () => {
+      const { here, there, hear } = twoTabs();
+      const onError = vi.fn();
+      const onReplaced = vi.fn();
+      await here.getState().executeTxAction({
+        actionFunction: async () => txHash,
+        params: createValidParams(),
+        defaultTracker: TransactionTracker.Ethereum,
+        onError,
+        onReplaced,
+      } as never);
+      await there.getState().addTxToPool(createTransaction({ txKey: txHash }));
+      there.getState().updateTxParams(txHash, {
+        status: TransactionStatus.Replaced,
+        pending: false,
+        isError: true,
+        replacedReason: 'replaced',
+        replacedTxHash: '0xnew',
+        finishedTimestamp: Math.floor(Date.now() / 1000),
+      } as never);
+      await hear();
+      expect(onReplaced).toHaveBeenCalledTimes(1);
+      expect(onError).toHaveBeenCalledTimes(1);
+    });
+
     it('fires the finished event once for a result that came from the other tab', async () => {
       const { here, there, hear } = twoTabs();
       const listener = vi.fn();
@@ -1483,6 +1535,29 @@ describe('what the audit found in the store', () => {
     const store = createStore({ name: 'unsynced', storage: createJSONStorage(() => storage), onRemoteCreate });
     await store.getState().reconcileUnsyncedTransactions();
     expect(onRemoteCreate).toHaveBeenCalledTimes(1);
+  });
+
+  // A second transaction started while the wallet still asked about the first, and each wrote over the other's state
+  it("a transaction that finishes late does not write over the next one's state", async () => {
+    const store = createStore();
+    let answerFirst: (key: string) => void = () => undefined;
+    const first = store.getState().executeTxAction({
+      actionFunction: () => new Promise<string>((resolve) => (answerFirst = resolve)),
+      params: createValidParams(),
+      defaultTracker: TransactionTracker.Ethereum,
+    } as never);
+    await new Promise((resolve) => setImmediate(resolve));
+    const second = vi.fn(async () => '0x2222');
+    await store.getState().executeTxAction({
+      actionFunction: second,
+      params: createValidParams(),
+      defaultTracker: TransactionTracker.Ethereum,
+    } as never);
+    expect(store.getState().initialTx?.lastTxKey).toBe('0x2222');
+    answerFirst('0x1111');
+    await first;
+    expect(store.getState().initialTx?.lastTxKey).toBe('0x2222');
+    expect(store.getState().transactionsPool['0x1111']).toBeDefined();
   });
 
   // localStorage nearly full: the send worked, the save did not, and the page said the send had failed and offered Retry
