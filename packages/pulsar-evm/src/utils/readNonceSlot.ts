@@ -17,6 +17,12 @@ import {
 import { getBlock, getBlockNumber, getTransaction, getTransactionCount, getTransactionReceipt } from 'viem/actions';
 
 const DEFAULT_MAX_SCANNED_BLOCKS = 1000;
+/**
+ * How many blocks above the newest one at its first reading a scan looks at. The nonce was spent by then, so only a block one
+ * node had and the node asked for the newest one did not can still hold the transaction that spent it. Reading every block
+ * since instead outran the reader on a chain of fast blocks: thousands in a row, past any `maxBlocks`.
+ */
+const NODE_LAG_BLOCKS = 16n;
 
 /**
  * The sender and nonce of a transaction, and the fields it was sent with, which tell a speed-up from another
@@ -37,8 +43,10 @@ export type NonceSlot = {
 
 /**
  * What {@link readNonceSlot} found:
- * - `open`: no final answer, ask again. The nonce is free, so the transaction can still land, or the transaction that
- *   spent it has no readable receipt yet.
+ * - `open`: the nonce is free, so the transaction can still land.
+ * - `spender_found`: another transaction spent the nonce and its receipt is not readable yet, which on a load-balanced RPC says
+ *   nothing: it was mined, in a block one node has. The tracked transaction will not land unless a reorganization brings it
+ *   back, so this is no free nonce. Ask again: with its receipt it is `replaced`.
  * - `ours`: the transaction itself spent the nonce. `receipt` is its receipt, when the node has it already.
  * - `replaced`: another transaction spent it, with the same data as viem's `onReplaced` gives.
  * - `spent`: the nonce is spent, so the transaction can never land, and no transaction of this sender could be found for
@@ -47,6 +55,7 @@ export type NonceSlot = {
  */
 export type NonceSlotReading =
   | { state: 'open' }
+  | { state: 'spender_found'; transaction: GetTransactionReturnType }
   | { state: 'ours'; receipt?: TransactionReceipt }
   | { state: 'replaced'; replacement: ReplacementReturnType }
   | { state: 'spent' };
@@ -60,6 +69,8 @@ export type NonceSlotScan = {
   newest?: bigint;
   /** The oldest block read. */
   oldest?: bigint;
+  /** The newest block it reads, fixed by the first reading of a spent nonce. */
+  highest?: bigint;
 };
 
 /**
@@ -134,8 +145,10 @@ async function findSpender(
 
   scan.newest ??= latest;
   scan.oldest ??= latest + 1n;
+  scan.highest ??= latest + NODE_LAG_BLOCKS;
+  const top = latest < scan.highest ? latest : scan.highest;
   // Each block is marked read only after it was, so an RPC error here makes the next reading go on from this block
-  while (scan.newest < latest) {
+  while (scan.newest < top) {
     const found = await inBlock(scan.newest + 1n);
     if (found) return found;
     scan.newest += 1n;
@@ -156,7 +169,8 @@ async function findSpender(
  * identify a transaction, so the reading is always `open` and viem's own detection is left to do the work.
  *
  * RPC calls: `eth_getTransactionCount`, the receipt of `hash`, and, once the nonce is spent,
- * `eth_getTransactionBySenderAndNonce` where the node has it, otherwise up to `maxBlocks` full blocks.
+ * `eth_getTransactionBySenderAndNonce` where the node has it, otherwise up to `maxBlocks` full blocks back from the newest, and
+ * 16 above it for nodes that disagree on the newest one.
  *
  * @param client - The viem client of the chain.
  * @param params - The transaction and how far back to look.
@@ -195,7 +209,7 @@ export async function readNonceSlot(
 
   // On a load-balanced RPC the block and the receipt come from different nodes, so no receipt yet says nothing
   const transactionReceipt = await receiptIfAny(client, transaction.hash);
-  if (!transactionReceipt) return { state: 'open' };
+  if (!transactionReceipt) return { state: 'spender_found', transaction };
 
   return {
     state: 'replaced',

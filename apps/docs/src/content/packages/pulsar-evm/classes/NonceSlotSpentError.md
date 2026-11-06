@@ -1,6 +1,6 @@
 # NonceSlotSpentError
 
-Defined in: [utils/readNonceSlot.ts:69](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L69)
+Defined in: [utils/readNonceSlot.ts:80](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L80)
 
 The error of a tracker when the nonce of its transaction is spent and no transaction could be found for it. The
 tracked transaction can never land, but money may have moved in the transaction that spent the nonce.
@@ -15,7 +15,7 @@ tracked transaction can never land, but money may have moved in the transaction 
 
 > **new NonceSlotSpentError**(`hash`): `NonceSlotSpentError`
 
-Defined in: [utils/readNonceSlot.ts:75](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L75)
+Defined in: [utils/readNonceSlot.ts:86](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L86)
 
 #### Parameters
 
@@ -39,7 +39,7 @@ The hash of the transaction that can no longer land.
 
 > **name**: `string` = `'NonceSlotSpentError'`
 
-Defined in: [utils/readNonceSlot.ts:70](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L70)
+Defined in: [utils/readNonceSlot.ts:81](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L81)
 
 #### Overrides
 

@@ -166,7 +166,7 @@ export function trackGelatoTask(taskId: string, apiKey: string) {
 ## 辅助函数 [#helpers]
 
 - `checkTransactionsTracker({ actionTxKey, connectorType, tracker })` 返回 Pulsar 会为某个交易键使用的追踪器：`ERC4337` 或 `Gelato` 仅在显式请求时返回，Safe 连接器 (`evm:safe`) 返回 `Safe`，其他情况返回 `Ethereum`。
-- `readNonceSlot(client, { hash, slot: { from, nonce } })` 在节点不再返回交易哈希时，根据发送方与 nonce 判断交易的结果：`open`、`ours`、`replaced`（附 viem 的替换数据）或 `spent`。重启后将发送方与 nonce 作为 `knownDetails` 传给 `evmTracker`，它也会读取这些信息。
+- `readNonceSlot(client, { hash, slot: { from, nonce } })` 在节点不再返回交易哈希时，根据发送方与 nonce 判断交易的结果：`open`（nonce 未被使用）、`spender_found`（另一笔交易已使用它，其收据尚不可读）、`ours`、`replaced`（附 viem 的替换数据）或 `spent`。重启后将发送方与 nonce 作为 `knownDetails` 传给 `evmTracker`，它也会读取这些信息。
 - `speedUpTxAction` 与 `cancelTxAction` 以相同的 nonce 重新发送一笔挂起的 EIP-1559 交易，手续费比上次发送时高 15%，且不低于市场估算，只能由发送该交易的账户操作。它们需要追踪器获取到的 `nonce` 与手续费字段；随后 `evmTracker` 会将原交易报告为已替换。
 - `selectEvmTxExplorerLink` 生成交易在区块浏览器（或 Safe 应用）中的链接。
 
