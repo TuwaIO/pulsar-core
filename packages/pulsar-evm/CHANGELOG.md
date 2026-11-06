@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.11.1...pulsar-evm-v0.12.0) (2026-11-06)
+
+
+### Features
+
+* **pulsar-evm:** readNonceSlot tells a spender with no receipt yet from a free nonce, and reads no block past what nodes can disagree on ([#102](https://github.com/TuwaIO/pulsar-core/issues/102)) ([a6d657e](https://github.com/TuwaIO/pulsar-core/commit/a6d657e4a832c054add8738de45bd20dd410b041))
+
 ## [0.11.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.11.0...pulsar-evm-v0.11.1) (2026-11-05)
 
 
