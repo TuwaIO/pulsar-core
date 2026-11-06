@@ -700,7 +700,7 @@ describe('evmTracker on the real viem', () => {
         { knownDetails },
       );
 
-      await pass(120);
+      await pass(200);
 
       expect(tracker.onReplaced).not.toHaveBeenCalled();
       expect(tracker.onFailure).toHaveBeenCalledOnce();
@@ -723,10 +723,28 @@ describe('evmTracker on the real viem', () => {
       expect(tracker.node.calls.filter((method) => method === 'eth_getBlockByNumber')).toHaveLength(0);
     });
 
-    test('a replacement is seen within a window, about a block of Ethereum', async () => {
+    // Measured on anvil: reading the nonce only between windows of 10 s showed a speed-up 8 s after it landed, where viem's scan took 2 s
+    test('a replacement shows at the next look for a block, as fast as it did', async () => {
       const tracker = track({ knownUntil: 40, replacementMinedAt: 48 });
-      await pass(60);
+      await pass(53);
       expect(tracker.onReplaced).toHaveBeenCalledOnce();
+    });
+
+    test('a block with nothing new costs no count', async () => {
+      const tracker = track({});
+      await pass(120);
+      const counts = tracker.node.calls.filter((method) => method === 'eth_getTransactionCount').length;
+      // A block every 12 s here, against a look every 4 s
+      expect(counts).toBeLessThanOrEqual(13);
+    });
+
+    // A mined transaction's result must not wait for a look at the nonce, nor be delivered twice by the two
+    test('a mined transaction ends once, with the watch of the nonce running beside it', async () => {
+      const tracker = track({ minedAt: 50 });
+      await pass(60);
+      expect(tracker.onSuccess).toHaveBeenCalledOnce();
+      await pass(120);
+      expect(tracker.onSuccess).toHaveBeenCalledOnce();
     });
 
     test('the first block of the scan is read before the first lookup, with a margin', async () => {

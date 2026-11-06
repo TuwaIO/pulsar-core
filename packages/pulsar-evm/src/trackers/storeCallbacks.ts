@@ -27,7 +27,13 @@ function savedSlot(tx: Transaction): NonceSlot | undefined {
   const { sender, nonce, to, value, input } = tx as EvmTransaction;
   if (!sender || nonce === undefined) return undefined;
   // A number by type, but a server's history brings a string, and a string never matched the nonce in a block
-  return { from: sender, nonce: Number(nonce), to: to ?? null, value: value === undefined ? undefined : BigInt(value), input };
+  return {
+    from: sender,
+    nonce: Number(nonce),
+    to: to ?? null,
+    value: value === undefined ? undefined : BigInt(value),
+    input,
+  };
 }
 
 /**
@@ -38,9 +44,7 @@ function pacingOf(tx: Transaction) {
   return () => {
     const ageMs = Date.now() - Number(tx.localTimestamp) * 1000;
     if (ageMs < 30 * 60_000) return {};
-    return ageMs < 2 * 60 * 60_000
-      ? { windowMs: 30_000, pollingIntervalMs: 15_000 }
-      : { windowMs: 60_000, pollingIntervalMs: 30_000 };
+    return { pollingIntervalMs: ageMs < 2 * 60 * 60_000 ? 15_000 : 30_000 };
   };
 }
 

@@ -67,11 +67,11 @@ The step-by-step React setup, with Nova Connect and a Codama-generated program c
 
 ## 🌐 External Services
 
-| Helper                | Host                                                                                                     | Purpose                                                       |
-| --------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Helper                | Host                                                                                                      | Purpose                                                       |
+| --------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | Signature tracker     | The URL of its cluster in `rpcUrls`, else the public endpoint of the cluster (`api.<cluster>.solana.com`) | `getSignatureStatuses` and `getTransaction` for the signature |
 | `retryTxAction`       | The URL of its cluster in `rpcUrls`, else the public endpoint of the cluster                              | The RPC client passed to your `actionFunction`                |
-| `signAndSendSolanaTx` | The client you pass                                                                                      | `getLatestBlockhash`; the signer sends the transaction        |
+| `signAndSendSolanaTx` | The client you pass                                                                                       | `getLatestBlockhash`; the signer sends the transaction        |
 
 The public `api.*.solana.com` endpoints are rate-limited; pass your own RPC URLs in production. Explorer links point to `explorer.solana.com` and are not requested by the package.
 

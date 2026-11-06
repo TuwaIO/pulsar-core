@@ -22,7 +22,7 @@ The wagmi config; the tracker uses its client for `tx.chainId`.
 
 > `optional` **confirmationsTimeout?**: `number`
 
-Defined in: [trackers/evmTracker.ts:181](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L181)
+Defined in: [trackers/evmTracker.ts:180](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L180)
 
 How long a mined transaction may wait for its confirmations, in milliseconds, before `onFailure` gets
 [ConfirmationsTimeoutError](/packages/pulsar-evm/classes/ConfirmationsTimeoutError.md). Defaults to no limit. Set it on a server, or one chain that makes no blocks would hold a
@@ -34,7 +34,7 @@ job for good.
 
 > `optional` **isAbandoned?**: () => `boolean`
 
-Defined in: [trackers/evmTracker.ts:187](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L187)
+Defined in: [trackers/evmTracker.ts:186](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L186)
 
 Asked before every lookup and every attempt. `true` ends tracking without any callback: nothing reads the result any
 more, for example as the transaction was removed from the pool.
@@ -75,7 +75,7 @@ Defaults to stopping after `retryCount` attempts.
 
 > `optional` **onConfirmationsUpdate?**: (`confirmations`) => `Promise`\<`void`\> \| `void`
 
-Defined in: [trackers/evmTracker.ts:192](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L192)
+Defined in: [trackers/evmTracker.ts:191](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L191)
 
 Called and awaited while waiting for `requiredConfirmations` (only when it is above 1). An error it throws is logged.
 
@@ -218,11 +218,10 @@ The transaction: nonce, fees, `to`, `value`, `input`.
 
 > `optional` **pacing?**: () => `object`
 
-Defined in: [trackers/evmTracker.ts:175](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L175)
+Defined in: [trackers/evmTracker.ts:174](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L174)
 
-How to wait for the next attempt, read before each: `windowMs`, how long one attempt lasts (10 s by default, the nonce is read
-after each), and `pollingIntervalMs`, how often it asks for the receipt (the client's by default). Lets a tracker slow down for
-a transaction that has been waiting for long.
+How often to look for a new block, read before each attempt: the receipt and the sender's nonce are read on a new block. The
+client's `pollingInterval` by default. Lets a tracker slow down for a transaction that has been waiting for long.
 
 #### Returns
 
@@ -231,10 +230,6 @@ a transaction that has been waiting for long.
 ##### pollingIntervalMs?
 
 > `optional` **pollingIntervalMs?**: `number`
-
-##### windowMs?
-
-> `optional` **windowMs?**: `number`
 
 ***
 
@@ -287,7 +282,7 @@ the number of confirmations to wait for.
 
 > `optional` **waitForTransactionReceiptParams?**: `WaitForTransactionReceiptParameters`
 
-Defined in: [trackers/evmTracker.ts:197](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L197)
+Defined in: [trackers/evmTracker.ts:196](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L196)
 
 Options for viem's `waitForTransactionReceipt`, merged over the defaults (`retryCount: 10`, `retryDelay: 3000`,
 `timeout: 60000`).

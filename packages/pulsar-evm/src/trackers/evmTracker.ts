@@ -36,13 +36,13 @@ const DEFAULT_RECEIPT_ATTEMPTS = 6;
 const RECEIPT_RETRY_DELAY = 5_000; // 5s base delay between attempts
 const MAX_RECEIPT_RETRY_DELAY = 30_000;
 const CONFIRMATIONS_POLLING_INTERVAL = 5000; // 5s between confirmation checks
-/** How long `receiptAttempts` counts one attempt, whatever a window takes. */
-const ATTEMPT_BUDGET_MS = 60_000;
+/** One call of viem's `waitForTransactionReceipt`: the whole wait of one attempt, not one RPC call. */
+const SINGLE_ATTEMPT_TIMEOUT = 60_000;
 /**
- * One call of viem's `waitForTransactionReceipt`: how long a replacement can go unseen, as the nonce is read after each. About a
- * block of Ethereum: viem's own scan saw it in the next block, and it read one full block per new block to do so.
+ * How far apart readings of a spent nonce with nothing to show count: while the nonce is read on each new block, three in a row can
+ * be a node behind its load balancer, seconds apart.
  */
-const RECEIPT_WINDOW_MS = 10_000;
+const SPENT_READING_GAP_MS = 60_000;
 /** A spent nonce with no transaction to show can be a node behind its load balancer: it must hold for a few readings. */
 const SPENT_READINGS_TO_BELIEVE = 3;
 /** How far before the block read at the start a replacement is looked for: nodes behind a load balancer disagree. */
@@ -168,11 +168,10 @@ export type EVMTrackerParams = {
    */
   receiptAttempts?: number;
   /**
-   * How to wait for the next attempt, read before each: `windowMs`, how long one attempt lasts (10 s by default, the nonce is read
-   * after each), and `pollingIntervalMs`, how often it asks for the receipt (the client's by default). Lets a tracker slow down for
-   * a transaction that has been waiting for long.
+   * How often to look for a new block, read before each attempt: the receipt and the sender's nonce are read on a new block. The
+   * client's `pollingInterval` by default. Lets a tracker slow down for a transaction that has been waiting for long.
    */
-  pacing?: () => { windowMs?: number; pollingIntervalMs?: number };
+  pacing?: () => { pollingIntervalMs?: number };
   /**
    * How long a mined transaction may wait for its confirmations, in milliseconds, before `onFailure` gets
    * {@link ConfirmationsTimeoutError}. Defaults to no limit. Set it on a server, or one chain that makes no blocks would hold a
@@ -208,9 +207,9 @@ export type EVMTrackerParams = {
  *    no failure: the nonce decides. A hash the node does not show is also asked of the wallet connected on the chain
  *    (`config.state.connections`), through its provider and with no prompt, as only its RPC may hold it: without the nonce no
  *    speed-up of it can be seen.
- * 3. Waits for the receipt with `waitForTransactionReceipt`, in windows of 10 s (`pacing`), for as long as `receiptAttempts` says,
- *    with viem's replacement scan off, as it reads a full block per new block. After every window that ended without an answer,
- *    whatever the error, it reads the sender's nonce with {@link readNonceSlot} and reports a replacement it finds.
+ * 3. Waits for the receipt with `waitForTransactionReceipt`, for as long as `receiptAttempts` says, with viem's replacement scan
+ *    off, as it reads a full block per new block. On each new block, at the client's polling pace, it reads the sender's nonce with
+ *    {@link readNonceSlot} and reports a replacement it finds.
  * 4. If `requiredConfirmations` is above 1, polls `getTransactionConfirmations` every 5 s until it is reached, reading the
  *    receipt again each time, so one a reorganization dropped goes back to waiting. `confirmationsTimeout` limits this wait.
  * 5. Awaits `onSuccess`, also for reverted transactions.
@@ -284,6 +283,7 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
   let fromBlock: bigint | undefined;
   const scan: NonceSlotScan = {};
   let spentReadings = 0;
+  let lastSpentReadingAt = 0;
   let lastError: unknown;
 
   // viem quotes the RPC URL, which can hold a key, in its errors: logs get the name only
@@ -295,7 +295,9 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
    */
   const waitForConfirmations = async (
     receipt: TransactionReceipt,
-  ): Promise<{ state: 'confirmed' | 'timedOut'; receipt: TransactionReceipt } | { state: 'reorged' } | { state: 'abandoned' }> => {
+  ): Promise<
+    { state: 'confirmed' | 'timedOut'; receipt: TransactionReceipt } | { state: 'reorged' } | { state: 'abandoned' }
+  > => {
     const needed = requiredConfirmations ?? 1;
     if (needed <= 1) return { state: 'confirmed', receipt };
     const deadline = confirmationsTimeout === undefined ? Infinity : Date.now() + confirmationsTimeout;
@@ -395,6 +397,8 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
     }
     // Seen in a block, it holds its own nonce, so this only says the node's parts disagree
     if (txDetails?.blockNumber) return false;
+    if (Date.now() - lastSpentReadingAt < SPENT_READING_GAP_MS) return false;
+    lastSpentReadingAt = Date.now();
     spentReadings += 1;
     if (spentReadings < SPENT_READINGS_TO_BELIEVE) return false;
     await onFailure(new NonceSlotSpentError(hash));
@@ -457,41 +461,71 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
   const pauseAfter = (attempt: number) => Math.min(RECEIPT_RETRY_DELAY * (attempt + 1), MAX_RECEIPT_RETRY_DELAY);
   let waitBudget = Infinity;
   if (Number.isFinite(receiptAttempts)) {
-    waitBudget = receiptAttempts * (waitForTransactionReceiptParams?.timeout ?? ATTEMPT_BUDGET_MS);
+    waitBudget = receiptAttempts * (waitForTransactionReceiptParams?.timeout ?? SINGLE_ATTEMPT_TIMEOUT);
     for (let attempt = 0; attempt < receiptAttempts - 1; attempt++) waitBudget += pauseAfter(attempt);
   }
   const waitUntil = Date.now() + waitBudget;
 
+  let slotReadAtBlock: bigint | undefined;
   for (let attempt = 0; Date.now() < waitUntil; attempt++) {
     if (isAbandoned?.()) return;
     let receipt: TransactionReceipt | undefined;
     let replacement: ReplacementReturnType | undefined;
     let timedOut = false;
-    const pace = pacing?.();
-    try {
-      receipt = await waitForTransactionReceipt(client, {
-        hash,
-        onReplaced: (found) => {
-          replacement = found;
-        },
-        retryCount: DEFAULT_RETRY_COUNT,
-        retryDelay: DEFAULT_RETRY_TIMEOUT_MS,
-        timeout: Math.min(pace?.windowMs ?? RECEIPT_WINDOW_MS, waitUntil - Date.now()),
-        ...(pace?.pollingIntervalMs !== undefined && { pollingInterval: pace.pollingIntervalMs }),
-        // viem's scan reads a full block for every new block, for what the sender's count below says with one call
-        checkReplacement: false,
-        ...waitForTransactionReceiptParams,
-      });
-    } catch (error) {
-      // Whatever it was (a timeout, an RPC error, a receipt behind its block), nothing is known about the transaction
-      lastError = error;
-      timedOut = error instanceof Error && error.name === 'WaitForTransactionReceiptTimeoutError';
-      if (!timedOut) {
-        console.warn(
-          `[evmTracker] No result yet for ${tx.txKey} on chain ${tx.chainId} (attempt ${attempt + 1}): ${describe(error)}.`,
-        );
+    let attemptOver = false;
+    let reading: Promise<boolean> | undefined;
+    const pollingIntervalMs = pacing?.().pollingIntervalMs;
+
+    const waited = waitForTransactionReceipt(client, {
+      hash,
+      onReplaced: (found) => {
+        replacement = found;
+      },
+      retryCount: DEFAULT_RETRY_COUNT,
+      retryDelay: DEFAULT_RETRY_TIMEOUT_MS,
+      timeout: Math.min(SINGLE_ATTEMPT_TIMEOUT, waitUntil - Date.now()),
+      ...(pollingIntervalMs !== undefined && { pollingInterval: pollingIntervalMs }),
+      // viem's scan reads a full block for every new block, for what the sender's count says with one call. The count below goes at the
+      // same pace, on a new block, so a replacement shows as fast as it did: restarting the wait in short windows to read it instead
+      // was slower, and dearer, as each new wait reads the receipt again
+      checkReplacement: false,
+      ...waitForTransactionReceiptParams,
+    }).then(
+      (found) => {
+        receipt = found;
+      },
+      (error: unknown) => {
+        // Whatever it was (a timeout, an RPC error, a receipt behind its block), nothing is known about the transaction
+        lastError = error;
+        timedOut = error instanceof Error && error.name === 'WaitForTransactionReceiptTimeoutError';
+        if (!timedOut) {
+          console.warn(
+            `[evmTracker] No result yet for ${tx.txKey} on chain ${tx.chainId} (attempt ${attempt + 1}): ${describe(error)}.`,
+          );
+        }
+      },
+    );
+
+    const watchedSlot = (async (): Promise<boolean> => {
+      while (!attemptOver) {
+        await sleep(pollingIntervalMs ?? client.pollingInterval);
+        if (attemptOver || isAbandoned?.()) return false;
+        // viem's own polling has just asked this: it comes from its cache, and a block with nothing new costs no count
+        const block = await getBlockNumber(client).catch(() => undefined);
+        if (attemptOver || block === undefined || block === slotReadAtBlock) continue;
+        slotReadAtBlock = block;
+        reading = readSlot();
+        if (await reading) return true;
+        reading = undefined;
       }
-    }
+      return false;
+    })();
+
+    const endedBySlot = await Promise.race([waited.then(() => false), watchedSlot]);
+    attemptOver = true;
+    if (endedBySlot || (reading && (await reading))) return;
+    if (isAbandoned?.()) return;
+    await waited;
 
     // viem's callback only records it: a throwing application callback inside viem would look like an RPC error
     // A viem older than 2.57.7 can report a transaction as replaced by itself: a receipt behind its block on another node
@@ -504,7 +538,7 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
       return;
     }
 
-    // A window that ran out is no error to wait out, and a mined transaction would go unseen meanwhile
+    // A wait that ran out is no error to wait out, and a mined transaction would go unseen meanwhile
     const left = waitUntil - Date.now();
     if (left > 0 && !timedOut) await sleep(Math.min(pauseAfter(attempt), left));
   }

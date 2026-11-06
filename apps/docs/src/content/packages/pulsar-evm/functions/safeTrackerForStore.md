@@ -5,7 +5,7 @@
 Defined in: [trackers/safeTracker.ts:269](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/safeTracker.ts#L269)
 
 Tracks a Safe multisig transaction of the Pulsar store with [createSafeFetcher](/packages/pulsar-evm/functions/createSafeFetcher.md) ([safePollingInterval](/packages/pulsar-evm/functions/safePollingInterval.md):
-every 5 s for the first hour, then every 30 s) and writes the results to the
+the first look 5 s away; then by its age, every 5 s for the first hour, then every 30 s) and writes the results to the
 store: while it waits, the owner confirmations collected (`confirmations`) and the Safe threshold
 (`requiredConfirmations`) and the executed transaction `hash`; then `Success`, `Failed` or `Replaced` (with the
 `safeTxHash` of the executed transaction as `replacedTxHash`) and the execution date as `finishedTimestamp`.

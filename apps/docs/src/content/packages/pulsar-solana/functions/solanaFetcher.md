@@ -2,7 +2,7 @@
 
 > **solanaFetcher**(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/solanaTracker.ts:152](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L152)
+Defined in: [trackers/solanaTracker.ts:163](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L163)
 
 A fetcher for `initializePollingTracker` from `@tuwaio/pulsar-core` that checks a Solana transaction once.
 

@@ -2,7 +2,7 @@
 
 > **createTxInMemoryStore**\<`T`\>(`params`): `StoreApi`\<[`ITxInMemoryStore`](/packages/pulsar-core/type-aliases/ITxInMemoryStore.md)\<`T`\>\>
 
-Defined in: [packages/pulsar-core/src/store/txInMemoryStore.ts:145](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txInMemoryStore.ts#L145)
+Defined in: [packages/pulsar-core/src/store/txInMemoryStore.ts:149](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txInMemoryStore.ts#L149)
 
 Creates an in-memory store that shows the remote transaction history of a wallet (for example from Quasar) together
 with the local pool of the persistent store. Nothing in it is persisted. Keep it in sync with the persistent store by

@@ -232,7 +232,8 @@ export type Erc4337TrackerForStoreParams<T extends Transaction> = Pick<
 /**
  * Tracks an ERC-4337 UserOperation of the Pulsar store in two stages and writes the results to the store:
  *
- * 1. Bundler: polls {@link erc4337Fetcher} every 2 s, and every minute after 60 consecutive failed attempts, as a bundler
+ * 1. Bundler: polls {@link erc4337Fetcher} with the first look 2 s away, then by its age every 2 s for five minutes and
+ *    every 30 s after, and every minute after 60 consecutive failed attempts, as a bundler
  *    that cannot be reached says nothing about the UserOperation. When the UserOperation is bundled, writes the bundle
  *    transaction `hash`. Only a reverted UserOperation marks the transaction `Failed`.
  * 2. On-chain: runs {@link evmTracker} for the bundle transaction and writes the details, confirmations and the final
@@ -277,8 +278,10 @@ export async function erc4337TrackerForStore<T extends Transaction>({
     tx,
     fetcher: erc4337Fetcher,
     // CRITICAL: Do NOT pass removeTxFromPool to prevent premature eviction from the store
-    // Every 2 s for what a person watches; a dropped UserOperation asked that for as long as the page stayed open
-    pollingInterval: () => (Date.now() - Number(tx.localTimestamp) * 1000 < 5 * 60_000 ? 2000 : 30_000),
+    // Every 2 s for what a person watches; a dropped UserOperation asked that for as long as the page stayed open. The first
+    // look stays 2 s away whatever the age: coming back to a page must not wait out the slow schedule
+    pollingInterval: (elapsedMs) =>
+      elapsedMs < 1000 || Date.now() - Number(tx.localTimestamp) * 1000 < 5 * 60_000 ? 2000 : 30_000,
     maxRetries: 60,
     // A bundler that cannot be reached says nothing about the UserOperation
     retryForeverEveryMs: 60_000,

@@ -18,7 +18,13 @@ import dayjs from 'dayjs';
 import { Hex, zeroAddress, zeroHash } from 'viem';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { createSafeFetcher, safeFetcher, safePollingInterval, safeTrackerForStore, SafeTxStatusResponse } from './safeTracker';
+import {
+  createSafeFetcher,
+  safeFetcher,
+  safePollingInterval,
+  safeTrackerForStore,
+  SafeTxStatusResponse,
+} from './safeTracker';
 
 // Mock the core polling utility.
 vi.mock('@tuwaio/pulsar-core', async (importActual) => {
@@ -429,7 +435,7 @@ describe('Safe transactions of multi-owner Safes', () => {
     const { pollingInterval } = vi.mocked(initializePollingTracker).mock.calls[0][0];
 
     expect(typeof pollingInterval).toBe('function');
-    expect((pollingInterval as () => number)()).toBe(5000);
+    expect((pollingInterval as (elapsedMs: number) => number)(10_000)).toBe(5000);
     expect(safePollingInterval(59 * 60 * 1000)).toBe(5000);
     expect(safePollingInterval(60 * 60 * 1000)).toBe(30000);
   });
@@ -444,7 +450,9 @@ describe('Safe transactions of multi-owner Safes', () => {
       removeTxFromPool: vi.fn(),
     });
     const { pollingInterval } = vi.mocked(initializePollingTracker).mock.calls[0][0];
-    expect((pollingInterval as () => number)()).toBe(30000);
+    expect((pollingInterval as (elapsedMs: number) => number)(5000)).toBe(30000);
+    // The delay comes before the first attempt too: a reload must not wait 30 seconds to read a finished one
+    expect((pollingInterval as (elapsedMs: number) => number)(0)).toBe(5000);
   });
 
   test('writes the owner confirmations and the threshold while the transaction waits', () => {

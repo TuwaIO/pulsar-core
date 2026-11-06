@@ -2,11 +2,12 @@
 
 > **erc4337TrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/erc4337Tracker.ts:249](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L249)
+Defined in: [trackers/erc4337Tracker.ts:250](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/erc4337Tracker.ts#L250)
 
 Tracks an ERC-4337 UserOperation of the Pulsar store in two stages and writes the results to the store:
 
-1. Bundler: polls [erc4337Fetcher](/packages/pulsar-evm/functions/erc4337Fetcher.md) every 2 s, and every minute after 60 consecutive failed attempts, as a bundler
+1. Bundler: polls [erc4337Fetcher](/packages/pulsar-evm/functions/erc4337Fetcher.md) with the first look 2 s away, then by its age every 2 s for five minutes and
+   every 30 s after, and every minute after 60 consecutive failed attempts, as a bundler
    that cannot be reached says nothing about the UserOperation. When the UserOperation is bundled, writes the bundle
    transaction `hash`. Only a reverted UserOperation marks the transaction `Failed`.
 2. On-chain: runs [evmTracker](/packages/pulsar-evm/functions/evmTracker.md) for the bundle transaction and writes the details, confirmations and the final

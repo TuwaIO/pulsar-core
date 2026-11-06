@@ -240,7 +240,7 @@ export const safeFetcher = createSafeFetcher();
 
 /**
  * Tracks a Safe multisig transaction of the Pulsar store with {@link createSafeFetcher} ({@link safePollingInterval}:
- * every 5 s for the first hour, then every 30 s) and writes the results to the
+ * the first look 5 s away; then by its age, every 5 s for the first hour, then every 30 s) and writes the results to the
  * store: while it waits, the owner confirmations collected (`confirmations`) and the Safe threshold
  * (`requiredConfirmations`) and the executed transaction `hash`; then `Success`, `Failed` or `Replaced` (with the
  * `safeTxHash` of the executed transaction as `replacedTxHash`) and the execution date as `finishedTimestamp`.
@@ -286,8 +286,10 @@ export function safeTrackerForStore<T extends Transaction>({
   return initializePollingTracker<SafeTxStatusResponse, T>({
     tx,
     fetcher: createSafeFetcher({ pendingTimeoutMs, notFoundGraceMs }),
-    // By the age of the transaction: each page load put a days-old one back on the 5-second schedule
-    pollingInterval: () => safePollingInterval(Date.now() - Number(tx.localTimestamp) * 1000),
+    // By the age of the transaction: each page load put a days-old one back on the 5-second schedule. Only the first look
+    // stays 5 seconds away: coming back to a page must not wait out the slow schedule
+    pollingInterval: (elapsedMs) =>
+      safePollingInterval(elapsedMs < 1000 ? 0 : Date.now() - Number(tx.localTimestamp) * 1000),
     retryForeverEveryMs: STORE_RETRY_EVERY_MS,
     isAbandoned: createAbandonCheck(isTxTracked, tx.txKey),
     // `removeTxFromPool` is not passed: failed transactions stay in the pool as `Failed`.
