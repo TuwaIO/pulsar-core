@@ -66,6 +66,18 @@ const EXPIRED_ERROR_MESSAGE =
 const TIMEOUT_ERROR_MESSAGE = 'Transaction tracking timed out or the transaction was not found.';
 
 /**
+ * What a person reads for an error on the chain. It is no `Error`, so `normalizeError` alone says "Unknown error" and
+ * keeps the code where only a developer looks. `@solana/kit` hands its numbers over as bigints, which
+ * JSON refuses; an instruction index and a program's error code are small.
+ */
+const onChainErrorMessage = (err: unknown): string =>
+  `The transaction failed on the chain: ${
+    typeof err === 'string'
+      ? err
+      : JSON.stringify(err, (_key, value: unknown) => (typeof value === 'bigint' ? Number(value) : value))
+  }`;
+
+/**
  * How far past `lastValidBlockHeight` the chain must be before a signature nobody shows counts as expired: about what a block needs
  * to become final. By then a transaction of the last valid block is final and any healthy node shows it, where one read of a node
  * a little behind told of one that had landed "send it again". It delays only the failure, by some 13 seconds.
@@ -296,7 +308,7 @@ export async function solanaFetcher({
 }
 
 /**
- * Tracks a Solana transaction of the Pulsar store with {@link solanaFetcher} (every second for two minutes, then every 15 seconds, and every minute after 30
+ * Tracks a Solana transaction of the Pulsar store with {@link solanaFetcher} (the first look a second away; then by its age, every second for two minutes, then every 15 seconds, and every minute after 30
  * consecutive status errors) and writes the results to the store: `confirmationStatus` (`processed`, then `confirmed`, usually within a
  * second of sending), `confirmations`, `slot`, `fee`, `instructions` and `recentBlockhash` while pending, then
  * `Success` with `confirmationStatus: 'finalized'` and `confirmations: 'MAX'`, or `Failed` with the normalized error,
@@ -312,7 +324,8 @@ export async function solanaFetcher({
  * tracking. When it is not finalized one hour after `localTimestamp`, long past any blockhash lifetime, the transaction is
  * marked `Failed` and stays in the pool. The callbacks receive the
  * transaction with every update written by the tracker; `onError` receives the on-chain error, or an `Error` when the
- * transaction expired or tracking timed out.
+ * transaction expired or tracking timed out. An on-chain error is written with the message
+ * `The transaction failed on the chain: ...`, naming the error as the node gave it.
  *
  * @template T - The application transaction type.
  * @param params - The transaction, the store members and the callbacks.
@@ -357,8 +370,11 @@ export async function solanaTrackerForStore<T extends Transaction>({
     // `removeTxFromPool` is not passed: failed transactions stay in the pool as `Failed`.
     // Every second while a transaction can still land by its blockhash, so `confirmed` shows up quickly; slower after, as one with no
     // lifetime saved cost 3600 calls an hour for its whole hour
-    pollingInterval: () =>
-      dayjs().diff(dayjs.unix(Number(tx.localTimestamp)), 'second') < FAST_POLLING_SECONDS ? 1000 : SLOW_POLLING_MS,
+    // The first look stays a second away whatever the age: coming back to a page must not wait out the slow schedule
+    pollingInterval: (elapsedMs) =>
+      elapsedMs < 1000 || dayjs().diff(dayjs.unix(Number(tx.localTimestamp)), 'second') < FAST_POLLING_SECONDS
+        ? 1000
+        : SLOW_POLLING_MS,
     maxRetries: 30, // Consecutive RPC errors before it slows down: 30 (about 30 seconds of outage)
     // An RPC outage says nothing about the transaction. The expired blockhash is what ends one that will never land.
     retryForeverEveryMs: 60_000,
@@ -404,7 +420,9 @@ export async function solanaTrackerForStore<T extends Transaction>({
         status: TransactionStatus.Failed,
         pending: false,
         isError: true,
-        error: normalizeError(reason),
+        error: response?.err
+          ? { ...normalizeError(reason), message: onChainErrorMessage(response.err) }
+          : normalizeError(reason),
         finishedTimestamp: dayjs().unix(),
       });
 

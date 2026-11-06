@@ -99,17 +99,27 @@ describe('solanaTrackerForStore', () => {
   // Every second while it can still land, so `confirmed` shows as fast as it did; an old one need not cost 3600 calls an hour
   test('reads every second for two minutes after sending, then every 15 seconds', async () => {
     await solanaTrackerForStore(mockParams);
-    const fresh = vi.mocked(initializePollingTracker).mock.calls[0][0].pollingInterval as () => number;
-    expect(fresh()).toBe(1000);
+    const fresh = vi.mocked(initializePollingTracker).mock.calls[0][0].pollingInterval as (elapsedMs: number) => number;
+    expect(fresh(5000)).toBe(1000);
     vi.mocked(initializePollingTracker).mockClear();
     await solanaTrackerForStore({ ...mockParams, tx: { ...mockTx, localTimestamp: dayjs().unix() - 121 } });
-    const old = vi.mocked(initializePollingTracker).mock.calls[0][0].pollingInterval as () => number;
-    expect(old()).toBe(15_000);
+    const old = vi.mocked(initializePollingTracker).mock.calls[0][0].pollingInterval as (elapsedMs: number) => number;
+    expect(old(5000)).toBe(15_000);
+  });
+
+  // The delay comes before the first attempt too: going by age alone, a reload waited 15 seconds to read a finished one
+  test('the first look at an old transaction stays a second away', async () => {
+    await solanaTrackerForStore({ ...mockParams, tx: { ...mockTx, localTimestamp: dayjs().unix() - 3600 } });
+    const old = vi.mocked(initializePollingTracker).mock.calls[0][0].pollingInterval as (elapsedMs: number) => number;
+    expect(old(0)).toBe(1000);
+    expect(old(1001)).toBe(15_000);
   });
 
   test('reads through the endpoint it is given, and writes it to no record', async () => {
     await solanaTrackerForStore({ ...mockParams, rpcUrl: 'https://rpc.example/key' });
-    expect(vi.mocked(initializePollingTracker).mock.calls[0][0].tx).toMatchObject({ rpcUrl: 'https://rpc.example/key' });
+    expect(vi.mocked(initializePollingTracker).mock.calls[0][0].tx).toMatchObject({
+      rpcUrl: 'https://rpc.example/key',
+    });
     for (const call of vi.mocked(mockParams.updateTxParams).mock.calls) expect(call[1]).not.toHaveProperty('rpcUrl');
   });
 
@@ -182,11 +192,28 @@ describe('solanaTrackerForStore', () => {
       pending: false,
       isError: true,
       error: expect.objectContaining({
-        message: 'Unknown error', // TransactionError is not an Error instance
+        // A TransactionError is no Error: on its own it reaches a person as "Unknown error", with the code only in `raw`
+        message: 'The transaction failed on the chain: {"InstructionError":[0,{"Custom":123}]}',
         raw: expect.objectContaining({ originalError: txError }),
       }),
       finishedTimestamp: expect.any(Number),
     });
+  });
+
+  test('an on-chain error given as a word, or holding big numbers, still reads', () => {
+    solanaTrackerForStore(mockParams);
+    const config = vi.mocked(initializePollingTracker).mock.calls[0][0];
+    const failure = { slot: 1, confirmations: 0, confirmationStatus: 'finalized' as const };
+
+    config.onFailure({ ...failure, err: 'AccountInUse' });
+    expect(vi.mocked(mockParams.updateTxParams).mock.lastCall?.[1].error?.message).toBe(
+      'The transaction failed on the chain: AccountInUse',
+    );
+
+    config.onFailure({ ...failure, err: { InstructionError: [1n, { Custom: 6000n }] } as unknown as TransactionError });
+    expect(vi.mocked(mockParams.updateTxParams).mock.lastCall?.[1].error?.message).toBe(
+      'The transaction failed on the chain: {"InstructionError":[1,{"Custom":6000}]}',
+    );
   });
 
   test('should call user onError callback when transaction fails', () => {
