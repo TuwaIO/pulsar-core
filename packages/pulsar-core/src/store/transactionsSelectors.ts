@@ -3,6 +3,8 @@
  * returns a new array, so memoize the result (or compare it shallowly) when using it in a React selector.
  */
 
+import { isSameAdapterAddress } from '@tuwaio/orbit-core';
+
 import { Transaction, TransactionPool } from '../types';
 
 /**
@@ -43,7 +45,7 @@ export const selectTxByKey = <T extends Transaction>(
 };
 
 /**
- * Returns the transactions sent by a wallet, oldest first. Addresses are compared case-insensitively.
+ * Returns the transactions sent by a wallet, oldest first. An EVM address matches in any case, a Solana address exactly.
  *
  * @template T - The application transaction type.
  * @param transactionsPool - The transaction pool of the store.
@@ -55,7 +57,10 @@ export const selectAllTransactionsByActiveWallet = <T extends Transaction>(
   from: string,
 ): T[] => {
   // Filters all transactions to find those matching the provided `from` address.
-  return selectAllTransactions(transactionsPool).filter((tx) => tx.from.toLowerCase() === from.toLowerCase());
+  return selectAllTransactions(transactionsPool).filter((tx) =>
+    // An EVM address in any case, a Solana address exactly: base58 in another case is another account
+    isSameAdapterAddress(tx.adapter, tx.from, from),
+  );
 };
 
 /**

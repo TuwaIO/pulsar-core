@@ -2,7 +2,7 @@
 
 > **createPulsarStore**\<`T`\>(`params`): `WithPersist`\<`StoreApi`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>\>, [`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>\>
 
-Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:91](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txTrackingStore.ts#L91)
+Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:92](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txTrackingStore.ts#L92)
 
 Creates the Pulsar transaction store: a vanilla Zustand store (use it from any framework, or bind it to React with
 `createBoundedUseStore`) that runs transactions through chain adapters and tracks them in the background.

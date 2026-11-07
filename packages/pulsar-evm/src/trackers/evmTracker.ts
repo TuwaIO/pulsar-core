@@ -307,7 +307,13 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
       try {
         current = await getTransactionReceipt(client, { hash: receipt.transactionHash });
         const confirmations = Number(await getTransactionConfirmations(client, { transactionReceipt: current }));
-        await onConfirmationsUpdate?.(confirmations);
+        // A callback that fails, such as with Redis away, says nothing about the chain: a mined transaction must not go on
+        // being polled for it
+        try {
+          await onConfirmationsUpdate?.(confirmations);
+        } catch (error) {
+          console.warn(`[evmTracker] onConfirmationsUpdate failed for ${tx.txKey}: ${describe(error)}.`);
+        }
         if (confirmations >= needed) return { state: 'confirmed', receipt: current };
       } catch (error) {
         if (error instanceof Error && error.name === 'TransactionReceiptNotFoundError') return { state: 'reorged' };

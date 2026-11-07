@@ -10,6 +10,7 @@ import { createJSONStorage, persist, PersistOptions, PersistStorage } from 'zust
 import { createStore, StoreApi } from 'zustand/vanilla';
 
 import {
+  BeforeTxProcess,
   EvmTransaction,
   ITxTrackingStore,
   PulsarAdapter,
@@ -120,6 +121,9 @@ export function createPulsarStore<T extends Transaction>({
   // the moment of the call and runs each callback once for a record: a result can reach this tab through its own tracker
   // and through another tab or a server, and a speed-up hands the callbacks on after the tracker of the new hash started.
   const trackerCallbacks = new Map<string, { callbacks: TrackerCallbacks<T>; called: Set<string> }>();
+  // What a call of `executeTxAction` was given beyond its transaction, by its action
+  type CallOptions = { beforeTxProcess?: BeforeTxProcess; abortOnTxError?: boolean } & TrackerCallbacks<T>;
+  const callOptions = new WeakMap<object, CallOptions>();
   // Removed here, so the next save of another tab does not bring them back at once, with a new tracker
   const removedTxKeys = new Set<string>();
 
@@ -429,15 +433,10 @@ export function createPulsarStore<T extends Transaction>({
         },
 
         // Runs a transaction from the chain check to the start of its tracker.
-        executeTxAction: async ({
-          defaultTracker,
-          actionFunction,
-          params,
-          beforeTxProcess: localBeforeTxProcess,
-          abortOnTxError: localAbortOnTxError,
-          ...callbacks
-        }) => {
-          const shouldAbort = localAbortOnTxError ?? abortOnTxError ?? true;
+        executeTxAction: async ({ defaultTracker, actionFunction, params, ...givenOptions }) => {
+          const definedOptions = Object.fromEntries(
+            Object.entries(givenOptions).filter(([, value]) => value !== undefined),
+          ) as CallOptions;
           const localTimestamp = dayjs().unix();
 
           // Trigger background reconciliation on new tx action
@@ -447,8 +446,19 @@ export function createPulsarStore<T extends Transaction>({
 
           validateInitialTransactionParams(params);
 
-          const { desiredChainID, tracker, ...restParams } = params;
-          const { onSuccess, onError, onReplaced } = callbacks;
+          const {
+            desiredChainID,
+            tracker,
+            actionFunction: retriedAction,
+            ...restParams
+          } = params as typeof params & { actionFunction?: object };
+          // A Retry comes back through an adapter with the action of the first call and nothing else of it. What that call
+          // was given stays here, in memory, as functions cannot be saved
+          const options = { ...(retriedAction && callOptions.get(retriedAction)), ...definedOptions };
+          callOptions.set(actionFunction, options);
+          const { onSuccess, onError, onReplaced } = options;
+          const beforeThisTx = options.beforeTxProcess;
+          const shouldAbort = options.abortOnTxError ?? abortOnTxError ?? true;
 
           // Step 1: Set initial state for immediate UI feedback (e.g., loading spinner).
           set({
@@ -490,7 +500,7 @@ export function createPulsarStore<T extends Transaction>({
             await foundAdapter.checkChainForTx(desiredChainID);
 
             try {
-              await (localBeforeTxProcess ?? beforeTxProcess)?.();
+              await (beforeThisTx ?? beforeTxProcess)?.();
             } catch (e) {
               if (shouldAbort) {
                 set({

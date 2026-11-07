@@ -92,6 +92,39 @@ function createTransaction(overrides: Partial<EvmTransaction> = {}): EvmTransact
 }
 
 describe('txTrackingStore validation', () => {
+  // A Retry comes back through an adapter with the action of the first call and nothing else of it: the next step of an app
+  // never ran, and its session check was skipped
+  it('a Retry keeps the callbacks and the check of the call it repeats, and no function reaches the record', async () => {
+    const adapter = createAdapter();
+    const store = createStore({ adapter });
+    const first = vi.fn().mockRejectedValue(new Error('reverted'));
+    const onSuccess = vi.fn();
+    const beforeTxProcess = vi.fn();
+
+    await expect(
+      store.getState().executeTxAction({
+        actionFunction: first,
+        params: createValidParams(),
+        onSuccess,
+        beforeTxProcess,
+      }),
+    ).rejects.toThrow('reverted');
+    expect(beforeTxProcess).toHaveBeenCalledTimes(1);
+
+    await store.getState().executeTxAction({
+      actionFunction: vi.fn().mockResolvedValue(txHash),
+      params: { ...createValidParams(), actionFunction: first } as ReturnType<typeof createValidParams>,
+    });
+
+    expect(beforeTxProcess).toHaveBeenCalledTimes(2);
+    const tx = store.getState().transactionsPool[txHash];
+    expect(tx).toBeDefined();
+    expect(tx).not.toHaveProperty('actionFunction');
+    const tracked = vi.mocked(adapter.checkAndInitializeTrackerInStore).mock.lastCall?.[0];
+    tracked?.onSuccess?.(tx);
+    expect(onSuccess).toHaveBeenCalledWith(tx);
+  });
+
   it('blocks invalid executeTxAction before creating initialTx or calling actionFunction', async () => {
     const store = createStore();
     const actionFunction = vi.fn().mockResolvedValue(txHash);
