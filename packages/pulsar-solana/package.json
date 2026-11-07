@@ -48,7 +48,7 @@
   ],
   "peerDependencies": {
     "@solana/kit": ">=8.2",
-    "@tuwaio/orbit-core": ">=0.4",
+    "@tuwaio/orbit-core": ">=0.6.1",
     "@tuwaio/orbit-solana": ">=0.4",
     "@tuwaio/pulsar-core": ">=0.12",
     "dayjs": "1.x.x"

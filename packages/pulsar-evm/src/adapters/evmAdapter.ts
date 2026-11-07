@@ -2,7 +2,7 @@
  * @file The EVM adapter that plugs `@wagmi/core` and `viem` into the Pulsar store.
  */
 
-import { getConnectorTypeFromName, lastConnectedConnectorHelpers, OrbitAdapter } from '@tuwaio/orbit-core';
+import { getConnectorTypeFromName, joinUrlPath, lastConnectedConnectorHelpers, OrbitAdapter } from '@tuwaio/orbit-core';
 import { checkAndSwitchChain } from '@tuwaio/orbit-evm';
 import { Transaction, TransactionTracker, TxAdapter } from '@tuwaio/pulsar-core';
 import { Config, getConnection } from '@wagmi/core';
@@ -72,10 +72,7 @@ export function pulsarEvmAdapter<T extends Transaction>(
       const localConnectedConnector = lastConnectedConnectorHelpers.getLastConnectedConnector();
       return {
         walletAddress: activeConnection.address ?? localConnectedConnector?.address ?? zeroAddress,
-        connectorType: getConnectorTypeFromName(
-          OrbitAdapter.EVM,
-          activeConnection.connector?.name?.toLowerCase() ?? 'unknown',
-        ),
+        connectorType: getConnectorTypeFromName(OrbitAdapter.EVM, activeConnection.connector?.name ?? 'unknown'),
       };
     },
 
@@ -97,7 +94,7 @@ export function pulsarEvmAdapter<T extends Transaction>(
         chainId === undefined ? getConnection(config).chain : appChains.find((c) => c.id === Number(chainId));
       const baseExplorerLink = chain?.blockExplorers?.default.url;
       if (!baseExplorerLink) return undefined;
-      return url ? `${baseExplorerLink.replace(/\/+$/, '')}/${url.replace(/^\/+/, '')}` : baseExplorerLink;
+      return joinUrlPath(baseExplorerLink, url);
     },
     getExplorerTxUrl: (tx) =>
       selectEvmTxExplorerLink({

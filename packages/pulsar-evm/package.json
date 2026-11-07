@@ -73,7 +73,7 @@
     }
   ],
   "peerDependencies": {
-    "@tuwaio/orbit-core": ">=0.4",
+    "@tuwaio/orbit-core": ">=0.6.1",
     "@tuwaio/orbit-evm": ">=0.3",
     "@tuwaio/pulsar-core": ">=0.12",
     "@wagmi/core": "3.x.x",

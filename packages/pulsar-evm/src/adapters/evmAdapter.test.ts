@@ -40,3 +40,25 @@ describe('pulsarEvmAdapter.getExplorerUrl', () => {
     expect(adapter.getExplorerUrl('/tx/0x1')).toBeUndefined();
   });
 });
+
+describe('pulsarEvmAdapter.getConnectorInfo', () => {
+  // The name went in lower-cased, which no known name of Orbit's table matches, so Base Account was `evm:baseaccount`
+  // on its transactions and `evm:coinbase` on its connection
+  test.each([
+    ['Base Account', 'evm:coinbase'],
+    ['Trust Wallet', 'evm:trust'],
+    ['Brave Wallet', 'evm:brave'],
+    ['Safe', 'evm:safe'],
+    ['Impersonated Connector', 'evm:impersonatedwallet'],
+    ['MetaMask', 'evm:metamask'],
+    ['Rabby Wallet', 'evm:rabbywallet'],
+  ])('names %s as its connection does', (name, connectorType) => {
+    getConnection.mockReturnValue({ address: '0x1', chain: mainnet, connector: { name } });
+    expect(adapter.getConnectorInfo().connectorType).toBe(connectorType);
+  });
+
+  test('says unknown with no connector', () => {
+    getConnection.mockReturnValue({ chain: mainnet });
+    expect(adapter.getConnectorInfo().connectorType).toBe('evm:unknown');
+  });
+});
