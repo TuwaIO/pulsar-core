@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.11.1...pulsar-solana-v0.11.2) (2026-11-07)
+
+
+### Bug Fixes
+
+* a Retry keeps what its first call was given, and a failing confirmations callback holds nothing up ([#110](https://github.com/TuwaIO/pulsar-core/issues/110)) ([6cbd5eb](https://github.com/TuwaIO/pulsar-core/commit/6cbd5ebb2bc8fecbc0de042a03db99312dca5ef3))
+
 ## [0.11.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.11.0...pulsar-solana-v0.11.1) (2026-11-07)
 
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.13.2...pulsar-evm-v0.13.3) (2026-11-07)
+
+
+### Bug Fixes
+
+* a Retry keeps what its first call was given, and a failing confirmations callback holds nothing up ([#110](https://github.com/TuwaIO/pulsar-core/issues/110)) ([6cbd5eb](https://github.com/TuwaIO/pulsar-core/commit/6cbd5ebb2bc8fecbc0de042a03db99312dca5ef3))
+
 ## [0.13.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.13.1...pulsar-evm-v0.13.2) (2026-11-07)
 
 
