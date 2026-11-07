@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.12.3...pulsar-core-v0.12.4) (2026-11-07)
+
+
+### Bug Fixes
+
+* **pulsar-core:** stopping the tracking of a transaction holds across page loads and tabs ([#112](https://github.com/TuwaIO/pulsar-core/issues/112)) ([e4109a6](https://github.com/TuwaIO/pulsar-core/commit/e4109a6ee8f2aff7cb02c74c3f29be628c743861))
+
 ## [0.12.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-core-v0.12.2...pulsar-core-v0.12.3) (2026-11-07)
 
 
