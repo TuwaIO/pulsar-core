@@ -1,19 +1,19 @@
 # @tuwaio/pulsar-evm
 
-`@tuwaio/pulsar-evm` is the EVM Layer 4 (L4) package of **Pulsar**, the transaction tracking project of TUWA Stage 2 ("State & Connection", next to Satellite Connect). Built on **`@wagmi/core`**, **`viem`** and **`@tuwaio/orbit-evm`**, it provides the EVM adapter for [`@tuwaio/pulsar-core`](https://pulsar.docs.tuwa.io/packages/pulsar-core) and trackers for standard transactions, ERC-4337 UserOperations, EIP-5792 call batches, Safe multisig transactions and Gelato relay tasks (deprecated). It does not use `ethers.js` or `web3.js`.
+`@tuwaio/pulsar-evm` is the EVM Layer 4 (L4) package of **Pulsar**, the transaction tracking project of TUWA Stage 2 ("State & Connection", next to Satellite Connect). Built on **`@wagmi/core`**, **`viem`** and **`@tuwaio/orbit-evm`**, it provides the EVM adapter for [`@tuwaio/pulsar-core`](https://pulsar.docs.tuwa.io/packages/pulsar-core) and trackers for standard transactions, ERC-4337 UserOperations, EIP-5792 call batches and Safe multisig transactions. It does not use `ethers.js` or `web3.js`.
 
 ---
 
 ## 🏛️ Core Capabilities
 
 - **Adapter:** `pulsarEvmAdapter(wagmiConfig, appChains, options?)` reads the wallet from the active wagmi connection, asks the wallet to switch to `desiredChainID` before signing, picks the tracker, builds explorer links, and adds speed-up, cancel and retry actions for UI kits such as Nova Transactions.
-- **Tracker routing:** the key returned by your `actionFunction` is tracked as a Safe transaction when the connector is a Safe wallet, and as a standard transaction otherwise. ERC-4337, EIP-5792 and Gelato are never detected automatically: pass `tracker: TransactionTracker.ERC4337` (or `EIP5792`, `Gelato`) in the transaction params.
-- **Standard transactions:** `evmTracker` retries `getTransaction` while the node has not indexed the transaction yet, waits for the receipt in attempts with growing pauses, waits for `requiredConfirmations` and records the block timestamp. It sees a speed-up or cancel made in the wallet at any moment (`Replaced` with `replacedTxHash` and `replacedReason`): after every attempt without an answer it reads the sender's nonce (`readNonceSlot`), which stays true when a node no longer returns the old hash, and after a reload it reads the sender and nonce saved on the transaction. A hash no public node shows is also asked of the wallet connected on its chain, through the wallet's provider and with no prompt: a fee below what public nodes keep or a private mempool may leave only the wallet's RPC holding it, and without its nonce no speed-up of it can be seen.
+- **Tracker routing:** the key returned by your `actionFunction` is tracked as a Safe transaction when the connector is a Safe wallet, and as a standard transaction otherwise. ERC-4337 and EIP-5792 are never detected automatically: pass `tracker: TransactionTracker.ERC4337` (or `EIP5792`) in the transaction params.
+- **Standard transactions:** `evmTracker` retries `getTransaction` while the node has not indexed the transaction yet, waits for the receipt in attempts, waits for `requiredConfirmations` and records the block timestamp. It sees a speed-up or cancel made in the wallet at any moment (`Replaced` with `replacedTxHash` and `replacedReason`): after every attempt without an answer it reads the sender's nonce (`readNonceSlot`), which stays true when a node no longer returns the old hash, and after a reload it reads the sender and nonce saved on the transaction. A hash no public node shows is also asked of the wallet connected on its chain, through the wallet's provider and with no prompt: a fee below what public nodes keep or a private mempool may leave only the wallet's RPC holding it, and without its nonce no speed-up of it can be seen.
 - **A speed-up continues in a new record:** the old record stays as `Replaced`, with the new hash in `replacedTxHash`, and a new record under the new hash, linked by `replaces`, goes on to its own confirmations and `Success` or `Failed`, with the callbacks of `executeTxAction`. A cancel (`replacedReason: 'cancelled'`) or another transaction in the nonce (`replaced`) is not the same operation, so it only ends the old record. A speed-up made in the wallet can be seen only once it is in a block.
 - **A slow transaction is not a failed one:** in the store, time alone never means `Failed`. A transaction stays pending until it has a receipt or its nonce is spent, as in a wallet, and an RPC error only means asking again. Only a hash that no node has ever shown, with nothing saved to read instead, fails, 24 hours after it was sent. Alone, on a server, `evmTracker` gives up after `receiptAttempts` (6 by default, 435 s).
 - **ERC-4337 UserOperations:** a two-stage tracker polls `eth_getUserOperationReceipt` on your bundler (`bundlerUrl`, or Pimlico with `pimlicoApiKey`), then follows the bundle transaction on-chain like a standard transaction. After a reload it resumes at the stage it reached.
 - **EIP-5792 call batches:** for an `actionFunction` that returns the batch ID of `wallet_sendCalls` (`sendCalls` of `@wagmi/core`), a two-stage tracker asks the connected wallet for the batch status (`wallet_getCallsStatus`), then follows the transaction that executed the batch on-chain. The status comes from the wallet, so the wallet that sent the batch must stay connected until it is executed.
-- **Safe multisig:** polls the Safe Transaction Service until the `safeTxHash` is executed, and reports it as replaced when another transaction with the same nonce was executed. While it waits, the transaction shows how many owners confirmed it (`confirmations`) out of the Safe threshold (`requiredConfirmations`), which Nova Transactions displays as "x / y". It is checked every 5 s for the first hour of tracking, then every 30 s. Collecting signatures can take days, so by default the tracker waits without a limit; set `safePendingTimeoutMs` in the adapter options to give up after a time. A service that cannot be reached never ends tracking, and a 404 is final only after 10 minutes, as a new proposal is indexed with a delay.
+- **Safe multisig:** polls the Safe Transaction Service until the `safeTxHash` is executed, and reports it as replaced when another transaction with the same nonce was executed. While it waits, the transaction shows how many owners confirmed it (`confirmations`) out of the Safe threshold (`requiredConfirmations`), which Nova Transactions displays as "x / y". It is checked every 5 s for the first hour after it was sent, then every 30 s. Collecting signatures can take days, so by default the tracker waits without a limit; set `safePendingTimeoutMs` in the adapter options to give up after a time. A service that cannot be reached never ends tracking, and a 404 is final only after 10 minutes, as a new proposal is indexed with a delay.
 - **Safe without wagmi:** `@tuwaio/pulsar-evm/safe` exports the Safe tracker alone (`createSafeFetcher`, `safeFetcher`, `safeTrackerForStore`, `SafeTransactionServiceUrls`). It loads neither `@wagmi/core` nor `@tuwaio/orbit-evm`, so apps built on `viem` alone can use it.
 - **Speed up and cancel:** `speedUpTxAction` and `cancelTxAction` resend a pending EIP-1559 transaction with the same nonce, 15% above the fees last sent for it and at least at the market estimate, as a transaction stuck below the base fee stays stuck with 15% more. They work only from the account that sent the transaction. The original tracker then reports it as `Replaced`, with `replacedReason` `repriced` or `cancelled`.
 - **Standalone use:** the trackers and fetchers work without the store, in your own state or on a server. See [EVM Trackers Standalone](https://pulsar.docs.tuwa.io/evmStandalone).
@@ -97,13 +97,12 @@ The step-by-step React setup is in the **[React transaction tracking guide](http
 
 The trackers send requests to these hosts. The transaction hash, `userOpHash` or `safeTxHash` (and for Safe, the Safe address) is sent to them:
 
-| Tracker             | Host                                                                                                                    | Purpose                                                                                                                                                                                                                                                                                                                      |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Standard, stage 2   | The RPC transports of your wagmi config                                                                                 | `getTransaction`, receipts, confirmations and block timestamps; the sender's nonce after every attempt without an answer, and once it is spent `eth_getTransactionBySenderAndNonce`, or its count at past blocks to find the one block to read; only a node without old state is read block by block, up to 1000 full blocks |
-| ERC-4337 stage 1    | `bundlerUrl`, else `api.pimlico.io` (with `pimlicoApiKey` in the URL), else the rate-limited public `public.pimlico.io` | `eth_getUserOperationReceipt`                                                                                                                                                                                                                                                                                                |
-| EIP-5792 stage 1    | The connected wallet (no host): `wallet_getCallsStatus` through the wagmi connector                                     | Status of the call batch and the hash of the transaction that executed it                                                                                                                                                                                                                                                    |
-| Safe                | `safe-transaction-<network>.safe.global` (see `SafeTransactionServiceUrls`)                                             | Status of the multisig transaction and of other transactions with its nonce                                                                                                                                                                                                                                                  |
-| Gelato (deprecated) | `api.gelato.cloud`, with the Gelato API key as a `Bearer` token                                                         | `relayer_getStatus` and `relayer_getCapabilities`                                                                                                                                                                                                                                                                            |
+| Tracker           | Host                                                                                                                    | Purpose                                                                                                                                                                                                                                                                                                                      |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Standard, stage 2 | The RPC transports of your wagmi config                                                                                 | `getTransaction`, receipts, confirmations and block timestamps; the sender's nonce after every attempt without an answer, and once it is spent `eth_getTransactionBySenderAndNonce`, or its count at past blocks to find the one block to read; only a node without old state is read block by block, up to 1000 full blocks |
+| ERC-4337 stage 1  | `bundlerUrl`, else `api.pimlico.io` (with `pimlicoApiKey` in the URL), else the rate-limited public `public.pimlico.io` | `eth_getUserOperationReceipt`                                                                                                                                                                                                                                                                                                |
+| EIP-5792 stage 1  | The connected wallet (no host): `wallet_getCallsStatus` through the wagmi connector                                     | Status of the call batch and the hash of the transaction that executed it                                                                                                                                                                                                                                                    |
+| Safe              | `safe-transaction-<network>.safe.global` (see `SafeTransactionServiceUrls`)                                             | Status of the multisig transaction and of other transactions with its nonce                                                                                                                                                                                                                                                  |
 
 Explorer links point to the block explorer configured in your viem chains, or to `app.safe.global` for Safe transactions; they are not requested by the package.
 
@@ -116,10 +115,6 @@ Every export, with signatures and types generated from the source, is documented
 ## 📄 License
 
 Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/LICENSE) file for details.
-
-## Enumerations
-
-- [~~GelatoStatusCode~~](/packages/pulsar-evm/enumerations/GelatoStatusCode.md)
 
 ## Classes
 
@@ -138,12 +133,6 @@ Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/
 - [Erc4337TrackerForStoreParams](/packages/pulsar-evm/type-aliases/Erc4337TrackerForStoreParams.md)
 - [Erc4337UserOpReceipt](/packages/pulsar-evm/type-aliases/Erc4337UserOpReceipt.md)
 - [EVMTrackerParams](/packages/pulsar-evm/type-aliases/EVMTrackerParams.md)
-- [~~GelatoBaseStatus~~](/packages/pulsar-evm/type-aliases/GelatoBaseStatus.md)
-- [~~GelatoCapabilities~~](/packages/pulsar-evm/type-aliases/GelatoCapabilities.md)
-- [~~GelatoCapabilitiesByChain~~](/packages/pulsar-evm/type-aliases/GelatoCapabilitiesByChain.md)
-- [~~GelatoClientConfig~~](/packages/pulsar-evm/type-aliases/GelatoClientConfig.md)
-- [~~GelatoTaskStatus~~](/packages/pulsar-evm/type-aliases/GelatoTaskStatus.md)
-- [~~GelatoToken~~](/packages/pulsar-evm/type-aliases/GelatoToken.md)
 - [InitializeTrackerParams](/packages/pulsar-evm/type-aliases/InitializeTrackerParams.md)
 - [NonceSlot](/packages/pulsar-evm/type-aliases/NonceSlot.md)
 - [NonceSlotReading](/packages/pulsar-evm/type-aliases/NonceSlotReading.md)
@@ -153,21 +142,17 @@ Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/
 
 ## Variables
 
-- [~~gelatoTracker~~](/packages/pulsar-evm/variables/gelatoTracker.md)
 - [gnosisSafeLinksHelper](/packages/pulsar-evm/variables/gnosisSafeLinksHelper.md)
 - [SAFE\_DEFAULT\_PENDING\_TIMEOUT\_MS](/packages/pulsar-evm/variables/SAFE_DEFAULT_PENDING_TIMEOUT_MS.md)
 - [safeFetcher](/packages/pulsar-evm/variables/safeFetcher.md)
-- [safeSdkOptions](/packages/pulsar-evm/variables/safeSdkOptions.md)
 - [SafeTransactionServiceUrls](/packages/pulsar-evm/variables/SafeTransactionServiceUrls.md)
 
 ## Functions
 
 - [cancelTxAction](/packages/pulsar-evm/functions/cancelTxAction.md)
 - [checkAndInitializeTrackerInStore](/packages/pulsar-evm/functions/checkAndInitializeTrackerInStore.md)
-- [~~checkIsGelatoAvailable~~](/packages/pulsar-evm/functions/checkIsGelatoAvailable.md)
 - [checkTransactionsTracker](/packages/pulsar-evm/functions/checkTransactionsTracker.md)
 - [createEip5792Fetcher](/packages/pulsar-evm/functions/createEip5792Fetcher.md)
-- [~~createGelatoClient~~](/packages/pulsar-evm/functions/createGelatoClient.md)
 - [createSafeFetcher](/packages/pulsar-evm/functions/createSafeFetcher.md)
 - [eip5792Tracker](/packages/pulsar-evm/functions/eip5792Tracker.md)
 - [eip5792TrackerForStore](/packages/pulsar-evm/functions/eip5792TrackerForStore.md)
@@ -176,9 +161,6 @@ Licensed under the **Apache-2.0 License**. See the [LICENSE](https://github.com/
 - [erc4337TrackerForStore](/packages/pulsar-evm/functions/erc4337TrackerForStore.md)
 - [evmTracker](/packages/pulsar-evm/functions/evmTracker.md)
 - [evmTrackerForStore](/packages/pulsar-evm/functions/evmTrackerForStore.md)
-- [~~gelatoFetcher~~](/packages/pulsar-evm/functions/gelatoFetcher.md)
-- [~~gelatoTrackerForStore~~](/packages/pulsar-evm/functions/gelatoTrackerForStore.md)
-- [~~isRetryableReceiptError~~](/packages/pulsar-evm/functions/isRetryableReceiptError.md)
 - [pulsarEvmAdapter](/packages/pulsar-evm/functions/pulsarEvmAdapter.md)
 - [readNonceSlot](/packages/pulsar-evm/functions/readNonceSlot.md)
 - [safePollingInterval](/packages/pulsar-evm/functions/safePollingInterval.md)

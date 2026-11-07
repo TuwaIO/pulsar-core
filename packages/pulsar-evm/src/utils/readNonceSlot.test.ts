@@ -25,8 +25,12 @@ type Node = {
   direct?: boolean;
   /** A read of this block fails. */
   failing?: bigint;
-  /** A node without old state, which answers the count of the newest block only. */
+  /** A node without old state: it answers the count of the newest block and of the `stateWindow` blocks below it. */
   pruned?: boolean;
+  stateWindow?: bigint;
+  /** What `eth_getLogs` answers; it refuses when there are none set. */
+  logs?: { transactionHash: Hex }[];
+  logReads?: unknown[];
   blocksRead: bigint[];
   countsRead: number;
 };
@@ -64,9 +68,15 @@ function nodeOf(script: Partial<Node> & { head: bigint }) {
         node.countsRead += 1;
         const at = args[1] as string;
         if (at === 'latest') return numberToHex(NONCE + (node.spentIn === undefined ? 0 : 1));
-        if (node.pruned) throw Object.assign(new Error('missing trie node'), { code: -32000 });
+        if (node.pruned && BigInt(at) < node.head - (node.stateWindow ?? 0n)) {
+          throw Object.assign(new Error('missing trie node'), { code: -32000 });
+        }
         return numberToHex(NONCE + (node.spentIn !== undefined && BigInt(at) >= node.spentIn ? 1 : 0));
       }
+      case 'eth_getLogs':
+        (node.logReads ??= []).push(args[0]);
+        if (!node.logs) throw Object.assign(new Error('query returned more than 10000 results'), { code: -32005 });
+        return node.logs.map((log) => ({ ...log, address: SENDER, topics: [], data: '0x' }));
       case 'eth_getTransactionBySenderAndNonce':
         if (!node.direct) throw Object.assign(new Error('the method does not exist'), { code: -32601 });
         return node.spender ? { hash: node.spender } : null;
@@ -146,53 +156,125 @@ describe('readNonceSlot', () => {
   });
 
   // It read every block since the last reading, uncounted by `maxBlocks`: thousands in a row on a chain of fast blocks
-  describe('blocks above the first reading', () => {
-    it('reads no more of them than nodes can disagree on, however far the chain went', async () => {
-      const { node, client } = nodeOf({ head: 100_000n, spentIn: 1n, spender: OTHER, pruned: true });
-      const scan: NonceSlotScan = {};
-      await readNonceSlot(client, { hash: OWN, slot, scan, maxBlocks: 10 });
-      node.blocksRead.length = 0;
-      node.head = 114_400n;
-      await readNonceSlot(client, { hash: OWN, slot, scan, maxBlocks: 10 });
-      const above = node.blocksRead.filter((block) => block > 100_000n);
-      expect(above).toHaveLength(16);
-      expect(Math.max(...above.map(Number))).toBe(100_016);
+  // The count came from a node at the newest block, the block number from one behind it
+  it('reads nothing while this node does not see the nonce spent, and finds it once it does', async () => {
+    const { node, client } = nodeOf({ head: 100_000n, spentIn: 100_001n, spender: OTHER, receipt: true });
+    const scan: NonceSlotScan = {};
+    expect(await readNonceSlot(client, { hash: OWN, slot, scan })).toEqual({ state: 'spent' });
+    expect(node.blocksRead).toEqual([]);
+    node.head = 100_003n;
+    expect(await readNonceSlot(client, { hash: OWN, slot, scan })).toMatchObject({
+      state: 'replaced',
+      replacement: { transaction: { hash: OTHER } },
+    });
+    expect(node.blocksRead).toEqual([100_001n]);
+  });
+
+  // A public node keeps about the last 128 blocks of state: asking first for the far end failed on it, and every block was read
+  describe('a node that keeps no old state', () => {
+    const contractCall = { ...slot, to: SENDER, input: '0xa9059cbb' as Hex };
+
+    it('finds a recent spend from the counts of what it keeps, with one full block', async () => {
+      const { node, client } = nodeOf({
+        head: 100_000n,
+        spentIn: 99_950n,
+        spender: OTHER,
+        receipt: true,
+        pruned: true,
+        stateWindow: 128n,
+      });
+      expect(await readNonceSlot(client, { hash: OWN, slot, scan: {} })).toMatchObject({ state: 'replaced' });
+      expect(node.blocksRead).toEqual([99_950n]);
+      expect(node.countsRead).toBeLessThan(20);
     });
 
-    it('holds to that after a reading the node failed, too', async () => {
-      const { node, client } = nodeOf({ head: 100_000n, spentIn: 1n, spender: OTHER, failing: 99_995n, pruned: true });
+    it('goes down from where the counts stopped, as nothing newer can hold it', async () => {
+      const { node, client } = nodeOf({
+        head: 100_000n,
+        spentIn: 99_860n,
+        spender: OTHER,
+        receipt: true,
+        pruned: true,
+        stateWindow: 128n,
+      });
+      expect(await readNonceSlot(client, { hash: OWN, slot, scan: {} })).toMatchObject({ state: 'replaced' });
+      expect(node.blocksRead.length).toBeLessThanOrEqual(32);
+      expect(node.blocksRead[0]).toBeLessThan(99_880n);
+    });
+
+    it('costs no more than its budget in full blocks, over all readings of a transaction', async () => {
+      const { node, client } = nodeOf({
+        head: 100_000n,
+        spentIn: 5n,
+        spender: OTHER,
+        receipt: true,
+        pruned: true,
+        stateWindow: 128n,
+      });
+      const scan: NonceSlotScan = {};
+      expect(await readNonceSlot(client, { hash: OWN, slot, scan })).toEqual({ state: 'spent' });
+      const counts = node.countsRead;
+      expect(await readNonceSlot(client, { hash: OWN, slot, scan })).toEqual({ state: 'spent' });
+      expect(node.blocksRead).toHaveLength(32);
+      expect(new Set(node.blocksRead).size).toBe(32);
+      // Only the count of the newest block, which says the nonce is spent
+      expect(node.countsRead).toBe(counts + 1);
+    });
+
+    it('goes on from the block a limit stopped it at', async () => {
+      const { node, client } = nodeOf({ head: 1000n, spentIn: 5n, spender: OTHER, pruned: true, failing: 990n });
       const scan: NonceSlotScan = {};
       await expect(readNonceSlot(client, { hash: OWN, slot, scan })).rejects.toThrow();
       node.failing = undefined;
       node.blocksRead.length = 0;
-      node.head = 114_400n;
-      await readNonceSlot(client, { hash: OWN, slot, scan, maxBlocks: 10 });
-      expect(node.blocksRead.filter((block) => block > 100_016n)).toEqual([]);
+      await readNonceSlot(client, { hash: OWN, slot, scan });
+      expect(node.blocksRead[0]).toBe(990n);
+      expect(node.blocksRead).toHaveLength(22);
     });
 
-    // The count came from a node at the newest block, the block number from one behind it
-    it('finds a replacement in the block above the first reading', async () => {
-      const { node, client } = nodeOf({ head: 100_000n, spentIn: 100_001n, spender: OTHER, receipt: true });
-      const scan: NonceSlotScan = {};
-      expect(await readNonceSlot(client, { hash: OWN, slot, scan, maxBlocks: 10 })).toEqual({ state: 'spent' });
-      node.head = 100_003n;
-      expect(await readNonceSlot(client, { hash: OWN, slot, scan, maxBlocks: 10 })).toMatchObject({
-        state: 'replaced',
-        replacement: { transaction: { hash: OTHER } },
+    it('finds an old spend of a contract call in the logs, with no full block', async () => {
+      const { node, client } = nodeOf({
+        head: 100_000n,
+        spentIn: 90_000n,
+        spender: OTHER,
+        receipt: true,
+        pruned: true,
+        stateWindow: 128n,
+        logs: [{ transactionHash: OTHER }],
       });
+      expect(await readNonceSlot(client, { hash: OWN, slot: contractCall, scan: {} })).toMatchObject({
+        state: 'replaced',
+      });
+      expect(node.blocksRead).toEqual([]);
+      expect(node.logReads).toHaveLength(1);
     });
 
-    it('reads each of them once', async () => {
-      const { node, client } = nodeOf({ head: 100_000n, spentIn: 1n, spender: OTHER, pruned: true });
+    it('takes from the logs only the transaction that spent this nonce', async () => {
+      const { node, client } = nodeOf({
+        head: 100_000n,
+        spentIn: 90_000n,
+        spender: OTHER,
+        pruned: true,
+        stateWindow: 128n,
+        logs: [{ transactionHash: OWN }],
+      });
+      expect(await readNonceSlot(client, { hash: OWN, slot: contractCall, scan: {} })).toEqual({ state: 'spent' });
+      expect(node.blocksRead).toHaveLength(32);
+    });
+
+    it('reads the logs once, and goes on when a node refuses them', async () => {
+      const { node, client } = nodeOf({ head: 100_000n, spentIn: 5n, pruned: true, stateWindow: 128n });
       const scan: NonceSlotScan = {};
-      await readNonceSlot(client, { hash: OWN, slot, scan, maxBlocks: 10 });
-      node.head = 100_020n;
-      await readNonceSlot(client, { hash: OWN, slot, scan, maxBlocks: 10 });
-      node.head = 100_040n;
-      await readNonceSlot(client, { hash: OWN, slot, scan, maxBlocks: 10 });
-      const above = node.blocksRead.filter((block) => block > 100_000n);
-      expect(new Set(above).size).toBe(above.length);
-      expect(above).toHaveLength(16);
+      await readNonceSlot(client, { hash: OWN, slot: contractCall, scan });
+      await readNonceSlot(client, { hash: OWN, slot: contractCall, scan });
+      expect(node.logReads).toHaveLength(1);
+      expect(node.blocksRead).toHaveLength(32);
+    });
+
+    it('asks no logs for a plain transfer, which leaves none', async () => {
+      const { node, client } = nodeOf({ head: 100_000n, spentIn: 5n, pruned: true, stateWindow: 128n });
+      await readNonceSlot(client, { hash: OWN, slot, scan: {} });
+      expect(node.logReads).toBeUndefined();
     });
   });
 
@@ -226,19 +308,20 @@ describe('readNonceSlot', () => {
       expect(node.blocksRead).toEqual([99_001n]);
     });
 
-    it('reads no block when the nonce was spent before its reach', async () => {
+    it('reads no block when the nonce was spent before the transaction could have been replaced', async () => {
       const { node, client } = nodeOf({ head: 100_000n, spentIn: 98_000n, spender: OTHER, receipt: true });
-      expect(await readNonceSlot(client, { hash: OWN, slot, scan: {} })).toEqual({ state: 'spent' });
+      expect(await readNonceSlot(client, { hash: OWN, slot, fromBlock: 99_000n, scan: {} })).toEqual({
+        state: 'spent',
+      });
       expect(node.blocksRead).toEqual([]);
     });
 
-    it('goes further back when it is allowed to', async () => {
-      const { node, client } = nodeOf({ head: 100_000n, spentIn: 98_000n, spender: OTHER, receipt: true });
-      const scan: NonceSlotScan = {};
-      expect(await readNonceSlot(client, { hash: OWN, slot, scan })).toEqual({ state: 'spent' });
-      const reading = await readNonceSlot(client, { hash: OWN, slot, scan, maxBlocks: 3000 });
-      expect(reading).toMatchObject({ state: 'replaced' });
-      expect(node.blocksRead).toEqual([98_000n]);
+    // The limit of a thousand blocks was for block reads, and it ended a replacement older than that as Replaced with no reason
+    it('goes as far back as the chain for a few counts', async () => {
+      const { node, client } = nodeOf({ head: 1_000_000n, spentIn: 5n, spender: OTHER, receipt: true });
+      expect(await readNonceSlot(client, { hash: OWN, slot, scan: {} })).toMatchObject({ state: 'replaced' });
+      expect(node.blocksRead).toEqual([5n]);
+      expect(node.countsRead).toBeLessThan(45);
     });
 
     it('asks again only for the block it found, while the receipt is on its way', async () => {

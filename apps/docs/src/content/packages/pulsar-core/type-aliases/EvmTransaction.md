@@ -2,7 +2,7 @@
 
 > **EvmTransaction** = [`BaseTransaction`](/packages/pulsar-core/type-aliases/BaseTransaction.md) & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:168](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L168)
+Defined in: [packages/pulsar-core/src/types.ts:158](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L158)
 
 An EVM transaction. Trackers fill the on-chain fields (`hash`, `nonce`, fees, `to`, `value`, `input`) once the
 transaction details are available.
@@ -28,7 +28,7 @@ this URL; pass them as `pimlicoApiKey`.
 > `optional` **hash?**: `` `0x${string}` ``
 
 The on-chain transaction hash: the `txKey` for standard transactions, and the hash of the mined transaction for
-ERC-4337, Safe and Gelato once it is known.
+ERC-4337 and Safe once it is known.
 
 ### input?
 

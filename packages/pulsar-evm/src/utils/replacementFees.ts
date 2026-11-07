@@ -2,6 +2,7 @@
  * @file The rules shared by the wallet actions that replace a pending transaction: `speedUpTxAction` and `cancelTxAction`.
  */
 
+import { getBrowserStorage } from '@tuwaio/orbit-core';
 import { EvmTransaction, Transaction } from '@tuwaio/pulsar-core';
 import { Config, getClient } from '@wagmi/core';
 import { isAddressEqual } from 'viem';
@@ -17,12 +18,13 @@ type Fees = { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint };
 const lastSentFees = new Map<string, Fees>();
 const STORAGE_KEY_PREFIX = 'pulsar-evm:replacementFees:';
 
-/** `sessionStorage` where it exists: the tab's memory, which a reload keeps. A blocked one only costs that. */
+// The memory of the tab, which a reload keeps. A browser's only: Node 26 has a `sessionStorage` on the server too, one for
+// the whole process. A blocked one only costs the fees after a reload
 function readSavedFees(key: string): Fees | undefined {
   const inMemory = lastSentFees.get(key);
   if (inMemory) return inMemory;
   try {
-    const saved = globalThis.sessionStorage?.getItem(STORAGE_KEY_PREFIX + key);
+    const saved = getBrowserStorage('sessionStorage')?.getItem(STORAGE_KEY_PREFIX + key);
     if (!saved) return undefined;
     const { maxFeePerGas, maxPriorityFeePerGas } = JSON.parse(saved) as Record<keyof Fees, string>;
     return { maxFeePerGas: BigInt(maxFeePerGas), maxPriorityFeePerGas: BigInt(maxPriorityFeePerGas) };
@@ -113,7 +115,7 @@ export function rememberSentFees(tx: Transaction, fees: Fees): void {
   const key = slotKey(tx);
   lastSentFees.set(key, fees);
   try {
-    globalThis.sessionStorage?.setItem(
+    getBrowserStorage('sessionStorage')?.setItem(
       STORAGE_KEY_PREFIX + key,
       JSON.stringify({
         maxFeePerGas: fees.maxFeePerGas.toString(),

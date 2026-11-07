@@ -2,7 +2,7 @@
 
 > **evmTracker**(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/evmTracker.ts:254](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L254)
+Defined in: [trackers/evmTracker.ts:239](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L239)
 
 Tracks a standard EVM transaction by its hash, without a store. Use it to track transactions in your own state or on
 a server.
@@ -14,9 +14,9 @@ Steps (all RPC calls go through the wagmi client of `tx.chainId`):
    no failure: the nonce decides. A hash the node does not show is also asked of the wallet connected on the chain
    (`config.state.connections`), through its provider and with no prompt, as only its RPC may hold it: without the nonce no
    speed-up of it can be seen.
-3. Waits for the receipt with `waitForTransactionReceipt`, for as long as `receiptAttempts` says. If viem reports a replacement,
-   calls `onReplaced` and stops. After every attempt that ended without an answer, whatever the error, it reads the
-   sender's nonce with [readNonceSlot](/packages/pulsar-evm/functions/readNonceSlot.md) and reports a replacement it finds.
+3. Waits for the receipt with `waitForTransactionReceipt`, for as long as `receiptAttempts` says, with viem's replacement scan
+   off, as it reads a full block per new block. On each new block, at the client's polling pace, it reads the sender's nonce with
+   [readNonceSlot](/packages/pulsar-evm/functions/readNonceSlot.md) and reports a replacement it finds.
 4. If `requiredConfirmations` is above 1, polls `getTransactionConfirmations` every 5 s until it is reached, reading the
    receipt again each time, so one a reorganization dropped goes back to waiting. `confirmationsTimeout` limits this wait.
 5. Awaits `onSuccess`, also for reverted transactions.

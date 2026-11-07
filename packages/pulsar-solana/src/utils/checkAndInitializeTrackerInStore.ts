@@ -22,6 +22,7 @@ import { solanaTrackerForStore } from '../trackers/solanaTracker';
  * @param params - The tracker, the transaction, the store members and the callbacks.
  * @param params.tx - The transaction to track.
  * @param params.tracker - The tracker to run, usually `tx.tracker`.
+ * @param params.rpcUrl - The RPC endpoint of the transaction's cluster.
  * @param params.onSuccess - Called when the transaction is finalized.
  * @param params.onError - Called when the transaction failed or tracking gave up.
  * @param params.updateTxParams - The store's `updateTxParams`.
@@ -32,18 +33,22 @@ import { solanaTrackerForStore } from '../trackers/solanaTracker';
 export async function checkAndInitializeTrackerInStore<T extends Transaction>({
   tx,
   tracker,
+  rpcUrl,
   onSuccess,
   onError,
   ...rest
 }: {
   tx: T;
   tracker: TransactionTracker;
+  /** The RPC endpoint of the transaction's cluster, from the adapter's `rpcUrls`. */
+  rpcUrl?: string;
 } & TrackerCallbacks<T> &
   Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'>): Promise<void> {
   switch (tracker) {
     case TransactionTracker.Solana:
       await solanaTrackerForStore({
         tx,
+        rpcUrl,
         onSuccess,
         onError,
         ...rest,

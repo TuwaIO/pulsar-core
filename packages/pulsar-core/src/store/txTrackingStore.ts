@@ -6,7 +6,7 @@
 import { normalizeError, selectAdapterByKey, setChainId } from '@tuwaio/orbit-core';
 import dayjs from 'dayjs';
 import { produce } from 'immer';
-import { persist, PersistOptions } from 'zustand/middleware';
+import { createJSONStorage, persist, PersistOptions, PersistStorage } from 'zustand/middleware';
 import { createStore, StoreApi } from 'zustand/vanilla';
 
 import {
@@ -19,12 +19,29 @@ import {
   TransactionStatus,
   TransactionTracker,
 } from '../types';
-import { mergeTabPools } from '../utils/mergeTabPools';
+import { keepsItsResult, mergeTabPools } from '../utils/mergeTabPools';
 import { normalizeRemoteTx } from '../utils/normalizeRemoteTx';
-import { DEFAULT_RETENTION_DAYS, expiredTransactionKeys } from '../utils/transactionRetention';
+import { DEFAULT_RETENTION_DAYS, evictedTransactionKeys, expiredTransactionKeys } from '../utils/transactionRetention';
 import { validateInitialTransactionParams, validateTransaction } from '../utils/transactionValidation';
 import { createTxFinishedNotifier, isFinishedStatus } from '../utils/txFinished';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
+
+/** A storage whose failed save is logged, not thrown: the state in memory goes on, and the next save tries again. */
+function withoutFailingSaves<S>(storage: PersistStorage<S> | undefined): PersistStorage<S> | undefined {
+  if (!storage) return storage;
+  const logged = (error: unknown) => console.warn('[Pulsar] The transactions could not be saved:', error);
+  return {
+    ...storage,
+    setItem: (name, value) => {
+      try {
+        const saved = storage.setItem(name, value);
+        return saved instanceof Promise ? saved.catch(logged) : saved;
+      } catch (error) {
+        logged(error);
+      }
+    },
+  };
+}
 
 /**
  * Creates the Pulsar transaction store: a vanilla Zustand store (use it from any framework, or bind it to React with
@@ -53,7 +70,6 @@ import { initializeTxTrackingStore } from './initializeTxTrackingStore';
  *   ones are dropped when the saved state is restored and when a transaction is added. `null` keeps them without a
  *   term. Defaults to 30.
  * @param params.onRemoteCreate - Remote sync callback (see `SyncCallbacks`).
- * @param params.gelatoApiKey - Deprecated Gelato API key, passed to the trackers.
  * @param params.beforeTxProcess - Global preflight callback (see `BeforeTxProcess`).
  * @param params.abortOnTxError - Whether a `beforeTxProcess` error aborts the transaction. Defaults to `true`.
  * @param params.onTxFinished - Called when a transaction finishes, also after a page reload, per open tab (see
@@ -77,7 +93,6 @@ export function createPulsarStore<T extends Transaction>({
   maxTransactions = 50,
   retentionDays = DEFAULT_RETENTION_DAYS,
   onRemoteCreate,
-  gelatoApiKey,
   beforeTxProcess,
   abortOnTxError,
   onTxFinished,
@@ -132,7 +147,6 @@ export function createPulsarStore<T extends Transaction>({
     startTracker(tx.txKey, () =>
       selectAdapterByKey({ adapterKey: tx.adapter, adapter })?.checkAndInitializeTrackerInStore({
         tx,
-        gelatoApiKey,
         ...callbacksOf(tx.txKey),
         ...store.getState(),
       }),
@@ -197,7 +211,11 @@ export function createPulsarStore<T extends Transaction>({
         }),
       );
       if (known.pending && !trackedTxKeys.has(replacedTxHash)) void startRestored(known as unknown as T);
-      else if (!known.pending) deliverResult(known as unknown as T);
+      else if (!known.pending) {
+        // Sped up again already: the callbacks go on to the last record, or nothing calls them with the real result
+        followSpeedUp(known as unknown as T);
+        deliverResult(known as unknown as T);
+      }
       return;
     }
 
@@ -242,7 +260,13 @@ export function createPulsarStore<T extends Transaction>({
     if (tx.status === TransactionStatus.Success) runCallback(tx.txKey, 'onSuccess', tx);
     else if (tx.status === TransactionStatus.Failed) {
       runCallback(tx.txKey, 'onError', new Error(tx.error?.message ?? 'The transaction failed.'), tx);
-    } else if (tx.status === TransactionStatus.Replaced) runCallback(tx.txKey, 'onReplaced', tx, tx);
+    } else if (tx.status === TransactionStatus.Replaced) {
+      runCallback(tx.txKey, 'onReplaced', tx, tx);
+      // As this tab's own tracker does: another transaction in the nonce that reverted
+      if (tx.isError) {
+        runCallback(tx.txKey, 'onError', new Error(tx.error?.message ?? 'The transaction failed.'), tx);
+      }
+    }
   };
 
   /** A final result that did not come through this tab's tracker, which stops at its next check. */
@@ -304,7 +328,6 @@ export function createPulsarStore<T extends Transaction>({
               return startTracker(tx.txKey, () =>
                 foundAdapter?.checkAndInitializeTrackerInStore({
                   tx,
-                  gelatoApiKey,
                   ...callbacksOf(tx.txKey),
                   ...get(),
                 }),
@@ -319,7 +342,8 @@ export function createPulsarStore<T extends Transaction>({
           const txsToTrack: T[] = [];
           // Local transactions that the remote backend reports as finished, for the "transaction finished" event
           const finishedTxKeys: string[] = [];
-          const validRemoteTxs = remoteTxs.filter((remoteTx) => {
+          // Normalized first: a row brings its empty columns as `null` and its numbers as strings
+          const validRemoteTxs = remoteTxs.map(normalizeRemoteTx).filter((remoteTx) => {
             try {
               validateTransaction(remoteTx);
               return true;
@@ -345,16 +369,25 @@ export function createPulsarStore<T extends Transaction>({
                   txsToTrack.push(record);
                 }
 
-                // Case B: Self-healing. Local is stuck on pending, but remote says it's terminal.
-                if (localTx?.pending && isFinishedStatus(remoteTx.status)) {
+                // Case B: Self-healing. Local is stuck on pending, or holds a `Failed` the chain answers otherwise, and remote
+                // says it's terminal.
+                const correctable =
+                  localTx && !isFinishedStatus(localTx.status)
+                    ? localTx.pending
+                    : localTx?.status !== remoteTx.status && !keepsItsResult(localTx?.status, remoteTx.status);
+                if (localTx && correctable && isFinishedStatus(remoteTx.status)) {
                   // A server's Failed can be its own time limit, and its Replaced may not say why, when a speed-up is what
                   // decides whether a new record follows. While this page's tracker runs, the chain answers
                   const remoteReason = (remoteTx as unknown as EvmTransaction).replacedReason;
                   const provesNothing =
                     remoteTx.status === TransactionStatus.Failed ||
                     (remoteTx.status === TransactionStatus.Replaced && !remoteReason);
-                  if (provesNothing && trackedTxKeys.has(remoteTx.txKey)) return;
-                  if (!isFinishedStatus(localTx.status)) finishedTxKeys.push(remoteTx.txKey);
+                  if (provesNothing && (trackedTxKeys.has(remoteTx.txKey) || isFinishedStatus(localTx.status))) return;
+                  finishedTxKeys.push(remoteTx.txKey);
+                  if (remoteTx.status === TransactionStatus.Success) {
+                    localTx.isError = false;
+                    delete localTx.error;
+                  }
                   localTx.status = remoteTx.status;
                   localTx.pending = false;
                   if (remoteTx.txKey) localTx.txKey = remoteTx.txKey;
@@ -385,7 +418,6 @@ export function createPulsarStore<T extends Transaction>({
                 return startTracker(tx.txKey, () =>
                   foundAdapter?.checkAndInitializeTrackerInStore({
                     tx,
-                    gelatoApiKey,
                     ...callbacksOf(tx.txKey),
                     // Pass the fresh state after the synchronous set above
                     ...get(),
@@ -437,7 +469,7 @@ export function createPulsarStore<T extends Transaction>({
           const handleTxError = (e: unknown) => {
             set((state) =>
               produce(state, (draft) => {
-                if (draft.initialTx) {
+                if (draft.initialTx?.actionFunction === actionFunction) {
                   draft.initialTx.isInitializing = false;
                   draft.initialTx.error = normalizeError(e);
                 }
@@ -480,7 +512,7 @@ export function createPulsarStore<T extends Transaction>({
 
             // If `txKeyFromAction` is undefined, it indicates the user cancelled the action.
             if (!txKeyFromAction) {
-              set({ initialTx: undefined });
+              if (get().initialTx?.actionFunction === actionFunction) set({ initialTx: undefined });
               return;
             }
 
@@ -489,7 +521,6 @@ export function createPulsarStore<T extends Transaction>({
               actionTxKey: txKeyFromAction,
               connectorType,
               tracker,
-              gelatoApiKey: params.gelatoApiKey ?? gelatoApiKey,
               bundlerUrl: params.bundlerUrl,
               pimlicoApiKey: params.pimlicoApiKey,
             });
@@ -517,7 +548,8 @@ export function createPulsarStore<T extends Transaction>({
             // Step 7: Update the initial state to link it with the newly created transaction.
             set((state) =>
               produce(state, (draft) => {
-                if (draft.initialTx) {
+                // A later action may have taken this one slot while the wallet was asked about this one
+                if (draft.initialTx?.actionFunction === actionFunction) {
                   draft.initialTx.isInitializing = false;
                   draft.initialTx.lastTxKey = finalTxKey;
                 }
@@ -532,7 +564,6 @@ export function createPulsarStore<T extends Transaction>({
               foundAdapter.checkAndInitializeTrackerInStore({
                 tx,
                 ...callbacksOf(finalTxKey),
-                gelatoApiKey,
                 ...get(),
               }),
             );
@@ -551,6 +582,8 @@ export function createPulsarStore<T extends Transaction>({
           return persistedState;
         },
         ...options, // Merges user-provided persistence options.
+        // A save may fail (`localStorage` full): the money has gone by then, and a throw here read as a failed send, with Retry
+        storage: withoutFailingSaves(options.storage ?? createJSONStorage<ITxTrackingStore<T>>(() => localStorage)),
         // The saved state comes back without the finished transactions past their term, whatever `merge` the app passes
         merge: (persistedState, currentState) => {
           const merged = options.merge
@@ -561,8 +594,16 @@ export function createPulsarStore<T extends Transaction>({
                 initialTx: currentState.initialTx,
               };
           const expired = expiredTransactionKeys(merged.transactionsPool ?? {}, retentionDays);
-          if (expired.length === 0) return merged;
           const transactionsPool = { ...merged.transactionsPool };
+          // What older versions saved with a record and nothing reads any more: an endpoint or a key left in `localStorage` for good
+          for (const [key, tx] of Object.entries(transactionsPool)) {
+            if ('rpcUrl' in tx || 'gelatoApiKey' in tx) {
+              const kept = { ...tx } as T & { rpcUrl?: string; gelatoApiKey?: string };
+              delete kept.rpcUrl;
+              delete kept.gelatoApiKey;
+              transactionsPool[key] = kept as unknown as (typeof transactionsPool)[string];
+            }
+          }
           const unsyncedTxKeys = merged.unsyncedTxKeys ? { ...merged.unsyncedTxKeys } : merged.unsyncedTxKeys;
           for (const key of expired) {
             delete transactionsPool[key];
@@ -593,11 +634,22 @@ export function createPulsarStore<T extends Transaction>({
         }),
       ) as TransactionPool<T>;
       const state = store.getState();
-      const { pool, finished, added } = mergeTabPools(state.transactionsPool as TransactionPool<T>, valid);
+      const merged = mergeTabPools(state.transactionsPool as TransactionPool<T>, valid, (txKey) =>
+        trackedTxKeys.has(txKey),
+      );
+      const { finished, added } = merged;
+      // The limits hold whatever the other tab saved: it brought back what this one had evicted, and the pool grew past them
+      const expired = expiredTransactionKeys(merged.pool, retentionDays);
+      const kept = Object.fromEntries(
+        Object.entries(merged.pool).filter(([key]) => !expired.includes(key)),
+      ) as TransactionPool<T>;
+      const evicted = evictedTransactionKeys(kept, maxTransactions);
+      for (const key of evicted) delete kept[key];
+      const pool = expired.length + evicted.length > 0 ? kept : merged.pool;
       if (pool !== state.transactionsPool)
         (store as StoreApi<ITxTrackingStore<T>>).setState({ transactionsPool: pool });
       // Finished first: a speed-up hands its callbacks on, and the new record among `added` must start with them
-      for (const txKey of finished) finishedElsewhere(pool[txKey]);
+      for (const txKey of finished) if (pool[txKey]) finishedElsewhere(pool[txKey]);
       // The tab that sent it may close: this one must then be able to finish it
       for (const tx of added) void startRestored(tx);
     };

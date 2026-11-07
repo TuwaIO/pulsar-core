@@ -1,6 +1,6 @@
 # ConfirmationsTimeoutError
 
-Defined in: [trackers/evmTracker.ts:80](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L80)
+Defined in: [trackers/evmTracker.ts:60](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L60)
 
 The error of `onFailure` when a mined transaction did not reach its confirmations within `confirmationsTimeout`. The
 transaction is mined: `receipt` says how.
@@ -15,7 +15,7 @@ transaction is mined: `receipt` says how.
 
 > **new ConfirmationsTimeoutError**(`receipt`, `needed`): `ConfirmationsTimeoutError`
 
-Defined in: [trackers/evmTracker.ts:89](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L89)
+Defined in: [trackers/evmTracker.ts:69](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L69)
 
 #### Parameters
 
@@ -45,7 +45,7 @@ The confirmations it did not reach.
 
 > **name**: `string` = `'ConfirmationsTimeoutError'`
 
-Defined in: [trackers/evmTracker.ts:81](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L81)
+Defined in: [trackers/evmTracker.ts:61](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L61)
 
 #### Overrides
 
@@ -57,6 +57,6 @@ Defined in: [trackers/evmTracker.ts:81](https://github.com/TuwaIO/pulsar-core/bl
 
 > `readonly` **receipt**: `TransactionReceipt`
 
-Defined in: [trackers/evmTracker.ts:83](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L83)
+Defined in: [trackers/evmTracker.ts:63](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/trackers/evmTracker.ts#L63)
 
 The receipt of the transaction.

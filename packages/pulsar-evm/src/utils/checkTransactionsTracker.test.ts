@@ -10,20 +10,6 @@ import { checkTransactionsTracker } from './checkTransactionsTracker';
 describe('checkTransactionsTracker', () => {
   const mockTxHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
 
-  test('should route to Gelato when tracker is Gelato and gelatoApiKey is provided', () => {
-    const result = checkTransactionsTracker({
-      actionTxKey: 'gelato-task-id-123',
-      connectorType: 'injected',
-      tracker: TransactionTracker.Gelato,
-      gelatoApiKey: 'key-123',
-    });
-
-    expect(result).toEqual({
-      tracker: TransactionTracker.Gelato,
-      txKey: 'gelato-task-id-123',
-    });
-  });
-
   test('should route to ERC-4337 when tracker is ERC4337 and key is hex', () => {
     const result = checkTransactionsTracker({
       actionTxKey: mockTxHash,
@@ -73,7 +59,7 @@ describe('checkTransactionsTracker', () => {
     });
   });
 
-  test('should throw error if non-hex key is provided for non-Gelato tracker', () => {
+  test('should throw error if a non-hex key is provided', () => {
     expect(() =>
       checkTransactionsTracker({
         actionTxKey: 'invalid-non-hex-key',

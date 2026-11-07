@@ -1,5 +1,5 @@
 /**
- * @file A generic polling loop for trackers that check a transaction through an API or RPC method (Safe, Gelato,
+ * @file A generic polling loop for trackers that check a transaction through an API or RPC method (Safe,
  * ERC-4337 bundlers, Solana).
  */
 

@@ -74,6 +74,16 @@ const mergeTransactionIntoPool = <T extends Transaction>(
 
   if (existingTx) {
     if (isTerminalStatus(existingTx.status)) {
+      // The local pool is this device's answer from the chain: after a reorganization the original landed, with no trace of the
+      // replacement to keep
+      if (
+        source === 'local' &&
+        existingTx.status === TransactionStatus.Replaced &&
+        tx.status === TransactionStatus.Success
+      ) {
+        pool[tx.txKey] = tx;
+        return true;
+      }
       if (keepsItsResult(existingTx.status, tx.status)) return false;
       pool[tx.txKey] = { ...existingTx, ...tx, error: tx.error };
       return true;
@@ -156,6 +166,9 @@ export function createTxInMemoryStore<T extends Transaction>({
    *
    * @param response The paginated response returned by `getHistory`.
    */
+  /** The newest request of the first page: another wallet may have connected while an older answer was on its way. */
+  let newestRequest = 0;
+
   const applyHistoryResponse = (response: Awaited<ReturnType<NonNullable<typeof getHistory>>>) => {
     if (!response) return { isLoading: false };
 
@@ -215,6 +228,7 @@ export function createTxInMemoryStore<T extends Transaction>({
     fetchInitial: async (walletAddress) => {
       if (!getHistory || !walletAddress) return;
 
+      const request = ++newestRequest;
       set(setRequestState(true));
 
       if (reconcileUnsyncedTransactions) {
@@ -223,10 +237,10 @@ export function createTxInMemoryStore<T extends Transaction>({
 
       try {
         const response = await getHistory({ page: 1, walletAddress });
-        set(applyHistoryResponse(response));
+        if (request === newestRequest) set(applyHistoryResponse(response));
       } catch (error) {
         console.error('[Pulsar] Failed to fetch initial transaction history:', error);
-        set({ isLoading: false, isError: true });
+        if (request === newestRequest) set({ isLoading: false, isError: true });
       }
     },
 
@@ -235,12 +249,13 @@ export function createTxInMemoryStore<T extends Transaction>({
 
       if (!getHistory || !hasMore || isLoading || !walletAddress) return;
 
+      const request = newestRequest;
       set(setRequestState(true));
 
       try {
         const nextPage = currentPage + 1;
         const response = await getHistory({ page: nextPage, walletAddress });
-        set(applyHistoryResponse(response));
+        if (request === newestRequest) set(applyHistoryResponse(response));
       } catch (error) {
         console.error(`[Pulsar] Failed to fetch transaction history page ${currentPage + 1}:`, error);
         set({ isLoading: false, isError: true });

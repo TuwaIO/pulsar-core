@@ -68,8 +68,9 @@ type Script = {
   minedAgainAt?: number;
   /** A contract creation: the transactions have no recipient. */
   contractCreation?: boolean;
-  /** A node without old state, which answers the sender's count at the newest block only. */
+  /** A node without old state, which answers the sender's count at the newest block and the `stateWindow` blocks below it. */
   noOldState?: boolean;
+  stateWindow?: number;
 };
 
 const rpcTransaction = (fields: {
@@ -186,7 +187,9 @@ function scriptedNode(script: Script) {
       }
       case 'eth_getTransactionCount': {
         const at = args[1] as string;
-        if (script.noOldState && at !== 'latest') throw new Error('missing trie node');
+        if (script.noOldState && at !== 'latest' && Number(BigInt(at)) < blockAt(now()) - (script.stateWindow ?? 0)) {
+          throw new Error('missing trie node');
+        }
         const block = at === 'latest' ? blockAt(now()) : Number(BigInt(at));
         const by = (mined: boolean, minedIn: number | null) => mined && minedIn !== null && block >= minedIn;
         const used =
@@ -677,34 +680,71 @@ describe('evmTracker on the real viem', () => {
       expect(onSuccess.mock.calls[0][1].blockNumber).toBe(BigInt(blockAt(300)));
     });
 
-    test('the block scan goes on where it stopped, and reads a block once', async () => {
-      // Mined 100 blocks before the restart, and a rate limit stops the scan halfway
+    // Up to a thousand full blocks for each replaced transaction, on each wallet and server tracking one
+    test('a node with no old state finds what it remembers from counts, with one full block', async () => {
       const tracker = track(
-        { knownUntil: 0, replacementMinedAt: -1200, failBlocksOnce: [FIRST_BLOCK - 50], noOldState: true },
+        { knownUntil: 0, replacementMinedAt: -600, noOldState: true, stateWindow: 128 },
         { knownDetails },
       );
 
-      await pass(120);
-
-      expect(tracker.onReplaced).toHaveBeenCalledOnce();
-      const reads = tracker.node.calls.filter((method) => method === 'eth_getBlockByNumber').length;
-      expect(reads).toBeLessThan(130);
-    });
-
-    // Every block since, for each replaced transaction on each wallet and server tracking one: a paid RPC bills them, and a
-    // public one stops answering
-    test('a node with old state reads the one block that spent the nonce', async () => {
-      const scan = track({ knownUntil: 0, replacementMinedAt: -1200, noOldState: true }, { knownDetails });
-      await pass(120);
-      const tracker = track({ knownUntil: 0, replacementMinedAt: -1200 }, { knownDetails });
-      await pass(120);
+      await pass(30);
 
       expect(tracker.onReplaced).toHaveBeenCalledOnce();
       expect(tracker.onReplaced.mock.calls[0][0].transaction.hash).toBe(NEW_HASH);
-      const fullBlocks = (node: typeof tracker.node) =>
-        node.calls.filter((method) => method === 'eth_getBlockByNumber').length;
-      expect(fullBlocks(scan.node)).toBeGreaterThan(90);
-      expect(fullBlocks(tracker.node)).toBeLessThan(10);
+      expect(tracker.node.calls.filter((method) => method === 'eth_getBlockByNumber')).toHaveLength(1);
+    });
+
+    test('older than it remembers costs a few blocks, then says it could not be found', async () => {
+      const tracker = track(
+        { knownUntil: 0, replacementMinedAt: -12_000, noOldState: true, stateWindow: 128 },
+        { knownDetails },
+      );
+
+      await pass(200);
+
+      expect(tracker.onReplaced).not.toHaveBeenCalled();
+      expect(tracker.onFailure).toHaveBeenCalledOnce();
+      expect(tracker.node.calls.filter((method) => method === 'eth_getBlockByNumber').length).toBeLessThanOrEqual(32);
+    });
+
+    test('a node with old state reads the one block that spent the nonce', async () => {
+      const tracker = track({ knownUntil: 0, replacementMinedAt: -12_000 }, { knownDetails });
+      await pass(30);
+
+      expect(tracker.onReplaced).toHaveBeenCalledOnce();
+      expect(tracker.onReplaced.mock.calls[0][0].transaction.hash).toBe(NEW_HASH);
+      expect(tracker.node.calls.filter((method) => method === 'eth_getBlockByNumber')).toHaveLength(1);
+    });
+
+    // viem's own scan read a full block for every new block, for what the sender's count says with one call
+    test('an idle pending transaction reads no full block at all', async () => {
+      const tracker = track({});
+      await pass(300);
+      expect(tracker.node.calls.filter((method) => method === 'eth_getBlockByNumber')).toHaveLength(0);
+    });
+
+    // Measured on anvil: reading the nonce only between windows of 10 s showed a speed-up 8 s after it landed, where viem's scan took 2 s
+    test('a replacement shows at the next look for a block, as fast as it did', async () => {
+      const tracker = track({ knownUntil: 40, replacementMinedAt: 48 });
+      await pass(53);
+      expect(tracker.onReplaced).toHaveBeenCalledOnce();
+    });
+
+    test('a block with nothing new costs no count', async () => {
+      const tracker = track({});
+      await pass(120);
+      const counts = tracker.node.calls.filter((method) => method === 'eth_getTransactionCount').length;
+      // A block every 12 s here, against a look every 4 s
+      expect(counts).toBeLessThanOrEqual(13);
+    });
+
+    // A mined transaction's result must not wait for a look at the nonce, nor be delivered twice by the two
+    test('a mined transaction ends once, with the watch of the nonce running beside it', async () => {
+      const tracker = track({ minedAt: 50 });
+      await pass(60);
+      expect(tracker.onSuccess).toHaveBeenCalledOnce();
+      await pass(120);
+      expect(tracker.onSuccess).toHaveBeenCalledOnce();
     });
 
     test('the first block of the scan is read before the first lookup, with a margin', async () => {
@@ -795,7 +835,7 @@ describe('evmTracker on the real viem', () => {
     });
 
     test('logs carry only the name of an error: viem quotes the RPC URL with its key in the message', async () => {
-      track({}, { receiptAttempts: 2 });
+      track({ receiptFailsUntil: 200 }, { receiptAttempts: 2 });
 
       await pass(200);
 
@@ -1153,7 +1193,10 @@ describe('a speed-up through the real store, adapter and viem', () => {
     from: SENDER,
     type: 'REFUND',
     title: 'Refund',
-    localTimestamp: 1_700_000_000,
+    // Just sent, whatever the clock of the test: a long wait is read less often
+    get localTimestamp() {
+      return Math.floor(Date.now() / 1000);
+    },
     connectorType: 'evm:metamask',
   } as unknown as EvmTransaction;
 

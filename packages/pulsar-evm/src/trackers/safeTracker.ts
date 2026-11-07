@@ -16,7 +16,7 @@ import {
   TransactionStatus,
 } from '@tuwaio/pulsar-core';
 import dayjs from 'dayjs';
-import { Hex, zeroHash } from 'viem';
+import { Address, getAddress, Hex, isAddress, zeroHash } from 'viem';
 
 import { SafeTransactionServiceUrls } from '../utils/safeConstants';
 
@@ -202,7 +202,8 @@ export const createSafeFetcher = ({
     // 3. If still pending, check for replacements.
     // This is necessary because another transaction with the same nonce might have been executed.
     const nonceTxsResponse = await fetch(
-      `${baseUrl}/safes/${tx.from}/multisig-transactions/?nonce=${safeStatus.nonce}`,
+      // Checksummed: the service answers nothing for a lower-case address, so a replaced proposal was never seen
+      `${baseUrl}/safes/${isAddress(tx.from as Address) ? getAddress(tx.from as Address) : tx.from}/multisig-transactions/?nonce=${safeStatus.nonce}`,
     );
     if (!nonceTxsResponse.ok) {
       throw new Error(`Safe API (nonce check) responded with status: ${nonceTxsResponse.status}`);
@@ -239,7 +240,7 @@ export const safeFetcher = createSafeFetcher();
 
 /**
  * Tracks a Safe multisig transaction of the Pulsar store with {@link createSafeFetcher} ({@link safePollingInterval}:
- * every 5 s for the first hour, then every 30 s) and writes the results to the
+ * the first look 5 s away; then by its age, every 5 s for the first hour, then every 30 s) and writes the results to the
  * store: while it waits, the owner confirmations collected (`confirmations`) and the Safe threshold
  * (`requiredConfirmations`) and the executed transaction `hash`; then `Success`, `Failed` or `Replaced` (with the
  * `safeTxHash` of the executed transaction as `replacedTxHash`) and the execution date as `finishedTimestamp`.
@@ -285,7 +286,10 @@ export function safeTrackerForStore<T extends Transaction>({
   return initializePollingTracker<SafeTxStatusResponse, T>({
     tx,
     fetcher: createSafeFetcher({ pendingTimeoutMs, notFoundGraceMs }),
-    pollingInterval: safePollingInterval,
+    // By the age of the transaction: each page load put a days-old one back on the 5-second schedule. Only the first look
+    // stays 5 seconds away: coming back to a page must not wait out the slow schedule
+    pollingInterval: (elapsedMs) =>
+      safePollingInterval(elapsedMs < 1000 ? 0 : Date.now() - Number(tx.localTimestamp) * 1000),
     retryForeverEveryMs: STORE_RETRY_EVERY_MS,
     isAbandoned: createAbandonCheck(isTxTracked, tx.txKey),
     // `removeTxFromPool` is not passed: failed transactions stay in the pool as `Failed`.

@@ -89,4 +89,31 @@ describe('pulsarSolanaAdapter', () => {
       await expect(adapter.checkChainForTx('solana:devnet')).rejects.toBeInstanceOf(SolanaChainMismatchError);
     });
   });
+
+  // A record from another device or a server has no endpoint, and one on the record could hold a key
+  test('tracks on the URL of the cluster in rpcUrls, without writing it to the record', async () => {
+    const updateTxParams = vi.fn();
+    const seen: string[] = [];
+    await adapter.checkAndInitializeTrackerInStore({
+      tx: {
+        adapter: OrbitAdapter.SOLANA,
+        txKey: 'sig',
+        chainId: 'solana:devnet',
+        tracker: TransactionTracker.Solana,
+        pending: true,
+        localTimestamp: Math.floor(Date.now() / 1000),
+        from: 'a',
+        type: 't',
+        connectorType: 'c',
+      } as never,
+      transactionsPool: {},
+      updateTxParams,
+      removeTxFromPool: vi.fn(),
+      isTxTracked: () => {
+        seen.push('checked');
+        return false;
+      },
+    } as never);
+    for (const call of updateTxParams.mock.calls) expect(call[1]).not.toHaveProperty('rpcUrl');
+  });
 });

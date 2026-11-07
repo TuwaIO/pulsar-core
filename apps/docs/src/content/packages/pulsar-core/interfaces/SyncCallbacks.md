@@ -1,6 +1,6 @@
 # SyncCallbacks\<T\>
 
-Defined in: [packages/pulsar-core/src/types.ts:388](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L388)
+Defined in: [packages/pulsar-core/src/types.ts:373](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L373)
 
 Callbacks that synchronize the local pool with a remote backend (for example Quasar). Passed to
 `createPulsarStore`.
@@ -19,7 +19,7 @@ The application transaction type.
 
 > `optional` **onRemoteCreate?**: (`tx`) => `Promise`\<`void`\>
 
-Defined in: [packages/pulsar-core/src/types.ts:397](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L397)
+Defined in: [packages/pulsar-core/src/types.ts:382](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L382)
 
 Called in the background with every new transaction, right after `addTxToPool` has written it to the pool with
 `syncStatus: 'pending-sync'` and listed its key in `unsyncedTxKeys`. It never delays or blocks tracking. Resolving
@@ -33,7 +33,7 @@ synced. A transaction is never sent twice at the same time.
 
 `T`
 
-A copy of the pooled transaction without `pimlicoApiKey` and `gelatoApiKey`.
+A copy of the pooled transaction without `pimlicoApiKey`.
 
 #### Returns
 

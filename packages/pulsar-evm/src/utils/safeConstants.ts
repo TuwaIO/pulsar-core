@@ -22,17 +22,6 @@ import {
 } from 'viem/chains';
 
 /**
- * Options for the Safe Apps SDK (`@safe-global/safe-apps-sdk`), for apps that run inside the Safe web app. Pulsar does
- * not use them itself.
- */
-export const safeSdkOptions = {
-  /** Domains of Safe web apps the SDK accepts messages from. */
-  allowedDomains: [/gnosis-safe.io$/, /app.safe.global$/, /metissafe.tech$/],
-  /** Whether the SDK logs debug messages. */
-  debug: false,
-};
-
-/**
  * Safe web app URL prefixes by chain ID, such as `https://app.safe.global/eth:`. The Safe address follows the prefix.
  * Used by {@link selectEvmTxExplorerLink} to link Safe transactions.
  */

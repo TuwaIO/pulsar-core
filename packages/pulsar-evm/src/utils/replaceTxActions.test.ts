@@ -143,9 +143,11 @@ describe.each([
 
   test('the fees last sent survive a reload, in the memory of the tab', async () => {
     const saved = new Map<string, string>();
-    vi.stubGlobal('sessionStorage', {
-      getItem: (key: string) => saved.get(key) ?? null,
-      setItem: (key: string, value: string) => saved.set(key, value),
+    vi.stubGlobal('window', {
+      sessionStorage: {
+        getItem: (key: string) => saved.get(key) ?? null,
+        setItem: (key: string, value: string) => saved.set(key, value),
+      },
     });
     try {
       const tx = pendingTx();
@@ -155,6 +157,18 @@ describe.each([
       const [[key, value]] = saved;
       expect(key).toContain('pulsar-evm:replacementFees:');
       expect(JSON.parse(value)).toEqual({ maxFeePerGas: '1150', maxPriorityFeePerGas: '115' });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  // Node 26 has a `sessionStorage` on the server too, one for the whole process. It is no memory of a tab
+  test('keeps nothing in a storage with no browser around it', async () => {
+    const setItem = vi.fn();
+    vi.stubGlobal('sessionStorage', { getItem: () => null, setItem });
+    try {
+      await action({ config, tx: pendingTx() });
+      expect(setItem).not.toHaveBeenCalled();
     } finally {
       vi.unstubAllGlobals();
     }

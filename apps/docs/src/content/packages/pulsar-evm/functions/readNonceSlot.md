@@ -2,7 +2,7 @@
 
 > **readNonceSlot**(`client`, `params`): `Promise`\<[`NonceSlotReading`](/packages/pulsar-evm/type-aliases/NonceSlotReading.md)\>
 
-Defined in: [utils/readNonceSlot.ts:261](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L261)
+Defined in: [utils/readNonceSlot.ts:328](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L328)
 
 Reads what became of a transaction from its sender and nonce. It works when the node no longer returns the hash, which
 a node does once a replacement reaches its mempool, or when it drops a transaction whose fee fell too low, and it does
@@ -11,8 +11,9 @@ identify a transaction, so the reading is always `open` and viem's own detection
 
 RPC calls: `eth_getTransactionCount`, the receipt of `hash`, and, once the nonce is spent,
 `eth_getTransactionBySenderAndNonce` where the node has it, otherwise `eth_getTransactionCount` at past blocks to find the block
-that spent it, about two calls per doubling of its distance, and that one full block. Only a node without old state is read
-block by block, up to `maxBlocks` full blocks back from the newest, and 16 above it for nodes that disagree on the newest one.
+that spent it, about two calls per doubling of its distance, and that one full block. Only for a spend older than what a node
+without old state remembers: one `eth_getLogs` when the transaction called a contract, then up to `maxBlocks` full blocks in all,
+going down from where the counts stopped.
 
 ## Parameters
 
@@ -42,7 +43,7 @@ The hash of the tracked transaction.
 
 `number`
 
-The most blocks back from the newest to read. Defaults to 1000.
+The most full blocks to read one by one, over all readings of a transaction. Defaults to 32.
 
 #### scan?
 

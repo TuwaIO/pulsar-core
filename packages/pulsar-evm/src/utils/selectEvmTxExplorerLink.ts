@@ -2,7 +2,7 @@
  * @file Builds the explorer URL of an EVM transaction.
  */
 
-import { OrbitAdapter } from '@tuwaio/orbit-core';
+import { joinUrlPath, OrbitAdapter } from '@tuwaio/orbit-core';
 import { EvmTransaction, Transaction, TransactionTracker } from '@tuwaio/pulsar-core';
 import { Chain } from 'viem';
 
@@ -60,5 +60,5 @@ export const selectEvmTxExplorerLink = <T extends Transaction>({
 
   if (!hash) return '';
 
-  return `${explorerUrl}/tx/${hash}`;
+  return joinUrlPath(explorerUrl, `tx/${hash}`);
 };

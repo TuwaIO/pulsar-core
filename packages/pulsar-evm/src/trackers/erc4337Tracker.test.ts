@@ -331,6 +331,21 @@ describe('erc4337Tracker', () => {
       );
     });
 
+    // The delay comes before the first attempt too: a reload must not wait 30 seconds to read a finished one
+    test('reads every 2 seconds for five minutes, then every 30, with the first look always 2 seconds away', async () => {
+      const localTimestamp = Math.floor(Date.now() / 1000);
+      await erc4337TrackerForStore({ ...mockParams, tx: { ...mockParams.tx, localTimestamp } });
+      const fresh = vi.mocked(initializePollingTracker).mock.calls.at(-1)?.[0].pollingInterval as (
+        ms: number,
+      ) => number;
+      expect(fresh(60_000)).toBe(2000);
+
+      await erc4337TrackerForStore({ ...mockParams, tx: { ...mockParams.tx, localTimestamp: localTimestamp - 3600 } });
+      const old = vi.mocked(initializePollingTracker).mock.calls.at(-1)?.[0].pollingInterval as (ms: number) => number;
+      expect(old(0)).toBe(2000);
+      expect(old(2001)).toBe(30_000);
+    });
+
     test('should update hash on onIntervalTick when hash is present', async () => {
       await erc4337TrackerForStore(mockParams);
 

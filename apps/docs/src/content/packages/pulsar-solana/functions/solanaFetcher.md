@@ -2,12 +2,12 @@
 
 > **solanaFetcher**(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/solanaTracker.ts:131](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L131)
+Defined in: [trackers/solanaTracker.ts:164](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L164)
 
 A fetcher for `initializePollingTracker` from `@tuwaio/pulsar-core` that checks a Solana transaction once.
 
-It sends `getSignatureStatuses` (with `searchTransactionHistory`, so transactions older than the node's recent status
-cache are found after a page reload) to `tx.rpcUrl`, or to the public endpoint of the cluster in `tx.chainId`,
+It sends `getSignatureStatuses` (with `searchTransactionHistory` on the first check of a run and past a blockhash's lifetime, so
+transactions older than the node's recent status cache are found after a page reload) to `tx.rpcUrl`, or to the public endpoint of the cluster in `tx.chainId`,
 through a client cached by `createSolanaRPC` from `@tuwaio/orbit-solana`. Until it has the fee, blockhash and
 instructions (from `tx`, or fetched on an earlier tick of the same tracking run and cached in memory for the `tx`
 object), it also sends `getTransaction` (commitment `confirmed`, `maxSupportedTransactionVersion: 1`, so legacy,
@@ -15,13 +15,13 @@ version 0 and version 1 transactions are read). A `getTransaction` error is not 
 status alone and the details are asked again on the next tick.
 
 - Signature not found, with `tx.lastValidBlockHeight` (or the one `signAndSendSolanaTx` recorded for the signature
-  in this page): sends `getBlockHeight` (commitment `confirmed`); once the
-  height is above it, checks the signature once more and, still not found, calls `onFailure` with `expired: true`
-  and stops polling (the blockhash expired, so the transaction can never land).
+  in this page): sends `getBlockHeight` (commitment `confirmed`); once the height is more than 32 blocks above it, checks the
+  signature once more and, still not found, calls `onFailure` and stops polling, with `expired: true` when this run saw the
+  blockhash still valid (it can never land), `false` when it came back later and the node may just keep no old statuses.
 - Signature not found otherwise: keeps polling; one hour after `localTimestamp` calls `onFailure()` and stops
   polling.
 - Found: calls `onIntervalTick` with the status (`confirmationStatus` `processed`, `confirmed` or `finalized`, plus
-  the details once `getTransaction` returns them), then: an on-chain error calls `onFailure` with it right away;
+  the details once `getTransaction` returns them), then: an on-chain error past `processed` calls `onFailure` with it right away;
   `finalized` with the details calls `onSuccess`. `finalized` without the details keeps polling for them and, on
   the 10th such check of the `tx` object (counted in memory), logs a warning and calls `onSuccess` without them. A
   transaction not finalized one hour after `localTimestamp` calls `onFailure` with its status; a finalized one never

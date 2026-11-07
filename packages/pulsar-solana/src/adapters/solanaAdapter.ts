@@ -8,7 +8,6 @@ import {
   getAvailableSolanaConnectors,
   getCluster,
   getConnectedSolanaConnector,
-  getRpcUrlForCluster,
   getSolanaExplorerLink,
   type SolanaClusterMoniker,
 } from '@tuwaio/orbit-solana';
@@ -46,7 +45,7 @@ const toClusterMoniker = (chainId: string) => (chainId ? getCluster({ cluster: c
  * - `getExplorerUrl` and `getExplorerTxUrl` build Solana Explorer links with `getSolanaExplorerLink` from
  *   `@tuwaio/orbit-solana`.
  * - `retryTxAction` closes the modal and runs `executeTxAction` again with `tx.actionFunction({ client, ...tx.payload })`,
- *   where `client` is a cached RPC client for `tx.rpcUrl` or the cluster of `desiredChainID`. It throws when no wallet
+ *   where `client` is a cached RPC client for the URL of the cluster of `desiredChainID` in `rpcUrls`, or its public endpoint. It throws when no wallet
  *   is connected or `executeTxAction` is missing.
  *
  * There is no `cancelTxAction` or `speedUpTxAction` for Solana.
@@ -105,6 +104,8 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
     checkAndInitializeTrackerInStore: ({ tx, ...rest }) => {
       return checkAndInitializeTrackerInStore({
         tracker: tx.tracker,
+        // From here and not from the record: an endpoint can hold a key, and a record from another device or a server has none
+        rpcUrl: rpcUrls[getCluster({ cluster: tx.chainId as string }) as SolanaClusterMoniker],
         tx,
         ...rest,
       });
@@ -135,13 +136,11 @@ export function pulsarSolanaAdapter<T extends Transaction>(config: SolanaAdapter
       }
 
       const clusterForRetry = getCluster({ cluster: tx?.desiredChainID as string }) as SolanaClusterMoniker;
-      const rpcUrlForRetry = tx.rpcUrl ?? getRpcUrlForCluster({ cluster: clusterForRetry, rpcUrls });
-
-      if (!rpcUrlForRetry) {
-        throw new Error('Retry failed: Could not determine RPC endpoint for the transaction chain.');
-      }
-
-      const client = createSolanaClientWithCache({ rpcUrlOrMoniker: rpcUrlForRetry, rpcUrls });
+      // The cluster itself without a URL for it: `getRpcUrlForCluster` falls back to mainnet, the wrong chain for a retry
+      const client = createSolanaClientWithCache({
+        rpcUrlOrMoniker: rpcUrls[clusterForRetry] ?? clusterForRetry,
+        rpcUrls,
+      });
 
       await executeTxAction({
         actionFunction: () =>

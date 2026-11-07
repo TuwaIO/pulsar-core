@@ -12,5 +12,5 @@ The configuration of [pulsarSolanaAdapter](/packages/pulsar-solana/functions/pul
 
 Defined in: [types.ts:15](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/types.ts#L15)
 
-RPC URLs by cluster moniker (`mainnet`, `devnet`, `testnet`, `localnet`), used by `retryTxAction` when the
-transaction has no `rpcUrl`. Clusters without a URL fall back to the public mainnet-beta endpoint.
+RPC URLs by cluster moniker (`mainnet`, `devnet`, `testnet`, `localnet`), the one source of the tracker's and
+`retryTxAction`'s endpoint. A cluster without a URL uses its public endpoint.

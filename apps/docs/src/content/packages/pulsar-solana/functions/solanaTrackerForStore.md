@@ -2,9 +2,9 @@
 
 > **solanaTrackerForStore**\<`T`\>(`params`): `Promise`\<`void`\>
 
-Defined in: [trackers/solanaTracker.ts:288](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L288)
+Defined in: [trackers/solanaTracker.ts:341](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-solana/src/trackers/solanaTracker.ts#L341)
 
-Tracks a Solana transaction of the Pulsar store with [solanaFetcher](/packages/pulsar-solana/functions/solanaFetcher.md) (every second, and every minute after 30
+Tracks a Solana transaction of the Pulsar store with [solanaFetcher](/packages/pulsar-solana/functions/solanaFetcher.md) (the first look a second away; then by its age, every second for two minutes, then every 15 seconds, and every minute after 30
 consecutive status errors) and writes the results to the store: `confirmationStatus` (`processed`, then `confirmed`, usually within a
 second of sending), `confirmations`, `slot`, `fee`, `instructions` and `recentBlockhash` while pending, then
 `Success` with `confirmationStatus: 'finalized'` and `confirmations: 'MAX'`, or `Failed` with the normalized error,
@@ -20,7 +20,8 @@ An RPC outage says nothing about the transaction, so errors of `getSignatureStat
 tracking. When it is not finalized one hour after `localTimestamp`, long past any blockhash lifetime, the transaction is
 marked `Failed` and stays in the pool. The callbacks receive the
 transaction with every update written by the tracker; `onError` receives the on-chain error, or an `Error` when the
-transaction expired or tracking timed out.
+transaction expired or tracking timed out. An on-chain error is written with the message
+`The transaction failed on the chain: ...`, naming the error as the node gave it.
 
 ## Type Parameters
 

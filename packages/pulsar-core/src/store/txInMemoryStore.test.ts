@@ -92,6 +92,20 @@ describe('createTxInMemoryStore', () => {
     expect(store.getState().transactionsPool['0x1']).toEqual(terminal);
   });
 
+  // After a reorganization the original is the one that landed: the history kept both as replaced by each other, for good
+  it("takes this device's Success over a Replaced, but no server's", () => {
+    const replaced = createTransaction({
+      txKey: '0x1',
+      status: TransactionStatus.Replaced,
+      pending: false,
+      replacedTxHash: '0x2',
+    });
+    const store = createTxInMemoryStore<EvmTransaction>({ localTransactionsPool: { '0x1': replaced } });
+    const success = createTransaction({ txKey: '0x1', status: TransactionStatus.Success, pending: false });
+    store.getState().syncWithLocalPool({ '0x1': success });
+    expect(store.getState().transactionsPool['0x1']).toEqual(success);
+  });
+
   it('moves a pending transaction to Failed when the local pool reports the failure', () => {
     const pending = createTransaction({ txKey: '0x1', status: undefined, pending: true });
     const store = createTxInMemoryStore<EvmTransaction>({ localTransactionsPool: { '0x1': pending } });
@@ -259,5 +273,28 @@ describe('createTxInMemoryStore: what the local tracker knows and a server does 
 
       expect(store.getState().transactionsPool['0x2']).toBe(other);
     });
+  });
+
+  // Another wallet connected while a page of the first was on its way, and its answer overwrote the pagination
+  it('takes no answer of a request a newer one has replaced', async () => {
+    const answers: ((value: unknown) => void)[] = [];
+    const getHistory = vi.fn(() => new Promise((resolve) => answers.push(resolve))) as never;
+    const store = createTxInMemoryStore<EvmTransaction>({ localTransactionsPool: {}, getHistory });
+    const first = store.getState().fetchInitial('0xold');
+    const second = store.getState().fetchInitial('0xnew');
+    await new Promise((resolve) => setImmediate(resolve));
+    answers[1]({ docs: [], page: 1, hasNextPage: false, totalDocs: 0, totalPages: 1 });
+    await second;
+    answers[0]({
+      docs: [createTransaction({ txKey: '0xold' })],
+      page: 7,
+      hasNextPage: true,
+      totalDocs: 1,
+      totalPages: 9,
+    });
+    await first;
+    expect(store.getState().currentPage).toBe(1);
+    expect(store.getState().hasMore).toBe(false);
+    expect(store.getState().transactionsPool['0xold']).toBeUndefined();
   });
 });

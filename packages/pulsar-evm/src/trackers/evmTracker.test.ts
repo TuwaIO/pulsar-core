@@ -9,7 +9,7 @@ import { createClient, Hex, http, TransactionReceipt, zeroAddress, zeroHash } fr
 import { mainnet, sepolia } from 'viem/chains';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { evmTracker, EVMTrackerParams, isRetryableReceiptError } from './evmTracker';
+import { evmTracker, EVMTrackerParams } from './evmTracker';
 
 // Mock the entire 'viem/actions' module to control its behavior in tests.
 vi.mock('viem/actions', async (importActual) => {
@@ -248,21 +248,6 @@ describe('evmTracker Unit Tests', () => {
     expect(baseTrackerParams.onConfirmationsUpdate).toHaveBeenCalledWith(3);
     expect(baseTrackerParams.onSuccess).toHaveBeenCalled();
     vi.useRealTimers();
-  });
-});
-
-describe('isRetryableReceiptError, kept for those who import it', () => {
-  test('tells a transient error from another', () => {
-    expect(isRetryableReceiptError(new Error('Request timed out after 60000ms'))).toBe(true);
-    expect(isRetryableReceiptError(Object.assign(new Error('x'), { name: 'HttpRequestError' }))).toBe(true);
-    expect(isRetryableReceiptError(new Error('Execution reverted by EVM'))).toBe(false);
-    expect(isRetryableReceiptError(null)).toBe(false);
-  });
-
-  test('reads nested causes', () => {
-    const outer = new Error('RPC Call Failed');
-    outer.cause = new Error('502 Bad Gateway');
-    expect(isRetryableReceiptError(outer)).toBe(true);
   });
 });
 

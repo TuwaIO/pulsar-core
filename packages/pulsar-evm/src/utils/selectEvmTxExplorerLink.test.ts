@@ -6,6 +6,13 @@ import { describe, expect, it } from 'vitest';
 import { selectEvmTxExplorerLink } from './selectEvmTxExplorerLink';
 
 describe('selectEvmTxExplorerLink', () => {
+  // A chain's explorer URL may end in a slash, and the link then read `//tx/`
+  it('joins with one slash when the explorer URL ends in one', () => {
+    const chain = { ...mainnet, blockExplorers: { default: { name: 'Scan', url: 'https://scan.example/' } } };
+    const tx = { adapter: OrbitAdapter.EVM, chainId: chain.id, txKey: '0xabc' } as unknown as EvmTransaction;
+    expect(selectEvmTxExplorerLink({ chains: [chain], tx })).toBe('https://scan.example/tx/0xabc');
+  });
+
   const chains = [mainnet, sepolia, arbitrum] as const;
 
   it('returns Safe UI link for Safe transactions', () => {
