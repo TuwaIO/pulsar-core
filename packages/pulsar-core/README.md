@@ -161,7 +161,7 @@ Pass `onRemoteCreate` to send every new transaction to your backend, for example
 
 `onRemoteCreate` receives a copy of the transaction without `pimlicoApiKey` and `rpcUrl` (an endpoint can hold a key): configure provider keys on the backend instead (for Quasar, in the app settings). `bundlerUrl` is sent, so do not put API keys in it.
 
-To show the remote history, `createTxInMemoryStore` merges the pages returned by your `getHistory` with the local pool (a final result is never overwritten by stale data, except a `Failed` that the chain answers otherwise, a server's `Failed` does not replace a transaction still pending, and transactions that fail validation are skipped), and `injectExternalPendingTxs` adds pending transactions from other devices to the local pool and tracks them. The complete Next.js + Quasar integration, with server actions and SIWX sessions, is in the **[Quasar transaction sync guide](https://docs.tuwa.io/guides/quasar-transaction-sync)**. A person who stops tracking a transaction removes it from both stores: `removeTxFromPool` of each, or the in-memory one keeps it pending for good, as nothing is left to finish it.
+To show the remote history, `createTxInMemoryStore` (pass `isTxRemoved` of the store, so that a transaction a person stopped tracking stays out) merges the pages returned by your `getHistory` with the local pool (a final result is never overwritten by stale data, except a `Failed` that the chain answers otherwise, a server's `Failed` does not replace a transaction still pending, and transactions that fail validation are skipped), and `injectExternalPendingTxs` adds pending transactions from other devices to the local pool and tracks them. The complete Next.js + Quasar integration, with server actions and SIWX sessions, is in the **[Quasar transaction sync guide](https://docs.tuwa.io/guides/quasar-transaction-sync)**. A person who stops tracking a transaction removes it from both stores: `removeTxFromPool` of each, or the in-memory one keeps it pending for good, as nothing is left to finish it.
 
 ---
 
@@ -178,6 +178,7 @@ To show the remote history, `createTxInMemoryStore` merges the pages returned by
 - A finished transaction (including a `Failed` one) is dropped `retentionDays` after its `finishedTimestamp` (or its `localTimestamp` when it has none), when the saved state is restored and when a transaction is added; the default is 30 days, and `retentionDays: null` keeps finished transactions without a term. Pending transactions stay until they finish. Transactions also leave the pool through the `maxTransactions` eviction and `removeTxFromPool`. `store.persist.clearStorage()` deletes the saved state.
 - Everything in a transaction is saved, including `payload` and, for ERC-4337, `bundlerUrl` and `pimlicoApiKey` (needed to resume tracking after a reload; a Pimlico key used in the browser is public anyway). Do not put secrets in `payload`.
 - `createTxInMemoryStore` keeps its state in memory only.
+- `${name}:removedTxKeys` holds the keys of the latest 50 transactions removed with `removeTxFromPool`, as when a person stops tracking one, so that a page load, a server's history or another tab does not bring them back. It is its own key: every tab saves the whole state, and a tab with an older copy would undo the removal. Sending the same key anew clears it.
 
 ---
 

@@ -101,6 +101,27 @@ Transactions returned by the backend.
 
 A promise that resolves when the trackers of the added transactions have started.
 
+### isTxRemoved
+
+> **isTxRemoved**: (`txKey`) => `boolean`
+
+Whether a transaction was removed with `removeTxFromPool`, as when a person stops tracking it. Kept across page loads and
+tabs: `injectExternalPendingTxs` does not bring it back as pending. Pass it to `createTxInMemoryStore`.
+
+#### Parameters
+
+##### txKey
+
+`string`
+
+The key of the transaction.
+
+#### Returns
+
+`boolean`
+
+`true` until the same key is sent anew. The latest 50 are remembered.
+
 ### isTxTracked
 
 > **isTxTracked**: (`txKey`) => `boolean`

@@ -1,5 +1,5 @@
 import { OrbitAdapter } from '@tuwaio/orbit-core';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createJSONStorage, StateStorage } from 'zustand/middleware';
 
 import {
@@ -1145,6 +1145,164 @@ describe('final statuses and trackers', () => {
     store.getState().removeTxFromPool(txHash);
 
     expect(store.getState().isTxTracked(txHash)).toBe(false);
+  });
+});
+
+// Owner, 2026-11-07: "Stop tracking" lasted until the next page load. The list was in memory, while the server keeps a pending row
+// for up to a day and another tab keeps its copy: the record came back with a tracker and a toast, for what a person had put away
+describe('a transaction a person stopped tracking', () => {
+  const NAME = 'stop-tracking-test';
+  const KEY = '0xstopped';
+  const WALLET = '0x0000000000000000000000000000000000000001';
+  const pending = (txKey = KEY) =>
+    ({
+      txKey,
+      hash: txKey,
+      adapter: OrbitAdapter.EVM,
+      tracker: TransactionTracker.Ethereum,
+      from: WALLET,
+      type: 'T',
+      chainId: 1,
+      nonce: 1,
+      to: WALLET,
+      value: '0',
+      pending: true,
+      localTimestamp: Math.floor(Date.now() / 1000),
+    }) as unknown as EvmTransaction;
+
+  let saved: Map<string, string>;
+  let listeners: ((event: { key: string | null }) => void)[];
+  let adapter: TxAdapter<EvmTransaction>;
+  let state: ReturnType<typeof createMemoryStorage>;
+  const openPage = () =>
+    createPulsarStore<EvmTransaction>({ name: NAME, adapter, storage: createJSONStorage(() => state) } as StoreConfig);
+
+  beforeEach(() => {
+    saved = new Map();
+    listeners = [];
+    adapter = createAdapter();
+    state = createMemoryStorage();
+    vi.stubGlobal('window', {
+      addEventListener: (type: string, listener: (event: { key: string | null }) => void) => {
+        if (type === 'storage') listeners.push(listener);
+      },
+    });
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => saved.get(key) ?? null,
+      setItem: (key: string, value: string) => saved.set(key, value),
+      removeItem: (key: string) => saved.delete(key),
+    });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('stays stopped after a page load, when the history brings its pending row again', async () => {
+    const before = openPage();
+    await before.getState().addTxToPool(pending());
+    before.getState().removeTxFromPool(KEY);
+    vi.mocked(adapter.checkAndInitializeTrackerInStore).mockClear();
+
+    const after = openPage();
+    await after.getState().injectExternalPendingTxs([pending()]);
+
+    expect(after.getState().transactionsPool[KEY]).toBeUndefined();
+    expect(adapter.checkAndInitializeTrackerInStore).not.toHaveBeenCalled();
+    expect(after.getState().isTxRemoved(KEY)).toBe(true);
+  });
+
+  it('stays stopped after a page load, when another tab has saved its copy', async () => {
+    const here = openPage();
+    const there = openPage();
+    await there.getState().addTxToPool(pending());
+    here.getState().removeTxFromPool(KEY);
+    there.getState().updateTxParams(KEY, { nonce: 5 });
+
+    const after = openPage();
+
+    expect(after.getState().transactionsPool[KEY]).toBeUndefined();
+  });
+
+  it('another tab lets go of it as well', async () => {
+    const here = openPage();
+    const there = openPage();
+    await there.getState().addTxToPool(pending());
+    await there.getState().initializeTransactionsPool();
+    expect(there.getState().isTxTracked(KEY)).toBe(true);
+
+    here.getState().removeTxFromPool(KEY);
+    listeners[1]({ key: `${NAME}:removedTxKeys` });
+
+    expect(there.getState().transactionsPool[KEY]).toBeUndefined();
+    expect(there.getState().isTxTracked(KEY)).toBe(false);
+  });
+
+  it('leaves the others alone, in every tab', async () => {
+    const here = openPage();
+    const there = openPage();
+    await there.getState().addTxToPool(pending());
+    await there.getState().addTxToPool(pending('0xother'));
+
+    here.getState().removeTxFromPool(KEY);
+    listeners[1]({ key: `${NAME}:removedTxKeys` });
+
+    expect(there.getState().transactionsPool['0xother']).toBeDefined();
+    expect(openPage().getState().transactionsPool['0xother']).toBeDefined();
+  });
+
+  // A Safe proposes the same hash again
+  it('counts again when the same key is sent anew, also after a page load', async () => {
+    const page = openPage();
+    await page.getState().addTxToPool(pending());
+    page.getState().removeTxFromPool(KEY);
+
+    await page.getState().executeTxAction({
+      actionFunction: async () => KEY as never,
+      params: { adapter: OrbitAdapter.EVM, desiredChainID: 1, title: 't', description: 'd', type: 'T' },
+    });
+
+    expect(page.getState().isTxRemoved(KEY)).toBe(false);
+    expect(openPage().getState().isTxRemoved(KEY)).toBe(false);
+  });
+
+  it('keeps the latest fifty: nothing else ever clears them', () => {
+    const page = openPage();
+    for (let i = 0; i < 60; i += 1) page.getState().removeTxFromPool(`0x${i}`);
+
+    const after = openPage();
+    expect(after.getState().isTxRemoved('0x59')).toBe(true);
+    expect(after.getState().isTxRemoved('0x10')).toBe(true);
+    expect(after.getState().isTxRemoved('0x9')).toBe(false);
+  });
+
+  it('holds for the page where the storage is closed, and throws nothing', async () => {
+    vi.stubGlobal('localStorage', {
+      getItem: () => {
+        throw new Error('The storage is closed');
+      },
+      setItem: () => {
+        throw new Error('The storage is closed');
+      },
+    });
+    const page = openPage();
+    await page.getState().addTxToPool(pending());
+
+    expect(() => page.getState().removeTxFromPool(KEY)).not.toThrow();
+    await page.getState().injectExternalPendingTxs([pending()]);
+
+    expect(page.getState().transactionsPool[KEY]).toBeUndefined();
+  });
+
+  it('ignores what is not a list in the storage', () => {
+    saved.set(`${NAME}:removedTxKeys`, '{"not":"a list"}');
+
+    expect(openPage().getState().isTxRemoved(KEY)).toBe(false);
+  });
+
+  it('saves the list apart from the state, so that a save of another tab cannot undo it', async () => {
+    const page = openPage();
+    await page.getState().addTxToPool(pending());
+    page.getState().removeTxFromPool(KEY);
+
+    expect(JSON.parse(saved.get(`${NAME}:removedTxKeys`)!)).toEqual([KEY]);
   });
 });
 

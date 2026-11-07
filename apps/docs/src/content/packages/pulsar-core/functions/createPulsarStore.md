@@ -2,7 +2,7 @@
 
 > **createPulsarStore**\<`T`\>(`params`): `WithPersist`\<`StoreApi`\<[`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>\>, [`ITxTrackingStore`](/packages/pulsar-core/type-aliases/ITxTrackingStore.md)\<`T`\>\>
 
-Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:92](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txTrackingStore.ts#L92)
+Defined in: [packages/pulsar-core/src/store/txTrackingStore.ts:96](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/txTrackingStore.ts#L96)
 
 Creates the Pulsar transaction store: a vanilla Zustand store (use it from any framework, or bind it to React with
 `createBoundedUseStore`) that runs transactions through chain adapters and tracks them in the background.
@@ -20,6 +20,9 @@ pool, and it tracks the pending transactions it learns that way, so a closed tab
 transaction gets one tracker, however often `initializeTransactionsPool` runs. A speed-up made in the wallet or through
 `speedUpTxAction` continues in a new record: the old one ends as `Replaced`, and a new one under the new hash, linked by
 `replaces`, goes on to the result with the same callbacks.
+`removeTxFromPool` writes the key to `localStorage` under `${name}:removedTxKeys` (the latest 50), so that neither a page load, a
+history of a server nor another tab brings the transaction back, and the other tabs let go of it. Sending the same key anew
+clears it.
 
 ## Type Parameters
 
