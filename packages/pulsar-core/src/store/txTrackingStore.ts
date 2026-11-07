@@ -26,6 +26,7 @@ import { DEFAULT_RETENTION_DAYS, evictedTransactionKeys, expiredTransactionKeys 
 import { validateInitialTransactionParams, validateTransaction } from '../utils/transactionValidation';
 import { createTxFinishedNotifier, isFinishedStatus } from '../utils/txFinished';
 import { initializeTxTrackingStore } from './initializeTxTrackingStore';
+import { createRemovedTxKeys, removedTxKeysStorageKey } from './removedTxKeys';
 
 /** A storage whose failed save is logged, not thrown: the state in memory goes on, and the next save tries again. */
 function withoutFailingSaves<S>(storage: PersistStorage<S> | undefined): PersistStorage<S> | undefined {
@@ -61,6 +62,9 @@ function withoutFailingSaves<S>(storage: PersistStorage<S> | undefined): Persist
  * transaction gets one tracker, however often `initializeTransactionsPool` runs. A speed-up made in the wallet or through
  * `speedUpTxAction` continues in a new record: the old one ends as `Replaced`, and a new one under the new hash, linked by
  * `replaces`, goes on to the result with the same callbacks.
+ * `removeTxFromPool` writes the key to `localStorage` under `${name}:removedTxKeys` (the latest 50), so that neither a page load, a
+ * history of a server nor another tab brings the transaction back, and the other tabs let go of it. Sending the same key anew
+ * clears it.
  *
  * @template T - The application transaction type.
  * @param params - The adapters, the store options and the options of Zustand's `persist` middleware.
@@ -124,8 +128,9 @@ export function createPulsarStore<T extends Transaction>({
   // What a call of `executeTxAction` was given beyond its transaction, by its action
   type CallOptions = { beforeTxProcess?: BeforeTxProcess; abortOnTxError?: boolean } & TrackerCallbacks<T>;
   const callOptions = new WeakMap<object, CallOptions>();
-  // Removed here, so the next save of another tab does not bring them back at once, with a new tracker
-  const removedTxKeys = new Set<string>();
+  // Removed here, so that nothing brings them back with a new tracker: the next save of another tab, the history of a server
+  // that keeps a pending row for up to a day, or a page load
+  const removedTxKeys = createRemovedTxKeys(options.name);
 
   const runCallback = (txKey: string, name: keyof TrackerCallbacks<T>, ...args: unknown[]) => {
     const entry = trackerCallbacks.get(txKey);
@@ -306,6 +311,8 @@ export function createPulsarStore<T extends Transaction>({
         subscribeTxFinished: txFinished.subscribe,
 
         isTxTracked: (txKey) => trackedTxKeys.has(txKey),
+
+        isTxRemoved: (txKey) => removedTxKeys.has(txKey),
 
         // Restarts the trackers of pending transactions, e.g. after a page reload.
         initializeTransactionsPool: async () => {
@@ -619,6 +626,12 @@ export function createPulsarStore<T extends Transaction>({
             delete transactionsPool[key];
             if (unsyncedTxKeys) delete unsyncedTxKeys[key];
           }
+          // Another tab may have saved its copy after a person stopped tracking it in this one
+          for (const key of Object.keys(transactionsPool)) {
+            if (!removedTxKeys.has(key)) continue;
+            delete transactionsPool[key];
+            if (unsyncedTxKeys) delete unsyncedTxKeys[key];
+          }
           return { ...merged, transactionsPool, unsyncedTxKeys };
         },
       },
@@ -664,6 +677,13 @@ export function createPulsarStore<T extends Transaction>({
       for (const tx of added) void startRestored(tx);
     };
     window.addEventListener('storage', (event) => {
+      // A person stopped tracking it in another tab, which is no reason to go on here
+      if (event.key === removedTxKeysStorageKey(options.name)) {
+        for (const txKey of removedTxKeys.reload()) {
+          if (store.getState().transactionsPool[txKey]) store.getState().removeTxFromPool(txKey);
+        }
+        return;
+      }
       if (event.key !== options.name) return;
       readOtherTab().catch((error: unknown) => console.error('[Pulsar] Could not read another tab:', error));
     });

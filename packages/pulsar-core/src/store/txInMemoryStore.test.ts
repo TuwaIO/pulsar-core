@@ -263,6 +263,28 @@ describe('createTxInMemoryStore: what the local tracker knows and a server does 
       expect(store.getState().transactionsPool['0x1']).toBeUndefined();
     });
 
+    // Owner, 2026-11-07: after a page load this store has forgotten, and the persistent one has not
+    it('leaves out the pending row of what the persistent store says was stopped, and shows it once it has finished', async () => {
+      const finished = createTransaction({ txKey: '0x2', pending: false, status: TransactionStatus.Success });
+      const getHistory = vi.fn().mockResolvedValue({
+        docs: [pendingTx(), finished],
+        page: 1,
+        hasNextPage: false,
+        totalDocs: 2,
+        totalPages: 1,
+      });
+      const store = createTxInMemoryStore<EvmTransaction>({
+        localTransactionsPool: {},
+        getHistory,
+        isTxRemoved: () => true,
+      });
+
+      await store.getState().fetchInitial(wallet);
+
+      expect(store.getState().transactionsPool['0x1']).toBeUndefined();
+      expect(store.getState().transactionsPool['0x2']).toBeDefined();
+    });
+
     it('leaves the others', () => {
       const other = createTransaction({ txKey: '0x2' });
       const store = createTxInMemoryStore<EvmTransaction>({
@@ -296,5 +318,62 @@ describe('createTxInMemoryStore: what the local tracker knows and a server does 
     expect(store.getState().currentPage).toBe(1);
     expect(store.getState().hasMore).toBe(false);
     expect(store.getState().transactionsPool['0xold']).toBeUndefined();
+  });
+
+  describe('a history page of the wallet before', () => {
+    const page = (number: number, hasNextPage = true) => ({
+      docs: [],
+      page: number,
+      hasNextPage,
+      totalDocs: 0,
+      totalPages: 9,
+    });
+
+    // Owner, 2026-11-07: a failed answer of the wallet before showed as an error of the new one
+    it('that fails says nothing of the new wallet', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      let failNext: (error: Error) => void = () => undefined;
+      const getHistory = vi
+        .fn()
+        .mockResolvedValueOnce(page(1))
+        .mockImplementationOnce(() => new Promise((_, reject) => (failNext = reject)))
+        .mockResolvedValueOnce(page(1, false));
+      const store = createTxInMemoryStore<EvmTransaction>({
+        localTransactionsPool: {},
+        getHistory: getHistory as never,
+      });
+      await store.getState().fetchInitial('0xold');
+      const late = store.getState().fetchNextPage('0xold');
+
+      await store.getState().fetchInitial('0xnew');
+      failNext(new Error('The page of the wallet before'));
+      await late;
+
+      expect(store.getState().isError).toBe(false);
+      expect(store.getState().isLoading).toBe(false);
+    });
+
+    // Its paging stayed in the store: the new wallet was asked for the next page number of the one before
+    it('leaves no page number to the new wallet, whose first page may never come', async () => {
+      const getHistory = vi
+        .fn()
+        .mockResolvedValueOnce(page(1))
+        .mockResolvedValueOnce(page(2))
+        .mockResolvedValueOnce(null);
+      const store = createTxInMemoryStore<EvmTransaction>({
+        localTransactionsPool: {},
+        getHistory: getHistory as never,
+      });
+      await store.getState().fetchInitial('0xold');
+      await store.getState().fetchNextPage('0xold');
+      expect(store.getState().currentPage).toBe(2);
+
+      await store.getState().fetchInitial('0xnew');
+      expect(store.getState().currentPage).toBe(1);
+      expect(store.getState().hasMore).toBe(false);
+
+      await store.getState().fetchNextPage('0xnew');
+      expect(getHistory).toHaveBeenCalledTimes(3);
+    });
   });
 });

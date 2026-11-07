@@ -140,6 +140,8 @@ const mergeTransactionIntoPool = <T extends Transaction>(
  * @template T - The application transaction type.
  * @param params - The store configuration.
  * @param params.localTransactionsPool - The initial pool.
+ * @param params.isTxRemoved - Usually `isTxRemoved` of the persistent store: leaves out the pending row of a transaction that a
+ * person stopped tracking, also after a page load.
  * @param params.reconcileUnsyncedTransactions - Called by `fetchInitial` before the first page is loaded.
  * @param params.getHistory - Loads one page of the remote history. A `null` result stops loading without changing the
  * pool; a thrown error sets `isError`.
@@ -148,6 +150,7 @@ const mergeTransactionIntoPool = <T extends Transaction>(
  */
 export function createTxInMemoryStore<T extends Transaction>({
   localTransactionsPool,
+  isTxRemoved,
   reconcileUnsyncedTransactions,
   getHistory,
   onHistoryFetched,
@@ -185,7 +188,8 @@ export function createTxInMemoryStore<T extends Transaction>({
         const pool = draft.transactionsPool as TransactionPool<T>;
 
         for (const remoteTx of validDocs) {
-          if (!removedTxKeys.has(remoteTx.txKey)) mergeTransactionIntoPool(pool, remoteTx, 'remote');
+          if (removedTxKeys.has(remoteTx.txKey) || (remoteTx.pending && isTxRemoved?.(remoteTx.txKey))) continue;
+          mergeTransactionIntoPool(pool, remoteTx, 'remote');
         }
 
         draft.currentPage = response.page;
@@ -229,7 +233,8 @@ export function createTxInMemoryStore<T extends Transaction>({
       if (!getHistory || !walletAddress) return;
 
       const request = ++newestRequest;
-      set(setRequestState(true));
+      // The paging of the wallet before is not this one's: its first page may never come
+      set({ ...setRequestState(true), currentPage: 1, hasMore: false });
 
       if (reconcileUnsyncedTransactions) {
         await reconcileUnsyncedTransactions();
@@ -258,7 +263,8 @@ export function createTxInMemoryStore<T extends Transaction>({
         if (request === newestRequest) set(applyHistoryResponse(response));
       } catch (error) {
         console.error(`[Pulsar] Failed to fetch transaction history page ${currentPage + 1}:`, error);
-        set({ isLoading: false, isError: true });
+        // A failed page of the wallet before says nothing of this one
+        if (request === newestRequest) set({ isLoading: false, isError: true });
       }
     },
   }));

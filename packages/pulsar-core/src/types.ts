@@ -707,6 +707,13 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
    */
   isTxTracked: (txKey: string) => boolean;
   /**
+   * Whether a transaction was removed with `removeTxFromPool`, as when a person stops tracking it. Kept across page loads and
+   * tabs: `injectExternalPendingTxs` does not bring it back as pending. Pass it to `createTxInMemoryStore`.
+   * @param txKey - The key of the transaction.
+   * @returns `true` until the same key is sent anew. The latest 50 are remembered.
+   */
+  isTxRemoved: (txKey: string) => boolean;
+  /**
    * Adds a listener of the "transaction finished" event (see `TxFinishedListener`). Listeners live in memory, not in
    * storage: add them after every page load, for example in a React effect (`useTxFinished` of
    * `@tuwaio/pulsar-react`). Adding the same function twice registers it once.
@@ -784,6 +791,13 @@ export type ITxInMemoryStore<T extends Transaction> = {
 export type ITxInMemoryStoreParameters<T extends Transaction> = {
   /** The initial pool, usually `transactionsPool` of the persistent store. */
   localTransactionsPool: TransactionPool<T>;
+  /**
+   * Usually `isTxRemoved` of the persistent store: the pending row of such a transaction is left out of the history, as nothing
+   * tracks it any more, also after a page load. Once a page brings it finished, it shows.
+   * @param txKey - The key of the transaction.
+   * @returns Whether it was removed.
+   */
+  isTxRemoved?: (txKey: string) => boolean;
   /** Called by `fetchInitial` before the first page is loaded, usually the store's `reconcileUnsyncedTransactions`. */
   reconcileUnsyncedTransactions?: () => Promise<void>;
   /**
