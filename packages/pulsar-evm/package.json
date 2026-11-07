@@ -89,7 +89,7 @@
     }
   },
   "devDependencies": {
-    "@tuwaio/orbit-core": "^0.6.1",
+    "@tuwaio/orbit-core": "^0.6.2",
     "@tuwaio/orbit-evm": "^0.4.2",
     "@tuwaio/pulsar-core": "workspace:^",
     "@wagmi/core": "^3.6.9",

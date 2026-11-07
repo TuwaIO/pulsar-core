@@ -2,9 +2,9 @@
 
 > **selectAllTransactionsByActiveWallet**\<`T`\>(`transactionsPool`, `from`): `T`[]
 
-Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:53](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/transactionsSelectors.ts#L53)
+Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:55](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/transactionsSelectors.ts#L55)
 
-Returns the transactions sent by a wallet, oldest first. Addresses are compared case-insensitively.
+Returns the transactions sent by a wallet, oldest first. An EVM address matches in any case, a Solana address exactly.
 
 ## Type Parameters
 

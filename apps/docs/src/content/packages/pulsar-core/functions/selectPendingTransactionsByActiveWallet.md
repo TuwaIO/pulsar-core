@@ -2,7 +2,7 @@
 
 > **selectPendingTransactionsByActiveWallet**\<`T`\>(`transactionsPool`, `from`): `T`[]
 
-Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:69](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/transactionsSelectors.ts#L69)
+Defined in: [packages/pulsar-core/src/store/transactionsSelectors.ts:74](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/store/transactionsSelectors.ts#L74)
 
 Returns the pending transactions sent by a wallet, oldest first. Addresses are compared case-insensitively.
 

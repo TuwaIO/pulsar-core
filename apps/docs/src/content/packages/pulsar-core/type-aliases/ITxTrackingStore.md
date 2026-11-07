@@ -2,7 +2,7 @@
 
 > **ITxTrackingStore**\<`T`\> = [`IInitializeTxTrackingStore`](/packages/pulsar-core/interfaces/IInitializeTxTrackingStore.md)\<`T`\> & `object`
 
-Defined in: [packages/pulsar-core/src/types.ts:651](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L651)
+Defined in: [packages/pulsar-core/src/types.ts:652](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-core/src/types.ts#L652)
 
 The state and actions of the store created by `createPulsarStore`.
 
@@ -24,6 +24,10 @@ Runs a transaction from start to tracking: validates `params`, sets `initialTx`,
 may ask the wallet to switch), runs `beforeTxProcess`, calls `actionFunction`, adds the transaction to the pool
 (see `addTxToPool`) and starts its tracker. When `actionFunction` returns `undefined`, `initialTx` is cleared and
 nothing is tracked. Also starts `reconcileUnsyncedTransactions` in the background.
+
+A Retry names the action it repeats as `params.params.actionFunction`, as `retryTxAction` of the adapters does:
+`beforeTxProcess`, `abortOnTxError` and the callbacks of that call apply again unless this call gives its own. They
+are kept in memory for as long as the action lives, and the action does not reach the transaction record.
 
 #### Parameters
 
