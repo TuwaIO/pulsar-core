@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.11.0...pulsar-solana-v0.11.1) (2026-11-07)
+
+
+### Bug Fixes
+
+* what the audit of Pulsar found, a replacement at less cost, and Gelato removed ([#108](https://github.com/TuwaIO/pulsar-core/issues/108)) ([8a2482e](https://github.com/TuwaIO/pulsar-core/commit/8a2482e49365131fc90d0af32a54a221800e0450))
+
 ## [0.11.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.10.5...pulsar-solana-v0.11.0) (2026-11-05)
 
 
