@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.13.1...pulsar-evm-v0.13.2) (2026-11-07)
+
+
+### Bug Fixes
+
+* what the audit of Pulsar found, a replacement at less cost, and Gelato removed ([#108](https://github.com/TuwaIO/pulsar-core/issues/108)) ([8a2482e](https://github.com/TuwaIO/pulsar-core/commit/8a2482e49365131fc90d0af32a54a221800e0450))
+
 ## [0.13.1](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.13.0...pulsar-evm-v0.13.1) (2026-11-06)
 
 
