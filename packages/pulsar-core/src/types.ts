@@ -504,7 +504,8 @@ export type TxAdapter<T extends Transaction> = Pick<BaseAdapter, 'getExplorerUrl
    * Optional: closes the tracking modal and runs a failed transaction again through `executeTxAction`.
    * @param params - The retry parameters.
    * @param params.txKey - The key of the failed transaction, passed to `onClose`.
-   * @param params.tx - The parameters of the transaction, including its `actionFunction`.
+   * @param params.tx - The parameters of the transaction, including its `actionFunction`. Pass them on as `params` of
+   * `executeTxAction`: by that action the store finds what the first call was given.
    * @param params.onClose - Closes the tracking modal.
    * @param params.executeTxAction - The store's `executeTxAction`.
    */
@@ -659,6 +660,10 @@ export type ITxTrackingStore<T extends Transaction> = IInitializeTxTrackingStore
    * may ask the wallet to switch), runs `beforeTxProcess`, calls `actionFunction`, adds the transaction to the pool
    * (see `addTxToPool`) and starts its tracker. When `actionFunction` returns `undefined`, `initialTx` is cleared and
    * nothing is tracked. Also starts `reconcileUnsyncedTransactions` in the background.
+   *
+   * A Retry names the action it repeats as `params.params.actionFunction`, as `retryTxAction` of the adapters does:
+   * `beforeTxProcess`, `abortOnTxError` and the callbacks of that call apply again unless this call gives its own. They
+   * are kept in memory for as long as the action lives, and the action does not reach the transaction record.
    *
    * @param params - The action, its metadata and the callbacks.
    * @param params.actionFunction - Signs and submits the transaction; returns its key, or `undefined` if cancelled.

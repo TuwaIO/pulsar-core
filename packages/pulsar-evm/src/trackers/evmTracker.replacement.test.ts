@@ -802,7 +802,15 @@ describe('evmTracker on the real viem', () => {
       expect(tracker.onReplaced).toHaveBeenCalledOnce();
     });
 
-    test('a rejecting onConfirmationsUpdate is caught and the count goes on', async () => {
+    test.each([
+      ['rejecting', () => Promise.reject(new Error('redis down'))],
+      [
+        'throwing',
+        () => {
+          throw new Error('redis down');
+        },
+      ],
+    ])('a %s onConfirmationsUpdate is caught and the count goes on', async (_, onConfirmationsUpdate) => {
       const { config } = setup({ minedAt: 12 });
       const onSuccess = vi.fn().mockResolvedValue(undefined);
       void evmTracker({
@@ -812,12 +820,14 @@ describe('evmTracker on the real viem', () => {
         onSuccess,
         onFailure: vi.fn(),
         onReplaced: vi.fn(),
-        onConfirmationsUpdate: () => Promise.reject(new Error('redis down')),
+        onConfirmationsUpdate,
       });
 
       await pass(400);
 
       expect(console.warn).toHaveBeenCalled();
+      // With Redis away a mined transaction went on being polled for 20 minutes
+      expect(onSuccess).toHaveBeenCalled();
     });
 
     test('an abandoned transaction stops its tracker with no callback', async () => {
