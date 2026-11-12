@@ -61,12 +61,12 @@ tracker (background)                              → updateTxParams(...) until 
 
 ## 🧩 软件包 [#-packages]
 
-| 软件包                                             | 层级 | 提供的功能                                                                                              | 对等依赖                                                                                            |
-| -------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| [`@tuwaio/pulsar-core`](/packages/pulsar-core)     | L3   | 支持持久化的交易状态库、适配器接口、元数据校验、远程同步钩子、选择器、“交易已完成”事件                  | `@tuwaio/orbit-core` ≥ 0.6.2, `zustand` 5.x, `immer` 11.x, `dayjs` 1.x                              |
-| [`@tuwaio/pulsar-evm`](/packages/pulsar-evm)       | L4   | EVM 适配器；标准交易、ERC-4337、EIP-5792 与 Safe 交易的追踪器；加速、取消；不依赖 wagmi 的 `/safe` 入口 | `@tuwaio/pulsar-core` ≥ 0.12, `viem` 2.x；主入口还需要 `@tuwaio/orbit-evm` ≥ 0.3, `@wagmi/core` 3.x |
-| [`@tuwaio/pulsar-solana`](/packages/pulsar-solana) | L4   | Solana 适配器、签名追踪器、`signAndSendSolanaTx`                                                        | `@tuwaio/pulsar-core` ≥ 0.12, `@tuwaio/orbit-solana` ≥ 0.4, `@solana/kit` ≥ 8.2                     |
-| [`@tuwaio/pulsar-react`](/packages/pulsar-react)   | L4   | `useInitializeTransactionsPool` 与 `useTxFinished` Hook                                                 | `react` ≥ 19.2.3                                                                                    |
+| 软件包                                             | 层级 | 提供的功能                                                                                              | 对等依赖                                                                                                                                       |
+| -------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@tuwaio/pulsar-core`](/packages/pulsar-core)     | L3   | 支持持久化的交易状态库、适配器接口、元数据校验、远程同步钩子、选择器、“交易已完成”事件                  | `@tuwaio/orbit-core` ≥ 0.6.2, `zustand` 5.x, `immer` 11.x, `dayjs` 1.x                                                                         |
+| [`@tuwaio/pulsar-evm`](/packages/pulsar-evm)       | L4   | EVM 适配器；标准交易、ERC-4337、EIP-5792 与 Safe 交易的追踪器；加速、取消；不依赖 wagmi 的 `/safe` 入口 | `@tuwaio/pulsar-core` ≥ 0.12, `@tuwaio/orbit-core` ≥ 0.6.1, `viem` 2.x, `dayjs` 1.x；主入口还需要 `@tuwaio/orbit-evm` ≥ 0.3, `@wagmi/core` 3.x |
+| [`@tuwaio/pulsar-solana`](/packages/pulsar-solana) | L4   | Solana 适配器、签名追踪器、`signAndSendSolanaTx`                                                        | `@tuwaio/pulsar-core` ≥ 0.12, `@tuwaio/orbit-core` ≥ 0.6.1, `@tuwaio/orbit-solana` ≥ 0.4, `@solana/kit` ≥ 8.2, `dayjs` 1.x                     |
+| [`@tuwaio/pulsar-react`](/packages/pulsar-react)   | L4   | `useInitializeTransactionsPool` 与 `useTxFinished` Hook                                                 | `react` ≥ 19.2.3                                                                                                                               |
 
 每个包页面先展示该包的 README，然后是根据 TypeScript 源码生成的全部导出的参考文档。L4 链相关包还需要 `@tuwaio/pulsar-core` 以及其所用 Orbit 包的对等依赖（Solana 需要 `@tuwaio/orbit-solana` 的 `@wallet-standard` 包）；下面的命令会一并安装它们。
 
