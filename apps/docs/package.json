@@ -14,8 +14,7 @@
     "postbuild": "tuwa-docs-search-index --force-language en"
   },
   "dependencies": {
-    "@heroicons/react": "^2.2.0",
-    "@tuwaio/docs-ui": "^0.10.1",
+    "@tuwaio/docs-ui": "^0.11.0",
     "@tuwaio/orbit-core": "^0.6.2",
     "@tuwaio/pulsar-core": "workspace:^",
     "framer-motion": "^14.9.1",
