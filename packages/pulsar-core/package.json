@@ -59,10 +59,10 @@
   "devDependencies": {
     "@tuwaio/orbit-core": "^0.6.2",
     "dayjs": "^1.11.23",
-    "immer": "^11.2.9",
+    "immer": "^11.2.10",
     "tsup": "^9.0.0",
     "typescript": "6.0.3",
     "vitest": "^5.1.0",
-    "zustand": "^5.0.16"
+    "zustand": "^5.1.0"
   }
 }
