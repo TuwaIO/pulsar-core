@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.11.2...pulsar-solana-v0.11.3) (2026-11-17)
+
+
+### Bug Fixes
+
+* **deps:** Next.js 16.4.6, docs-ui 0.12.3, and the latest external packages ([#120](https://github.com/TuwaIO/pulsar-core/issues/120)) ([8341f87](https://github.com/TuwaIO/pulsar-core/commit/8341f8768417ce39af07ba7d246fdad611e915da))
+
 ## [0.11.2](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.11.1...pulsar-solana-v0.11.2) (2026-11-07)
 
 
