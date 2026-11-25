@@ -2,7 +2,7 @@
 
 > **readNonceSlot**(`client`, `params`): `Promise`\<[`NonceSlotReading`](/packages/pulsar-evm/type-aliases/NonceSlotReading.md)\>
 
-Defined in: [utils/readNonceSlot.ts:328](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L328)
+Defined in: [utils/readNonceSlot.ts:330](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L330)
 
 Reads what became of a transaction from its sender and nonce. It works when the node no longer returns the hash, which
 a node does once a replacement reaches its mempool, or when it drops a transaction whose fee fell too low, and it does

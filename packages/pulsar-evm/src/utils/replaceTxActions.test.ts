@@ -5,10 +5,11 @@
 import { OrbitAdapter } from '@tuwaio/orbit-core';
 import { Transaction, TransactionTracker } from '@tuwaio/pulsar-core';
 import { Config, getAccount, getClient, sendTransaction } from '@wagmi/core';
-import { estimateFeesPerGas } from 'viem/actions';
+import { estimateFeesPerGas, getTransactionCount } from 'viem/actions';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { cancelTxAction } from './cancelTxAction';
+import { NonceAlreadyUsedError } from './nonceAlreadyUsedError';
 import { speedUpTxAction } from './speedUpTxAction';
 
 vi.mock('@wagmi/core', async (importActual) => ({
@@ -20,12 +21,20 @@ vi.mock('@wagmi/core', async (importActual) => ({
 vi.mock('viem/actions', async (importActual) => ({
   ...(await importActual<typeof import('viem/actions')>()),
   estimateFeesPerGas: vi.fn(),
+  getTransactionCount: vi.fn(),
 }));
 
 const WALLET = '0xad9a211d227d2d9c1b5573f73cda0284b758ac0c';
 const OTHER = '0xb8d9b1ec1c1f8bea7fb10450198c0b47d50c96b7';
 const config = {} as Config;
 let nextNonce = 100;
+
+/** A config whose connected wallet is on this chain, with a node of its own behind its provider. */
+const configWithWallet = (chainId: number, getProvider: () => Promise<unknown> = async () => ({ request: vi.fn() })) =>
+  ({ state: { connections: new Map([['uid', { chainId, connector: { getProvider } }]]) } }) as unknown as Config;
+/** The node of the app is the client of `getClient`; any other client reads through the wallet. */
+const APP_NODE = { uid: 'app' };
+const ofAppNode = (client: unknown) => client === APP_NODE;
 
 // A new nonce for every test: the fees last sent for a nonce are remembered for as long as the page lives
 const pendingTx = (fields: Record<string, unknown> = {}) =>
@@ -55,9 +64,10 @@ describe.each([
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getAccount).mockReturnValue({ address: WALLET } as never);
-    vi.mocked(getClient).mockReturnValue({} as never);
+    vi.mocked(getClient).mockReturnValue(APP_NODE as never);
     vi.mocked(sendTransaction).mockResolvedValue(`0x${'b'.repeat(64)}`);
     vi.mocked(estimateFeesPerGas).mockResolvedValue({ maxFeePerGas: 1n, maxPriorityFeePerGas: 1n } as never);
+    vi.mocked(getTransactionCount).mockResolvedValue(0);
   });
 
   test('sends from the account that sent the transaction, in the same nonce', async () => {
@@ -120,6 +130,90 @@ describe.each([
 
     expect(lastSent().maxFeePerGas).toBe(1150n);
     expect(lastSent().maxPriorityFeePerGas).toBe(115n);
+  });
+
+  // A node of the app out of its limit left 15% of a fee far below the base fee, and the replacement was stuck too
+  test("asks the wallet's node for the market when the node of the app does not answer", async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.mocked(estimateFeesPerGas).mockImplementation((async (client: unknown) => {
+      if (ofAppNode(client)) throw new Error('rate limited');
+      return { maxFeePerGas: 5_000_000n, maxPriorityFeePerGas: 2_000_000n };
+    }) as never);
+
+    await action({ config: configWithWallet(11155111), tx: pendingTx() });
+
+    expect(lastSent().maxFeePerGas).toBe(5_000_000n);
+    expect(lastSent().maxPriorityFeePerGas).toBe(2_000_000n);
+  });
+
+  test('does not ask a wallet on another chain for the market', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.mocked(estimateFeesPerGas).mockRejectedValue(new Error('rate limited'));
+
+    await action({ config: configWithWallet(1), tx: pendingTx() });
+
+    expect(estimateFeesPerGas).toHaveBeenCalledTimes(1);
+    expect(lastSent().maxFeePerGas).toBe(1150n);
+  });
+
+  test('a wallet that does not answer holds the press for no more than its time', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.mocked(estimateFeesPerGas).mockImplementation(((client: unknown) =>
+        ofAppNode(client) ? Promise.reject(new Error('rate limited')) : new Promise(() => {})) as never);
+
+      const sending = action({ config: configWithWallet(11155111), tx: pendingTx() });
+      await vi.advanceTimersByTimeAsync(3_000);
+      await sending;
+
+      expect(lastSent().maxFeePerGas).toBe(1150n);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // The wallet opened and refused a nonce already used, in its own English words
+  test('asks the wallet for nothing once the nonce is used: the transaction was mined or replaced', async () => {
+    const tx = pendingTx();
+    vi.mocked(getTransactionCount).mockResolvedValue((tx as unknown as { nonce: number }).nonce + 1);
+
+    const error = (await action({ config, tx }).catch((e: unknown) => e)) as Error;
+
+    expect(error.cause).toBeInstanceOf(NonceAlreadyUsedError);
+    expect((error.cause as Error).name).toBe('NonceAlreadyUsedError');
+    expect(getTransactionCount).toHaveBeenCalledWith(APP_NODE, { address: WALLET, blockTag: 'latest' });
+    expect(sendTransaction).not.toHaveBeenCalled();
+  });
+
+  test("asks the wallet's node for the nonce when the node of the app does not answer", async () => {
+    const tx = pendingTx();
+    vi.mocked(getTransactionCount).mockImplementation((async (client: unknown) => {
+      if (ofAppNode(client)) throw new Error('rate limited');
+      return (tx as unknown as { nonce: number }).nonce + 1;
+    }) as never);
+
+    const error = (await action({ config: configWithWallet(11155111), tx }).catch((e: unknown) => e)) as Error;
+
+    expect(error.cause).toBeInstanceOf(NonceAlreadyUsedError);
+    expect(sendTransaction).not.toHaveBeenCalled();
+  });
+
+  test('a nonce no node tells about does not stop the press: the wallet decides', async () => {
+    vi.mocked(getTransactionCount).mockRejectedValue(new Error('rate limited'));
+
+    await action({ config, tx: pendingTx() });
+
+    expect(sendTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  test('a transaction before it in the queue keeps the nonce free', async () => {
+    const tx = pendingTx();
+    vi.mocked(getTransactionCount).mockResolvedValue((tx as unknown as { nonce: number }).nonce);
+
+    await action({ config, tx });
+
+    expect(sendTransaction).toHaveBeenCalledTimes(1);
   });
 
   test('a second press goes above the first: the same fees would be refused as underpriced', async () => {
@@ -199,9 +293,10 @@ describe('speed-up and cancel of one transaction', () => {
   test('a cancel after a speed-up goes above the speed-up', async () => {
     vi.clearAllMocks();
     vi.mocked(getAccount).mockReturnValue({ address: WALLET } as never);
-    vi.mocked(getClient).mockReturnValue({} as never);
+    vi.mocked(getClient).mockReturnValue(APP_NODE as never);
     vi.mocked(sendTransaction).mockResolvedValue(`0x${'b'.repeat(64)}`);
     vi.mocked(estimateFeesPerGas).mockResolvedValue({ maxFeePerGas: 1n, maxPriorityFeePerGas: 1n } as never);
+    vi.mocked(getTransactionCount).mockResolvedValue(0);
     const tx = pendingTx();
 
     await speedUpTxAction({ config, tx });

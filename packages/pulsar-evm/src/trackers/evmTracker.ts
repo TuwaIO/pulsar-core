@@ -7,9 +7,6 @@ import { createTxUpdater, ITxTrackingStore, TrackerCallbacks, Transaction } from
 import { Config, getClient } from '@wagmi/core';
 import {
   Client,
-  createClient,
-  custom,
-  EIP1193Provider,
   GetTransactionReturnType,
   Hex,
   ReplacementReturnType,
@@ -25,6 +22,7 @@ import {
   waitForTransactionReceipt,
 } from 'viem/actions';
 
+import { readThroughWallet } from '../utils/nodeReads';
 import { NonceSlot, NonceSlotScan, NonceSlotSpentError, readNonceSlot } from '../utils/readNonceSlot';
 import { storeCallbacks, storeTrackerOptions } from './storeCallbacks';
 
@@ -48,9 +46,6 @@ const SPENT_READINGS_TO_BELIEVE = 3;
 /** How far before the block read at the start a replacement is looked for: nodes behind a load balancer disagree. */
 const FROM_BLOCK_MARGIN = 5n;
 
-/** How long the connected wallet may take to say what it knows of a hash: nothing else waits for it for longer. */
-const WALLET_READ_TIMEOUT_MS = 3000;
-
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
@@ -70,35 +65,6 @@ export class ConfirmationsTimeoutError extends Error {
     super(`Transaction ${receipt.transactionHash} did not reach ${needed} confirmations in time.`);
     this.receipt = receipt;
   }
-}
-
-/**
- * What the connected wallet says of a hash, through its own provider and with no prompt: the wallet's RPC may be the only place
- * that holds it (a fee below what public nodes keep, a private mempool). Only a wallet on the transaction's chain is asked. No
- * answer in {@link WALLET_READ_TIMEOUT_MS}, an error or no connection all come to the same: `undefined`.
- */
-async function readThroughWallet(
-  config: Config,
-  chainId: number,
-  hash: Hex,
-): Promise<GetTransactionReturnType | undefined> {
-  // A server's config has no connections, and one that is no real wagmi config has no state to read them from
-  for (const { chainId: on, connector } of config.state?.connections?.values() ?? []) {
-    if (on !== chainId) continue;
-    try {
-      const provider = (await connector.getProvider()) as EIP1193Provider;
-      const wallet = createClient({ transport: custom(provider, { retryCount: 0 }) });
-      return await Promise.race([
-        getTransaction(wallet, { hash }),
-        sleep(WALLET_READ_TIMEOUT_MS).then(() => {
-          throw new Error('The wallet did not answer');
-        }),
-      ]);
-    } catch {
-      // The next wallet, or the public nodes again
-    }
-  }
-  return undefined;
 }
 
 /**
@@ -419,7 +385,7 @@ export async function evmTracker(params: EVMTrackerParams): Promise<void> {
     } catch (error) {
       // Known from an earlier run: a hash the node does not show is what a replaced transaction looks like
       if (slot) break;
-      txDetails = await readThroughWallet(config, tx.chainId as number, hash);
+      txDetails = await readThroughWallet(config, tx.chainId as number, (wallet) => getTransaction(wallet, { hash }));
       if (!txDetails) {
         // An RPC error is no answer: past the limit, only the node saying it has no such transaction ends the wait
         const notFound = error instanceof Error && error.name === 'TransactionNotFoundError';

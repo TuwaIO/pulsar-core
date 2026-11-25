@@ -2,7 +2,7 @@
 
 > **NonceSlotReading** = \{ `state`: `"open"`; \} \| \{ `state`: `"spender_found"`; `transaction`: `GetTransactionReturnType`; \} \| \{ `receipt?`: `TransactionReceipt`; `state`: `"ours"`; \} \| \{ `replacement`: `ReplacementReturnType`; `state`: `"replaced"`; \} \| \{ `state`: `"spent"`; \}
 
-Defined in: [utils/readNonceSlot.ts:59](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L59)
+Defined in: [utils/readNonceSlot.ts:61](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/readNonceSlot.ts#L61)
 
 What [readNonceSlot](/packages/pulsar-evm/functions/readNonceSlot.md) found:
 - `open`: the nonce is free, so the transaction can still land.

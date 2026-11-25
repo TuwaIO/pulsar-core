@@ -7,7 +7,7 @@ import { Transaction } from '@tuwaio/pulsar-core';
 import { Config, getAccount, sendTransaction } from '@wagmi/core';
 import { Hex } from 'viem';
 
-import { assertSentBy, rememberSentFees, replacementFees } from './replacementFees';
+import { assertNonceFree, assertSentBy, rememberSentFees, replacementFees } from './replacementFees';
 
 /**
  * Cancels a pending EVM transaction: asks the connected wallet to send a zero-value transaction to its own address with
@@ -16,7 +16,8 @@ import { assertSentBy, rememberSentFees, replacementFees } from './replacementFe
  * transaction reports it as `Replaced` with `replacedReason: 'cancelled'`; the cancellation transaction itself is not
  * added to the pool.
  *
- * Side effects: reads the fees of the chain over RPC, opens a wallet prompt, broadcasts a transaction, and keeps the fees
+ * Side effects: reads the fees of the chain and the sender's transaction count over RPC (of the app's node or, when it does not
+ * answer, through the wallet connected on the chain), opens a wallet prompt, broadcasts a transaction, and keeps the fees
  * sent for the next replacement of this nonce, in memory and in `sessionStorage` under
  * `pulsar-evm:replacementFees:<chain>:<sender>:<nonce>`.
  *
@@ -28,7 +29,8 @@ import { assertSentBy, rememberSentFees, replacementFees } from './replacementFe
  * @returns The hash of the cancellation transaction.
  * @throws `Error` when the transaction is not an EVM transaction or lacks the nonce and fee fields, and
  * `Error('Failed to cancel transaction: …')` (with the original error as `cause`) when no account is connected, the
- * connected account did not send the transaction, or the wallet rejects or fails to send the transaction.
+ * connected account did not send the transaction, its nonce is already used (`NonceAlreadyUsedError`, with no wallet prompt), or
+ * the wallet rejects or fails to send the transaction.
  *
  * @example
  * ```ts
@@ -62,8 +64,8 @@ export async function cancelTxAction<T extends Transaction>({ config, tx }: { co
 
     assertSentBy(account.address, tx);
 
-    // 4. Calculate new gas fees.
-    const fees = await replacementFees(config, tx);
+    // 4. Calculate new gas fees, while the nonce is checked to be free still.
+    const [fees] = await Promise.all([replacementFees(config, tx), assertNonceFree(config, tx)]);
 
     // 5. Send a zero-value transaction to your own address with the same nonce and higher gas.
     const hash = await sendTransaction(config, {
