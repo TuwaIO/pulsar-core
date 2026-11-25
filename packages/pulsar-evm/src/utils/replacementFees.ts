@@ -5,8 +5,11 @@
 import { getBrowserStorage } from '@tuwaio/orbit-core';
 import { EvmTransaction, Transaction } from '@tuwaio/pulsar-core';
 import { Config, getClient } from '@wagmi/core';
-import { isAddressEqual } from 'viem';
-import { estimateFeesPerGas } from 'viem/actions';
+import { Client, isAddressEqual } from 'viem';
+import { estimateFeesPerGas, getTransactionCount } from 'viem/actions';
+
+import { hasNonceLanes, inTime, readThroughWallet } from './nodeReads';
+import { NonceAlreadyUsedError } from './nonceAlreadyUsedError';
 
 type Fees = { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint };
 
@@ -64,8 +67,50 @@ export function assertSentBy(account: `0x${string}`, tx: Transaction): void {
 }
 
 /**
+ * A read of the app's node, or of the wallet's when that one does not answer: with the app's out of its limit the press went out
+ * on old fees, and asked the wallet to replace what was already in a block.
+ */
+async function readOnce<T>(
+  config: Config,
+  chainId: number,
+  read: (client: Client) => Promise<T>,
+): Promise<T | undefined> {
+  const client = getClient(config, { chainId });
+  if (client) {
+    try {
+      return await inTime(read(client));
+    } catch {
+      // The wallet's node, below
+    }
+  }
+  return readThroughWallet(config, chainId, read, client?.chain);
+}
+
+/**
+ * Refuses a transaction whose nonce is already used: it was mined or replaced since the buttons were drawn, and the wallet would
+ * open only to say so in its own words. A nonce no node tells about stops nothing, as the wallet decides.
+ *
+ * Side effects: one read of the sender's transaction count, of the app's node or, when it does not answer, of the wallet's.
+ *
+ * @internal
+ * @param config - The wagmi config.
+ * @param tx - The transaction to replace.
+ * @throws {@link NonceAlreadyUsedError} when its nonce is used.
+ */
+export async function assertNonceFree(config: Config, tx: Transaction): Promise<void> {
+  const { chainId, from, nonce, sender } = tx as EvmTransaction;
+  if (hasNonceLanes(getClient(config, { chainId: chainId as number })?.chain)) return;
+  const address = (sender ?? from) as `0x${string}`;
+  const used = await readOnce(config, chainId as number, (client) =>
+    getTransactionCount(client, { address, blockTag: 'latest' }),
+  );
+  if (used !== undefined && used > Number(nonce)) throw new NonceAlreadyUsedError(tx.txKey);
+}
+
+/**
  * The fees of a replacement: 15% above the fees last sent for this nonce, and at least the market estimate, since a
- * transaction stuck below the base fee stays stuck with 15% more. Without an estimate the 15% still goes out.
+ * transaction stuck below the base fee stays stuck with 15% more. The estimate is of the app's node or, when it does not answer, of
+ * the wallet's. Without an estimate the 15% still goes out.
  *
  * The fees of a replacement sent by the wallet itself, or from another tab, are not known here: if they are higher, the
  * node refuses this one and the error says so.
@@ -87,15 +132,11 @@ export async function replacementFees(config: Config, tx: Transaction): Promise<
   let maxFee = raised(previous.maxFeePerGas);
   let priorityFee = raised(previous.maxPriorityFeePerGas);
 
-  try {
-    const client = getClient(config, { chainId: chainId as number });
-    if (client) {
-      const market = await estimateFeesPerGas(client);
-      if (market.maxFeePerGas > maxFee) maxFee = market.maxFeePerGas;
-      if (market.maxPriorityFeePerGas > priorityFee) priorityFee = market.maxPriorityFeePerGas;
-    }
-  } catch (error) {
-    console.warn('[Pulsar] Could not estimate the fees of the chain, raising the old ones only:', error);
+  const market = await readOnce(config, chainId as number, (client) => estimateFeesPerGas(client));
+  if (!market) console.warn('[Pulsar] Could not estimate the fees of the chain, raising the old ones only');
+  else {
+    if (market.maxFeePerGas > maxFee) maxFee = market.maxFeePerGas;
+    if (market.maxPriorityFeePerGas > priorityFee) priorityFee = market.maxPriorityFeePerGas;
   }
 
   return { maxFeePerGas: priorityFee > maxFee ? priorityFee : maxFee, maxPriorityFeePerGas: priorityFee };

@@ -17,6 +17,8 @@ import {
 } from 'viem';
 import { getBlock, getBlockNumber, getTransaction, getTransactionCount, getTransactionReceipt } from 'viem/actions';
 
+import { hasNonceLanes } from './nodeReads';
+
 /**
  * How many full blocks a transaction may cost, block by block, on a node that keeps no old state: the last step of the search, for a
  * spend older than what the node remembers.
@@ -331,8 +333,7 @@ export async function readNonceSlot(
 ): Promise<NonceSlotReading> {
   const { hash, slot, fromBlock, maxBlocks = DEFAULT_MAX_WALKED_BLOCKS, scan = {} } = params;
 
-  const lanes = (client.chain as { transactionReplacement?: { getKey?: unknown } } | undefined)?.transactionReplacement;
-  if (lanes?.getKey) return { state: 'open' };
+  if (hasNonceLanes(client.chain)) return { state: 'open' };
 
   const used = await getTransactionCount(client, { address: slot.from, blockTag: 'latest' });
   if (used <= slot.nonce) return { state: 'open' };

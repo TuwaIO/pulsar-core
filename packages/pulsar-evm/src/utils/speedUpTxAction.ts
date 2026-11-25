@@ -7,7 +7,7 @@ import { Transaction } from '@tuwaio/pulsar-core';
 import { Config, getAccount, sendTransaction } from '@wagmi/core';
 import { Hex } from 'viem';
 
-import { assertSentBy, rememberSentFees, replacementFees } from './replacementFees';
+import { assertNonceFree, assertSentBy, rememberSentFees, replacementFees } from './replacementFees';
 
 /**
  * Speeds up a pending EVM transaction: asks the connected wallet to resend it (same `to`, `value`, `input` and nonce)
@@ -16,7 +16,8 @@ import { assertSentBy, rememberSentFees, replacementFees } from './replacementFe
  * transaction reports it as `Replaced` with `replacedReason: 'repriced'`. In a `createPulsarStore` store a new record under
  * the new hash, linked by `replaces`, then goes on to the result: do not add the returned hash to the pool yourself.
  *
- * Side effects: reads the fees of the chain over RPC, opens a wallet prompt, broadcasts a transaction, and keeps the fees
+ * Side effects: reads the fees of the chain and the sender's transaction count over RPC (of the app's node or, when it does not
+ * answer, through the wallet connected on the chain), opens a wallet prompt, broadcasts a transaction, and keeps the fees
  * sent for the next replacement of this nonce, in memory and in `sessionStorage` under
  * `pulsar-evm:replacementFees:<chain>:<sender>:<nonce>`.
  *
@@ -29,7 +30,8 @@ import { assertSentBy, rememberSentFees, replacementFees } from './replacementFe
  * @throws `Error` when the transaction is not an EVM transaction or lacks the required fields, and
  * `Error('Failed to speed up transaction: …')` (with the original error as `cause`) when no account is connected, the
  * connected account did not send the transaction (from another account the same transfer would be sent a second time),
- * or the wallet rejects or fails to send the transaction.
+ * its nonce is already used (`NonceAlreadyUsedError`, with no wallet prompt), or the wallet rejects or fails to send the
+ * transaction.
  *
  * @example
  * ```ts
@@ -61,8 +63,8 @@ export async function speedUpTxAction<T extends Transaction>({ config, tx }: { c
 
     assertSentBy(account.address, tx);
 
-    // 4. Calculate new gas fees.
-    const fees = await replacementFees(config, tx);
+    // 4. Calculate new gas fees, while the nonce is checked to be free still.
+    const [fees] = await Promise.all([replacementFees(config, tx), assertNonceFree(config, tx)]);
 
     // 5. Resubmit the transaction with the same details but higher gas fees.
     const hash = await sendTransaction(config, {

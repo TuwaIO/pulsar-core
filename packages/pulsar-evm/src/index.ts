@@ -6,6 +6,7 @@ export * from './trackers/safeTracker';
 export * from './utils/cancelTxAction';
 export * from './utils/checkAndInitializeTrackerInStore';
 export * from './utils/checkTransactionsTracker';
+export * from './utils/nonceAlreadyUsedError';
 export * from './utils/readNonceSlot';
 export * from './utils/safeConstants';
 export * from './utils/selectEvmTxExplorerLink';

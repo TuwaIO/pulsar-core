@@ -2,7 +2,7 @@
 
 > **speedUpTxAction**\<`T`\>(`params`): `Promise`\<`` `0x${string}` ``\>
 
-Defined in: [utils/speedUpTxAction.ts:39](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/speedUpTxAction.ts#L39)
+Defined in: [utils/speedUpTxAction.ts:41](https://github.com/TuwaIO/pulsar-core/blob/main/packages/pulsar-evm/src/utils/speedUpTxAction.ts#L41)
 
 Speeds up a pending EVM transaction: asks the connected wallet to resend it (same `to`, `value`, `input` and nonce)
 with both EIP-1559 fees 15% above the fees last sent for this nonce, and at least at the market estimate, since a
@@ -10,7 +10,8 @@ transaction stuck below the base fee stays stuck with 15% more. When it is mined
 transaction reports it as `Replaced` with `replacedReason: 'repriced'`. In a `createPulsarStore` store a new record under
 the new hash, linked by `replaces`, then goes on to the result: do not add the returned hash to the pool yourself.
 
-Side effects: reads the fees of the chain over RPC, opens a wallet prompt, broadcasts a transaction, and keeps the fees
+Side effects: reads the fees of the chain and the sender's transaction count over RPC (of the app's node or, when it does not
+answer, through the wallet connected on the chain), opens a wallet prompt, broadcasts a transaction, and keeps the fees
 sent for the next replacement of this nonce, in memory and in `sessionStorage` under
 `pulsar-evm:replacementFees:<chain>:<sender>:<nonce>`.
 
@@ -52,7 +53,8 @@ The hash of the replacement transaction.
 `Error` when the transaction is not an EVM transaction or lacks the required fields, and
 `Error('Failed to speed up transaction: …')` (with the original error as `cause`) when no account is connected, the
 connected account did not send the transaction (from another account the same transfer would be sent a second time),
-or the wallet rejects or fails to send the transaction.
+its nonce is already used (`NonceAlreadyUsedError`, with no wallet prompt), or the wallet rejects or fails to send the
+transaction.
 
 ## Example
 
