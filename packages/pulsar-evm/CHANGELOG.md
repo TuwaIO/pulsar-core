@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.5](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.13.4...pulsar-evm-v0.13.5) (2026-11-25)
+
+
+### Bug Fixes
+
+* **evm:** speed up and cancel read the wallet's node when the app's does not answer, and refuse a used nonce ([#122](https://github.com/TuwaIO/pulsar-core/issues/122)) ([5fce1bb](https://github.com/TuwaIO/pulsar-core/commit/5fce1bbd67b983a57e72934682a6c26adcdccf98))
+
 ## [0.13.4](https://github.com/TuwaIO/pulsar-core/compare/pulsar-evm-v0.13.3...pulsar-evm-v0.13.4) (2026-11-17)
 
 
