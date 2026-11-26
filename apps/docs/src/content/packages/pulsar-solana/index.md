@@ -67,13 +67,13 @@ The step-by-step React setup, with Nova Connect and a Codama-generated program c
 
 ## 🌐 External Services
 
-| Helper                | Host                                                                                                      | Purpose                                                       |
-| --------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Signature tracker     | The URL of its cluster in `rpcUrls`, else the public endpoint of the cluster (`api.<cluster>.solana.com`) | `getSignatureStatuses` and `getTransaction` for the signature |
-| `retryTxAction`       | The URL of its cluster in `rpcUrls`, else the public endpoint of the cluster                              | The RPC client passed to your `actionFunction`                |
-| `signAndSendSolanaTx` | The client you pass                                                                                       | `getLatestBlockhash`; the signer sends the transaction        |
+| Helper                | Host                                                                                                       | Purpose                                                       |
+| --------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Signature tracker     | The URLs of its cluster in `rpcUrls`, else the public endpoint of the cluster (`api.<cluster>.solana.com`) | `getSignatureStatuses` and `getTransaction` for the signature |
+| `retryTxAction`       | The URLs of its cluster in `rpcUrls`, else the public endpoint of the cluster                              | The RPC client passed to your `actionFunction`                |
+| `signAndSendSolanaTx` | The client you pass                                                                                        | `getLatestBlockhash`; the signer sends the transaction        |
 
-The public `api.*.solana.com` endpoints are rate-limited; pass your own RPC URLs in production. Explorer links point to `explorer.solana.com` and are not requested by the package.
+A cluster can have several URLs in `rpcUrls` (`devnet: [first, second]`): a read goes to the next one when one does not answer. The public `api.*.solana.com` endpoints are rate-limited; pass your own RPC URLs in production. Explorer links point to `explorer.solana.com` and are not requested by the package.
 
 ---
 

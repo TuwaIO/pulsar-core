@@ -5,7 +5,7 @@
 
 import type { Signature, TransactionError } from '@solana/kit';
 import { normalizeError, OrbitAdapter } from '@tuwaio/orbit-core';
-import { createSolanaRPC, getCluster } from '@tuwaio/orbit-solana';
+import { createSolanaRPC, getCluster, type SolanaRpcUrl } from '@tuwaio/orbit-solana';
 import {
   createAbandonCheck,
   createTxUpdater,
@@ -54,8 +54,8 @@ export type SolanaSignatureStatusResponse = {
  */
 export type SolanaFetcherTx = Pick<Transaction, 'adapter' | 'txKey' | 'chainId' | 'localTimestamp'> &
   Pick<SolanaTransaction, 'fee' | 'recentBlockhash' | 'instructions' | 'lastValidBlockHeight'> & {
-    /** The RPC endpoint to read. Without it, the public endpoint of the cluster in `chainId`. */
-    rpcUrl?: string;
+    /** The RPC endpoint to read, or several: the next when one does not answer. Without it, the public endpoint of the cluster in `chainId`. */
+    rpcUrl?: SolanaRpcUrl;
   };
 
 /** The error of a transaction whose blockhash expired before it landed. */
@@ -177,7 +177,8 @@ export async function solanaFetcher({
   // the next tick and gives up only after `maxRetries` consecutive failures.
 
   // Initialize the Solana RPC client
-  const rpc = createSolanaRPC({ rpcUrlOrMoniker: tx.rpcUrl ?? getCluster({ cluster: tx.chainId as string }) });
+  const cluster = getCluster({ cluster: tx.chainId as string });
+  const rpc = createSolanaRPC({ rpcUrlOrMoniker: cluster, rpcUrls: { [cluster]: tx.rpcUrl } });
 
   const isExpired = dayjs().diff(dayjs.unix(tx.localTimestamp), 'hour') >= MAX_PENDING_HOURS;
 
@@ -330,7 +331,7 @@ export async function solanaFetcher({
  * @template T - The application transaction type.
  * @param params - The transaction, the store members and the callbacks.
  * @param params.tx - The Solana transaction to track.
- * @param params.rpcUrl - The RPC endpoint of its cluster; without it, the public endpoint of the cluster.
+ * @param params.rpcUrl - The RPC endpoint of its cluster, or several; without it, the public endpoint of the cluster.
  * @param params.updateTxParams - The store's `updateTxParams`.
  * @param params.removeTxFromPool - Not used: failed transactions stay in the pool.
  * @param params.transactionsPool - The store's pool when tracking starts.
@@ -347,8 +348,8 @@ export async function solanaTrackerForStore<T extends Transaction>({
 }: Pick<ITxTrackingStore<T>, 'updateTxParams' | 'removeTxFromPool' | 'transactionsPool'> &
   Partial<Pick<ITxTrackingStore<T>, 'isTxTracked'>> & {
     tx: T;
-    /** The RPC endpoint of its cluster, from the adapter. Not written to the pool: an endpoint can hold a key. */
-    rpcUrl?: string;
+    /** The RPC endpoint of its cluster, or several, from the adapter. Not written to the pool: an endpoint can hold a key. */
+    rpcUrl?: SolanaRpcUrl;
   } & TrackerCallbacks<T>): Promise<void> {
   const updateTx = createTxUpdater({
     tx,
