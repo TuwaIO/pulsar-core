@@ -11,6 +11,6 @@ The transaction fields [solanaFetcher](/packages/pulsar-solana/functions/solanaF
 
 ### rpcUrl?
 
-> `optional` **rpcUrl?**: `string`
+> `optional` **rpcUrl?**: `SolanaRpcUrl`
 
-The RPC endpoint to read. Without it, the public endpoint of the cluster in `chainId`.
+The RPC endpoint to read, or several: the next when one does not answer. Without it, the public endpoint of the cluster in `chainId`.

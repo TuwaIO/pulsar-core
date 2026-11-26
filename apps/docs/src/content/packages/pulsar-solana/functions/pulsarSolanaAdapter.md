@@ -21,7 +21,7 @@ matching Wallet Standard wallet with `getConnectedSolanaConnector` from `@tuwaio
 - `getExplorerUrl` and `getExplorerTxUrl` build Solana Explorer links with `getSolanaExplorerLink` from
   `@tuwaio/orbit-solana`.
 - `retryTxAction` closes the modal and runs `executeTxAction` again with `tx.actionFunction({ client, ...tx.payload })`,
-  where `client` is a cached RPC client for the URL of the cluster of `desiredChainID` in `rpcUrls`, or its public endpoint. It throws when no wallet
+  where `client` is a cached RPC client for the URLs of the cluster of `desiredChainID` in `rpcUrls`, or its public endpoint. It throws when no wallet
   is connected or `executeTxAction` is missing.
 
 There is no `cancelTxAction` or `speedUpTxAction` for Solana.
