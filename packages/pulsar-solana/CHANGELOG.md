@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.11.3...pulsar-solana-v0.12.0) (2026-11-26)
+
+
+### Features
+
+* several RPC URLs of a Solana cluster, the next one when one does not answer ([#125](https://github.com/TuwaIO/pulsar-core/issues/125)) ([1dea9ad](https://github.com/TuwaIO/pulsar-core/commit/1dea9ad2d2b4fe3c45fcecc0ff6ef8fcf1c44234))
+
 ## [0.11.3](https://github.com/TuwaIO/pulsar-core/compare/pulsar-solana-v0.11.2...pulsar-solana-v0.11.3) (2026-11-17)
 
 
